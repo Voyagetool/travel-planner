@@ -48,7 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    print("[PASS] [1/2] 雲端即時同步、跨裝置存取、主行程連動、預算實付對比與交通編輯結構檢查通過！")
+    # 7. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
+    for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
+        assert cat_name in html, f"缺少 6 大標準分類: {cat_name}"
+
+    print("[PASS] [1/2] 雲端即時同步、主行程連動、預算實付對比、交通編輯與 6 大分類模式檢查通過！")
 
 
 def test_calculation_logic():
