@@ -4,12 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>旅遊支出計算中心 ‧ Travel Expense Calculator</title>
+  
+  <!-- 引入現代極簡頂級字體家族：Plus Jakarta Sans (類似截圖的高級現代無襯線體) 與 Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   
+  <!-- 引入 SheetJS 函式庫以支援原生產生並匯出 .xlsx Excel 試算表 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
-    /* CSS 重設與基礎變數（極簡低飽和度 Slate 配色） */
+    /* CSS 重設與基礎變數（極簡低飽和度 Slate 配色與現代質感） */
     :root {
       --bg-base: #f8fafc;
       --bg-surface: #ffffff;
@@ -37,6 +42,11 @@
       --cat-other: #db2777;      /* 柔桃紅 - 購物與其他 */
       --cat-other-bg: #fdf2f8;
 
+      /* 沙金色溫潤標籤 (截圖同款) */
+      --badge-warm-bg: #fbf3db;
+      --badge-warm-text: #785121;
+      --badge-warm-border: rgba(120, 81, 33, 0.18);
+
       --radius-sm: 6px;
       --radius-md: 10px;
       --radius-lg: 16px;
@@ -55,7 +65,7 @@
     }
 
     body {
-      font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
       background-color: var(--bg-base);
       color: var(--text-main);
       line-height: 1.5;
@@ -63,6 +73,8 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     /* 頂部導覽列 (Header) */
@@ -73,7 +85,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 24px;
       flex-shrink: 0;
       z-index: 30;
     }
@@ -88,9 +100,9 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 10px;
+      padding: 6px 11px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-muted);
       background: var(--bg-subtle);
       border: 1px solid var(--border-color);
@@ -107,31 +119,44 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
+    /* 標題套用類似截圖的高字重、微收縮無襯線體 */
     .trip-title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: var(--radius-sm);
+      color: var(--text-main);
     }
     .trip-title:hover {
       background: var(--bg-subtle);
     }
 
+    /* 截圖同款精緻標籤 */
     .trip-badge {
       font-size: 11px;
       font-weight: 600;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: var(--radius-full);
       background: var(--bg-subtle);
       color: var(--text-muted);
       border: 1px solid var(--border-color);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trip-badge.badge-warm {
+      background: var(--badge-warm-bg);
+      color: var(--badge-warm-text);
+      border-color: var(--badge-warm-border);
     }
 
     .header-actions {
@@ -147,7 +172,7 @@
       gap: 6px;
       padding: 6px 12px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-color);
       background: var(--bg-surface);
@@ -155,6 +180,7 @@
       cursor: pointer;
       transition: all 0.15s ease;
       white-space: nowrap;
+      font-family: inherit;
     }
     .btn:hover {
       background: var(--bg-subtle);
@@ -170,8 +196,21 @@
       border-color: #1e293b;
     }
 
-    .currency-toggle-btn {
+    /* 專屬 Excel 匯出按鈕樣式 */
+    .btn-excel {
+      background: #047857;
+      color: #ffffff;
+      border-color: #047857;
       font-weight: 600;
+    }
+    .btn-excel:hover {
+      background: #065f46;
+      border-color: #065f46;
+      color: #ffffff;
+    }
+
+    .currency-toggle-btn {
+      font-weight: 700;
       background: var(--bg-subtle);
       color: var(--text-main);
     }
@@ -187,7 +226,7 @@
 
     /* 左側：統計儀表板 (Dashboard Sidebar) */
     .sidebar-dashboard {
-      width: 380px;
+      width: 370px;
       flex-shrink: 0;
       background: var(--bg-surface);
       border-right: 1px solid var(--border-color);
@@ -195,7 +234,7 @@
       flex-direction: column;
       overflow-y: auto;
       padding: 20px;
-      gap: 20px;
+      gap: 18px;
     }
 
     /* 總額大卡片 */
@@ -215,7 +254,7 @@
 
     .stat-hero-label {
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-muted);
@@ -223,17 +262,18 @@
 
     .stat-hero-value {
       font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-weight: 800;
+      letter-spacing: -0.03em;
       color: var(--text-main);
       display: flex;
-      align-baseline: baseline;
+      align-items: baseline;
       gap: 4px;
+      font-feature-settings: "tnum";
     }
 
     .stat-hero-currency {
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-muted);
     }
 
@@ -254,11 +294,13 @@
     .stat-sub-label {
       font-size: 11px;
       color: var(--text-muted);
+      font-weight: 500;
     }
 
     .stat-sub-val {
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-main);
+      font-feature-settings: "tnum";
     }
 
     /* 分類支出分佈進度條與清單 */
@@ -328,7 +370,7 @@
     }
 
     .category-name {
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .category-amounts {
@@ -336,8 +378,9 @@
     }
 
     .category-amount-val {
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-main);
+      font-feature-settings: "tnum";
     }
 
     .category-pct {
@@ -351,7 +394,7 @@
       display: flex;
       align-items: flex-end;
       gap: 6px;
-      height: 90px;
+      height: 85px;
       padding: 10px 0 0 0;
       border-bottom: 1px solid var(--border-color);
     }
@@ -392,7 +435,8 @@
     }
 
     .daily-col-label {
-      font-size: 10px;
+      font-size: 11px;
+      font-weight: 600;
       color: var(--text-muted);
       margin-top: 4px;
       white-space: nowrap;
@@ -411,7 +455,7 @@
     .days-nav-bar {
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-color);
-      padding: 8px 20px;
+      padding: 8px 24px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -429,7 +473,7 @@
       background: var(--bg-surface);
       color: var(--text-muted);
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.15s ease;
@@ -447,7 +491,7 @@
       background: var(--text-main);
       color: #ffffff;
       border-color: var(--text-main);
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .day-tab-btn .badge-count {
@@ -460,15 +504,16 @@
       background: rgba(255,255,255,0.25);
     }
 
-    /* 視圖內容容器 */
+    /* 視圖內容容器 (大幅加寬，減少左右空白，充分填滿視窗) */
     .view-container {
-      padding: 24px;
-      max-width: 1080px;
+      padding: 20px 32px;
+      max-width: 100%;
       width: 100%;
-      margin: 0 auto;
+      margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
+      box-sizing: border-box;
     }
 
     /* 該日匯總摘要條 */
@@ -476,12 +521,13 @@
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 16px 20px;
+      padding: 18px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 16px;
+      box-shadow: var(--shadow-sm);
     }
 
     .day-summary-title {
@@ -490,19 +536,21 @@
     }
 
     .day-summary-title h2 {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-main);
     }
 
     .day-summary-subtitle {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
+      margin-top: 2px;
     }
 
     .day-metrics {
       display: flex;
-      gap: 20px;
+      gap: 24px;
       align-items: center;
     }
 
@@ -514,13 +562,18 @@
 
     .metric-pill-label {
       font-size: 11px;
+      font-weight: 600;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .metric-pill-val {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 800;
       color: var(--text-main);
+      letter-spacing: -0.02em;
+      font-feature-settings: "tnum";
     }
 
     /* 分類區塊卡片 (Category Section Card) */
@@ -529,10 +582,11 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
 
     .group-header {
-      padding: 14px 18px;
+      padding: 14px 20px;
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -545,13 +599,14 @@
       align-items: center;
       gap: 10px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: -0.01em;
     }
 
     .group-tag {
       font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
+      font-weight: 700;
+      padding: 3px 8px;
       border-radius: var(--radius-full);
       display: inline-flex;
       align-items: center;
@@ -561,28 +616,30 @@
     .group-header-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .group-subtotal {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-muted);
+      font-feature-settings: "tnum";
     }
 
     .add-item-btn {
-      padding: 4px 10px;
+      padding: 5px 12px;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       border-radius: var(--radius-sm);
       background: var(--bg-subtle);
       border: 1px solid var(--border-color);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       color: var(--text-main);
-      transition: background 0.15s ease;
+      transition: all 0.15s ease;
+      font-family: inherit;
     }
     .add-item-btn:hover {
       background: var(--bg-hover);
@@ -598,7 +655,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 18px;
+      padding: 13px 20px;
       border-bottom: 1px solid var(--border-color);
       transition: background 0.1s ease;
     }
@@ -619,12 +676,12 @@
 
     .item-subbadge {
       font-size: 11px;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
       background: var(--bg-subtle);
       color: var(--text-muted);
       white-space: nowrap;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .item-info {
@@ -635,7 +692,7 @@
 
     .item-name {
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-main);
       white-space: nowrap;
       overflow: hidden;
@@ -648,6 +705,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-top: 1px;
     }
 
     .item-right {
@@ -662,13 +720,16 @@
     }
 
     .item-primary-cost {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
       color: var(--text-main);
+      font-feature-settings: "tnum";
     }
 
     .item-secondary-cost {
       font-size: 11px;
+      font-weight: 500;
       color: var(--text-muted);
     }
 
@@ -732,7 +793,7 @@
 
     .lodging-banner-title {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--cat-lodging);
       display: flex;
       align-items: center;
@@ -767,12 +828,14 @@
     }
     .mobile-total-label {
       font-size: 11px;
+      font-weight: 600;
       color: var(--text-muted);
     }
     .mobile-total-val {
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 800;
       color: var(--text-main);
+      font-feature-settings: "tnum";
     }
 
     .mobile-add-btn {
@@ -782,7 +845,7 @@
       border: none;
       border-radius: var(--radius-full);
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -840,8 +903,9 @@
 
     .modal-title {
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text-main);
+      letter-spacing: -0.01em;
     }
 
     .modal-body {
@@ -872,7 +936,7 @@
 
     .form-label {
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-muted);
     }
 
@@ -880,12 +944,6 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-    }
-
-    .form-row-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
     }
 
     .input-field, .select-field, .textarea-field {
@@ -940,7 +998,7 @@
       gap: 4px;
       padding: 6px 12px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       border-radius: var(--radius-sm);
       background: var(--bg-subtle);
       border: 1px solid var(--border-color);
@@ -951,7 +1009,7 @@
       background: var(--text-main);
       color: #ffffff;
       border-color: var(--text-main);
-      font-weight: 600;
+      font-weight: 700;
     }
 
     /* 響應式：手機與平板視窗 (< 860px) */
@@ -998,7 +1056,6 @@
         display: none;
       }
 
-      /* 在手機端將彈窗化為 Bottom Sheet */
       .modal-backdrop {
         align-items: flex-end;
         padding: 0;
@@ -1064,7 +1121,8 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
         <span class="trip-badge" id="tripDaysBadge">7 天</span>
-        <span class="trip-badge" id="tripMembersBadge">2 人</span>
+        <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
+        <span class="trip-badge badge-warm" id="statusBadge">支出計算中心 ‧ 已即時試算</span>
       </div>
     </div>
 
@@ -1074,8 +1132,14 @@
         <span id="currencyToggleText">幣別: TWD (台幣)</span>
       </button>
 
-      <!-- 更多操作下拉或選單 -->
-      <button class="btn" onclick="openTripSettingsModal()" title="旅程與匯率設定">
+      <!-- 頂部快捷匯出 Excel 按鈕 -->
+      <button class="btn btn-excel" onclick="exportToExcel()" title="匯出完整 Excel (.xlsx) 試算表">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
+        <span>匯出 Excel</span>
+      </button>
+
+      <!-- 旅程設定按鈕 -->
+      <button class="btn" onclick="openTripSettingsModal()" title="旅程天數與匯率設定">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span class="brand-title-text">設定</span>
       </button>
@@ -1096,7 +1160,7 @@
       <div class="stat-hero-card">
         <div class="stat-hero-header">
           <span class="stat-hero-label">旅程總支出預估</span>
-          <span class="trip-badge" id="rateHintBadge">匯率 4.65</span>
+          <span class="trip-badge badge-warm" id="rateHintBadge">1 CNY ≈ 4.65 TWD</span>
         </div>
         <div class="stat-hero-value">
           <span id="totalExpenditureDisplay">0</span>
@@ -1151,6 +1215,12 @@
 
       <!-- 實用工具按鈕區 -->
       <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+        <!-- 主要 Excel 匯出按鈕 -->
+        <button class="btn btn-excel" onclick="exportToExcel()" style="width: 100%; justify-content: center; padding: 8px 12px;" title="匯出完整 Excel (.xlsx) 試算表">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
+          <span style="font-weight: 700;">匯出 Excel 試算表 (.xlsx)</span>
+        </button>
+
         <div style="display: flex; gap: 8px;">
           <button class="btn" style="flex: 1;" onclick="window.print()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -1178,7 +1248,7 @@
         <!-- JS 動態產生：全部總覽 | Day 1 | Day 2 ... | 大項交通與住宿 -->
       </nav>
 
-      <!-- 視圖主內容容器 -->
+      <!-- 視圖主內容容器 (加寬填滿，左右空白減少) -->
       <div class="view-container" id="viewContainer">
         <!-- JS 依據當前選取的天數或總覽動態渲染卡片群組 -->
       </div>
@@ -1192,10 +1262,15 @@
       <span class="mobile-total-label">總支出試算</span>
       <span class="mobile-total-val" id="mobileTotalPreview">0 TWD</span>
     </div>
-    <button class="mobile-add-btn" onclick="openAddExpenseModal()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-      <span>記一筆</span>
-    </button>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-excel" onclick="exportToExcel()" style="padding: 10px 14px; border-radius: var(--radius-full);" title="匯出 Excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </button>
+      <button class="mobile-add-btn" onclick="openAddExpenseModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        <span>記一筆</span>
+      </button>
+    </div>
   </div>
 
   <!-- 新增/編輯支出彈跳視窗 (Modal / Bottom Sheet) -->
@@ -1419,9 +1494,10 @@
     /**
      * 旅遊支出計算中心 (Travel Expense Calculator)
      * 架構設計：
-     * - 響應式、全視窗自適應
+     * - 響應式、全視窗自適應加寬 (左右留白最小化)
      * - 每日餐食、每日景點、每日交通、大項交通、彈性住宿多模式
      * - 雙幣別即時換算與人數均攤
+     * - 支援完整 Excel (.xlsx) 與 CSV 匯出功能
      */
 
     // 預設重慶 7 天 6 夜範本資料
@@ -1610,7 +1686,6 @@
         return rate > 0 ? (amount / rate) : amount;
       }
 
-      // 其他幣別暫以 1:1 或簡易折算
       return Number(amount);
     }
 
@@ -1673,14 +1748,12 @@
             }
           }
         } else if (acc.mode === "trip") {
-          // 整趟包棟均攤至每一天
           applies = true;
           const totalDays = Number(appState.tripInfo.daysCount) || 1;
           dailyShareInOriginal = (Number(acc.amount) || 0) / totalDays;
         }
 
         if (applies) {
-          // 住宿一般預設為全團總額
           const costInBase = convertAmount(dailyShareInOriginal, acc.currency, appState.tripInfo.baseCurrency);
           dayLodgingTotal += costInBase;
         }
@@ -1796,7 +1869,7 @@
       const trip = appState.tripInfo;
       document.getElementById("tripTitleText").textContent = trip.title;
       document.getElementById("tripDaysBadge").textContent = `${trip.daysCount} 天`;
-      document.getElementById("tripMembersBadge").textContent = `${trip.memberCount} 人`;
+      document.getElementById("tripMembersBadge").textContent = `${trip.memberCount} 人同行`;
 
       const isBase = trip.displayCurrency === "base";
       const curName = isBase ? trip.baseCurrency : trip.foreignCurrency;
@@ -1962,7 +2035,7 @@
       }
     }
 
-    // 渲染右側主視圖
+    // 渲染右側主視圖 (加寬版面)
     function renderMainView() {
       const container = document.getElementById("viewContainer");
       const trip = appState.tripInfo;
@@ -2147,7 +2220,6 @@
 
     // 渲染特定單日的住宿橫幅
     function renderDayLodgingBanner(day, dayLodgingDisplay, targetCur) {
-      // 尋找當天適用的住宿
       const hit = appState.accommodations.find(acc => {
         if (acc.mode === "daily" && Number(acc.day) === day) return true;
         if (acc.mode === "range" && day >= Number(acc.startDay) && day <= Number(acc.endDay)) return true;
@@ -2390,7 +2462,7 @@
                 <span>餐食 ${diningCount} 項 ‧ 景點 ${spotCount} 項 ‧ 交通 ${transitCount} 項</span>
               </div>
               <div class="group-header-right">
-                <span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-weight: 600;">
                   <span>查看詳情</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
                 </span>
@@ -2401,7 +2473,7 @@
                 <div class="empty-placeholder" style="padding: 12px;">該天尚無支出細項</div>
               ` : dayItems.slice(0, 3).map(it => renderExpenseRow(it)).join("")}
               ${dayItems.length > 3 ? `
-                <div style="padding: 8px 18px; text-align: center; font-size: 12px; color: var(--text-muted); background: var(--bg-base); cursor: pointer;" onclick="selectDayTab(${day})">
+                <div style="padding: 8px 18px; text-align: center; font-size: 12px; color: var(--text-muted); background: var(--bg-base); cursor: pointer; font-weight: 600;" onclick="selectDayTab(${day})">
                   還有 ${dayItems.length - 3} 項支出，點擊查看全部...
                 </div>
               ` : ''}
@@ -2753,6 +2825,229 @@
         }
       };
       reader.readAsText(file);
+    }
+
+    // ==========================================
+    // 匯出 Excel (.xlsx) 專屬核心函式 (SheetJS)
+    // ==========================================
+    function exportToExcel() {
+      const stats = calculateStatistics();
+      const trip = appState.tripInfo;
+      const memberCount = trip.memberCount;
+      const baseCur = trip.baseCurrency;
+      const foreignCur = trip.foreignCurrency;
+      const fileName = `${trip.title}_支出試算表_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+      // 檢查 SheetJS (XLSX) 是否可用
+      if (typeof XLSX === "undefined") {
+        console.warn("SheetJS 未連線，改以相容 Excel CSV 格式匯出");
+        exportFallbackCsv();
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      // ------------------------------------------
+      // 1. 工作表一：【支出統計總覽】
+      // ------------------------------------------
+      const summaryData = [
+        ["✈️ 旅遊支出統計與預算總表", ""],
+        ["旅程名稱", trip.title],
+        ["總天數", `${trip.daysCount} 天`],
+        ["同行人數", `${trip.memberCount} 人`],
+        ["幣別設定", `本幣: ${baseCur} | 當地外幣: ${foreignCur}`],
+        ["參考匯率", `1 ${foreignCur} = ${trip.exchangeRate} ${baseCur}`],
+        ["", ""],
+        ["【核心費用指標】", ""],
+        [`全團總支出 (${baseCur})`, stats.grandTotalBase],
+        [`全團總支出 (${foreignCur})`, stats.grandTotalForeign],
+        [`每人平均負擔 (${baseCur})`, stats.perPersonBase],
+        [`每人平均負擔 (${foreignCur})`, stats.perPersonForeign],
+        ["", ""],
+        ["【各類別花費分佈】", "", "", ""],
+        ["支出類別", `全團總額 (${baseCur})`, `每人平均 (${baseCur})`, "佔比 (%)"],
+        ["大項交通/固定支出", stats.categories.major, stats.categories.major / memberCount, ((stats.categories.major / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
+        ["住宿費用總額", stats.categories.lodging, stats.categories.lodging / memberCount, ((stats.categories.lodging / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
+        ["每日餐食小計", stats.categories.dining, stats.categories.dining / memberCount, ((stats.categories.dining / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
+        ["每日景點門票", stats.categories.spot, stats.categories.spot / memberCount, ((stats.categories.spot / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
+        ["每日市區交通", stats.categories.transit, stats.categories.transit / memberCount, ((stats.categories.transit / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
+        ["購物與其他", stats.categories.other, stats.categories.other / memberCount, ((stats.categories.other / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
+        ["", ""],
+        ["【每日支出統計 (含住宿攤提)】", "", ""],
+        ["日程", `當日全團總支出 (${baseCur})`, `當日每人負擔 (${baseCur})`]
+      ];
+
+      for (let i = 1; i <= trip.daysCount; i++) {
+        const dayCost = stats.dailyTotals[i];
+        summaryData.push([`第 ${i} 天 (Day ${i})`, dayCost, dayCost / memberCount]);
+      }
+
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      wsSummary['!cols'] = [{ wch: 25 }, { wch: 22 }, { wch: 20 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, "支出總覽");
+
+      // ------------------------------------------
+      // 2. 工作表二：【每日消費明細】
+      // ------------------------------------------
+      const dailyHeaders = [
+        "天數", "類別", "子分類", "項目名稱", "計費模式",
+        "原幣金額", "原幣幣別", `全團折合 (${baseCur})`, `每人負擔 (${baseCur})`, "備註說明"
+      ];
+      const dailyRows = [dailyHeaders];
+
+      const categoryNameMap = {
+        dining: "餐食", spot: "景點", transit: "每日交通", other: "購物與其他", shopping: "購物"
+      };
+      const subtypeMap = {
+        breakfast: "早餐", lunch: "午餐", dinner: "晚餐", snack: "小吃/點心",
+        ticket: "門票", activity: "體驗/演出", guide: "導覽",
+        metro: "地鐵/捷運", taxi: "計程車/叫車", bus: "公車", bike: "單車", gift: "伴手禮"
+      };
+
+      // 依天數排序
+      const sortedDaily = [...appState.dailyExpenses].sort((a, b) => Number(a.day) - Number(b.day));
+
+      sortedDaily.forEach(item => {
+        const totalRaw = calcItemTotalCost(item);
+        const totalInBase = convertAmount(totalRaw, item.currency, baseCur);
+        const perPersonInBase = totalInBase / memberCount;
+
+        dailyRows.push([
+          `第 ${item.day} 天`,
+          categoryNameMap[item.category] || item.category,
+          subtypeMap[item.subType] || item.subType || "-",
+          item.name,
+          item.pricingType === "per_person" ? "每人單價" : "全團總額",
+          Number(item.amount),
+          item.currency,
+          Number(totalInBase.toFixed(1)),
+          Number(perPersonInBase.toFixed(1)),
+          item.note || ""
+        ]);
+      });
+
+      const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
+      wsDaily['!cols'] = [
+        { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 28 }, { wch: 12 },
+        { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 32 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsDaily, "每日支出明細");
+
+      // ------------------------------------------
+      // 3. 工作表三：【大項交通與住宿】
+      // ------------------------------------------
+      const majorHeaders = [
+        "分類", "項目名稱", "配置/天數說明", "晚數/數量", "計費模式",
+        "原幣金額", "幣別", `全團折合 (${baseCur})`, `每人負擔 (${baseCur})`, "備註說明"
+      ];
+      const majorRows = [majorHeaders];
+
+      // 大項交通
+      appState.majorExpenses.forEach(m => {
+        const totalRaw = calcItemTotalCost(m);
+        const totalInBase = convertAmount(totalRaw, m.currency, baseCur);
+        const perPersonInBase = totalInBase / memberCount;
+
+        majorRows.push([
+          "大項交通/固定支出",
+          m.name,
+          "整趟固定大項",
+          1,
+          m.pricingType === "per_person" ? "每人單價" : "全團總額",
+          Number(m.amount),
+          m.currency,
+          Number(totalInBase.toFixed(1)),
+          Number(perPersonInBase.toFixed(1)),
+          m.note || ""
+        ]);
+      });
+
+      // 住宿配置
+      appState.accommodations.forEach(acc => {
+        let nights = 1;
+        let modeLabel = "單日入住";
+        if (acc.mode === "range") {
+          nights = Math.max(1, (Number(acc.endDay) - Number(acc.startDay) + 1));
+          modeLabel = `Day ${acc.startDay} ~ Day ${acc.endDay}`;
+        } else if (acc.mode === "daily") {
+          modeLabel = `Day ${acc.day}`;
+        } else if (acc.mode === "trip") {
+          nights = trip.daysCount;
+          modeLabel = `全趟 ${trip.daysCount} 天包棟`;
+        }
+
+        let totalRaw = Number(acc.amount) || 0;
+        if (acc.mode === "range" && acc.pricingType === "per_night") {
+          totalRaw = totalRaw * nights;
+        }
+        const totalInBase = convertAmount(totalRaw, acc.currency, baseCur);
+        const perPersonInBase = totalInBase / memberCount;
+
+        majorRows.push([
+          "住宿費用",
+          acc.name,
+          modeLabel,
+          nights,
+          acc.pricingType === "per_night" ? "每晚單價" : "整段總額",
+          Number(acc.amount),
+          acc.currency,
+          Number(totalInBase.toFixed(1)),
+          Number(perPersonInBase.toFixed(1)),
+          acc.note || ""
+        ]);
+      });
+
+      const wsMajor = XLSX.utils.aoa_to_sheet(majorRows);
+      wsMajor['!cols'] = [
+        { wch: 18 }, { wch: 28 }, { wch: 18 }, { wch: 12 }, { wch: 12 },
+        { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 32 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsMajor, "大項交通與住宿");
+
+      // 寫入並觸發瀏覽器下載 Excel
+      XLSX.writeFile(wb, fileName);
+    }
+
+    // 離線 Fallback：匯出標準相容 Excel CSV (含 UTF-8 BOM)
+    function exportFallbackCsv() {
+      const stats = calculateStatistics();
+      const trip = appState.tripInfo;
+      let csv = "\uFEFF"; // UTF-8 BOM 防止 Excel 開啟中文亂碼
+      csv += `【${trip.title}】旅遊支出試算表\n`;
+      csv += `總天數,${trip.daysCount} 天,同行人數,${trip.memberCount} 人,基準幣別,${trip.baseCurrency},當地外幣,${trip.foreignCurrency},匯率,${trip.exchangeRate}\n`;
+      csv += `全團總支出 (${trip.baseCurrency}),${stats.grandTotalBase},每人平均負擔 (${trip.baseCurrency}),${stats.perPersonBase}\n\n`;
+
+      csv += "天數,分類,項目名稱,計費方式,金額,幣別,折合本幣(TWD),備註\n";
+      appState.majorExpenses.forEach(m => {
+        const totalRaw = calcItemTotalCost(m);
+        const totalInBase = convertAmount(totalRaw, m.currency, trip.baseCurrency);
+        csv += `全趟,大項支出,"${m.name}",${m.pricingType},${m.amount},${m.currency},${totalInBase},"${m.note || ''}"\n`;
+      });
+
+      appState.accommodations.forEach(acc => {
+        let totalRaw = Number(acc.amount) || 0;
+        if (acc.mode === "range" && acc.pricingType === "per_night") {
+          const nights = Math.max(1, (Number(acc.endDay) - Number(acc.startDay) + 1));
+          totalRaw = totalRaw * nights;
+        }
+        const totalInBase = convertAmount(totalRaw, acc.currency, trip.baseCurrency);
+        csv += `住宿,住宿費用,"${acc.name}",${acc.pricingType},${acc.amount},${acc.currency},${totalInBase},"${acc.note || ''}"\n`;
+      });
+
+      appState.dailyExpenses.forEach(d => {
+        const totalRaw = calcItemTotalCost(d);
+        const totalInBase = convertAmount(totalRaw, d.currency, trip.baseCurrency);
+        csv += `第 ${d.day} 天,${d.category},"${d.name}",${d.pricingType},${d.amount},${d.currency},${totalInBase},"${d.note || ''}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${trip.title}_支出明細_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     // 複製明細文字 (貼至 LINE / Notion)
