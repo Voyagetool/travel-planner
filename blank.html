@@ -8751,7 +8751,7 @@ const firebaseConfig = {
                             </div>
                             <div class="okr-kpi-sub">共 <strong>${totalEventsCount}</strong> 個行程點 ‧ 準備 ${prepPct}%</div>
                         </div>
-                        <div class="okr-kpi-icon-box blue"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="okr-kpi-icon-box blue"><i class="fa-solid fa-calendar-check"></i></div>
                     </div>
 
                     <div class="okr-kpi-card clickable" onclick="switchView('logistics')" title="點擊切換至「交通與住宿」分頁管理機票、包車接送與飯店">
@@ -8762,7 +8762,7 @@ const firebaseConfig = {
                                 ${mtCount > 0 ? `<span style="color:#334155; font-weight:700;">含 ${mtCount} 筆包車/接送</span> ‧ ` : ''}<span style="color:#286678; font-weight:600;">管理機酒與接送 ➔</span>
                             </div>
                         </div>
-                        <div class="okr-kpi-icon-box purple"><i class="fa-regular fa-compass"></i></div>
+                        <div class="okr-kpi-icon-box purple"><i class="fa-solid fa-plane-departure"></i></div>
                     </div>
 
                     <div class="okr-kpi-card clickable" onclick="switchView('expenses'); switchExpensesSubtab('budget');" title="點擊查看每人預算統計分析">
@@ -8773,7 +8773,7 @@ const firebaseConfig = {
                                 <span style="color:#334155; font-weight:700;">當地 ${curr.symbol}${stats.totalBudget.toLocaleString()}</span> ‧ 日均 NT$ ${stats.twdAvgBudget.toLocaleString()}
                             </div>
                         </div>
-                        <div class="okr-kpi-icon-box amber"><i class="fa-solid fa-coins"></i></div>
+                        <div class="okr-kpi-icon-box amber"><i class="fa-solid fa-wallet"></i></div>
                     </div>
 
                     <div class="okr-kpi-card clickable" onclick="switchView('expenses'); switchExpensesSubtab('actual-expenses');" title="點擊前往實際費用與發票核銷中心">
@@ -8784,7 +8784,7 @@ const firebaseConfig = {
                                 1 ${curr.code} ≈ NT$ ${curr.rate} ‧ 點擊核銷記帳
                             </div>
                         </div>
-                        <div class="okr-kpi-icon-box emerald"><i class="fa-solid fa-award"></i></div>
+                        <div class="okr-kpi-icon-box emerald"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                     </div>
                 </div>
 
