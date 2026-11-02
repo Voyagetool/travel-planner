@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>旅遊支出計算中心 ‧ Travel Expense Calculator</title>
   
-  <!-- 引入現代極簡頂級字體家族：Plus Jakarta Sans (類似截圖的高級現代無襯線體) 與 Noto Sans TC -->
+  <!-- 引入現代極簡頂級字體家族：Plus Jakarta Sans 與 Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
-    /* CSS 重設與基礎變數（極簡低飽和度 Slate 配色與現代質感） */
+    /* CSS 重設與基礎變數 */
     :root {
       --bg-base: #f8fafc;
       --bg-surface: #ffffff;
@@ -32,7 +32,7 @@
       --border-color: #e2e8f0;
       --border-focus: #0f172a;
 
-      /* 分類低調微色彩 */
+      /* 分類微色彩 */
       --cat-dining: #d97706;     /* 暖琥珀 - 餐食 */
       --cat-dining-bg: #fffbeb;
       --cat-spot: #4f46e5;       /* 靛藍 - 景點 */
@@ -46,12 +46,24 @@
       --cat-other: #db2777;      /* 柔桃紅 - 購物與其他 */
       --cat-other-bg: #fdf2f8;
 
+      /* 差額與核銷狀態色彩 */
+      --status-saving-bg: #ecfdf5;
+      --status-saving-text: #059669;
+      --status-saving-border: #a7f3d0;
+
+      --status-over-bg: #fef2f2;
+      --status-over-text: #dc2626;
+      --status-over-border: #fecaca;
+
+      --status-unpaid-bg: #fffbeb;
+      --status-unpaid-text: #d97706;
+      --status-unpaid-border: #fde68a;
+
       /* 沙金色溫潤標籤 (截圖同款) */
       --badge-warm-bg: #fbf3db;
       --badge-warm-text: #785121;
       --badge-warm-border: rgba(120, 81, 33, 0.18);
 
-      /* 雲端狀態微標籤 */
       --badge-cloud-bg: #ecfdf5;
       --badge-cloud-text: #065f46;
       --badge-cloud-border: #a7f3d0;
@@ -86,7 +98,7 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* 頂部導覽列 (Header) */
+    /* 頂部導覽列 */
     .app-header {
       height: 58px;
       background: var(--bg-surface);
@@ -132,7 +144,6 @@
       flex-wrap: wrap;
     }
 
-    /* 標題套用類似截圖的高字重、微收縮無襯線體 */
     .trip-title {
       font-size: 17px;
       font-weight: 800;
@@ -149,7 +160,6 @@
       background: var(--bg-subtle);
     }
 
-    /* 截圖同款精緻標籤 */
     .trip-badge {
       font-size: 11px;
       font-weight: 600;
@@ -217,7 +227,6 @@
       border-color: #1e293b;
     }
 
-    /* 專屬 Excel 匯出按鈕樣式 */
     .btn-excel {
       background: #047857;
       color: #ffffff;
@@ -230,7 +239,6 @@
       color: #ffffff;
     }
 
-    /* 連動同步按鈕 */
     .btn-sync {
       background: var(--bg-subtle);
       color: #0284c7;
@@ -248,7 +256,7 @@
       color: var(--text-main);
     }
 
-    /* 主工作區 (全視窗自適應雙欄) */
+    /* 主工作區 (全視窗滿版自適應) */
     .app-workspace {
       flex: 1;
       display: flex;
@@ -257,9 +265,9 @@
       position: relative;
     }
 
-    /* 左側：統計儀表板 (Dashboard Sidebar) */
+    /* 左側：統計儀表板 (Dashboard) */
     .sidebar-dashboard {
-      width: 370px;
+      width: 380px;
       flex-shrink: 0;
       background: var(--bg-surface);
       border-right: 1px solid var(--border-color);
@@ -267,80 +275,111 @@
       flex-direction: column;
       overflow-y: auto;
       padding: 20px;
-      gap: 18px;
+      gap: 16px;
     }
 
-    /* 總額大卡片 */
+    /* 總額對比大卡片 (Budget vs Actual Hero Card) */
     .stat-hero-card {
       background: var(--bg-subtle);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 18px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .stat-hero-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
     }
 
     .stat-hero-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-muted);
     }
 
-    .stat-hero-value {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: var(--text-main);
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
-      font-feature-settings: "tnum";
+    .hero-dual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
     }
 
-    .stat-hero-currency {
-      font-size: 16px;
+    .hero-stat-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-stat-caption {
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
     }
 
-    .stat-hero-sub {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-    }
-
-    .stat-sub-item {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-sub-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .stat-sub-val {
-      font-weight: 700;
+    .hero-stat-amount {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
       color: var(--text-main);
       font-feature-settings: "tnum";
     }
 
-    /* 分類支出分佈進度條與清單 */
+    .hero-stat-amount.actual {
+      color: #0284c7;
+    }
+
+    /* 差額狀態長條條 (Variance Pill Bar) */
+    .variance-card-strip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .diff-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .diff-badge.saving {
+      background: var(--status-saving-bg);
+      color: var(--status-saving-text);
+      border: 1px solid var(--status-saving-border);
+    }
+    .diff-badge.over {
+      background: var(--status-over-bg);
+      color: var(--status-over-text);
+      border: 1px solid var(--status-over-border);
+    }
+    .diff-badge.matched {
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+    .diff-badge.unpaid {
+      background: var(--status-unpaid-bg);
+      color: var(--status-unpaid-text);
+      border: 1px solid var(--status-unpaid-border);
+    }
+
+    /* 分類支出分佈 */
     .breakdown-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .section-title {
@@ -371,7 +410,7 @@
     .category-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .category-row {
@@ -408,6 +447,9 @@
 
     .category-amounts {
       text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
     }
 
     .category-amount-val {
@@ -416,19 +458,18 @@
       font-feature-settings: "tnum";
     }
 
-    .category-pct {
-      font-size: 11px;
+    .category-amount-sub {
+      font-size: 10px;
       color: var(--text-muted);
-      margin-left: 4px;
     }
 
-    /* 每日支出迷你長條圖 (Daily Trend) */
+    /* 每日支出迷你直條圖 */
     .daily-trend-chart {
       display: flex;
       align-items: flex-end;
       gap: 6px;
-      height: 85px;
-      padding: 10px 0 0 0;
+      height: 80px;
+      padding: 6px 0 0 0;
       border-bottom: 1px solid var(--border-color);
     }
 
@@ -448,7 +489,7 @@
 
     .daily-bar-wrap {
       width: 100%;
-      max-width: 24px;
+      max-width: 22px;
       background: var(--bg-subtle);
       border-radius: 4px 4px 0 0;
       height: 100%;
@@ -464,7 +505,7 @@
       transition: height 0.3s ease, background 0.15s ease;
     }
     .daily-bar-fill.active {
-      background: var(--text-main);
+      background: #0284c7;
     }
 
     .daily-col-label {
@@ -475,7 +516,7 @@
       white-space: nowrap;
     }
 
-    /* 右側：主內容區 (Main Content Area) */
+    /* 右側：主內容區 */
     .main-content {
       flex: 1;
       display: flex;
@@ -484,7 +525,7 @@
       background: var(--bg-base);
     }
 
-    /* 頂部天數切換滑軌 (Days Tab Navigation) */
+    /* 頂部天數切換滑軌 */
     .days-nav-bar {
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-color);
@@ -537,7 +578,7 @@
       background: rgba(255,255,255,0.25);
     }
 
-    /* 視圖內容容器 (大幅加寬，減少左右空白，充分填滿視窗) */
+    /* 視圖內容容器 (全寬加寬) */
     .view-container {
       padding: 20px 32px;
       max-width: 100%;
@@ -563,11 +604,6 @@
       box-shadow: var(--shadow-sm);
     }
 
-    .day-summary-title {
-      display: flex;
-      flex-direction: column;
-    }
-
     .day-summary-title h2 {
       font-size: 20px;
       font-weight: 800;
@@ -583,8 +619,9 @@
 
     .day-metrics {
       display: flex;
-      gap: 24px;
+      gap: 20px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .metric-pill {
@@ -609,7 +646,7 @@
       font-feature-settings: "tnum";
     }
 
-    /* 分類區塊卡片 (Category Section Card) */
+    /* 分類區塊卡片 */
     .expense-group-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
@@ -723,6 +760,12 @@
       min-width: 0;
     }
 
+    .item-title-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .item-name {
       font-size: 14px;
       font-weight: 600;
@@ -750,20 +793,27 @@
 
     .item-pricing-calc {
       text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
     }
 
-    .item-primary-cost {
+    .item-cost-primary {
       font-size: 15px;
       font-weight: 700;
       letter-spacing: -0.01em;
       color: var(--text-main);
       font-feature-settings: "tnum";
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .item-secondary-cost {
+    .item-cost-budget {
       font-size: 11px;
-      font-weight: 500;
       color: var(--text-muted);
+      font-feature-settings: "tnum";
     }
 
     .item-actions {
@@ -799,7 +849,6 @@
       color: #ef4444;
     }
 
-    /* 空狀態 */
     .empty-placeholder {
       padding: 24px;
       text-align: center;
@@ -811,7 +860,7 @@
       gap: 6px;
     }
 
-    /* 住宿專屬特色卡片 (Lodging Highlight Card) */
+    /* 住宿卡片 */
     .lodging-card-banner {
       background: var(--cat-lodging-bg);
       border: 1px solid rgba(124, 58, 237, 0.15);
@@ -839,7 +888,7 @@
       margin-top: 2px;
     }
 
-    /* 手機浮動快速操作列 (Mobile Bottom Action Bar) */
+    /* 手機底部快捷浮動條 */
     .mobile-bottom-bar {
       display: none;
       position: fixed;
@@ -907,7 +956,7 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -1012,7 +1061,6 @@
       background: var(--bg-subtle);
     }
 
-    /* 類別快速切換膠囊 (Radio Pill Group) */
     .pill-selector {
       display: flex;
       flex-wrap: wrap;
@@ -1045,6 +1093,28 @@
       font-weight: 700;
     }
 
+    /* 交通專屬編輯卡塊樣式 */
+    .transport-edit-panel {
+      background: var(--cat-transit-bg);
+      border: 1px solid rgba(5, 150, 105, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* 預算 vs 實付對比輸入卡塊 */
+    .budget-actual-input-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     /* 響應式：手機與平板視窗 (< 860px) */
     @media (max-width: 860px) {
       body {
@@ -1057,7 +1127,7 @@
         flex-direction: column;
         height: auto;
         overflow: visible;
-        padding-bottom: 80px; /* 給底部操作列留空間 */
+        padding-bottom: 80px;
       }
 
       .sidebar-dashboard {
@@ -1096,7 +1166,7 @@
 
       .modal-window {
         max-width: 100%;
-        max-height: 85vh;
+        max-height: 88vh;
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
         animation: sheetSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1112,7 +1182,7 @@
       }
     }
 
-    /* 列印樣式 (Print Clean Report) */
+    /* 列印樣式 */
     @media print {
       body {
         background: #fff;
@@ -1155,7 +1225,6 @@
         </div>
         <span class="trip-badge" id="tripDaysBadge">7 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
-        <!-- 雲端跨裝置即時狀態膠囊 (點擊可切換房間或複製手機存取網址) -->
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
           <span id="cloudStatusDot">🟢</span> <span id="cloudStatusText">雲端已連線 (chongqing-2026)</span>
         </span>
@@ -1193,61 +1262,69 @@
     </div>
   </header>
 
-  <!-- 主工作區 (全視窗滿版雙欄) -->
+  <!-- 主工作區 -->
   <main class="app-workspace">
     
     <!-- 左側儀表板 -->
     <aside class="sidebar-dashboard">
-      <!-- 總花費 Hero 卡片 -->
+      <!-- 總額對比 Hero 卡片 (預估 vs 實付 vs 差額) -->
       <div class="stat-hero-card">
         <div class="stat-hero-header">
-          <span class="stat-hero-label">旅程總支出預估</span>
+          <span class="stat-hero-label">收支試算對比 (全團總計)</span>
           <span class="trip-badge badge-warm" id="rateHintBadge">1 CNY ≈ 4.65 TWD</span>
         </div>
-        <div class="stat-hero-value">
-          <span id="totalExpenditureDisplay">0</span>
-          <span class="stat-hero-currency" id="displayCurrencySymbol">TWD</span>
+
+        <!-- 預估 vs 實付雙欄 -->
+        <div class="hero-dual-grid">
+          <div class="hero-stat-box">
+            <span class="hero-stat-caption">預估總預算 (Budget)</span>
+            <div class="hero-stat-amount" id="totalBudgetDisplay">0</div>
+          </div>
+          <div class="hero-stat-box">
+            <span class="hero-stat-caption">實際總支出 (Actual)</span>
+            <div class="hero-stat-amount actual" id="totalActualDisplay">0</div>
+          </div>
+        </div>
+
+        <!-- 差額指標卡塊 -->
+        <div class="variance-card-strip">
+          <span style="font-weight: 600; color: var(--text-muted);">收支差額狀態</span>
+          <span class="diff-badge saving" id="heroVarianceBadge">結餘 +0 TWD</span>
         </div>
         
+        <!-- 人均與外幣折合 -->
         <div class="stat-hero-sub">
           <div class="stat-sub-item">
-            <span class="stat-sub-label">每人平均負擔 (共 <span id="memberCountLabel">2</span> 人)</span>
-            <span class="stat-sub-val" id="perPersonExpenditureDisplay">0 TWD</span>
+            <span class="stat-sub-label">每人實付 (共 <span id="memberCountLabel">2</span> 人)</span>
+            <span class="stat-sub-val" id="perPersonActualDisplay">0 TWD</span>
           </div>
           <div class="stat-sub-item" style="text-align: right;">
-            <span class="stat-sub-label">外幣折合</span>
-            <span class="stat-sub-val" id="foreignExpenditureDisplay">¥ 0 CNY</span>
+            <span class="stat-sub-label">外幣實付折合</span>
+            <span class="stat-sub-val" id="foreignActualDisplay">¥ 0 CNY</span>
           </div>
         </div>
       </div>
 
-      <!-- 分類佔比分析 (Stacked Bar & Category List) -->
+      <!-- 分類佔比分析 -->
       <div class="breakdown-section">
         <div class="section-title">
-          <span>支出分類佔比</span>
+          <span>支出分類分佈</span>
           <span id="categoryCountSummary">共 6 類</span>
         </div>
 
-        <!-- 堆疊彩色條 -->
         <div class="stacked-bar-container" id="stackedBarContainer">
-          <div class="stacked-bar-seg" style="background: var(--cat-major); width: 0%;"></div>
-          <div class="stacked-bar-seg" style="background: var(--cat-lodging); width: 0%;"></div>
-          <div class="stacked-bar-seg" style="background: var(--cat-dining); width: 0%;"></div>
-          <div class="stacked-bar-seg" style="background: var(--cat-spot); width: 0%;"></div>
-          <div class="stacked-bar-seg" style="background: var(--cat-transit); width: 0%;"></div>
-          <div class="stacked-bar-seg" style="background: var(--cat-other); width: 0%;"></div>
+          <!-- 彩色堆疊條 -->
         </div>
 
-        <!-- 類別清單 -->
         <div class="category-list" id="categoryBreakdownList">
           <!-- JS 動態渲染各分類金額與比例 -->
         </div>
       </div>
 
-      <!-- 每日支出對比直條圖 (Daily Trend) -->
+      <!-- 每日支出對比直條圖 -->
       <div class="breakdown-section">
         <div class="section-title">
-          <span>每日支出分佈</span>
+          <span>每日實付分佈</span>
           <span id="dailyAvgDisplay">平均 0 / 天</span>
         </div>
         <div class="daily-trend-chart" id="dailyTrendChart">
@@ -1257,13 +1334,11 @@
 
       <!-- 實用工具按鈕區 -->
       <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
-        <!-- 主要 Excel 匯出按鈕 -->
         <button class="btn btn-excel" onclick="exportToExcel()" style="width: 100%; justify-content: center; padding: 8px 12px;" title="匯出完整 Excel (.xlsx) 試算表">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
           <span style="font-weight: 700;">匯出 Excel 試算表 (.xlsx)</span>
         </button>
 
-        <!-- 一鍵同步主行程與雲端房間設定 -->
         <div style="display: flex; gap: 8px;">
           <button class="btn btn-sync" style="flex: 1; font-size: 12px;" onclick="syncFromMainPlan()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
@@ -1297,14 +1372,14 @@
     <!-- 右側主內容區 -->
     <section class="main-content">
       
-      <!-- 天數切換滑軌導覽 (Days Navigation Bar) -->
+      <!-- 天數切換滑軌導覽 -->
       <nav class="days-nav-bar" id="daysNavBar">
         <!-- JS 動態產生：全部總覽 | Day 1 | Day 2 ... | 大項交通與住宿 -->
       </nav>
 
-      <!-- 視圖主內容容器 (加寬填滿，左右空白減少) -->
+      <!-- 視圖主內容容器 -->
       <div class="view-container" id="viewContainer">
-        <!-- JS 依據當前選取的天數或總覽動態渲染卡片群組 -->
+        <!-- JS 依據當前選取動態渲染 -->
       </div>
     </section>
 
@@ -1313,8 +1388,8 @@
   <!-- 手機底部快捷浮動條 -->
   <div class="mobile-bottom-bar">
     <div class="mobile-total-preview">
-      <span class="mobile-total-label">總支出試算</span>
-      <span class="mobile-total-val" id="mobileTotalPreview">0 TWD</span>
+      <span class="mobile-total-label">實付 / 預算</span>
+      <span class="mobile-total-val" id="mobileTotalPreview">0 / 0 TWD</span>
     </div>
     <div style="display: flex; gap: 8px;">
       <button class="btn btn-sync" onclick="syncFromMainPlan()" style="padding: 10px 12px; border-radius: var(--radius-full);" title="同步主行程">
@@ -1330,7 +1405,7 @@
     </div>
   </div>
 
-  <!-- 新增/編輯支出彈跳視窗 (Modal / Bottom Sheet) -->
+  <!-- 新增/編輯支出彈跳視窗 (支援預算/實付與交通詳細編輯) -->
   <div class="modal-backdrop" id="expenseModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -1342,10 +1417,11 @@
 
       <form id="expenseForm" onsubmit="handleSaveExpense(event)">
         <input type="hidden" id="editItemId" value="">
+        <input type="hidden" id="editItemTargetType" value="daily"> <!-- "daily" | "major" | "lodging" -->
         
         <div class="modal-body">
           <!-- 大分類選擇 -->
-          <div class="form-group">
+          <div class="form-group" id="categorySelectGroup">
             <label class="form-label">支出類別</label>
             <div class="pill-selector" id="categoryPillSelector">
               <label class="pill-radio-label">
@@ -1361,12 +1437,12 @@
                 <span class="pill-box">🚇 每日交通</span>
               </label>
               <label class="pill-radio-label">
-                <input type="radio" name="modalCategory" value="lodging" onchange="onCategoryChanged('lodging')">
-                <span class="pill-box">🏨 住宿費用</span>
-              </label>
-              <label class="pill-radio-label">
                 <input type="radio" name="modalCategory" value="major" onchange="onCategoryChanged('major')">
                 <span class="pill-box">✈️ 大項交通/跨城</span>
+              </label>
+              <label class="pill-radio-label">
+                <input type="radio" name="modalCategory" value="lodging" onchange="onCategoryChanged('lodging')">
+                <span class="pill-box">🏨 住宿費用</span>
               </label>
               <label class="pill-radio-label">
                 <input type="radio" name="modalCategory" value="other" onchange="onCategoryChanged('other')">
@@ -1378,10 +1454,26 @@
           <!-- 項目名稱 -->
           <div class="form-group">
             <label class="form-label" for="itemNameInput">項目名稱</label>
-            <input type="text" id="itemNameInput" class="input-field" placeholder="例如：花市豌雜麵、長江索道票、威斯汀酒店" required>
+            <input type="text" id="itemNameInput" class="input-field" placeholder="例如：花市豌雜麵、長江索道票、台北松山往返機票" required>
           </div>
 
-          <!-- 子分類與天數配置 (依大分類動態切換) -->
+          <!-- 交通專屬編輯配置欄位 (在大項交通 major 或每日交通 transit 時動態呈現) -->
+          <div id="transportSpecificPanel" class="transport-edit-panel" style="display: none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" style="color: var(--cat-transit);">交通工具 / 模式</label>
+                <select id="transportModeSelect" class="select-field" onchange="onTransportModeChanged()">
+                  <!-- JS 動態切換大項交通或市區交通工具清單 -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="color: var(--cat-transit);">起訖路線 / 班次</label>
+                <input type="text" id="transportRouteInput" class="input-field" placeholder="例如：松山 ⇋ 江北、1號線">
+              </div>
+            </div>
+          </div>
+
+          <!-- 日期與子分類 (一般每日項目) -->
           <div class="form-row" id="dayAndSubtypeRow">
             <div class="form-group">
               <label class="form-label" for="itemDaySelect">旅程天數</label>
@@ -1442,27 +1534,50 @@
             </div>
           </div>
 
-          <!-- 金額、幣別與分攤設定 -->
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="itemAmountInput">金額</label>
-              <div class="input-addon-group">
-                <input type="number" id="itemAmountInput" class="input-field" placeholder="0" min="0" step="any" required>
-                <select id="itemCurrencySelect" class="select-field">
-                  <option value="CNY">CNY (人民幣)</option>
-                  <option value="TWD">TWD (新台幣)</option>
-                  <option value="JPY">JPY (日圓)</option>
-                  <option value="USD">USD (美元)</option>
-                </select>
+          <!-- 預算與實際支出對比配置卡塊 (核心升級) -->
+          <div class="budget-actual-input-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">💰 費用與核銷設定</span>
+              <label style="font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #0284c7;">
+                <input type="checkbox" id="itemIsPaidCheckbox" checked onchange="onPaidStatusToggle()">
+                <span>已支付 / 實付核銷</span>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="itemBudgetAmountInput">預估預算 (Budget)</label>
+                <div class="input-addon-group">
+                  <input type="number" id="itemBudgetAmountInput" class="input-field" placeholder="0" min="0" step="any" required oninput="autoFillActualIfEmpty()">
+                  <select id="itemCurrencySelect" class="select-field">
+                    <option value="CNY">CNY (人民幣)</option>
+                    <option value="TWD">TWD (新台幣)</option>
+                    <option value="JPY">JPY (日圓)</option>
+                    <option value="USD">USD (美元)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="itemActualAmountInput">實際支出 (Actual Cost)</label>
+                <input type="number" id="itemActualAmountInput" class="input-field" placeholder="尚未實付可留空" min="0" step="any">
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="itemPricingTypeSelect">計費分攤對象</label>
-              <select id="itemPricingTypeSelect" class="select-field">
-                <option value="total">全團總額 (人數自動均攤)</option>
-                <option value="per_person">每人單價 (自動乘全團人數)</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="itemPricingTypeSelect">計費分攤對象</label>
+                <select id="itemPricingTypeSelect" class="select-field">
+                  <option value="total">全團總額 (人數自動均攤)</option>
+                  <option value="per_person">每人單價 (自動乘全團人數)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="justify-content: flex-end;">
+                <div id="modalCostDiffHint" style="font-size: 11px; color: var(--text-muted); padding-bottom: 8px;">
+                  差額：符合預算 (0)
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1481,7 +1596,7 @@
     </div>
   </div>
 
-  <!-- 旅程設定彈窗 (Trip Settings Modal) -->
+  <!-- 旅程設定彈窗 -->
   <div class="modal-backdrop" id="tripSettingsModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -1547,7 +1662,7 @@
     </div>
   </div>
 
-  <!-- 雲端房間與跨裝置存取彈窗 (Cloud Room Modal) -->
+  <!-- 雲端房間與跨裝置存取彈窗 -->
   <div class="modal-backdrop" id="cloudRoomModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -1560,7 +1675,7 @@
       <div class="modal-body">
         <div style="background: var(--badge-cloud-bg); border: 1px solid var(--badge-cloud-border); border-radius: var(--radius-sm); padding: 12px; font-size: 13px; color: var(--badge-cloud-text); line-height: 1.6;">
           <strong>💡 跨裝置存取說明：</strong><br>
-          本支出計算中心已串接 Google Firebase Firestore 雲端即時資料庫！只要在手機、平板或其他電腦開啟同一個房間網址，所有人即可同步存取、即時編輯與記帳，免手動更新。
+          已串接 Google Firebase Firestore 雲端資料庫！只要在手機或外部裝置開啟同一個房間網址，所有人即可同步存取、即時共同編輯與核銷記帳。
         </div>
 
         <div class="form-group">
@@ -1569,9 +1684,6 @@
             <input type="text" id="cloudRoomInput" class="input-field" placeholder="例如 chongqing-2026" required>
             <button class="btn btn-primary" onclick="changeCloudRoom()">切換房間</button>
           </div>
-          <span style="font-size: 11px; color: var(--text-muted);">
-            與主行程共用同一個房間碼（預設為 <code>chongqing-2026</code>），亦可輸入自訂代碼開新房間。
-          </span>
         </div>
 
         <div class="form-group">
@@ -1580,9 +1692,6 @@
             <input type="text" id="cloudShareUrlInput" class="input-field" readonly style="background: var(--bg-subtle); font-size: 12px;">
             <button class="btn btn-sync" onclick="copyShareRoomUrl()">📋 複製連結</button>
           </div>
-          <span style="font-size: 11px; color: var(--text-muted);">
-            將此連結貼到手機瀏覽器或傳給旅伴，點開即可遠端存取與共同記帳！
-          </span>
         </div>
 
         <div style="border-top: 1px dashed var(--border-color); padding-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted);">
@@ -1600,16 +1709,13 @@
   <script>
     /**
      * 旅遊支出計算中心 (Travel Expense Calculator)
-     * 架構設計：
-     * - 響應式、全視窗自適應加寬 (左右留白最小化)
-     * - 每日餐食、每日景點、每日交通、大項交通、彈性住宿多模式
-     * - 雙幣別即時換算與人數均攤
-     * - 完整 Excel (.xlsx) 試算表匯出功能
-     * - Google Firebase Firestore 雲端跨裝置即時雙向同步
-     * - 與主規劃手帳 (index.html) 一鍵連動同步資料
+     * - 預估預算 (Budget) vs 實際支出 (Actual) 精準對比
+     * - 交通項目專屬可編輯選項 (大項交通與每日交通)
+     * - Firebase Firestore 跨裝置即時雙向連線
+     * - 主行程活動一鍵智慧連動
+     * - 完整 Excel (.xlsx) 多工作表匯出
      */
 
-    // 專屬 Firebase 雲端配置 (與 index.html 相同專案)
     const DEFAULT_FIREBASE_CONFIG = {
       apiKey: "AIzaSyBqKgK7zKjy4-t7dPeOFYp8jwmMMRXO95g",
       authDomain: "travel-plan-7f507.firebaseapp.com",
@@ -1628,9 +1734,9 @@
     let isReceivingCloud = false;
     let cloudDebounceTimer = null;
 
-    // 預設重慶 7 天 6 夜範本資料
+    // 預設重慶 7 天 6 夜範本資料 (含預算與實付對比)
     const DEFAULT_EXPENSE_DATA = {
-      version: "2026.11.02",
+      version: "2026.11.02.v2",
       tripInfo: {
         title: "重慶 7 天 6 夜魔幻之旅",
         startDate: "2026-04-10",
@@ -1641,13 +1747,17 @@
         exchangeRate: 4.65,
         displayCurrency: "TWD"
       },
-      // 大項支出（非每日，如國際機票、跨城高鐵、旅遊平安險）
+      // 大項支出 (含交通工具類型、起訖、預算與實付)
       majorExpenses: [
         {
           id: "m_flight",
           category: "flight",
+          transitType: "flight_round",
+          route: "台北松山 (TSA) ⇋ 重慶江北 (CKG)",
           name: "往返直飛機票 (台北松山 ⇋ 重慶江北)",
-          amount: 12500,
+          amount: 13000,          // 預算
+          actualAmount: 12500,    // 實付特價
+          isPaid: true,
           currency: "TWD",
           pricingType: "per_person",
           note: "國泰/國航直飛含托運行李 23kg"
@@ -1655,8 +1765,12 @@
         {
           id: "m_insurance",
           category: "other",
+          transitType: "insurance",
+          route: "富邦產險",
           name: "海外旅遊平安與不便險",
           amount: 680,
+          actualAmount: 680,
+          isPaid: true,
           currency: "TWD",
           pricingType: "per_person",
           note: "富邦產險 7 天豪華型"
@@ -1664,24 +1778,30 @@
         {
           id: "m_sim",
           category: "other",
+          transitType: "other_major",
+          route: "中港澳 eSIM",
           name: "中國大陸免翻牆 eSIM (7天/每日2GB)",
           amount: 450,
+          actualAmount: 450,
+          isPaid: true,
           currency: "TWD",
           pricingType: "per_person",
           note: "中港澳直通免翻牆"
         }
       ],
-      // 住宿專屬計算（支援單日、多日區間、整趟）
+      // 住宿專案
       accommodations: [
         {
           id: "acc_1",
           name: "重慶解放碑威斯汀酒店 (Westin)",
-          mode: "range",          // 連續多日區間
+          mode: "range",
           startDay: 1,
-          endDay: 3,             // Day 1 ~ Day 3 (共 3 晚)
+          endDay: 3,
           nights: 3,
           pricingType: "per_night",
-          amount: 850,           // 每晚 850 CNY
+          amount: 900,            // 預算每晚 900
+          actualAmount: 850,      // 實付每晚 850
+          isPaid: true,
           currency: "CNY",
           roomCount: 1,
           note: "高樓層江景房，含雙人自助早餐"
@@ -1689,11 +1809,13 @@
         {
           id: "acc_2",
           name: "武隆仙女山依雲度假酒店",
-          mode: "daily",          // 單日不同計費
-          day: 4,                // Day 4 (1 晚)
+          mode: "daily",
+          day: 4,
           nights: 1,
           pricingType: "per_night",
           amount: 560,
+          actualAmount: 560,
+          isPaid: true,
           currency: "CNY",
           roomCount: 1,
           note: "天生三橋景區旁，木屋家庭房"
@@ -1703,76 +1825,75 @@
           name: "觀音橋九街設計師江景民宿",
           mode: "range",
           startDay: 5,
-          endDay: 6,             // Day 5 ~ Day 6 (共 2 晚)
+          endDay: 6,
           nights: 2,
-          pricingType: "total_stay", // 整段總額計費
-          amount: 720,           // 2 晚總價 720 CNY (每晚 360)
+          pricingType: "total_stay",
+          amount: 750,            // 預算 750
+          actualAmount: 720,      // 實付 720
+          isPaid: true,
           currency: "CNY",
           roomCount: 1,
           note: "整套落地窗投影套房"
         }
       ],
-      // 每日細項支出（餐食、景點、每日交通、購物其他）
+      // 每日細項支出 (含交通工具細項、預算與實付)
       dailyExpenses: [
         // Day 1
-        { id: "e1_1", day: 1, category: "transit", subType: "metro", name: "機場快線與地鐵一日卡", amount: 15, currency: "CNY", pricingType: "per_person", note: "江北機場至解放碑" },
-        { id: "e1_2", day: 1, category: "dining", subType: "lunch", name: "花市豌雜麵 (老字號)", amount: 36, currency: "CNY", pricingType: "total", note: "招牌乾餾二兩 + 冰豆漿" },
-        { id: "e1_3", day: 1, category: "spot", subType: "ticket", name: "長江索道往返門票", amount: 30, currency: "CNY", pricingType: "per_person", note: "北站至南站往返" },
-        { id: "e1_4", day: 1, category: "dining", subType: "dinner", name: "珮姐老火鍋 (解放碑總店)", amount: 280, currency: "CNY", pricingType: "total", note: "九宮格中辣 + 鮮毛肚麻辣牛肉" },
-        { id: "e1_5", day: 1, category: "transit", subType: "taxi", name: "回酒店計程車 (滴滴)", amount: 18, currency: "CNY", pricingType: "total", note: "夜間返回威斯汀" },
+        { id: "e1_1", day: 1, category: "transit", subType: "metro", route: "機場 ➔ 解放碑", name: "機場快線與地鐵一日卡", amount: 15, actualAmount: 15, isPaid: true, currency: "CNY", pricingType: "per_person", note: "江北機場至解放碑" },
+        { id: "e1_2", day: 1, category: "dining", subType: "lunch", name: "花市豌雜麵 (老字號)", amount: 40, actualAmount: 36, isPaid: true, currency: "CNY", pricingType: "total", note: "招牌乾餾二兩 + 冰豆漿" },
+        { id: "e1_3", day: 1, category: "spot", subType: "ticket", name: "長江索道往返門票", amount: 30, actualAmount: 30, isPaid: true, currency: "CNY", pricingType: "per_person", note: "北站至南站往返" },
+        { id: "e1_4", day: 1, category: "dining", subType: "dinner", name: "珮姐老火鍋 (解放碑總店)", amount: 300, actualAmount: 280, isPaid: true, currency: "CNY", pricingType: "total", note: "九宮格中辣 + 鮮毛肚麻辣牛肉" },
+        { id: "e1_5", day: 1, category: "transit", subType: "taxi", route: "洪崖洞 ➔ 威斯汀", name: "回酒店計程車 (滴滴)", amount: 25, actualAmount: 18, isPaid: true, currency: "CNY", pricingType: "total", note: "夜間返回威斯汀" },
 
         // Day 2
-        { id: "e2_1", day: 2, category: "transit", subType: "metro", name: "地鐵 2 號線搭乘 (李子壩)", amount: 8, currency: "CNY", pricingType: "per_person", note: "單程穿樓體驗" },
-        { id: "e2_2", day: 2, category: "spot", subType: "ticket", name: "三峽博物館專屬講解導覽", amount: 120, currency: "CNY", pricingType: "total", note: "官方人工金牌講解" },
-        { id: "e2_3", day: 2, category: "dining", subType: "lunch", name: "李子壩梁山雞 (總店)", amount: 198, currency: "CNY", pricingType: "total", note: "藥膳芋兒雞微辣小份" },
-        { id: "e2_4", day: 2, category: "dining", subType: "snack", name: "下浩里文創手沖咖啡與小點", amount: 75, currency: "CNY", pricingType: "total", note: "觀江懸崖景觀位" },
-        { id: "e2_5", day: 2, category: "dining", subType: "dinner", name: "南山枇杷園食聖火鍋 (全山火鍋)", amount: 320, currency: "CNY", pricingType: "total", note: "半山觀景雅座" },
-        { id: "e2_6", day: 2, category: "transit", subType: "taxi", name: "南山往返包車/網約車", amount: 65, currency: "CNY", pricingType: "total", note: "上下南山專車" },
+        { id: "e2_1", day: 2, category: "transit", subType: "metro", route: "2號線：李子壩", name: "地鐵 2 號線搭乘 (李子壩)", amount: 8, actualAmount: 8, isPaid: true, currency: "CNY", pricingType: "per_person", note: "單程穿樓體驗" },
+        { id: "e2_2", day: 2, category: "spot", subType: "guide", name: "三峽博物館專屬講解導覽", amount: 120, actualAmount: 120, isPaid: true, currency: "CNY", pricingType: "total", note: "官方人工金牌講解" },
+        { id: "e2_3", day: 2, category: "dining", subType: "lunch", name: "李子壩梁山雞 (總店)", amount: 200, actualAmount: 198, isPaid: true, currency: "CNY", pricingType: "total", note: "藥膳芋兒雞微辣小份" },
+        { id: "e2_4", day: 2, category: "dining", subType: "snack", name: "下浩里文創手沖咖啡與小點", amount: 80, actualAmount: 75, isPaid: true, currency: "CNY", pricingType: "total", note: "觀江懸崖景觀位" },
+        { id: "e2_5", day: 2, category: "dining", subType: "dinner", name: "南山枇杷園食聖火鍋 (全山火鍋)", amount: 300, actualAmount: 320, isPaid: true, currency: "CNY", pricingType: "total", note: "半山觀景雅座 (加點毛肚微超支)" },
+        { id: "e2_6", day: 2, category: "transit", subType: "taxi", route: "市區 ⇋ 南山往返", name: "南山往返包車/網約車", amount: 50, actualAmount: 65, isPaid: true, currency: "CNY", pricingType: "total", note: "上下南山專車加成" },
 
         // Day 3
-        { id: "e3_1", day: 3, category: "spot", subType: "ticket", name: "湖廣會館門票與戲曲演出", amount: 25, currency: "CNY", pricingType: "per_person", note: "古建築群參觀" },
-        { id: "e3_2", day: 3, category: "dining", subType: "lunch", name: "來福士烤匠麻辣烤魚", amount: 210, currency: "CNY", pricingType: "total", note: "經典麻辣烤黔魚 + 芝麻冰粉" },
-        { id: "e3_3", day: 3, category: "transit", subType: "metro", name: "地鐵往返大劇院", amount: 6, currency: "CNY", pricingType: "per_person", note: "大劇院江邊看洪崖洞夜景" },
-        { id: "e3_4", day: 3, category: "dining", subType: "dinner", name: "九街烤腦花與江湖菜小酒館", amount: 160, currency: "CNY", pricingType: "total", note: "歌樂山辣子雞 + 梅子酒" },
+        { id: "e3_1", day: 3, category: "spot", subType: "ticket", name: "湖廣會館門票與戲曲演出", amount: 25, actualAmount: 25, isPaid: true, currency: "CNY", pricingType: "per_person", note: "古建築群參觀" },
+        { id: "e3_2", day: 3, category: "dining", subType: "lunch", name: "來福士烤匠麻辣烤魚", amount: 220, actualAmount: 210, isPaid: true, currency: "CNY", pricingType: "total", note: "經典麻辣烤黔魚 + 芝麻冰粉" },
+        { id: "e3_3", day: 3, category: "transit", subType: "metro", route: "6號線大劇院", name: "地鐵往返大劇院", amount: 6, actualAmount: 6, isPaid: true, currency: "CNY", pricingType: "per_person", note: "大劇院江邊看洪崖洞夜景" },
+        { id: "e3_4", day: 3, category: "dining", subType: "dinner", name: "九街烤腦花與江湖菜小酒館", amount: 180, actualAmount: 160, isPaid: true, currency: "CNY", pricingType: "total", note: "歌樂山辣子雞 + 梅子酒" },
 
         // Day 4 (武隆一日)
-        { id: "e4_1", day: 4, category: "transit", subType: "taxi", name: "重慶至武隆往返旅遊專線包車", amount: 480, currency: "CNY", pricingType: "total", note: "全天專屬別克 GL8 商務車" },
-        { id: "e4_2", day: 4, category: "spot", subType: "ticket", name: "武隆天生三橋景區套票 (含電梯)", amount: 125, currency: "CNY", pricingType: "per_person", note: "滿城盡帶黃金甲天福官驛" },
-        { id: "e4_3", day: 4, category: "spot", subType: "ticket", name: "龍水峽地縫景區門票", amount: 105, currency: "CNY", pricingType: "per_person", note: "峽谷探險地質奇觀" },
-        { id: "e4_4", day: 4, category: "dining", subType: "lunch", name: "仙女山鎮碗碗羊肉", amount: 110, currency: "CNY", pricingType: "total", note: "高山羊肉湯鍋 + 燒餅" },
-        { id: "e4_5", day: 4, category: "dining", subType: "dinner", name: "依雲度假酒店特色土雞煲", amount: 180, currency: "CNY", pricingType: "total", note: "山珍土特產" },
+        { id: "e4_1", day: 4, category: "transit", subType: "charter_day", route: "重慶市區 ⇋ 武隆景區", name: "重慶至武隆往返旅遊專線包車", amount: 500, actualAmount: 480, isPaid: true, currency: "CNY", pricingType: "total", note: "全天專屬別克 GL8 商務車" },
+        { id: "e4_2", day: 4, category: "spot", subType: "ticket", name: "武隆天生三橋景區套票 (含電梯)", amount: 125, actualAmount: 125, isPaid: true, currency: "CNY", pricingType: "per_person", note: "滿城盡帶黃金甲天福官驛" },
+        { id: "e4_3", day: 4, category: "spot", subType: "ticket", name: "龍水峽地縫景區門票", amount: 105, actualAmount: 105, isPaid: true, currency: "CNY", pricingType: "per_person", note: "峽谷探險地質奇觀" },
+        { id: "e4_4", day: 4, category: "dining", subType: "lunch", name: "仙女山鎮碗碗羊肉", amount: 120, actualAmount: 110, isPaid: true, currency: "CNY", pricingType: "total", note: "高山羊肉湯鍋 + 燒餅" },
+        { id: "e4_5", day: 4, category: "dining", subType: "dinner", name: "依雲度假酒店特色土雞煲", amount: 180, actualAmount: 180, isPaid: true, currency: "CNY", pricingType: "total", note: "山珍土特產" },
 
         // Day 5
-        { id: "e5_1", day: 5, category: "transit", subType: "metro", name: "市區地鐵 1 號線往磁器口", amount: 10, currency: "CNY", pricingType: "per_person", note: "古鎮往返" },
-        { id: "e5_2", day: 5, category: "spot", subType: "ticket", name: "重慶 1949 沉浸式大型實景劇", amount: 268, currency: "CNY", pricingType: "per_person", note: "旋轉看台 A 區VIP" },
-        { id: "e5_3", day: 5, category: "dining", subType: "lunch", name: "磁器口陳麻花與古鎮毛血旺", amount: 88, currency: "CNY", pricingType: "total", note: "道地老店" },
-        { id: "e5_4", day: 5, category: "other", subType: "gift", name: "磁器口特產手工底料與麻花伴手禮", amount: 260, currency: "CNY", pricingType: "total", note: "橋頭火鍋底料 6 包" },
-        { id: "e5_5", day: 5, category: "dining", subType: "dinner", name: "楊記隆府經典重慶江湖菜", amount: 235, currency: "CNY", pricingType: "total", note: "大麻圓 + 霸王兔" },
+        { id: "e5_1", day: 5, category: "transit", subType: "metro", route: "1號線磁器口", name: "市區地鐵 1 號線往磁器口", amount: 10, actualAmount: 10, isPaid: true, currency: "CNY", pricingType: "per_person", note: "古鎮往返" },
+        { id: "e5_2", day: 5, category: "spot", subType: "ticket", name: "重慶 1949 沉浸式大型實景劇", amount: 268, actualAmount: 268, isPaid: true, currency: "CNY", pricingType: "per_person", note: "旋轉看台 A 區VIP" },
+        { id: "e5_3", day: 5, category: "dining", subType: "lunch", name: "磁器口陳麻花與古鎮毛血旺", amount: 90, actualAmount: 88, isPaid: true, currency: "CNY", pricingType: "total", note: "道地老店" },
+        { id: "e5_4", day: 5, category: "other", subType: "gift", name: "磁器口特產手工底料與麻花伴手禮", amount: 300, actualAmount: 260, isPaid: true, currency: "CNY", pricingType: "total", note: "橋頭火鍋底料 6 包" },
+        { id: "e5_5", day: 5, category: "dining", subType: "dinner", name: "楊記隆府經典重慶江湖菜", amount: 250, actualAmount: 235, isPaid: true, currency: "CNY", pricingType: "total", note: "大麻圓 + 霸王兔" },
 
         // Day 6
-        { id: "e6_1", day: 6, category: "transit", subType: "metro", name: "地鐵與長途公車", amount: 12, currency: "CNY", pricingType: "per_person", note: "羅中立美術館與川美" },
-        { id: "e6_2", day: 6, category: "spot", subType: "ticket", name: "黃桷坪塗鴉藝術街巡禮 (免費體驗)", amount: 0, currency: "CNY", pricingType: "total", note: "免費藝術步道打卡" },
-        { id: "e6_3", day: 6, category: "dining", subType: "lunch", name: "梯坎豆花 (川美老店)", amount: 48, currency: "CNY", pricingType: "total", note: "蹄花湯 + 豆花飯" },
-        { id: "e6_4", day: 6, category: "dining", subType: "dinner", name: "九街高空景觀精釀餐酒館", amount: 310, currency: "CNY", pricingType: "total", note: "臨別歡聚告別晚宴" },
+        { id: "e6_1", day: 6, category: "transit", subType: "metro", route: "川美老校區", name: "地鐵與長途公車", amount: 12, actualAmount: 12, isPaid: true, currency: "CNY", pricingType: "per_person", note: "羅中立美術館與川美" },
+        { id: "e6_2", day: 6, category: "spot", subType: "ticket", name: "黃桷坪塗鴉藝術街巡禮 (免費體驗)", amount: 0, actualAmount: 0, isPaid: true, currency: "CNY", pricingType: "total", note: "免費藝術步道打卡" },
+        { id: "e6_3", day: 6, category: "dining", subType: "lunch", name: "梯坎豆花 (川美老店)", amount: 50, actualAmount: 48, isPaid: true, currency: "CNY", pricingType: "total", note: "蹄花湯 + 豆花飯" },
+        { id: "e6_4", day: 6, category: "dining", subType: "dinner", name: "九街高空景觀精釀餐酒館", amount: 300, actualAmount: 310, isPaid: false, currency: "CNY", pricingType: "total", note: "臨別歡聚告別晚宴 (待結算)" },
 
         // Day 7
-        { id: "e7_1", day: 7, category: "dining", subType: "breakfast", name: "山城小湯圓與糯米糰", amount: 24, currency: "CNY", pricingType: "total", note: "傳統古早味早餐" },
-        { id: "e7_2", day: 7, category: "transit", subType: "taxi", name: "送機專車 (觀音橋 ➔ 江北機場 T3)", amount: 55, currency: "CNY", pricingType: "total", note: "送機含過路費" }
+        { id: "e7_1", day: 7, category: "dining", subType: "breakfast", name: "山城小湯圓與糯米糰", amount: 24, actualAmount: 24, isPaid: false, currency: "CNY", pricingType: "total", note: "傳統古早味早餐" },
+        { id: "e7_2", day: 7, category: "transit", subType: "taxi", route: "觀音橋 ➔ 江北機場 T3", name: "送機專車 (觀音橋 ➔ 江北機場 T3)", amount: 60, actualAmount: 55, isPaid: false, currency: "CNY", pricingType: "total", note: "送機含過路費" }
       ]
     };
 
-    // 狀態管理物件
     let appState = null;
-    let currentSelectedDay = "all"; // "all" | 1 | 2 | 3 ... | "major_lodging"
+    let currentSelectedDay = "all";
 
-    // 初始化載入
     function initApp() {
       loadState();
       renderAll();
       initFirebaseSync();
     }
 
-    // 取得當前房間碼
     function getCloudRoomId() {
       const urlParams = new URLSearchParams(window.location.search);
       const queryRoom = urlParams.get('room');
@@ -1789,13 +1910,11 @@
       }
     }
 
-    // 返回主行程跳轉帶房間碼
     function navigateToMainPlanner() {
       const roomId = getCloudRoomId();
       window.location.href = `index.html?room=${encodeURIComponent(roomId)}`;
     }
 
-    // 初始化 Firebase 即時同步
     function initFirebaseSync() {
       const roomId = getCloudRoomId();
       updateCloudBadgeUI("syncing", `連線雲端中 (${roomId})...`);
@@ -1816,7 +1935,6 @@
       }
     }
 
-    // 監聽雲端房間變更
     function listenCloudRoom(roomId) {
       if (!firestoreDb) return;
       if (cloudUnsubscribe) {
@@ -1832,7 +1950,7 @@
           if (data && data.expenseState) {
             isReceivingCloud = true;
             appState = data.expenseState;
-            saveState(true); // 本地存檔但不往雲端推送，避免回音迴圈
+            saveState(true);
             renderAll();
             isReceivingCloud = false;
 
@@ -1840,12 +1958,10 @@
             updateCloudBadgeUI("online", `雲端已同步 (${roomId})`);
             document.getElementById("cloudLastSyncTime").textContent = `最後同步：${timeStr} (來自雲端)`;
           } else {
-            // 雲端尚無支出帳本，自動將本機狀態同步推上去
             updateCloudBadgeUI("online", `雲端已連線 (${roomId})`);
             pushStateToCloud();
           }
         } else {
-          // Document 尚未建立，建立新房間
           updateCloudBadgeUI("online", `雲端全新房間 (${roomId})`);
           pushStateToCloud();
         }
@@ -1855,7 +1971,6 @@
       });
     }
 
-    // 推送狀態至 Firebase Firestore
     function pushStateToCloud() {
       if (!firestoreDb || isReceivingCloud) return;
       
@@ -1879,7 +1994,6 @@
       }, 500);
     }
 
-    // 更新頂部雲端標籤狀態
     function updateCloudBadgeUI(status, text) {
       const badge = document.getElementById("cloudStatusBadge");
       const dot = document.getElementById("cloudStatusDot");
@@ -1905,7 +2019,6 @@
       }
     }
 
-    // 從 LocalStorage 載入或載入預設資料
     function loadState() {
       try {
         const saved = localStorage.getItem("travel_planner_expense_data");
@@ -1921,7 +2034,6 @@
       }
     }
 
-    // 儲存狀態至 LocalStorage 並同步推送到雲端
     function saveState(skipCloud = false) {
       try {
         localStorage.setItem("travel_planner_expense_data", JSON.stringify(appState));
@@ -1933,239 +2045,14 @@
       }
     }
 
-    // ==========================================
-    // 🔄 一鍵從主規劃手帳 (index.html) 同步資料
-    // ==========================================
-    function syncFromMainPlan() {
-      const roomId = getCloudRoomId();
-      
-      // 輔助剖析器：由主行程 Plan 轉換為 ExpenseState
-      function processPlanSync(plan) {
-        if (!plan) return false;
-
-        const memberCount = Number(plan.memberCount) || 2;
-        const exchangeRate = Number(plan.exchangeRate) || 4.65;
-        const daysCount = (plan.days && plan.days.length) ? plan.days.length : 7;
-        const tripTitle = plan.title || "重慶自由行";
-
-        // 更新基本設定
-        appState.tripInfo.title = tripTitle;
-        appState.tripInfo.memberCount = memberCount;
-        appState.tripInfo.exchangeRate = exchangeRate;
-        appState.tripInfo.daysCount = daysCount;
-
-        // 1. 同步大項交通 (機票)
-        if (plan.flights && plan.flights.items && plan.flights.items.length > 0) {
-          plan.flights.items.forEach(fl => {
-            const cost = Number(fl.cost) || 0;
-            if (cost > 0) {
-              const existingIdx = appState.majorExpenses.findIndex(m => m.name.includes(fl.flightNo || fl.depAir || "機票"));
-              const itemData = {
-                id: "m_sync_" + (fl.flightNo || Date.now()),
-                category: "flight",
-                name: `${fl.depAir || "出發地"} ⇋ ${fl.arrAir || "目的地"} 航班 (${fl.flightNo || "機票"})`,
-                amount: cost,
-                currency: fl.currency || "TWD",
-                pricingType: fl.costType === "group" ? "total" : "per_person",
-                note: fl.airline ? `${fl.airline} ${fl.seatClass || ''}` : "主行程同步之航班"
-              };
-              if (existingIdx >= 0) appState.majorExpenses[existingIdx] = itemData;
-              else appState.majorExpenses.push(itemData);
-            }
-          });
-        }
-
-        // 2. 同步住宿 (飯店)
-        if (plan.hotels && plan.hotels.length > 0) {
-          plan.hotels.forEach((h, idx) => {
-            const nights = Number(h.nights) || 1;
-            const cost = Number(h.costTotal || h.costPerNight) || 0;
-            const pricingType = h.costTotal ? "total_stay" : "per_night";
-
-            if (cost > 0 || h.name) {
-              const existingIdx = appState.accommodations.findIndex(a => a.name.includes(h.name));
-              const accData = {
-                id: "acc_sync_" + idx,
-                name: h.name || "預定飯店",
-                mode: nights > 1 ? "range" : "daily",
-                startDay: idx === 0 ? 1 : 4,
-                endDay: idx === 0 ? nights : (4 + nights - 1),
-                day: idx === 0 ? 1 : 4,
-                nights: nights,
-                pricingType: pricingType,
-                amount: cost > 0 ? cost : (pricingType === "per_night" ? 500 : 1500),
-                currency: h.currency || "CNY",
-                roomCount: Number(h.roomCount) || 1,
-                note: h.stayLabel || h.city || "主行程同步飯店"
-              };
-              if (existingIdx >= 0) appState.accommodations[existingIdx] = accData;
-              else appState.accommodations.push(accData);
-            }
-          });
-        }
-
-        // 3. 同步每日時間軸活動 (餐食、景點、每日交通)
-        if (plan.days && plan.days.length > 0) {
-          plan.days.forEach((dayObj, dayIdx) => {
-            const dayNum = dayIdx + 1;
-            if (dayObj.events && dayObj.events.length > 0) {
-              dayObj.events.forEach(ev => {
-                const cost = Number(ev.actualCost || ev.cost) || 0;
-                if (cost > 0) {
-                  // 依名稱關鍵字歸類
-                  let cat = "spot";
-                  let sub = "ticket";
-                  const n = (ev.name + " " + (ev.note || "")).toLowerCase();
-
-                  if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓/.test(n)) {
-                    cat = "dining";
-                    sub = /午/.test(n) ? "lunch" : (/晚|夜市/.test(n) ? "dinner" : (/早/.test(n) ? "breakfast" : "snack"));
-                  } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車/.test(n)) {
-                    cat = "transit";
-                    sub = /滴滴|計程車/.test(n) ? "taxi" : (/地鐵|捷運/.test(n) ? "metro" : "bus");
-                  } else if (/伴手禮|特產|底料|買|購物/.test(n)) {
-                    cat = "other";
-                    sub = "gift";
-                  }
-
-                  const existingIdx = appState.dailyExpenses.findIndex(d => d.day === dayNum && d.name === ev.name);
-                  const dailyItem = {
-                    id: "d_sync_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
-                    day: dayNum,
-                    category: cat,
-                    subType: sub,
-                    name: ev.name,
-                    amount: cost,
-                    currency: plan.currencyCode || "CNY",
-                    pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
-                    note: ev.note || ""
-                  };
-
-                  if (existingIdx >= 0) appState.dailyExpenses[existingIdx] = dailyItem;
-                  else appState.dailyExpenses.push(dailyItem);
-                }
-              });
-            }
-          });
-        }
-
-        saveState();
-        renderAll();
-        return true;
-      }
-
-      // 先嘗試從 Firestore 雲端讀取同房間的主行程資料
-      if (firestoreDb) {
-        updateCloudBadgeUI("syncing", "正在讀取主行程資料...");
-        firestoreDb.collection('travel_planners').doc(roomId).get().then(doc => {
-          let synced = false;
-          if (doc.exists) {
-            const data = doc.data();
-            if (data && data.appState && data.appState.plans) {
-              const activePlanId = data.appState.activePlanId || 'plan-chongqing';
-              const targetPlan = data.appState.plans[activePlanId] || Object.values(data.appState.plans)[0];
-              synced = processPlanSync(targetPlan);
-            }
-          }
-
-          // 若雲端無資料，嘗試從瀏覽器本地快取讀取
-          if (!synced) {
-            synced = trySyncFromLocalStorage();
-          }
-
-          if (synced) {
-            alert(`🎉 成功由主規劃手帳同步行程資料！\n已更新：旅程名稱、人數、匯率、機票大項、住宿與各天消費活動。`);
-          } else {
-            alert("未在雲端或本地找到主行程資料，已保留現有帳本。您可直接手動記帳或載入範例。");
-          }
-        }).catch(err => {
-          console.error("同步失敗，嘗試讀取本機", err);
-          if (trySyncFromLocalStorage()) {
-            alert("成功由本機主規劃快取同步行程資料！");
-          }
-        });
-      } else {
-        if (trySyncFromLocalStorage()) {
-          alert("成功由本機主規劃快取同步行程資料！");
-        } else {
-          alert("請確認主行程頁面 (index.html) 是否已儲存過行程。");
-        }
-      }
-
-      function trySyncFromLocalStorage() {
-        try {
-          const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
-          if (raw) {
-            const mainAppState = JSON.parse(raw);
-            if (mainAppState.plans) {
-              const activePlanId = mainAppState.activePlanId || 'plan-chongqing';
-              const targetPlan = mainAppState.plans[activePlanId] || Object.values(mainAppState.plans)[0];
-              return processPlanSync(targetPlan);
-            }
-          }
-        } catch(e) {}
-        return false;
-      }
-    }
-
-    // 開啟雲端房間設定彈窗
-    function openCloudRoomModal() {
-      const roomId = getCloudRoomId();
-      document.getElementById("cloudRoomInput").value = roomId;
-
-      // 生成包含完整房間碼的外部存取網址
-      const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
-      document.getElementById("cloudShareUrlInput").value = shareUrl;
-      document.getElementById("cloudRoomModal").classList.add("active");
-    }
-
-    function closeCloudRoomModal() {
-      document.getElementById("cloudRoomModal").classList.remove("active");
-    }
-
-    // 切換或開新房間
-    function changeCloudRoom() {
-      const newRoom = document.getElementById("cloudRoomInput").value.trim();
-      if (!newRoom) {
-        alert("請輸入房間代碼！");
-        return;
-      }
-      setCloudRoomId(newRoom);
-      
-      // 更新網址 Query 參數並重新連線
-      const newUrl = `${window.location.pathname}?room=${encodeURIComponent(newRoom)}`;
-      window.history.pushState({ path: newUrl }, '', newUrl);
-
-      listenCloudRoom(newRoom);
-      closeCloudRoomModal();
-      alert(`已成功切換至房間【${newRoom}】！正在連線雲端資料庫...`);
-    }
-
-    // 複製存取網址
-    function copyShareRoomUrl() {
-      const input = document.getElementById("cloudShareUrlInput");
-      input.select();
-      navigator.clipboard.writeText(input.value).then(() => {
-        alert("已複製專屬跨裝置存取連結！\n可直接傳到手機、平板或其他電腦開啟，跨裝置即時共同作業。");
-      }).catch(() => {
-        alert("複製失敗，請手動複製文字方塊中的網址。");
-      });
-    }
-
-    // 手動強制推送
-    function forcePushToCloud() {
-      pushStateToCloud();
-      alert("已立即推送最新帳本至 Firebase 雲端！");
-    }
-
-    // 匯率換算核心輔助函式
+    // 匯率換算核心
     function convertAmount(amount, fromCurrency, toCurrency) {
       if (!amount || isNaN(amount)) return 0;
       if (fromCurrency === toCurrency) return Number(amount);
       
       const rate = Number(appState.tripInfo.exchangeRate) || 1;
-      const baseCur = appState.tripInfo.baseCurrency; // 例如 TWD
-      const foreignCur = appState.tripInfo.foreignCurrency; // 例如 CNY
+      const baseCur = appState.tripInfo.baseCurrency;
+      const foreignCur = appState.tripInfo.foreignCurrency;
 
       if (fromCurrency === foreignCur && toCurrency === baseCur) {
         return amount * rate;
@@ -2177,10 +2064,18 @@
       return Number(amount);
     }
 
-    // 計算特定項目對於全團的總額 (Total Group Cost)
-    function calcItemTotalCost(item) {
+    // 計算特定項目對於全團的金額 (支援 isActual 取得預算或實付)
+    function calcItemTotalCost(item, isActual = false) {
       const memberCount = Number(appState.tripInfo.memberCount) || 1;
-      let rawAmount = Number(item.amount) || 0;
+      let rawAmount = 0;
+
+      if (isActual) {
+        // 若有明確填寫 actualAmount，則採用；若無則回退至 amount (預算)
+        rawAmount = (item.actualAmount !== undefined && item.actualAmount !== null && item.actualAmount !== "")
+          ? Number(item.actualAmount) : Number(item.amount || 0);
+      } else {
+        rawAmount = Number(item.amount || item.actualAmount || 0);
+      }
 
       if (item.nights && item.pricingType === "per_night") {
         rawAmount = rawAmount * Number(item.nights);
@@ -2192,33 +2087,25 @@
       return rawAmount;
     }
 
-    // 計算特定項目分攤給每人的個人負擔 (Per Person Cost)
-    function calcItemPerPersonCost(item) {
+    function calcItemPerPersonCost(item, isActual = false) {
       const memberCount = Number(appState.tripInfo.memberCount) || 1;
-      let rawAmount = Number(item.amount) || 0;
-
-      if (item.nights && item.pricingType === "per_night") {
-        rawAmount = rawAmount * Number(item.nights);
-      }
-
-      if (item.pricingType === "per_person") {
-        return rawAmount;
-      }
-      return rawAmount / memberCount;
+      const total = calcItemTotalCost(item, isActual);
+      return total / memberCount;
     }
 
-    // 計算住宿在第 N 天的每日攤提費用
-    function getLodgingCostForDay(dayIndex) {
+    // 計算當日住宿攤提 (支援預算 vs 實付)
+    function getLodgingCostForDay(dayIndex, isActual = false) {
       const targetDay = Number(dayIndex);
       let dayLodgingTotal = 0;
 
       appState.accommodations.forEach(acc => {
         let applies = false;
         let dailyShareInOriginal = 0;
+        let baseAmount = isActual ? (acc.actualAmount !== undefined && acc.actualAmount !== null ? Number(acc.actualAmount) : Number(acc.amount || 0)) : Number(acc.amount || 0);
 
         if (acc.mode === "daily" && Number(acc.day) === targetDay) {
           applies = true;
-          dailyShareInOriginal = Number(acc.amount) || 0;
+          dailyShareInOriginal = baseAmount;
         } else if (acc.mode === "range") {
           const s = Number(acc.startDay);
           const e = Number(acc.endDay);
@@ -2226,15 +2113,15 @@
             applies = true;
             const nights = Math.max(1, (e - s + 1));
             if (acc.pricingType === "per_night") {
-              dailyShareInOriginal = Number(acc.amount);
+              dailyShareInOriginal = baseAmount;
             } else {
-              dailyShareInOriginal = Number(acc.amount) / nights;
+              dailyShareInOriginal = baseAmount / nights;
             }
           }
         } else if (acc.mode === "trip") {
           applies = true;
           const totalDays = Number(appState.tripInfo.daysCount) || 1;
-          dailyShareInOriginal = (Number(acc.amount) || 0) / totalDays;
+          dailyShareInOriginal = baseAmount / totalDays;
         }
 
         if (applies) {
@@ -2246,84 +2133,105 @@
       return dayLodgingTotal;
     }
 
-    // 計算全域匯總統計數據
+    // 計算雙重統計數據 (預算 Budget vs 實付 Actual)
     function calculateStatistics() {
       const baseCur = appState.tripInfo.baseCurrency;
       const foreignCur = appState.tripInfo.foreignCurrency;
       const memberCount = Number(appState.tripInfo.memberCount) || 1;
-
-      let majorTotal = 0;
-      let lodgingTotal = 0;
-      let diningTotal = 0;
-      let spotTotal = 0;
-      let transitTotal = 0;
-      let otherTotal = 0;
-
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
-      const dailyTotals = Array(daysCount + 1).fill(0);
+
+      let budgetMajor = 0, actualMajor = 0;
+      let budgetLodging = 0, actualLodging = 0;
+      let budgetDining = 0, actualDining = 0;
+      let budgetSpot = 0, actualSpot = 0;
+      let budgetTransit = 0, actualTransit = 0;
+      let budgetOther = 0, actualOther = 0;
+
+      const dailyActualTotals = Array(daysCount + 1).fill(0);
+      const dailyBudgetTotals = Array(daysCount + 1).fill(0);
 
       // 1. 大項支出
       appState.majorExpenses.forEach(m => {
-        const totalRaw = calcItemTotalCost(m);
-        const inBase = convertAmount(totalRaw, m.currency, baseCur);
-        majorTotal += inBase;
+        const bRaw = calcItemTotalCost(m, false);
+        const aRaw = calcItemTotalCost(m, true);
+        budgetMajor += convertAmount(bRaw, m.currency, baseCur);
+        actualMajor += convertAmount(aRaw, m.currency, baseCur);
       });
 
       // 2. 住宿支出
       appState.accommodations.forEach(acc => {
-        let totalRaw = Number(acc.amount) || 0;
+        const nights = acc.mode === "range" ? Math.max(1, (Number(acc.endDay) - Number(acc.startDay) + 1)) : 1;
+        
+        let bRaw = Number(acc.amount || 0);
+        let aRaw = acc.actualAmount !== undefined && acc.actualAmount !== null ? Number(acc.actualAmount) : bRaw;
+        
         if (acc.mode === "range" && acc.pricingType === "per_night") {
-          const nights = Math.max(1, (Number(acc.endDay) - Number(acc.startDay) + 1));
-          totalRaw = totalRaw * nights;
+          bRaw *= nights;
+          aRaw *= nights;
         }
-        const inBase = convertAmount(totalRaw, acc.currency, baseCur);
-        lodgingTotal += inBase;
+        budgetLodging += convertAmount(bRaw, acc.currency, baseCur);
+        actualLodging += convertAmount(aRaw, acc.currency, baseCur);
       });
 
       // 3. 每日細項支出
       appState.dailyExpenses.forEach(d => {
-        const totalRaw = calcItemTotalCost(d);
-        const inBase = convertAmount(totalRaw, d.currency, baseCur);
+        const bRaw = calcItemTotalCost(d, false);
+        const aRaw = calcItemTotalCost(d, true);
+        const bBase = convertAmount(bRaw, d.currency, baseCur);
+        const aBase = convertAmount(aRaw, d.currency, baseCur);
         const dIndex = Number(d.day) || 1;
 
-        if (d.category === "dining") diningTotal += inBase;
-        else if (d.category === "spot") spotTotal += inBase;
-        else if (d.category === "transit") transitTotal += inBase;
-        else otherTotal += inBase;
+        if (d.category === "dining") { budgetDining += bBase; actualDining += aBase; }
+        else if (d.category === "spot") { budgetSpot += bBase; actualSpot += aBase; }
+        else if (d.category === "transit") { budgetTransit += bBase; actualTransit += aBase; }
+        else { budgetOther += bBase; actualOther += aBase; }
 
         if (dIndex >= 1 && dIndex <= daysCount) {
-          dailyTotals[dIndex] += inBase;
+          dailyBudgetTotals[dIndex] += bBase;
+          dailyActualTotals[dIndex] += aBase;
         }
       });
 
       // 加上當日住宿攤提
       for (let i = 1; i <= daysCount; i++) {
-        dailyTotals[i] += getLodgingCostForDay(i);
+        dailyBudgetTotals[i] += getLodgingCostForDay(i, false);
+        dailyActualTotals[i] += getLodgingCostForDay(i, true);
       }
 
-      const grandTotalBase = majorTotal + lodgingTotal + diningTotal + spotTotal + transitTotal + otherTotal;
-      const grandTotalForeign = convertAmount(grandTotalBase, baseCur, foreignCur);
-      const perPersonBase = grandTotalBase / memberCount;
-      const perPersonForeign = convertAmount(perPersonBase, baseCur, foreignCur);
+      const totalBudgetBase = budgetMajor + budgetLodging + budgetDining + spotBudget() + budgetTransit + budgetOther;
+      const totalActualBase = actualMajor + actualLodging + actualDining + actualSpot + actualTransit + actualOther;
+
+      function spotBudget() { return budgetSpot; }
+
+      const totalBudgetForeign = convertAmount(totalBudgetBase, baseCur, foreignCur);
+      const totalActualForeign = convertAmount(totalActualBase, baseCur, foreignCur);
+      
+      const perPersonBudgetBase = totalBudgetBase / memberCount;
+      const perPersonActualBase = totalActualBase / memberCount;
+
+      const diffBase = totalBudgetBase - totalActualBase; // 正數表示節省結餘，負數表示超支
 
       return {
-        grandTotalBase,
-        grandTotalForeign,
-        perPersonBase,
-        perPersonForeign,
+        totalBudgetBase,
+        totalActualBase,
+        totalBudgetForeign,
+        totalActualForeign,
+        perPersonBudgetBase,
+        perPersonActualBase,
+        diffBase,
         categories: {
-          major: majorTotal,
-          lodging: lodgingTotal,
-          dining: diningTotal,
-          spot: spotTotal,
-          transit: transitTotal,
-          other: otherTotal
+          major: { budget: budgetMajor, actual: actualMajor },
+          lodging: { budget: budgetLodging, actual: actualLodging },
+          dining: { budget: budgetDining, actual: actualDining },
+          spot: { budget: budgetSpot, actual: actualSpot },
+          transit: { budget: budgetTransit, actual: actualTransit },
+          other: { budget: budgetOther, actual: actualOther }
         },
-        dailyTotals
+        dailyActualTotals,
+        dailyBudgetTotals
       };
     }
 
-    // 格式化貨幣數字
     function formatCurrency(num, digits = 0) {
       if (isNaN(num)) return "0";
       return Number(num).toLocaleString('zh-TW', {
@@ -2332,14 +2240,12 @@
       });
     }
 
-    // 切換顯示幣別
     function toggleDisplayCurrency() {
       appState.tripInfo.displayCurrency = appState.tripInfo.displayCurrency === "base" ? "foreign" : "base";
       saveState();
       renderAll();
     }
 
-    // 渲染整個介面
     function renderAll() {
       renderHeader();
       renderSidebarDashboard();
@@ -2347,7 +2253,6 @@
       renderMainView();
     }
 
-    // 渲染頂部 Header 資訊
     function renderHeader() {
       const trip = appState.tripInfo;
       document.getElementById("tripTitleText").textContent = trip.title;
@@ -2357,60 +2262,79 @@
       const isBase = trip.displayCurrency === "base";
       const curName = isBase ? trip.baseCurrency : trip.foreignCurrency;
       document.getElementById("currencyToggleText").textContent = `顯示: ${curName}`;
-      document.getElementById("displayCurrencySymbol").textContent = curName;
       document.getElementById("rateHintBadge").textContent = `1 ${trip.foreignCurrency} ≈ ${trip.exchangeRate} ${trip.baseCurrency}`;
       document.getElementById("memberCountLabel").textContent = trip.memberCount;
     }
 
-    // 渲染左側統計看板
+    // 渲染左側統計看板 (預算 vs 實付對比)
     function renderSidebarDashboard() {
       const stats = calculateStatistics();
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
-      const displayTotal = isBase ? stats.grandTotalBase : stats.grandTotalForeign;
-      const displayPerPerson = isBase ? stats.perPersonBase : stats.perPersonForeign;
       const curCode = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
-      // Hero 金額
-      document.getElementById("totalExpenditureDisplay").textContent = formatCurrency(displayTotal);
-      document.getElementById("perPersonExpenditureDisplay").textContent = `${formatCurrency(displayPerPerson)} ${curCode}`;
-      
-      const foreignAlt = isBase ? stats.grandTotalForeign : stats.grandTotalBase;
+      const displayBudget = isBase ? stats.totalBudgetBase : stats.totalBudgetForeign;
+      const displayActual = isBase ? stats.totalActualBase : stats.totalActualForeign;
+      const displayPerPersonActual = isBase ? stats.perPersonActualBase : convertAmount(stats.perPersonActualBase, trip.baseCurrency, trip.foreignCurrency);
+
+      document.getElementById("totalBudgetDisplay").textContent = `${formatCurrency(displayBudget)} ${curCode}`;
+      document.getElementById("totalActualDisplay").textContent = `${formatCurrency(displayActual)} ${curCode}`;
+      document.getElementById("perPersonActualDisplay").textContent = `${formatCurrency(displayPerPersonActual)} ${curCode}`;
+
+      const foreignAltActual = isBase ? stats.totalActualForeign : stats.totalActualBase;
       const foreignAltCode = isBase ? trip.foreignCurrency : trip.baseCurrency;
-      document.getElementById("foreignExpenditureDisplay").textContent = `${formatCurrency(foreignAlt)} ${foreignAltCode}`;
+      document.getElementById("foreignActualDisplay").textContent = `¥ ${formatCurrency(foreignAltActual)} ${foreignAltCode}`;
+
+      // 差額徽章
+      const diffEl = document.getElementById("heroVarianceBadge");
+      const diffVal = isBase ? stats.diffBase : convertAmount(stats.diffBase, trip.baseCurrency, trip.foreignCurrency);
+
+      if (diffVal > 0) {
+        diffEl.className = "diff-badge saving";
+        diffEl.textContent = `結餘節省 +${formatCurrency(diffVal)} ${curCode}`;
+      } else if (diffVal < 0) {
+        diffEl.className = "diff-badge over";
+        diffEl.textContent = `已超支 -${formatCurrency(Math.abs(diffVal))} ${curCode}`;
+      } else {
+        diffEl.className = "diff-badge matched";
+        diffEl.textContent = `符合預算 (0 ${curCode})`;
+      }
 
       // 手機底部預覽
-      document.getElementById("mobileTotalPreview").textContent = `${formatCurrency(displayTotal)} ${curCode}`;
+      document.getElementById("mobileTotalPreview").textContent = `${formatCurrency(displayActual)} / ${formatCurrency(displayBudget)} ${curCode}`;
 
       renderCategoryBreakdown(stats);
       renderDailyTrend(stats);
     }
 
-    // 渲染分類佔比列表與進度條
     function renderCategoryBreakdown(stats) {
       const cats = [
-        { key: "major", name: "大項交通/固定支出", color: "var(--cat-major)", total: stats.categories.major, icon: "✈️" },
-        { key: "lodging", name: "住宿費用", color: "var(--cat-lodging)", total: stats.categories.lodging, icon: "🏨" },
-        { key: "dining", name: "每日餐食", color: "var(--cat-dining)", total: stats.categories.dining, icon: "🍜" },
-        { key: "spot", name: "每日景點門票", color: "var(--cat-spot)", total: stats.categories.spot, icon: "🎫" },
-        { key: "transit", name: "每日市區交通", color: "var(--cat-transit)", total: stats.categories.transit, icon: "🚇" },
-        { key: "other", name: "購物與其他", color: "var(--cat-other)", total: stats.categories.other, icon: "🛍️" }
+        { key: "major", name: "大項交通/固定", color: "var(--cat-major)", data: stats.categories.major, icon: "✈️" },
+        { key: "lodging", name: "住宿費用", color: "var(--cat-lodging)", data: stats.categories.lodging, icon: "🏨" },
+        { key: "dining", name: "每日餐食", color: "var(--cat-dining)", data: stats.categories.dining, icon: "🍜" },
+        { key: "spot", name: "每日景點門票", color: "var(--cat-spot)", data: stats.categories.spot, icon: "🎫" },
+        { key: "transit", name: "每日市區交通", color: "var(--cat-transit)", data: stats.categories.transit, icon: "🚇" },
+        { key: "other", name: "購物與其他", color: "var(--cat-other)", data: stats.categories.other, icon: "🛍️" }
       ];
 
-      const grandTotal = stats.grandTotalBase > 0 ? stats.grandTotalBase : 1;
+      const grandActual = stats.totalActualBase > 0 ? stats.totalActualBase : 1;
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
 
       const barContainer = document.getElementById("stackedBarContainer");
       barContainer.innerHTML = cats.map(c => {
-        const pct = ((c.total / grandTotal) * 100).toFixed(1);
+        const pct = ((c.data.actual / grandActual) * 100).toFixed(1);
         return `<div class="stacked-bar-seg" style="background: ${c.color}; width: ${pct}%;" title="${c.name}: ${pct}%"></div>`;
       }).join("");
 
       const listEl = document.getElementById("categoryBreakdownList");
       listEl.innerHTML = cats.map(c => {
-        const pct = ((c.total / grandTotal) * 100).toFixed(1);
-        const amountDisplay = isBase ? c.total : convertAmount(c.total, trip.baseCurrency, trip.foreignCurrency);
+        const pct = ((c.data.actual / grandActual) * 100).toFixed(1);
+        const actualDisp = isBase ? c.data.actual : convertAmount(c.data.actual, trip.baseCurrency, trip.foreignCurrency);
+        const budgetDisp = isBase ? c.data.budget : convertAmount(c.data.budget, trip.baseCurrency, trip.foreignCurrency);
+        const diff = c.data.budget - c.data.actual;
+        const diffText = diff > 0 ? `省 ${formatCurrency(diff)}` : (diff < 0 ? `超 ${formatCurrency(Math.abs(diff))}` : '平');
+
         return `
           <div class="category-row" onclick="filterByCategory('${c.key}')">
             <div class="category-info">
@@ -2418,15 +2342,14 @@
               <span class="category-name">${c.icon} ${c.name}</span>
             </div>
             <div class="category-amounts">
-              <span class="category-amount-val">${formatCurrency(amountDisplay)}</span>
-              <span class="category-pct">${pct}%</span>
+              <span class="category-amount-val">${formatCurrency(actualDisp)} <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(${pct}%)</span></span>
+              <span class="category-amount-sub">預算 ${formatCurrency(budgetDisp)} ‧ ${diffText}</span>
             </div>
           </div>
         `;
       }).join("");
     }
 
-    // 渲染每日支出趨勢迷你直條圖
     function renderDailyTrend(stats) {
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
       const chartEl = document.getElementById("dailyTrendChart");
@@ -2435,23 +2358,23 @@
 
       let maxDaily = 1;
       for (let i = 1; i <= daysCount; i++) {
-        if (stats.dailyTotals[i] > maxDaily) maxDaily = stats.dailyTotals[i];
+        if (stats.dailyActualTotals[i] > maxDaily) maxDaily = stats.dailyActualTotals[i];
       }
 
-      const sumDaily = stats.dailyTotals.slice(1).reduce((a, b) => a + b, 0);
-      const avg = sumDaily / Math.max(1, daysCount);
+      const sumActual = stats.dailyActualTotals.slice(1).reduce((a, b) => a + b, 0);
+      const avg = sumActual / Math.max(1, daysCount);
       const avgDisplay = isBase ? avg : convertAmount(avg, trip.baseCurrency, trip.foreignCurrency);
-      document.getElementById("dailyAvgDisplay").textContent = `日均 ${formatCurrency(avgDisplay)} ${isBase ? trip.baseCurrency : trip.foreignCurrency}`;
+      document.getElementById("dailyAvgDisplay").textContent = `實付日均 ${formatCurrency(avgDisplay)} ${isBase ? trip.baseCurrency : trip.foreignCurrency}`;
 
       let html = "";
       for (let i = 1; i <= daysCount; i++) {
-        const dayCost = stats.dailyTotals[i];
+        const dayCost = stats.dailyActualTotals[i];
         const heightPct = Math.max(12, Math.round((dayCost / maxDaily) * 100));
         const dayDisplay = isBase ? dayCost : convertAmount(dayCost, trip.baseCurrency, trip.foreignCurrency);
         const isActive = currentSelectedDay === i;
 
         html += `
-          <div class="daily-col" onclick="selectDayTab(${i})" title="第 ${i} 天: ${formatCurrency(dayDisplay)}">
+          <div class="daily-col" onclick="selectDayTab(${i})" title="第 ${i} 天實付: ${formatCurrency(dayDisplay)}">
             <div class="daily-bar-wrap">
               <div class="daily-bar-fill ${isActive ? 'active' : ''}" style="height: ${heightPct}%;"></div>
             </div>
@@ -2462,7 +2385,6 @@
       chartEl.innerHTML = html;
     }
 
-    // 渲染天數切換標籤列
     function renderDaysNav() {
       const navEl = document.getElementById("daysNavBar");
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
@@ -2509,7 +2431,6 @@
       }
     }
 
-    // 渲染主內容區 (自適應加寬)
     function renderMainView() {
       const container = document.getElementById("viewContainer");
       const trip = appState.tripInfo;
@@ -2521,37 +2442,50 @@
         const day = currentSelectedDay;
         const dayItems = appState.dailyExpenses.filter(e => Number(e.day) === day);
         
-        const dayLodgingBase = getLodgingCostForDay(day);
-        const dayLodgingDisplay = isBase ? dayLodgingBase : convertAmount(dayLodgingBase, trip.baseCurrency, trip.foreignCurrency);
+        const dayLodgingActualBase = getLodgingCostForDay(day, true);
+        const dayLodgingBudgetBase = getLodgingCostForDay(day, false);
+        const dayLodgingDisplay = isBase ? dayLodgingActualBase : convertAmount(dayLodgingActualBase, trip.baseCurrency, trip.foreignCurrency);
 
         const diningItems = dayItems.filter(e => e.category === "dining");
         const spotItems = dayItems.filter(e => e.category === "spot");
         const transitItems = dayItems.filter(e => e.category === "transit");
         const otherItems = dayItems.filter(e => e.category === "other" || e.category === "shopping");
 
-        let dayItemsBase = 0;
+        let dayActualBase = 0, dayBudgetBase = 0;
         dayItems.forEach(item => {
-          const raw = calcItemTotalCost(item);
-          dayItemsBase += convertAmount(raw, item.currency, trip.baseCurrency);
+          const aRaw = calcItemTotalCost(item, true);
+          const bRaw = calcItemTotalCost(item, false);
+          dayActualBase += convertAmount(aRaw, item.currency, trip.baseCurrency);
+          dayBudgetBase += convertAmount(bRaw, item.currency, trip.baseCurrency);
         });
-        const dayTotalBase = dayItemsBase + dayLodgingBase;
-        const dayTotalDisplay = isBase ? dayTotalBase : convertAmount(dayTotalBase, trip.baseCurrency, trip.foreignCurrency);
-        const dayPerPerson = dayTotalDisplay / trip.memberCount;
+
+        const dayTotalActual = dayActualBase + dayLodgingActualBase;
+        const dayTotalBudget = dayBudgetBase + dayLodgingBudgetBase;
+        const dayDiff = dayTotalBudget - dayTotalActual;
+
+        const dayActualDisplay = isBase ? dayTotalActual : convertAmount(dayTotalActual, trip.baseCurrency, trip.foreignCurrency);
+        const dayBudgetDisplay = isBase ? dayTotalBudget : convertAmount(dayTotalBudget, trip.baseCurrency, trip.foreignCurrency);
 
         container.innerHTML = `
           <div class="day-summary-bar">
             <div class="day-summary-title">
-              <h2>第 ${day} 天支出總計</h2>
-              <span class="day-summary-subtitle">含餐食、景點、每日交通與住宿分攤</span>
+              <h2>第 ${day} 天支出核銷與預算對比</h2>
+              <span class="day-summary-subtitle">含餐食、景點、每日市區交通與住宿攤提</span>
             </div>
             <div class="day-metrics">
               <div class="metric-pill">
-                <span class="metric-pill-label">該日全團總額</span>
-                <span class="metric-pill-val">${formatCurrency(dayTotalDisplay)} ${targetCur}</span>
+                <span class="metric-pill-label">該日實付總計</span>
+                <span class="metric-pill-val" style="color: #0284c7;">${formatCurrency(dayActualDisplay)} ${targetCur}</span>
               </div>
               <div class="metric-pill">
-                <span class="metric-pill-label">每人當日分攤</span>
-                <span class="metric-pill-val">${formatCurrency(dayPerPerson)} ${targetCur}</span>
+                <span class="metric-pill-label">該日預算</span>
+                <span class="metric-pill-val">${formatCurrency(dayBudgetDisplay)} ${targetCur}</span>
+              </div>
+              <div class="metric-pill">
+                <span class="metric-pill-label">當日差額</span>
+                <span class="diff-badge ${dayDiff >= 0 ? 'saving' : 'over'}">
+                  ${dayDiff >= 0 ? '結餘 +' : '超支 -'}${formatCurrency(Math.abs(dayDiff))} ${targetCur}
+                </span>
               </div>
             </div>
           </div>
@@ -2559,7 +2493,7 @@
           ${renderDayLodgingBanner(day, dayLodgingDisplay, targetCur)}
           ${renderCategoryCard("🍜 每日餐食", "dining", diningItems, day, "dining")}
           ${renderCategoryCard("🎫 每日景點門票與活動", "spot", spotItems, day, "spot")}
-          ${renderCategoryCard("🚇 每日交通 (地鐵/計程車/公車)", "transit", transitItems, day, "transit")}
+          ${renderCategoryCard("🚇 每日市區交通 (可編輯路線/工具)", "transit", transitItems, day, "transit")}
           ${otherItems.length > 0 ? renderCategoryCard("🛍️ 當日其他與購物", "other", otherItems, day, "other") : ""}
         `;
         return;
@@ -2570,8 +2504,8 @@
         container.innerHTML = `
           <div class="day-summary-bar">
             <div class="day-summary-title">
-              <h2>✈️ 大項交通支出與住宿管理</h2>
-              <span class="day-summary-subtitle">機票、跨城交通、保險與多模式住宿精算</span>
+              <h2>✈️ 大項交通支出與住宿管理 (支援完整編輯)</h2>
+              <span class="day-summary-subtitle">國際往返機票、跨城高鐵、跨省包車、保險與住宿多模式精算</span>
             </div>
           </div>
 
@@ -2579,12 +2513,12 @@
             <div class="group-header">
               <div class="group-title">
                 <span class="group-tag" style="background: var(--cat-major-bg); color: var(--cat-major);">大項交通</span>
-                <span>跨城機票/高鐵/保險/固定費用</span>
+                <span>跨城機票/高鐵/包車/保險 (點擊右側鉛筆可編輯)</span>
               </div>
               <div class="group-header-right">
                 <button class="add-item-btn" onclick="openAddExpenseModal('major')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                  <span>新增大項</span>
+                  <span>新增大項交通</span>
                 </button>
               </div>
             </div>
@@ -2619,17 +2553,23 @@
       container.innerHTML = `
         <div class="day-summary-bar">
           <div class="day-summary-title">
-            <h2>全旅程總覽</h2>
+            <h2>全旅程總覽 (預算 vs 實際支出)</h2>
             <span class="day-summary-subtitle">完整收錄大項交通、住宿與各天餐食、景點及日常交通</span>
           </div>
           <div class="day-metrics">
             <div class="metric-pill">
-              <span class="metric-pill-label">旅程總支出</span>
-              <span class="metric-pill-val">${formatCurrency(isBase ? stats.grandTotalBase : stats.grandTotalForeign)} ${targetCur}</span>
+              <span class="metric-pill-label">實際總支出</span>
+              <span class="metric-pill-val" style="color: #0284c7;">${formatCurrency(isBase ? stats.totalActualBase : stats.totalActualForeign)} ${targetCur}</span>
             </div>
             <div class="metric-pill">
-              <span class="metric-pill-label">每人平均</span>
-              <span class="metric-pill-val">${formatCurrency(isBase ? stats.perPersonBase : stats.perPersonForeign)} ${targetCur}</span>
+              <span class="metric-pill-label">預估總預算</span>
+              <span class="metric-pill-val">${formatCurrency(isBase ? stats.totalBudgetBase : stats.totalBudgetForeign)} ${targetCur}</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-pill-label">總差額</span>
+              <span class="diff-badge ${stats.diffBase >= 0 ? 'saving' : 'over'}">
+                ${stats.diffBase >= 0 ? '結餘 +' : '超支 -'}${formatCurrency(Math.abs(stats.diffBase))} ${targetCur}
+              </span>
             </div>
           </div>
         </div>
@@ -2638,7 +2578,7 @@
           <div class="group-header">
             <div class="group-title">
               <span class="group-tag" style="background: var(--cat-major-bg); color: var(--cat-major);">大項交通</span>
-              <span>固定機票/高鐵/保險</span>
+              <span>固定機票/高鐵/保險 (點擊右側鉛筆可編輯)</span>
             </div>
             <div class="group-header-right">
               <button class="add-item-btn" onclick="openAddExpenseModal('major')">
@@ -2714,12 +2654,15 @@
       const isBase = trip.displayCurrency === "base";
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
-      let subtotalBase = 0;
+      let subtotalActualBase = 0, subtotalBudgetBase = 0;
       items.forEach(it => {
-        const raw = calcItemTotalCost(it);
-        subtotalBase += convertAmount(raw, it.currency, trip.baseCurrency);
+        const aRaw = calcItemTotalCost(it, true);
+        const bRaw = calcItemTotalCost(it, false);
+        subtotalActualBase += convertAmount(aRaw, it.currency, trip.baseCurrency);
+        subtotalBudgetBase += convertAmount(bRaw, it.currency, trip.baseCurrency);
       });
-      const subtotalDisplay = isBase ? subtotalBase : convertAmount(subtotalBase, trip.baseCurrency, trip.foreignCurrency);
+      const subtotalActualDisplay = isBase ? subtotalActualBase : convertAmount(subtotalActualBase, trip.baseCurrency, trip.foreignCurrency);
+      const subtotalBudgetDisplay = isBase ? subtotalBudgetBase : convertAmount(subtotalBudgetBase, trip.baseCurrency, trip.foreignCurrency);
 
       return `
         <div class="expense-group-card">
@@ -2729,7 +2672,7 @@
               <span>${title}</span>
             </div>
             <div class="group-header-right">
-              <span class="group-subtotal">小計: ${formatCurrency(subtotalDisplay)} ${targetCur}</span>
+              <span class="group-subtotal">實付: ${formatCurrency(subtotalActualDisplay)} / 預算: ${formatCurrency(subtotalBudgetDisplay)} ${targetCur}</span>
               <button class="add-item-btn" onclick="openAddExpenseModal('${catKey}', ${day})">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 <span>新增</span>
@@ -2752,15 +2695,29 @@
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
-      const totalRaw = calcItemTotalCost(item);
-      const totalInTarget = convertAmount(totalRaw, item.currency, targetCur);
-      const perPersonInTarget = totalInTarget / trip.memberCount;
+
+      const totalActualRaw = calcItemTotalCost(item, true);
+      const totalBudgetRaw = calcItemTotalCost(item, false);
+
+      const actualInTarget = convertAmount(totalActualRaw, item.currency, targetCur);
+      const budgetInTarget = convertAmount(totalBudgetRaw, item.currency, targetCur);
+      const perPersonActual = actualInTarget / trip.memberCount;
+
+      const diff = totalBudgetRaw - totalActualRaw;
+      let diffBadge = "";
+      if (item.isPaid === false) {
+        diffBadge = `<span class="diff-badge unpaid">⏳ 待結算</span>`;
+      } else if (diff > 0) {
+        diffBadge = `<span class="diff-badge saving">省 ${formatCurrency(convertAmount(diff, item.currency, targetCur))}</span>`;
+      } else if (diff < 0) {
+        diffBadge = `<span class="diff-badge over">超 ${formatCurrency(convertAmount(Math.abs(diff), item.currency, targetCur))}</span>`;
+      }
 
       const pricingBadge = item.pricingType === "per_person" ? "每人" : "全團";
       const subtypeLabels = {
         breakfast: "早餐", lunch: "午餐", dinner: "晚餐", snack: "小吃/點心",
-        ticket: "門票", activity: "體驗", metro: "地鐵/捷運", taxi: "計程車/叫車",
-        bus: "公車", flight: "機票", train: "高鐵", gift: "伴手禮"
+        ticket: "門票", activity: "體驗", metro: "地鐵", taxi: "計程車/滴滴",
+        bus: "公車", bike: "單車", charter_day: "包車", flight: "機票", train: "高鐵", gift: "伴手禮"
       };
       const subLabel = subtypeLabels[item.subType] || "";
 
@@ -2769,19 +2726,27 @@
           <div class="item-left">
             ${subLabel ? `<span class="item-subbadge">${subLabel}</span>` : ''}
             <div class="item-info">
-              <span class="item-name">${item.name}</span>
-              ${item.note ? `<span class="item-note">${item.note}</span>` : ''}
+              <div class="item-title-line">
+                <span class="item-name">${item.name}</span>
+                ${item.route ? `<span style="font-size: 11px; color: var(--cat-transit); font-weight: 600;">[${item.route}]</span>` : ''}
+                ${diffBadge}
+              </div>
+              <span class="item-note">
+                ${pricingBadge} ‧ 預算 ${formatCurrency(item.amount)} ${item.currency}
+                ${item.actualAmount !== undefined && item.actualAmount !== item.amount ? ` (實付 ${formatCurrency(item.actualAmount)} ${item.currency})` : ''}
+                ${item.note ? ` ‧ ${item.note}` : ''}
+              </span>
             </div>
           </div>
 
           <div class="item-right">
             <div class="item-pricing-calc">
-              <div class="item-primary-cost">${formatCurrency(totalInTarget)} ${targetCur}</div>
-              <div class="item-secondary-cost">(${pricingBadge} ${formatCurrency(item.amount)} ${item.currency} ‧ 人均 ${formatCurrency(perPersonInTarget)})</div>
+              <div class="item-cost-primary">${formatCurrency(actualInTarget)} ${targetCur}</div>
+              <div class="item-cost-budget">預算 ${formatCurrency(budgetInTarget)} ‧ 人均 ${formatCurrency(perPersonActual)}</div>
             </div>
 
             <div class="item-actions">
-              <button class="icon-btn" onclick="openEditDailyExpenseModal('${item.id}')" title="編輯">
+              <button class="icon-btn" onclick="openEditDailyExpenseModal('${item.id}')" title="編輯項目 (含交通工具與實付)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
               </button>
               <button class="icon-btn delete" onclick="deleteDailyExpense('${item.id}')" title="刪除">
@@ -2793,6 +2758,7 @@
       `;
     }
 
+    // 渲染大項交通清單 (包含編輯大項交通選項按鈕)
     function renderMajorItemsList() {
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
@@ -2803,28 +2769,53 @@
       }
 
       return appState.majorExpenses.map(item => {
-        const totalRaw = calcItemTotalCost(item);
-        const totalInTarget = convertAmount(totalRaw, item.currency, targetCur);
-        const perPersonInTarget = totalInTarget / trip.memberCount;
+        const totalActualRaw = calcItemTotalCost(item, true);
+        const totalBudgetRaw = calcItemTotalCost(item, false);
+        const actualInTarget = convertAmount(totalActualRaw, item.currency, targetCur);
+        const budgetInTarget = convertAmount(totalBudgetRaw, item.currency, targetCur);
+        const perPersonActual = actualInTarget / trip.memberCount;
+
+        const diff = totalBudgetRaw - totalActualRaw;
+        let diffBadge = "";
+        if (item.isPaid === false) {
+          diffBadge = `<span class="diff-badge unpaid">⏳ 待付</span>`;
+        } else if (diff > 0) {
+          diffBadge = `<span class="diff-badge saving">省 ${formatCurrency(convertAmount(diff, item.currency, targetCur))}</span>`;
+        } else if (diff < 0) {
+          diffBadge = `<span class="diff-badge over">超 ${formatCurrency(convertAmount(Math.abs(diff), item.currency, targetCur))}</span>`;
+        }
+
         const pricingBadge = item.pricingType === "per_person" ? "每人" : "全團";
 
         return `
           <div class="expense-item-row">
             <div class="item-left">
-              <span class="item-subbadge" style="background: var(--cat-major-bg); color: var(--cat-major);">大項支出</span>
+              <span class="item-subbadge" style="background: var(--cat-major-bg); color: var(--cat-major);">大項交通</span>
               <div class="item-info">
-                <span class="item-name">${item.name}</span>
-                ${item.note ? `<span class="item-note">${item.note}</span>` : ''}
+                <div class="item-title-line">
+                  <span class="item-name">${item.name}</span>
+                  ${item.route ? `<span style="font-size: 11px; color: var(--cat-transit); font-weight: 600;">[${item.route}]</span>` : ''}
+                  ${diffBadge}
+                </div>
+                <span class="item-note">
+                  ${pricingBadge} ‧ 預算 ${formatCurrency(item.amount)} ${item.currency}
+                  ${item.actualAmount !== undefined && item.actualAmount !== item.amount ? ` (實付 ${formatCurrency(item.actualAmount)} ${item.currency})` : ''}
+                  ${item.note ? ` ‧ ${item.note}` : ''}
+                </span>
               </div>
             </div>
 
             <div class="item-right">
               <div class="item-pricing-calc">
-                <div class="item-primary-cost">${formatCurrency(totalInTarget)} ${targetCur}</div>
-                <div class="item-secondary-cost">(${pricingBadge} ${formatCurrency(item.amount)} ${item.currency} ‧ 人均 ${formatCurrency(perPersonInTarget)})</div>
+                <div class="item-cost-primary">${formatCurrency(actualInTarget)} ${targetCur}</div>
+                <div class="item-cost-budget">預算 ${formatCurrency(budgetInTarget)} ‧ 人均 ${formatCurrency(perPersonActual)}</div>
               </div>
 
               <div class="item-actions">
+                <!-- ✏️ 大項交通編輯選項按鈕 -->
+                <button class="icon-btn" onclick="openEditMajorExpenseModal('${item.id}')" title="編輯大項交通選項 (模式、路線、預算/實付)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
                 <button class="icon-btn delete" onclick="deleteMajorExpense('${item.id}')" title="刪除">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
@@ -2856,22 +2847,31 @@
           modeLabel = `全趟旅程 (${trip.daysCount} 天包棟均攤)`;
         }
 
-        let totalRaw = Number(acc.amount) || 0;
+        let bRaw = Number(acc.amount || 0);
+        let aRaw = acc.actualAmount !== undefined && acc.actualAmount !== null ? Number(acc.actualAmount) : bRaw;
         if (acc.mode === "range" && acc.pricingType === "per_night") {
-          totalRaw = totalRaw * nights;
+          bRaw *= nights;
+          aRaw *= nights;
         }
 
-        const totalInTarget = convertAmount(totalRaw, acc.currency, targetCur);
-        const perPersonInTarget = totalInTarget / trip.memberCount;
+        const actualInTarget = convertAmount(aRaw, acc.currency, targetCur);
+        const budgetInTarget = convertAmount(bRaw, acc.currency, targetCur);
+        const perPersonActual = actualInTarget / trip.memberCount;
+        const diff = bRaw - aRaw;
 
         return `
           <div class="expense-item-row">
             <div class="item-left">
               <span class="item-subbadge" style="background: var(--cat-lodging-bg); color: var(--cat-lodging);">🏨 ${modeLabel}</span>
               <div class="item-info">
-                <span class="item-name">${acc.name}</span>
+                <div class="item-title-line">
+                  <span class="item-name">${acc.name}</span>
+                  ${diff > 0 ? `<span class="diff-badge saving">省 ${formatCurrency(convertAmount(diff, acc.currency, targetCur))}</span>` : ''}
+                  ${diff < 0 ? `<span class="diff-badge over">超 ${formatCurrency(convertAmount(Math.abs(diff), acc.currency, targetCur))}</span>` : ''}
+                </div>
                 <span class="item-note">
                   ${acc.pricingType === "per_night" ? `每晚 ${formatCurrency(acc.amount)} ${acc.currency}` : `整段總價 ${formatCurrency(acc.amount)} ${acc.currency}`}
+                  ${acc.actualAmount !== undefined && acc.actualAmount !== acc.amount ? ` (實付 ${formatCurrency(acc.actualAmount)} ${acc.currency})` : ''}
                   ${acc.note ? ` ‧ ${acc.note}` : ''}
                 </span>
               </div>
@@ -2879,11 +2879,14 @@
 
             <div class="item-right">
               <div class="item-pricing-calc">
-                <div class="item-primary-cost">${formatCurrency(totalInTarget)} ${targetCur}</div>
-                <div class="item-secondary-cost">(人均 ${formatCurrency(perPersonInTarget)})</div>
+                <div class="item-cost-primary">${formatCurrency(actualInTarget)} ${targetCur}</div>
+                <div class="item-cost-budget">預算 ${formatCurrency(budgetInTarget)} ‧ 人均 ${formatCurrency(perPersonActual)}</div>
               </div>
 
               <div class="item-actions">
+                <button class="icon-btn" onclick="openEditAccommodationModal('${acc.id}')" title="編輯住宿">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
                 <button class="icon-btn delete" onclick="deleteAccommodation('${acc.id}')" title="刪除">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
@@ -2913,7 +2916,7 @@
               </div>
               <div class="group-header-right">
                 <span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                  <span>查看詳情</span>
+                  <span>查看詳情與對比</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
                 </span>
               </div>
@@ -2937,6 +2940,7 @@
     // Modal 與操作邏輯
     function openAddExpenseModal(defaultCat = "dining", targetDay = null) {
       document.getElementById("editItemId").value = "";
+      document.getElementById("editItemTargetType").value = "daily";
       document.getElementById("expenseModalTitle").textContent = "新增支出項目";
       document.getElementById("expenseForm").reset();
 
@@ -2947,6 +2951,7 @@
         document.getElementById("itemDaySelect").value = currentSelectedDay;
       }
 
+      document.getElementById("categorySelectGroup").style.display = "flex";
       const catRadios = document.getElementsByName("modalCategory");
       for (const r of catRadios) {
         if (r.value === defaultCat) {
@@ -2957,6 +2962,7 @@
       onCategoryChanged(defaultCat);
 
       document.getElementById("itemCurrencySelect").value = appState.tripInfo.foreignCurrency;
+      document.getElementById("itemIsPaidCheckbox").checked = true;
       document.getElementById("expenseModal").classList.add("active");
     }
 
@@ -2980,21 +2986,62 @@
       if (count >= 2) endSelect.value = 2;
     }
 
+    // 當切換支出大類別時
     function onCategoryChanged(cat) {
       const dayRow = document.getElementById("dayAndSubtypeRow");
       const lodgingFields = document.getElementById("lodgingSpecificFields");
+      const transportPanel = document.getElementById("transportSpecificPanel");
+      const transportModeSelect = document.getElementById("transportModeSelect");
       const subtypeSelect = document.getElementById("itemSubtypeSelect");
 
       if (cat === "lodging") {
         dayRow.style.display = "none";
         lodgingFields.style.display = "block";
+        transportPanel.style.display = "none";
         updateLodgingNights();
       } else if (cat === "major") {
         dayRow.style.display = "none";
         lodgingFields.style.display = "none";
+        transportPanel.style.display = "flex";
+
+        // 大項交通模式選項
+        transportModeSelect.innerHTML = `
+          <option value="flight_round">✈️ 往返機票 (去程+回程)</option>
+          <option value="flight_single">✈️ 單程機票</option>
+          <option value="train_highspeed">🚄 跨城高鐵 / 動車</option>
+          <option value="train_normal">🚆 長途火車</option>
+          <option value="charter_bus">🚐 跨城專車 / 商務包車</option>
+          <option value="car_rental">🚗 租車自駕</option>
+          <option value="ferry">🚢 長途客輪 / 渡輪</option>
+          <option value="insurance">🛡️ 旅遊平安與不便險</option>
+          <option value="visa">🛂 簽證 / 證件辦理</option>
+          <option value="other_major">📦 其他固定大項</option>
+        `;
+      } else if (cat === "transit") {
+        dayRow.style.display = "grid";
+        lodgingFields.style.display = "none";
+        transportPanel.style.display = "flex";
+
+        // 市區每日交通模式選項
+        transportModeSelect.innerHTML = `
+          <option value="metro">🚇 地鐵 / 捷運</option>
+          <option value="taxi">🚕 計程車 / 滴滴叫車</option>
+          <option value="bus">🚌 市區公車 / 客運</option>
+          <option value="bike">🚲 共享單車</option>
+          <option value="ropeway">🚡 纜車 / 索道 / 渡輪</option>
+          <option value="charter_day">🚐 市區短程包車</option>
+        `;
+
+        subtypeSelect.innerHTML = `
+          <option value="metro">地鐵/捷運</option>
+          <option value="taxi">計程車/叫車滴滴</option>
+          <option value="bus">公車/客運</option>
+          <option value="bike">共享單車</option>
+        `;
       } else {
         dayRow.style.display = "grid";
         lodgingFields.style.display = "none";
+        transportPanel.style.display = "none";
 
         if (cat === "dining") {
           subtypeSelect.innerHTML = `
@@ -3009,13 +3056,6 @@
             <option value="activity">體驗活動/演出</option>
             <option value="guide">專人導覽</option>
           `;
-        } else if (cat === "transit") {
-          subtypeSelect.innerHTML = `
-            <option value="metro">地鐵/捷運</option>
-            <option value="taxi">計程車/叫車滴滴</option>
-            <option value="bus">公車/客運</option>
-            <option value="bike">共享單車</option>
-          `;
         } else {
           subtypeSelect.innerHTML = `
             <option value="gift">伴手禮特產</option>
@@ -3023,6 +3063,14 @@
             <option value="other">其他雜項</option>
           `;
         }
+      }
+    }
+
+    function onTransportModeChanged() {
+      const mode = document.getElementById("transportModeSelect").value;
+      const subtypeSelect = document.getElementById("itemSubtypeSelect");
+      if (mode && subtypeSelect) {
+        subtypeSelect.value = mode;
       }
     }
 
@@ -3047,21 +3095,66 @@
       updateLodgingNights();
     }
 
-    // 儲存支出項目
+    function autoFillActualIfEmpty() {
+      const budgetVal = document.getElementById("itemBudgetAmountInput").value;
+      const actualInput = document.getElementById("itemActualAmountInput");
+      const isPaid = document.getElementById("itemIsPaidCheckbox").checked;
+      if (isPaid && (!actualInput.value || actualInput.value.trim() === "")) {
+        actualInput.value = budgetVal;
+      }
+      updateModalCostDiff();
+    }
+
+    function onPaidStatusToggle() {
+      const isPaid = document.getElementById("itemIsPaidCheckbox").checked;
+      const actualInput = document.getElementById("itemActualAmountInput");
+      if (!isPaid) {
+        actualInput.placeholder = "未支付 (同預算或暫無)";
+      } else {
+        actualInput.placeholder = "輸入實際花費";
+        if (!actualInput.value) actualInput.value = document.getElementById("itemBudgetAmountInput").value;
+      }
+      updateModalCostDiff();
+    }
+
+    function updateModalCostDiff() {
+      const budget = Number(document.getElementById("itemBudgetAmountInput").value) || 0;
+      const actual = Number(document.getElementById("itemActualAmountInput").value) || budget;
+      const diff = budget - actual;
+      const hintEl = document.getElementById("modalCostDiffHint");
+      if (diff > 0) {
+        hintEl.innerHTML = `<span style="color: #059669; font-weight: 700;">差額：結餘節省 +${diff}</span>`;
+      } else if (diff < 0) {
+        hintEl.innerHTML = `<span style="color: #dc2626; font-weight: 700;">差額：超支 -${Math.abs(diff)}</span>`;
+      } else {
+        hintEl.innerHTML = `<span style="color: var(--text-muted);">差額：符合預算 (0)</span>`;
+      }
+    }
+
+    // 儲存支出項目 (支援每日、大項與住宿)
     function handleSaveExpense(e) {
       e.preventDefault();
       const editId = document.getElementById("editItemId").value;
-      const category = document.querySelector('input[name="modalCategory"]:checked').value;
+      const targetType = document.getElementById("editItemTargetType").value;
+      const category = document.querySelector('input[name="modalCategory"]:checked') ? document.querySelector('input[name="modalCategory"]:checked').value : 'major';
+      
       const name = document.getElementById("itemNameInput").value.trim();
-      const amount = Number(document.getElementById("itemAmountInput").value);
+      const budgetAmount = Number(document.getElementById("itemBudgetAmountInput").value);
+      const actualVal = document.getElementById("itemActualAmountInput").value;
+      const actualAmount = (actualVal !== "" && !isNaN(actualVal)) ? Number(actualVal) : budgetAmount;
+      const isPaid = document.getElementById("itemIsPaidCheckbox").checked;
+
       const currency = document.getElementById("itemCurrencySelect").value;
       const pricingType = document.getElementById("itemPricingTypeSelect").value;
       const note = document.getElementById("itemNoteInput").value.trim();
 
-      if (!name || isNaN(amount)) return;
+      const transitMode = document.getElementById("transportModeSelect") ? document.getElementById("transportModeSelect").value : "";
+      const transitRoute = document.getElementById("transportRouteInput") ? document.getElementById("transportRouteInput").value.trim() : "";
 
-      if (category === "lodging") {
-        const mode = document.querySelector('input[name="lodgingMode"]:checked').value;
+      if (!name || isNaN(budgetAmount)) return;
+
+      if (category === "lodging" || targetType === "lodging") {
+        const mode = document.querySelector('input[name="lodgingMode"]:checked') ? document.querySelector('input[name="lodgingMode"]:checked').value : "daily";
         const lodgingPricingMode = document.getElementById("lodgingPricingMode").value;
         const startDay = Number(document.getElementById("lodgingStartDay").value) || 1;
         const endDay = Number(document.getElementById("lodgingEndDay").value) || startDay;
@@ -3076,7 +3169,9 @@
           day: startDay,
           nights,
           pricingType: lodgingPricingMode,
-          amount,
+          amount: budgetAmount,
+          actualAmount,
+          isPaid,
           currency,
           roomCount: 1,
           note
@@ -3089,12 +3184,16 @@
         } else {
           appState.accommodations.push(newLodging);
         }
-      } else if (category === "major") {
+      } else if (category === "major" || targetType === "major") {
         const newMajor = {
           id: editId || ("m_" + Date.now()),
           category: "flight",
+          transitType: transitMode || "flight_round",
+          route: transitRoute,
           name,
-          amount,
+          amount: budgetAmount,
+          actualAmount,
+          isPaid,
           currency,
           pricingType,
           note
@@ -3114,8 +3213,12 @@
           day,
           category,
           subType,
+          transitType: category === "transit" ? (transitMode || subType) : undefined,
+          route: category === "transit" ? transitRoute : undefined,
           name,
-          amount,
+          amount: budgetAmount,
+          actualAmount,
+          isPaid,
           currency,
           pricingType,
           note
@@ -3156,19 +3259,63 @@
       renderAll();
     }
 
+    // ✏️ 編輯大項交通選項 (Major Transport Edit Modal)
+    function openEditMajorExpenseModal(id) {
+      const item = appState.majorExpenses.find(m => m.id === id);
+      if (!item) return;
+
+      openAddExpenseModal("major");
+      document.getElementById("editItemId").value = item.id;
+      document.getElementById("editItemTargetType").value = "major";
+      document.getElementById("expenseModalTitle").textContent = "編輯大項交通與固定支出";
+      document.getElementById("itemNameInput").value = item.name;
+      document.getElementById("itemBudgetAmountInput").value = item.amount;
+      document.getElementById("itemActualAmountInput").value = item.actualAmount !== undefined ? item.actualAmount : item.amount;
+      document.getElementById("itemIsPaidCheckbox").checked = item.isPaid !== false;
+
+      document.getElementById("itemCurrencySelect").value = item.currency || appState.tripInfo.baseCurrency;
+      document.getElementById("itemPricingTypeSelect").value = item.pricingType || "per_person";
+      document.getElementById("itemNoteInput").value = item.note || "";
+
+      if (item.transitType && document.getElementById("transportModeSelect")) {
+        document.getElementById("transportModeSelect").value = item.transitType;
+      }
+      if (item.route && document.getElementById("transportRouteInput")) {
+        document.getElementById("transportRouteInput").value = item.route;
+      }
+
+      updateModalCostDiff();
+    }
+
+    // 編輯每日項目 (包含每日交通工具與實付金額編輯)
     function openEditDailyExpenseModal(id) {
       const item = appState.dailyExpenses.find(e => e.id === id);
       if (!item) return;
 
       openAddExpenseModal(item.category, item.day);
       document.getElementById("editItemId").value = item.id;
-      document.getElementById("expenseModalTitle").textContent = "編輯支出項目";
+      document.getElementById("editItemTargetType").value = "daily";
+      document.getElementById("expenseModalTitle").textContent = `編輯${item.category === 'transit' ? '交通' : '支出'}項目`;
       document.getElementById("itemNameInput").value = item.name;
-      document.getElementById("itemAmountInput").value = item.amount;
+      document.getElementById("itemBudgetAmountInput").value = item.amount;
+      document.getElementById("itemActualAmountInput").value = item.actualAmount !== undefined ? item.actualAmount : item.amount;
+      document.getElementById("itemIsPaidCheckbox").checked = item.isPaid !== false;
+
       document.getElementById("itemCurrencySelect").value = item.currency;
       document.getElementById("itemPricingTypeSelect").value = item.pricingType;
       document.getElementById("itemNoteInput").value = item.note || "";
       document.getElementById("itemSubtypeSelect").value = item.subType || "";
+
+      if (item.category === "transit") {
+        if (item.transitType && document.getElementById("transportModeSelect")) {
+          document.getElementById("transportModeSelect").value = item.transitType;
+        }
+        if (item.route && document.getElementById("transportRouteInput")) {
+          document.getElementById("transportRouteInput").value = item.route;
+        }
+      }
+
+      updateModalCostDiff();
     }
 
     function openEditAccommodationModal(id) {
@@ -3177,9 +3324,13 @@
 
       openAddExpenseModal("lodging");
       document.getElementById("editItemId").value = acc.id;
-      document.getElementById("expenseModalTitle").textContent = "編輯住宿配置";
+      document.getElementById("editItemTargetType").value = "lodging";
+      document.getElementById("expenseModalTitle").textContent = "編輯住宿配置與預算/實付";
       document.getElementById("itemNameInput").value = acc.name;
-      document.getElementById("itemAmountInput").value = acc.amount;
+      document.getElementById("itemBudgetAmountInput").value = acc.amount;
+      document.getElementById("itemActualAmountInput").value = acc.actualAmount !== undefined ? acc.actualAmount : acc.amount;
+      document.getElementById("itemIsPaidCheckbox").checked = acc.isPaid !== false;
+
       document.getElementById("itemCurrencySelect").value = acc.currency;
       document.getElementById("itemNoteInput").value = acc.note || "";
       
@@ -3193,6 +3344,7 @@
       if (acc.endDay) document.getElementById("lodgingEndDay").value = acc.endDay;
       if (acc.pricingType) document.getElementById("lodgingPricingMode").value = acc.pricingType;
       updateLodgingNights();
+      updateModalCostDiff();
     }
 
     function openTripSettingsModal() {
@@ -3267,7 +3419,233 @@
     }
 
     // ==========================================
-    // 匯出 Excel (.xlsx) 專屬核心函式 (SheetJS)
+    // 🔄 一鍵從主規劃手帳 (index.html) 同步資料
+    // ==========================================
+    function syncFromMainPlan() {
+      const roomId = getCloudRoomId();
+      
+      function processPlanSync(plan) {
+        if (!plan) return false;
+
+        const memberCount = Number(plan.memberCount) || 2;
+        const exchangeRate = Number(plan.exchangeRate) || 4.65;
+        const daysCount = (plan.days && plan.days.length) ? plan.days.length : 7;
+        const tripTitle = plan.title || "重慶自由行";
+
+        appState.tripInfo.title = tripTitle;
+        appState.tripInfo.memberCount = memberCount;
+        appState.tripInfo.exchangeRate = exchangeRate;
+        appState.tripInfo.daysCount = daysCount;
+
+        // 1. 同步大項交通 (機票)
+        if (plan.flights && plan.flights.items && plan.flights.items.length > 0) {
+          plan.flights.items.forEach(fl => {
+            const cost = Number(fl.cost) || 0;
+            if (cost > 0) {
+              const existingIdx = appState.majorExpenses.findIndex(m => m.name.includes(fl.flightNo || fl.depAir || "機票"));
+              const itemData = {
+                id: "m_sync_" + (fl.flightNo || Date.now()),
+                category: "flight",
+                transitType: "flight_round",
+                route: `${fl.depAir || "松山"} ⇋ ${fl.arrAir || "江北"}`,
+                name: `${fl.depAir || "出發地"} ⇋ ${fl.arrAir || "目的地"} 航班 (${fl.flightNo || "機票"})`,
+                amount: cost,
+                actualAmount: fl.actualCost ? Number(fl.actualCost) : cost,
+                isPaid: true,
+                currency: fl.currency || "TWD",
+                pricingType: fl.costType === "group" ? "total" : "per_person",
+                note: fl.airline ? `${fl.airline} ${fl.seatClass || ''}` : "主行程同步之航班"
+              };
+              if (existingIdx >= 0) appState.majorExpenses[existingIdx] = itemData;
+              else appState.majorExpenses.push(itemData);
+            }
+          });
+        }
+
+        // 2. 同步住宿
+        if (plan.hotels && plan.hotels.length > 0) {
+          plan.hotels.forEach((h, idx) => {
+            const nights = Number(h.nights) || 1;
+            const cost = Number(h.costTotal || h.costPerNight) || 0;
+            const pricingType = h.costTotal ? "total_stay" : "per_night";
+
+            if (cost > 0 || h.name) {
+              const existingIdx = appState.accommodations.findIndex(a => a.name.includes(h.name));
+              const accData = {
+                id: "acc_sync_" + idx,
+                name: h.name || "預定飯店",
+                mode: nights > 1 ? "range" : "daily",
+                startDay: idx === 0 ? 1 : 4,
+                endDay: idx === 0 ? nights : (4 + nights - 1),
+                day: idx === 0 ? 1 : 4,
+                nights: nights,
+                pricingType: pricingType,
+                amount: cost > 0 ? cost : 800,
+                actualAmount: cost > 0 ? cost : 800,
+                isPaid: true,
+                currency: h.currency || "CNY",
+                roomCount: Number(h.roomCount) || 1,
+                note: h.stayLabel || h.city || "主行程同步飯店"
+              };
+              if (existingIdx >= 0) appState.accommodations[existingIdx] = accData;
+              else appState.accommodations.push(accData);
+            }
+          });
+        }
+
+        // 3. 同步每日時間軸活動
+        if (plan.days && plan.days.length > 0) {
+          plan.days.forEach((dayObj, dayIdx) => {
+            const dayNum = dayIdx + 1;
+            if (dayObj.events && dayObj.events.length > 0) {
+              dayObj.events.forEach(ev => {
+                const bCost = Number(ev.cost) || 0;
+                const aCost = Number(ev.actualCost) || bCost;
+
+                if (bCost > 0 || aCost > 0) {
+                  let cat = "spot";
+                  let sub = "ticket";
+                  const n = (ev.name + " " + (ev.note || "")).toLowerCase();
+
+                  if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓/.test(n)) {
+                    cat = "dining";
+                    sub = /午/.test(n) ? "lunch" : (/晚|夜市/.test(n) ? "dinner" : (/早/.test(n) ? "breakfast" : "snack"));
+                  } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車/.test(n)) {
+                    cat = "transit";
+                    sub = /滴滴|計程車/.test(n) ? "taxi" : (/地鐵|捷運/.test(n) ? "metro" : "bus");
+                  } else if (/伴手禮|特產|底料|買|購物/.test(n)) {
+                    cat = "other";
+                    sub = "gift";
+                  }
+
+                  const existingIdx = appState.dailyExpenses.findIndex(d => d.day === dayNum && d.name === ev.name);
+                  const dailyItem = {
+                    id: "d_sync_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
+                    day: dayNum,
+                    category: cat,
+                    subType: sub,
+                    transitType: cat === "transit" ? sub : undefined,
+                    route: cat === "transit" ? ev.name : undefined,
+                    name: ev.name,
+                    amount: bCost > 0 ? bCost : aCost,
+                    actualAmount: aCost,
+                    isPaid: true,
+                    currency: plan.currencyCode || "CNY",
+                    pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
+                    note: ev.note || ""
+                  };
+
+                  if (existingIdx >= 0) appState.dailyExpenses[existingIdx] = dailyItem;
+                  else appState.dailyExpenses.push(dailyItem);
+                }
+              });
+            }
+          });
+        }
+
+        saveState();
+        renderAll();
+        return true;
+      }
+
+      if (firestoreDb) {
+        updateCloudBadgeUI("syncing", "正在讀取主行程資料...");
+        firestoreDb.collection('travel_planners').doc(roomId).get().then(doc => {
+          let synced = false;
+          if (doc.exists) {
+            const data = doc.data();
+            if (data && data.appState && data.appState.plans) {
+              const activePlanId = data.appState.activePlanId || 'plan-chongqing';
+              const targetPlan = data.appState.plans[activePlanId] || Object.values(data.appState.plans)[0];
+              synced = processPlanSync(targetPlan);
+            }
+          }
+
+          if (!synced) {
+            synced = trySyncFromLocalStorage();
+          }
+
+          if (synced) {
+            alert(`🎉 成功由主規劃手帳同步行程資料！\n已更新：旅程名稱、人數、匯率、機票大項、住宿與各天消費活動。`);
+          } else {
+            alert("未在雲端或本地找到主行程資料，已保留現有帳本。您可直接手動記帳或載入範例。");
+          }
+        }).catch(err => {
+          console.error("同步失敗，嘗試讀取本機", err);
+          if (trySyncFromLocalStorage()) {
+            alert("成功由本機主規劃快取同步行程資料！");
+          }
+        });
+      } else {
+        if (trySyncFromLocalStorage()) {
+          alert("成功由本機主規劃快取同步行程資料！");
+        } else {
+          alert("請確認主行程頁面 (index.html) 是否已儲存過行程。");
+        }
+      }
+
+      function trySyncFromLocalStorage() {
+        try {
+          const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+          if (raw) {
+            const mainAppState = JSON.parse(raw);
+            if (mainAppState.plans) {
+              const activePlanId = mainAppState.activePlanId || 'plan-chongqing';
+              const targetPlan = mainAppState.plans[activePlanId] || Object.values(mainAppState.plans)[0];
+              return processPlanSync(targetPlan);
+            }
+          }
+        } catch(e) {}
+        return false;
+      }
+    }
+
+    function openCloudRoomModal() {
+      const roomId = getCloudRoomId();
+      document.getElementById("cloudRoomInput").value = roomId;
+
+      const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
+      document.getElementById("cloudShareUrlInput").value = shareUrl;
+      document.getElementById("cloudRoomModal").classList.add("active");
+    }
+
+    function closeCloudRoomModal() {
+      document.getElementById("cloudRoomModal").classList.remove("active");
+    }
+
+    function changeCloudRoom() {
+      const newRoom = document.getElementById("cloudRoomInput").value.trim();
+      if (!newRoom) {
+        alert("請輸入房間代碼！");
+        return;
+      }
+      setCloudRoomId(newRoom);
+      
+      const newUrl = `${window.location.pathname}?room=${encodeURIComponent(newRoom)}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      listenCloudRoom(newRoom);
+      closeCloudRoomModal();
+      alert(`已成功切換至房間【${newRoom}】！正在連線雲端資料庫...`);
+    }
+
+    function copyShareRoomUrl() {
+      const input = document.getElementById("cloudShareUrlInput");
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        alert("已複製專屬跨裝置存取連結！\n可直接傳到手機、平板或其他電腦開啟，跨裝置即時共同作業。");
+      }).catch(() => {
+        alert("複製失敗，請手動複製文字方塊中的網址。");
+      });
+    }
+
+    function forcePushToCloud() {
+      pushStateToCloud();
+      alert("已立即推送最新帳本至 Firebase 雲端！");
+    }
+
+    // ==========================================
+    // 匯出 Excel (.xlsx) 包含預算 vs 實付與差額
     // ==========================================
     function exportToExcel() {
       const stats = calculateStatistics();
@@ -3275,119 +3653,121 @@
       const memberCount = trip.memberCount;
       const baseCur = trip.baseCurrency;
       const foreignCur = trip.foreignCurrency;
-      const fileName = `${trip.title}_支出試算表_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = `${trip.title}_預算與實際支出對比報表_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       if (typeof XLSX === "undefined") {
-        console.warn("SheetJS 未連線，改以相容 Excel CSV 格式匯出");
-        exportFallbackCsv();
+        alert("SheetJS 尚未載入完成，請稍候重試");
         return;
       }
 
       const wb = XLSX.utils.book_new();
 
-      // 1. 工作表一：【支出統計總覽】
+      // 1. 工作表一：【支出總覽與預算對比】
       const summaryData = [
-        ["✈️ 旅遊支出統計與預算總表", ""],
+        ["✈️ 旅遊支出總覽與預算 vs 實付對比表", "", "", ""],
         ["旅程名稱", trip.title],
         ["總天數", `${trip.daysCount} 天`],
         ["同行人數", `${trip.memberCount} 人`],
         ["幣別設定", `本幣: ${baseCur} | 當地外幣: ${foreignCur}`],
         ["參考匯率", `1 ${foreignCur} = ${trip.exchangeRate} ${baseCur}`],
-        ["", ""],
-        ["【核心費用指標】", ""],
-        [`全團總支出 (${baseCur})`, stats.grandTotalBase],
-        [`全團總支出 (${foreignCur})`, stats.grandTotalForeign],
-        [`每人平均負擔 (${baseCur})`, stats.perPersonBase],
-        [`每人平均負擔 (${foreignCur})`, stats.perPersonForeign],
-        ["", ""],
-        ["【各類別花費分佈】", "", "", ""],
-        ["支出類別", `全團總額 (${baseCur})`, `每人平均 (${baseCur})`, "佔比 (%)"],
-        ["大項交通/固定支出", stats.categories.major, stats.categories.major / memberCount, ((stats.categories.major / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
-        ["住宿費用總額", stats.categories.lodging, stats.categories.lodging / memberCount, ((stats.categories.lodging / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
-        ["每日餐食小計", stats.categories.dining, stats.categories.dining / memberCount, ((stats.categories.dining / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
-        ["每日景點門票", stats.categories.spot, stats.categories.spot / memberCount, ((stats.categories.spot / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
-        ["每日市區交通", stats.categories.transit, stats.categories.transit / memberCount, ((stats.categories.transit / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
-        ["購物與其他", stats.categories.other, stats.categories.other / memberCount, ((stats.categories.other / (stats.grandTotalBase || 1)) * 100).toFixed(1) + "%"],
-        ["", ""],
-        ["【每日支出統計 (含住宿攤提)】", "", ""],
-        ["日程", `當日全團總支出 (${baseCur})`, `當日每人負擔 (${baseCur})`]
+        ["", "", "", ""],
+        ["【核心收支指標】", `預估預算 (${baseCur})`, `實際支出 (${baseCur})`, "差額 (結餘/超支)"],
+        ["全團總支出", stats.totalBudgetBase, stats.totalActualBase, stats.diffBase >= 0 ? `結餘 +${stats.diffBase}` : `超支 -${Math.abs(stats.diffBase)}`],
+        ["每人平均負擔", stats.perPersonBudgetBase, stats.perPersonActualBase, (stats.diffBase / memberCount) >= 0 ? `結餘 +${(stats.diffBase / memberCount).toFixed(1)}` : `超支 -${Math.abs(stats.diffBase / memberCount).toFixed(1)}`],
+        ["外幣折合總計", stats.totalBudgetForeign, stats.totalActualForeign, "-"],
+        ["", "", "", ""],
+        ["【各分類花費分佈】", `預算 (${baseCur})`, `實付 (${baseCur})`, "差額說明"],
+        ["大項交通/固定支出", stats.categories.major.budget, stats.categories.major.actual, (stats.categories.major.budget - stats.categories.major.actual) >= 0 ? `省 ${stats.categories.major.budget - stats.categories.major.actual}` : `超 ${Math.abs(stats.categories.major.budget - stats.categories.major.actual)}`],
+        ["住宿費用總額", stats.categories.lodging.budget, stats.categories.lodging.actual, (stats.categories.lodging.budget - stats.categories.lodging.actual) >= 0 ? `省 ${stats.categories.lodging.budget - stats.categories.lodging.actual}` : `超 ${Math.abs(stats.categories.lodging.budget - stats.categories.lodging.actual)}`],
+        ["每日餐食小計", stats.categories.dining.budget, stats.categories.dining.actual, (stats.categories.dining.budget - stats.categories.dining.actual) >= 0 ? `省 ${stats.categories.dining.budget - stats.categories.dining.actual}` : `超 ${Math.abs(stats.categories.dining.budget - stats.categories.dining.actual)}`],
+        ["每日景點門票", stats.categories.spot.budget, stats.categories.spot.actual, (stats.categories.spot.budget - stats.categories.spot.actual) >= 0 ? `省 ${stats.categories.spot.budget - stats.categories.spot.actual}` : `超 ${Math.abs(stats.categories.spot.budget - stats.categories.spot.actual)}`],
+        ["每日市區交通", stats.categories.transit.budget, stats.categories.transit.actual, (stats.categories.transit.budget - stats.categories.transit.actual) >= 0 ? `省 ${stats.categories.transit.budget - stats.categories.transit.actual}` : `超 ${Math.abs(stats.categories.transit.budget - stats.categories.transit.actual)}`],
+        ["購物與其他", stats.categories.other.budget, stats.categories.other.actual, (stats.categories.other.budget - stats.categories.other.actual) >= 0 ? `省 ${stats.categories.other.budget - stats.categories.other.actual}` : `超 ${Math.abs(stats.categories.other.budget - stats.categories.other.actual)}`],
+        ["", "", "", ""],
+        ["【每日花費對比 (含住宿攤提)】", `預算 (${baseCur})`, `實付 (${baseCur})`, "當日結餘/超支"]
       ];
 
       for (let i = 1; i <= trip.daysCount; i++) {
-        const dayCost = stats.dailyTotals[i];
-        summaryData.push([`第 ${i} 天 (Day ${i})`, dayCost, dayCost / memberCount]);
+        const dActual = stats.dailyActualTotals[i];
+        const dBudget = stats.dailyBudgetTotals[i];
+        const dDiff = dBudget - dActual;
+        summaryData.push([
+          `第 ${i} 天 (Day ${i})`,
+          dBudget,
+          dActual,
+          dDiff >= 0 ? `結餘 +${dDiff}` : `超支 -${Math.abs(dDiff)}`
+        ]);
       }
 
       const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-      wsSummary['!cols'] = [{ wch: 25 }, { wch: 22 }, { wch: 20 }, { wch: 15 }];
-      XLSX.utils.book_append_sheet(wb, wsSummary, "支出總覽");
+      wsSummary['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 18 }, { wch: 22 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, "支出總覽對比");
 
-      // 2. 工作表二：【每日消費明細】
+      // 2. 工作表二：【每日消費與交通明細】
       const dailyHeaders = [
-        "天數", "類別", "子分類", "項目名稱", "計費模式",
-        "原幣金額", "原幣幣別", `全團折合 (${baseCur})`, `每人負擔 (${baseCur})`, "備註說明"
+        "天數", "類別", "交通/子項目", "路線/起訖", "項目名稱", "計費模式",
+        "預估金額", "實際金額", "幣別", `全團實付 (${baseCur})`, `每人實付 (${baseCur})`, "支付狀態", "備註說明"
       ];
       const dailyRows = [dailyHeaders];
 
       const categoryNameMap = {
         dining: "餐食", spot: "景點", transit: "每日交通", other: "購物與其他", shopping: "購物"
       };
-      const subtypeMap = {
-        breakfast: "早餐", lunch: "午餐", dinner: "晚餐", snack: "小吃/點心",
-        ticket: "門票", activity: "體驗/演出", guide: "導覽",
-        metro: "地鐵/捷運", taxi: "計程車/叫車", bus: "公車", bike: "單車", gift: "伴手禮"
-      };
 
       const sortedDaily = [...appState.dailyExpenses].sort((a, b) => Number(a.day) - Number(b.day));
 
       sortedDaily.forEach(item => {
-        const totalRaw = calcItemTotalCost(item);
-        const totalInBase = convertAmount(totalRaw, item.currency, baseCur);
-        const perPersonInBase = totalInBase / memberCount;
+        const totalActualRaw = calcItemTotalCost(item, true);
+        const actualInBase = convertAmount(totalActualRaw, item.currency, baseCur);
+        const perPersonInBase = actualInBase / memberCount;
 
         dailyRows.push([
           `第 ${item.day} 天`,
           categoryNameMap[item.category] || item.category,
-          subtypeMap[item.subType] || item.subType || "-",
+          item.transitType || item.subType || "-",
+          item.route || "-",
           item.name,
           item.pricingType === "per_person" ? "每人單價" : "全團總額",
           Number(item.amount),
+          item.actualAmount !== undefined ? Number(item.actualAmount) : Number(item.amount),
           item.currency,
-          Number(totalInBase.toFixed(1)),
+          Number(actualInBase.toFixed(1)),
           Number(perPersonInBase.toFixed(1)),
+          item.isPaid !== false ? "已支付" : "待結算",
           item.note || ""
         ]);
       });
 
       const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
       wsDaily['!cols'] = [
-        { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 28 }, { wch: 12 },
-        { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 32 }
+        { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 26 }, { wch: 12 },
+        { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 28 }
       ];
-      XLSX.utils.book_append_sheet(wb, wsDaily, "每日支出明細");
+      XLSX.utils.book_append_sheet(wb, wsDaily, "每日支出與交通明細");
 
       // 3. 工作表三：【大項交通與住宿】
       const majorHeaders = [
-        "分類", "項目名稱", "配置/天數說明", "晚數/數量", "計費模式",
-        "原幣金額", "幣別", `全團折合 (${baseCur})`, `每人負擔 (${baseCur})`, "備註說明"
+        "分類", "交通模式/類型", "路線/區間", "項目名稱", "晚數/數量", "計費模式",
+        "預估金額", "實際金額", "幣別", `全團實付 (${baseCur})`, "核銷狀態", "備註說明"
       ];
       const majorRows = [majorHeaders];
 
       appState.majorExpenses.forEach(m => {
-        const totalRaw = calcItemTotalCost(m);
-        const totalInBase = convertAmount(totalRaw, m.currency, baseCur);
-        const perPersonInBase = totalInBase / memberCount;
+        const totalActualRaw = calcItemTotalCost(m, true);
+        const actualInBase = convertAmount(totalActualRaw, m.currency, baseCur);
 
         majorRows.push([
-          "大項交通/固定支出",
+          "大項交通支出",
+          m.transitType || "機票/高鐵",
+          m.route || "整趟固定",
           m.name,
-          "整趟固定大項",
           1,
           m.pricingType === "per_person" ? "每人單價" : "全團總額",
           Number(m.amount),
+          m.actualAmount !== undefined ? Number(m.actualAmount) : Number(m.amount),
           m.currency,
-          Number(totalInBase.toFixed(1)),
-          Number(perPersonInBase.toFixed(1)),
+          Number(actualInBase.toFixed(1)),
+          m.isPaid !== false ? "已支付" : "待付",
           m.note || ""
         ]);
       });
@@ -3405,101 +3785,63 @@
           modeLabel = `全趟 ${trip.daysCount} 天包棟`;
         }
 
-        let totalRaw = Number(acc.amount) || 0;
+        let aRaw = acc.actualAmount !== undefined && acc.actualAmount !== null ? Number(acc.actualAmount) : Number(acc.amount || 0);
         if (acc.mode === "range" && acc.pricingType === "per_night") {
-          totalRaw = totalRaw * nights;
+          aRaw *= nights;
         }
-        const totalInBase = convertAmount(totalRaw, acc.currency, baseCur);
-        const perPersonInBase = totalInBase / memberCount;
+        const actualInBase = convertAmount(aRaw, acc.currency, baseCur);
 
         majorRows.push([
           "住宿費用",
-          acc.name,
+          acc.pricingType === "per_night" ? "每晚計費" : "總額計費",
           modeLabel,
+          acc.name,
           nights,
-          acc.pricingType === "per_night" ? "每晚單價" : "整段總額",
+          acc.pricingType === "per_night" ? "每晚房價" : "整段總額",
           Number(acc.amount),
+          acc.actualAmount !== undefined ? Number(acc.actualAmount) : Number(acc.amount),
           acc.currency,
-          Number(totalInBase.toFixed(1)),
-          Number(perPersonInBase.toFixed(1)),
+          Number(actualInBase.toFixed(1)),
+          acc.isPaid !== false ? "已支付" : "待付",
           acc.note || ""
         ]);
       });
 
       const wsMajor = XLSX.utils.aoa_to_sheet(majorRows);
       wsMajor['!cols'] = [
-        { wch: 18 }, { wch: 28 }, { wch: 18 }, { wch: 12 }, { wch: 12 },
-        { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 32 }
+        { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 10 }, { wch: 12 },
+        { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 16 }, { wch: 10 }, { wch: 28 }
       ];
       XLSX.utils.book_append_sheet(wb, wsMajor, "大項交通與住宿");
 
       XLSX.writeFile(wb, fileName);
     }
 
-    function exportFallbackCsv() {
-      const stats = calculateStatistics();
-      const trip = appState.tripInfo;
-      let csv = "\uFEFF";
-      csv += `【${trip.title}】旅遊支出試算表\n`;
-      csv += `總天數,${trip.daysCount} 天,同行人數,${trip.memberCount} 人,基準幣別,${trip.baseCurrency},當地外幣,${trip.foreignCurrency},匯率,${trip.exchangeRate}\n`;
-      csv += `全團總支出 (${trip.baseCurrency}),${stats.grandTotalBase},每人平均負擔 (${trip.baseCurrency}),${stats.perPersonBase}\n\n`;
-
-      csv += "天數,分類,項目名稱,計費方式,金額,幣別,折合本幣(TWD),備註\n";
-      appState.majorExpenses.forEach(m => {
-        const totalRaw = calcItemTotalCost(m);
-        const totalInBase = convertAmount(totalRaw, m.currency, trip.baseCurrency);
-        csv += `全趟,大項支出,"${m.name}",${m.pricingType},${m.amount},${m.currency},${totalInBase},"${m.note || ''}"\n`;
-      });
-
-      appState.accommodations.forEach(acc => {
-        let totalRaw = Number(acc.amount) || 0;
-        if (acc.mode === "range" && acc.pricingType === "per_night") {
-          const nights = Math.max(1, (Number(acc.endDay) - Number(acc.startDay) + 1));
-          totalRaw = totalRaw * nights;
-        }
-        const totalInBase = convertAmount(totalRaw, acc.currency, trip.baseCurrency);
-        csv += `住宿,住宿費用,"${acc.name}",${acc.pricingType},${acc.amount},${acc.currency},${totalInBase},"${acc.note || ''}"\n`;
-      });
-
-      appState.dailyExpenses.forEach(d => {
-        const totalRaw = calcItemTotalCost(d);
-        const totalInBase = convertAmount(totalRaw, d.currency, trip.baseCurrency);
-        csv += `第 ${d.day} 天,${d.category},"${d.name}",${d.pricingType},${d.amount},${d.currency},${totalInBase},"${d.note || ''}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `${trip.title}_支出明細_${Date.now()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
     function copyExpenseSummaryText() {
       const stats = calculateStatistics();
       const trip = appState.tripInfo;
-      let text = `✈️ ${trip.title} ‧ 旅遊支出結算表\n`;
+      let text = `✈️ ${trip.title} ‧ 旅遊預算與實際支出對比結算\n`;
       text += `📅 總天數：${trip.daysCount} 天 | 👥 同行人數：${trip.memberCount} 人\n`;
-      text += `💰 旅程總支出：${formatCurrency(stats.grandTotalBase)} ${trip.baseCurrency} (約 ${formatCurrency(stats.grandTotalForeign)} ${trip.foreignCurrency})\n`;
-      text += `👤 每人平均負擔：${formatCurrency(stats.perPersonBase)} ${trip.baseCurrency}\n`;
+      text += `📊 預估總預算：${formatCurrency(stats.totalBudgetBase)} ${trip.baseCurrency}\n`;
+      text += `🧾 實際總支出：${formatCurrency(stats.totalActualBase)} ${trip.baseCurrency} (約 ${formatCurrency(stats.totalActualForeign)} ${trip.foreignCurrency})\n`;
+      text += `⚖️ 收支總差額：${stats.diffBase >= 0 ? `結餘節省 +${formatCurrency(stats.diffBase)}` : `超支警示 -${formatCurrency(Math.abs(stats.diffBase))}`} ${trip.baseCurrency}\n`;
+      text += `👤 每人實付負擔：${formatCurrency(stats.perPersonActualBase)} ${trip.baseCurrency}\n`;
       text += `---------------------------\n`;
-      text += `【分類花費統計】\n`;
-      text += `✈️ 大項交通支出: ${formatCurrency(stats.categories.major)} ${trip.baseCurrency}\n`;
-      text += `🏨 住宿總費用: ${formatCurrency(stats.categories.lodging)} ${trip.baseCurrency}\n`;
-      text += `🍜 每日餐食: ${formatCurrency(stats.categories.dining)} ${trip.baseCurrency}\n`;
-      text += `🎫 景點門票: ${formatCurrency(stats.categories.spot)} ${trip.baseCurrency}\n`;
-      text += `🚇 每日交通: ${formatCurrency(stats.categories.transit)} ${trip.baseCurrency}\n`;
-      text += `🛍️ 購物與其他: ${formatCurrency(stats.categories.other)} ${trip.baseCurrency}\n`;
+      text += `【分類花費對比 (實付 / 預算)】\n`;
+      text += `✈️ 大項交通支出: ${formatCurrency(stats.categories.major.actual)} / ${formatCurrency(stats.categories.major.budget)} ${trip.baseCurrency}\n`;
+      text += `🏨 住宿總費用: ${formatCurrency(stats.categories.lodging.actual)} / ${formatCurrency(stats.categories.lodging.budget)} ${trip.baseCurrency}\n`;
+      text += `🍜 每日餐食: ${formatCurrency(stats.categories.dining.actual)} / ${formatCurrency(stats.categories.dining.budget)} ${trip.baseCurrency}\n`;
+      text += `🎫 景點門票: ${formatCurrency(stats.categories.spot.actual)} / ${formatCurrency(stats.categories.spot.budget)} ${trip.baseCurrency}\n`;
+      text += `🚇 每日交通: ${formatCurrency(stats.categories.transit.actual)} / ${formatCurrency(stats.categories.transit.budget)} ${trip.baseCurrency}\n`;
+      text += `🛍️ 購物與其他: ${formatCurrency(stats.categories.other.actual)} / ${formatCurrency(stats.categories.other.budget)} ${trip.baseCurrency}\n`;
       text += `---------------------------\n`;
-      text += `【每日花費概覽 (含住宿攤提)】\n`;
+      text += `【每日實付一覽 (含住宿攤提)】\n`;
       for (let i = 1; i <= trip.daysCount; i++) {
-        text += `Day ${i}: ${formatCurrency(stats.dailyTotals[i])} ${trip.baseCurrency}\n`;
+        text += `Day ${i}: 實付 ${formatCurrency(stats.dailyActualTotals[i])} (預算 ${formatCurrency(stats.dailyBudgetTotals[i])}) ${trip.baseCurrency}\n`;
       }
 
       navigator.clipboard.writeText(text).then(() => {
-        alert("已複製費用結算摘要至剪貼簿！可直接貼至 LINE 群組或 Notion 手帳。");
+        alert("已複製費用對比結算摘要至剪貼簿！可直接貼至 LINE 群組或 Notion 手帳。");
       }).catch(() => {
         alert("複製失敗，請手動選取文字。");
       });

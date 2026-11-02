@@ -35,29 +35,48 @@ def test_html_structure_and_features():
     assert "syncFromMainPlan" in html, "未實作 syncFromMainPlan 同步函式"
     assert "processPlanSync" in html, "未實作主行程活動費用映射邏輯"
 
-    print("[PASS] [1/2] 雲端即時同步、跨裝置存取與主行程連動結構檢查通過！")
+    # 5. 驗證預算與實際支出對比功能 (Budget vs Actual)
+    assert "totalBudgetDisplay" in html, "缺少預估總預算顯示欄位"
+    assert "totalActualDisplay" in html, "缺少實付總支出顯示欄位"
+    assert "heroVarianceBadge" in html, "缺少收支差額結餘/超支徽章"
+    assert "actualAmount" in html, "缺少實付金額欄位定義"
+    assert "isPaid" in html, "缺少已付狀態標記"
+
+    # 6. 驗證交通項目可編輯選項
+    assert "openEditMajorExpenseModal" in html, "缺少大項交通編輯彈窗函式"
+    assert "transportSpecificPanel" in html, "缺少交通專屬模式起訖面板"
+    assert "transportModeSelect" in html, "缺少交通細項分類選單"
+    assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
+
+    print("[PASS] [1/2] 雲端即時同步、跨裝置存取、主行程連動、預算實付對比與交通編輯結構檢查通過！")
 
 
 def test_calculation_logic():
     exchange_rate = 4.65
     member_count = 2
 
-    # 大項支出計算
+    # 大項支出計算 (預算 vs 實付)
     major_expenses = [
-        {"name": "往返機票", "amount": 12500, "currency": "TWD", "pricingType": "per_person"},
-        {"name": "保險", "amount": 680, "currency": "TWD", "pricingType": "per_person"},
-        {"name": "eSIM", "amount": 450, "currency": "TWD", "pricingType": "per_person"},
+        {"name": "往返機票", "budget": 12500, "actual": 12200, "currency": "TWD", "pricingType": "per_person"},
+        {"name": "高鐵票", "budget": 1800, "actual": 1850, "currency": "TWD", "pricingType": "per_person"},
+        {"name": "保險", "budget": 680, "actual": 680, "currency": "TWD", "pricingType": "per_person"},
+        {"name": "eSIM", "budget": 450, "actual": 420, "currency": "TWD", "pricingType": "per_person"},
     ]
-    major_total_twd = sum(m["amount"] * member_count for m in major_expenses)
-    assert major_total_twd == 27260, f"大項支出計算錯誤: {major_total_twd}"
+    budget_twd = sum(m["budget"] * member_count for m in major_expenses)
+    actual_twd = sum(m["actual"] * member_count for m in major_expenses)
+    diff_twd = budget_twd - actual_twd
 
-    # 住宿計算
-    lodging_cny = (850 * 3) + 560 + 720
-    assert lodging_cny == 3830, f"住宿 CNY 計算錯誤: {lodging_cny}"
-    lodging_twd = lodging_cny * exchange_rate
-    assert round(lodging_twd, 2) == 17809.5, f"住宿 TWD 換算錯誤: {lodging_twd}"
+    assert budget_twd == 30860, f"大項支出預算計算錯誤: {budget_twd}"
+    assert actual_twd == 30300, f"大項支出實付計算錯誤: {actual_twd}"
+    assert diff_twd == 560, f"差額節省計算錯誤: {diff_twd} (預期結餘 560)"
 
-    print("[PASS] [2/2] 核心財務與攤提計算邏輯模擬測試通過！")
+    # 住宿計算 (CNY)
+    lodging_cny_budget = (850 * 3) + 560 + 720
+    assert lodging_cny_budget == 3830, f"住宿 CNY 計算錯誤: {lodging_cny_budget}"
+    lodging_twd_budget = lodging_cny_budget * exchange_rate
+    assert round(lodging_twd_budget, 2) == 17809.5, f"住宿 TWD 換算錯誤: {lodging_twd_budget}"
+
+    print("[PASS] [2/2] 核心財務、預算對比與攤提計算邏輯模擬測試通過！")
 
 
 if __name__ == "__main__":
