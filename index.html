@@ -5305,6 +5305,85 @@
             }
         }
 
+
+        /* 景點攻略整合視圖與 24h 時分分離選單樣式 */
+        .sg-24h-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .sg-24h-unit {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #ffffff;
+            border: 1px solid var(--notion-border, #cbd5e1);
+            border-radius: 6px;
+            padding: 3px 6px;
+            min-height: 38px;
+        }
+        .sg-24h-unit select {
+            border: none;
+            background: transparent;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #0f172a;
+            padding: 2px 4px;
+            cursor: pointer;
+            outline: none;
+        }
+        .sg-24h-sep {
+            font-weight: 800;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .sg-section-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+        .sg-section-box.booking-theme {
+            background: #fffdf7;
+            border-color: #fde68a;
+        }
+        .sg-day-pill-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 2px 9px;
+            border-radius: 999px;
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+        .sg-day-pill-live.unmatched {
+            background: #f1f5f9;
+            color: #64748b;
+            border-color: #cbd5e1;
+            font-weight: 600;
+        }
+        .sg-card-booking-strip {
+            margin-top: 8px;
+            padding: 7px 11px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.78rem;
+        }
+        .sg-card-booking-strip.is-done {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
     </style>
 </head>
 <body>
@@ -5389,7 +5468,7 @@
                 <i class="fa-solid fa-plane-up"></i> 交通與住宿 (Transit & Stay)
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
-                <i class="fa-solid fa-landmark-dome"></i> 景點與搶票 (Spots & Booking)
+                <i class="fa-solid fa-landmark-dome"></i> 景點攻略 (Spot Guides)
             </button>
             <button class="view-tab-btn" id="tabBtn-expenses" onclick="switchView('expenses')">
                 <i class="fa-solid fa-chart-pie"></i> 費用與記帳 (Budget & Expenses)
@@ -5403,7 +5482,7 @@
                     <optgroup label="📋 主要功能分頁">
                         <option value="timeline">⊞ 總覽與每日行程 (Overview)</option>
                         <option value="logistics">✈️ 交通與住宿大項目 (Transit & Stay)</option>
-                        <option value="spots">🏛️ 景點攻略與搶票時程 (Spots & Booking)</option>
+                        <option value="spots">🏛️ 景點攻略 (Spot Guides)</option>
                         <option value="budget">📊 費用規劃：預算統計分析 (Budget)</option>
                         <option value="actual-expenses">🧾 費用核銷：實際花費記帳 (Actual Expenses)</option>
                     </optgroup>
@@ -5600,69 +5679,24 @@
                 </div>
             </div>
 
-            <!-- VIEW 2 & 3 MERGED: 景點攻略與搶票時程整合中心 -->
+            <!-- VIEW 2 & 3 MERGED: 景點攻略整合中心（合併搶票預約與景點速通攻略） -->
             <div class="view-content-pane" id="view-spots">
-                <!-- 次級分頁切換導覽列 (可同頁全覽或切換單一區塊) -->
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
-                    <div class="expenses-subtabs-bar">
-                        <button type="button" class="expenses-subtab-btn active" id="spotsSubtabBtn-all" onclick="switchSpotsSubtab('all')">
-                            <i class="fa-solid fa-layer-group"></i> 📋 景點攻略＋搶票全覽
-                        </button>
-                        <button type="button" class="expenses-subtab-btn" id="spotsSubtabBtn-guides" onclick="switchSpotsSubtab('guides')">
-                            <i class="fa-solid fa-landmark-dome"></i> 🏛️ 景點速通攻略
-                        </button>
-                        <button type="button" class="expenses-subtab-btn" id="spotsSubtabBtn-booking" onclick="switchSpotsSubtab('booking')">
-                            <i class="fa-regular fa-clock"></i> 🎫 搶票與預約時程
-                        </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="font-size: 0.95rem; font-weight: 800; color: #0369a1; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-landmark-dome" style="color: #0284c7;"></i>
+                            <span>景點攻略</span>
+                        </span>
+                        <span style="font-size: 0.76rem; font-weight: 500; color: #64748b;">彙整景點路線防雷、預約搶票時程提醒，並依造訪日期時間自動串聯至每日行程</span>
                     </div>
                     <div style="display: flex; gap: 6px; align-items: center;">
-                        <button class="n-btn" style="padding: 4px 10px; font-size: 0.78rem;" onclick="openAddBookingModal()">
-                            <i class="fa-solid fa-plus"></i> 新增搶票預約
-                        </button>
-                        <button class="n-btn n-btn-primary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="openAddSpotGuideModal()">
+                        <button type="button" class="n-btn n-btn-primary" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700;" onclick="openAddSpotGuideModal()">
                             <i class="fa-solid fa-plus"></i> 新增景點攻略
                         </button>
                     </div>
                 </div>
 
-                <!-- 區塊 A: 搶票與預約時程總表 -->
-                <div id="spotsSubpane-booking" style="margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div style="font-size: 0.88rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-regular fa-clock" style="color: #d97706;"></i>
-                            <span>🎫 搶票與預約時程總表</span>
-                            <span style="font-size: 0.76rem; font-weight: 500; color: #64748b; margin-left: 4px;">（掌握景點、演出、包車開放時間，準時搶票不撲空）</span>
-                        </div>
-                    </div>
-                    <div class="notion-table-wrapper">
-                        <table class="notion-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 130px;">搶票 / 開放日期</th>
-                                    <th style="width: 85px;">時間</th>
-                                    <th>目標項目 (參觀日 / 體驗內容)</th>
-                                    <th style="width: 170px;">預約平台 / 管道</th>
-                                    <th style="width: 110px;">難易程度</th>
-                                    <th style="width: 100px;">預約狀態</th>
-                                    <th style="width: 100px; text-align: right;">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bookingScheduleTbody">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 區塊 B: 核心景點速通攻略 -->
                 <div id="spotsSubpane-guides">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div style="font-size: 0.88rem; font-weight: 800; color: #0369a1; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-landmark-dome" style="color: #0284c7;"></i>
-                            <span>🏛️ 核心景點速通攻略與防雷指南</span>
-                            <span style="font-size: 0.76rem; font-weight: 500; color: #0284c7; margin-left: 4px;">（彙整各景點路線秘技、排隊防雷與行程安排狀態）</span>
-                        </div>
-                    </div>
                     <div id="spotGuidesContainer">
                         <!-- Populated dynamically -->
                     </div>
@@ -7354,56 +7388,164 @@
         </div>
     </div>
 
-    <!-- 7. 新增/編輯預約搶票項目 (支援編輯與防閃退) -->
-    <div class="modal-backdrop" id="addBookingModal" onclick="handleBackdropClick(event, 'addBookingModal')">
-        <div class="modal-dialog" style="max-width: 520px;" onclick="event.stopPropagation();">
+    <!-- 7. 新增/編輯 景點攻略（整合造訪日期時間行程串聯 ＋ 預約搶票時程設定） -->
+    <div class="modal-backdrop" id="editSpotGuideModal" onclick="handleBackdropClick(event, 'editSpotGuideModal')">
+        <div class="modal-dialog" style="max-width: 650px;" onclick="event.stopPropagation();">
             <div class="modal-header">
-                <div class="modal-title" id="bookingModalTitle"><i class="fa-regular fa-clock"></i> 搶票與時程項目設定</div>
-                <button type="button" class="modal-close-btn" onclick="closeModal('addBookingModal')"><i class="fa-solid fa-xmark"></i></button>
+                <div class="modal-title" id="spotGuideModalTitle"><i class="fa-solid fa-landmark-dome" style="color:#0284c7;"></i> 新增景點攻略</div>
+                <button type="button" class="modal-close-btn" onclick="closeModal('editSpotGuideModal')"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="bookingForm" onsubmit="handleSaveBookingSubmit(event); return false;">
-                <input type="hidden" id="bEditIndex" value="-1">
-                <div class="modal-body">
+            <form id="spotGuideForm" onsubmit="handleSaveSpotGuideSubmit(event); return false;">
+                <input type="hidden" id="sgEditIndex" value="-1">
+                <div class="modal-body" style="max-height: 76vh; overflow-y: auto;">
+                    <!-- 1. 景點基本與速通攻略 -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">開放 / 搶票日期</label>
-                            <input type="text" id="bDate" class="form-input" placeholder="例如：即刻 或 10/10 或 04/30 (四)">
+                            <label class="form-label">景點名稱 <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="sgNameInput" class="form-input" oninput="updateSgScheduledDayStatusUI()" placeholder="例如：故宮博物院 或 洪崖洞">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">時間</label>
-                            <input type="text" id="bTime" class="form-input" placeholder="例如：10:00 或 20:00 或 -">
+                            <label class="form-label">景點詳細地址 (選填，用於導航定位)</label>
+                            <input type="text" id="sgAddressInput" class="form-input" placeholder="例如：北京市東城區景山前街4號">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">目標項目 (參觀日 / 體驗內容)</label>
-                        <input type="text" id="bTarget" class="form-input" placeholder="例如：長江索道單程門票 (D5) 或 武隆天生三橋專屬包車 (D4)">
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">速通攻略與防雷指南 <span style="color:#ef4444;">*</span></label>
+                        <textarea id="sgTipInput" class="form-input" style="min-height: 76px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">預約平台 / 管道</label>
-                        <input type="text" id="bPlatform" class="form-input" placeholder="例如：重慶索道官方微信 或 KKday / 飛豬 / 本地專車">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">難易程度</label>
-                            <select id="bDifficulty" class="form-input">
-                                <option value="手速關鍵">🔥 手速關鍵</option>
-                                <option value="極難搶">⚡ 極難搶</option>
-                                <option value="優先預約">🌟 優先預約</option>
-                                <option value="一般預約">📌 一般預約</option>
-                            </select>
+
+                    <!-- 2. 造訪日期與時間（串聯回每日行程 ＋ 顯示第幾天） -->
+                    <div class="sg-section-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                            <div style="font-size:0.84rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-regular fa-calendar-check" style="color:#2f6fed;"></i>
+                                <span>預計造訪日期與時間（串聯每日行程）</span>
+                            </div>
+                            <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.7rem; color:#64748b;" onclick="clearSpotGuideVisitDateTime()">清除造訪日期時間</button>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">預約狀態</label>
-                            <select id="bStatus" class="form-input">
-                                <option value="待開放">⏳ 待開放</option>
-                                <option value="已完成">✅ 已完成</option>
-                            </select>
+
+                        <div class="mt-date-time-row" style="margin-bottom: 10px;">
+                            <!-- 造訪日期：互動式行事曆 -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size:0.76rem;">造訪日期（點選行事曆自動對應行程天數）</label>
+                                <input type="hidden" id="sgVisitDate">
+                                <div class="bcal-wrapper" id="sgVisitCalWrapper">
+                                    <div class="mt-single-cal-trigger" id="sgVisitCalTrigger" onclick="toggleSgCalendar('visit', event)">
+                                        <div class="bcal-slot-value" id="sgVisitCalDisplay" style="font-size:0.86rem;">--</div>
+                                        <div style="display:inline-flex; align-items:center; gap:6px;">
+                                            <span class="bcal-nights-pill" id="sgVisitDayBadge" style="font-size:0.69rem; padding:1px 7px;">--</span>
+                                            <i class="fa-solid fa-calendar-days" style="color:#64748b; font-size:0.82rem;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="bcal-dropdown-panel" id="sgVisitCalPanel"></div>
+                                </div>
+                            </div>
+
+                            <!-- 造訪時間：24 小時制（時、分分開設定） -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size:0.76rem;">造訪時間（24 小時制，時與分分開設定）</label>
+                                <div class="sg-24h-row">
+                                    <div class="sg-24h-unit" title="開始時間（24小時制）">
+                                        <select id="sgVisitStartHour" onchange="onSgVisitTimeChange()"></select>
+                                        <span class="sg-24h-sep">:</span>
+                                        <select id="sgVisitStartMin" onchange="onSgVisitTimeChange()"></select>
+                                    </div>
+                                    <span style="color:#94a3b8; font-size:0.78rem; font-weight:700;">~</span>
+                                    <div class="sg-24h-unit" title="結束時間（選填，24小時制）">
+                                        <select id="sgVisitEndHour" onchange="onSgVisitTimeChange()"></select>
+                                        <span class="sg-24h-sep">:</span>
+                                        <select id="sgVisitEndMin" onchange="onSgVisitTimeChange()"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 已安排至行程中（即時顯示第幾天 ＋ 安排備註） -->
+                        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:9px 11px;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+                                <label style="display:inline-flex; align-items:center; gap:7px; font-size:0.82rem; font-weight:800; color:#15803d; cursor:pointer; margin:0; user-select:none;">
+                                    <input type="checkbox" id="sgScheduledCheck" class="n-checkbox" onchange="updateSgScheduledDayStatusUI()">
+                                    <span>已安排至行程中（自動串聯並依時間排序當日行程）</span>
+                                </label>
+                                <span id="sgScheduledDayLiveBadge" class="sg-day-pill-live unmatched">尚未指定天數</span>
+                            </div>
+                            <input type="text" id="sgScheduleNoteInput" class="form-input" style="font-size:0.8rem; padding:6px 10px;" placeholder="安排備註 (選填，例如：午門進神武門出、建議提早 20 分鐘安檢)">
+                        </div>
+                    </div>
+
+                    <!-- 3. 預約／搶票時程設定（整合原搶票預約功能） -->
+                    <div class="sg-section-box booking-theme" style="margin-bottom: 4px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <label style="display:inline-flex; align-items:center; gap:7px; font-size:0.84rem; font-weight:800; color:#b45309; cursor:pointer; margin:0; user-select:none;">
+                                <input type="checkbox" id="sgHasBookingCheck" class="n-checkbox" onchange="toggleSgBookingFields()">
+                                <span><i class="fa-solid fa-ticket"></i> 需提前預約／搶票時程設定</span>
+                            </label>
+                            <span style="font-size:0.72rem; color:#92400e;">勾選後可設定開放預約日期、24小時制時間與預約狀態</span>
+                        </div>
+
+                        <div id="sgBookingFieldsWrap" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #fcd34d;">
+                            <div class="mt-date-time-row" style="margin-bottom: 10px;">
+                                <!-- 開放／搶票日期：互動式行事曆 -->
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-size:0.76rem;">開放／搶票日期（點選行事曆）</label>
+                                    <input type="hidden" id="sgBookingDate">
+                                    <div class="bcal-wrapper" id="sgBookingCalWrapper">
+                                        <div class="mt-single-cal-trigger" id="sgBookingCalTrigger" onclick="toggleSgCalendar('booking', event)">
+                                            <div class="bcal-slot-value" id="sgBookingCalDisplay" style="font-size:0.86rem;">--</div>
+                                            <div style="display:inline-flex; align-items:center; gap:6px;">
+                                                <span class="bcal-nights-pill" id="sgBookingDateBadge" style="font-size:0.69rem; padding:1px 7px; background:#fef3c7; color:#b45309; border-color:#fde68a;">預約日</span>
+                                                <i class="fa-solid fa-calendar-days" style="color:#d97706; font-size:0.82rem;"></i>
+                                            </div>
+                                        </div>
+                                        <div class="bcal-dropdown-panel" id="sgBookingCalPanel"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 開放／搶票時間：24 小時制（時、分分開設定） -->
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-size:0.76rem;">開放時間（24 小時制，時與分分開設定）</label>
+                                    <div class="sg-24h-row">
+                                        <div class="sg-24h-unit" title="開放搶票時間（24小時制）">
+                                            <select id="sgBookingHour" onchange="onSgBookingTimeChange()"></select>
+                                            <span class="sg-24h-sep">:</span>
+                                            <select id="sgBookingMin"></select>
+                                        </div>
+                                        <span id="sgBookingTimeHint" style="font-size:0.74rem; color:#92400e; font-weight:700;"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="margin-bottom: 0;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-size:0.76rem;">預約平台／管道</label>
+                                    <input type="text" id="sgBookingPlatform" class="form-input" placeholder="例如：官方網站 / 微信公眾號 / Klook">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-size:0.76rem;">難易程度 ＆ 預約狀態</label>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                        <select id="sgBookingDifficulty" class="form-input" style="padding:6px 8px;">
+                                            <option value="手速關鍵">🔥 手速關鍵</option>
+                                            <option value="極難搶">⚡ 極難搶</option>
+                                            <option value="優先預約">🌟 優先預約</option>
+                                            <option value="一般預約">📌 一般預約</option>
+                                        </select>
+                                        <select id="sgBookingStatus" class="form-input" style="padding:6px 8px;">
+                                            <option value="待開放">⏳ 待開放</option>
+                                            <option value="已完成">✅ 已完成</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="n-btn" onclick="closeModal('addBookingModal')">取消</button>
-                    <button type="button" class="n-btn n-btn-primary" onclick="handleSaveBookingSubmit(event)" id="bookingSubmitBtn"><i class="fa-solid fa-check"></i> 儲存預約項目</button>
+                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span style="font-size:0.75rem; color:#64748b;"><i class="fa-solid fa-rotate" style="color:#0284c7;"></i> 設定造訪日期與時間並勾選「已安排至行程中」，將自動同步並排序至對應天數行程</span>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="n-btn" onclick="closeModal('editSpotGuideModal')">取消</button>
+                        <button type="submit" class="n-btn n-btn-primary" id="sgSubmitBtn"><i class="fa-solid fa-check"></i> 儲存景點攻略</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -10917,174 +11059,259 @@ const firebaseConfig = {
             };
         }
 
-        function toggleBookingItemStatus(idx) {
-            const plan = getCurrentPlan();
-            if (!plan || !plan.bookingSchedule || !plan.bookingSchedule[idx]) return;
-            const norm = normalizeBookingItem(plan.bookingSchedule[idx]);
-            const nextStatus = (norm.status === '已完成') ? '待開放' : '已完成';
-            plan.bookingSchedule[idx].difficulty = norm.difficulty;
-            plan.bookingSchedule[idx].status = nextStatus;
-            saveState();
-            renderBookingView();
-            showToast('success', `「${plan.bookingSchedule[idx].target || '時程'}」狀態已切換為：${nextStatus}`);
-        }
-
-        function renderBookingView() {
-            const plan = getCurrentPlan();
-            const tbody = document.getElementById('bookingScheduleTbody');
-            if (!plan || !tbody) return;
-
-            const list = plan.bookingSchedule || [];
-            if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--notion-text-sub); padding: 24px;">尚無預約或搶票時程，點擊右上角「＋ 新增預約項目」即可建立。</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = list.map((rawItem, idx) => {
-                const item = normalizeBookingItem(rawItem);
-
-                // 難易程度 Badge
-                let diffBadgeClass = 'pill-gray';
-                let diffIcon = '📌';
-                if (item.difficulty === '極難搶') {
-                    diffBadgeClass = 'pill-red';
-                    diffIcon = '⚡';
-                } else if (item.difficulty === '手速關鍵') {
-                    diffBadgeClass = 'pill-orange';
-                    diffIcon = '🔥';
-                } else if (item.difficulty === '優先預約') {
-                    diffBadgeClass = 'pill-blue';
-                    diffIcon = '🌟';
-                }
-
-                // 預約狀態 Badge (待開放 vs 已完成)
-                const isCompleted = (item.status === '已完成');
-                const statusBadgeClass = isCompleted ? 'pill-green' : 'pill-yellow';
-                const statusText = isCompleted ? '✅ 已完成' : '⏳ 待開放';
-
-                return `
-                    <tr style="cursor: pointer; transition: background 0.15s ease;" onclick="openEditBookingModal(${idx})" title="點擊編輯此筆預約時程">
-                        <td style="font-weight: 700; white-space: nowrap;">${escapeHtml(item.date)}</td>
-                        <td style="color: #0284c7; font-weight: 700; white-space: nowrap;">${escapeHtml(item.time)}</td>
-                        <td style="font-weight: 600; color: #0f172a;">${escapeHtml(item.target)}</td>
-                        <td style="color: #475569;">${escapeHtml(item.platform)}</td>
-                        <td><span class="prop-pill ${diffBadgeClass}" style="font-size:0.75rem; white-space:nowrap;">${diffIcon} ${escapeHtml(item.difficulty)}</span></td>
-                        <td onclick="event.stopPropagation(); toggleBookingItemStatus(${idx})" title="點擊快速切換狀態 (待開放 ⇄ 已完成)">
-                            <span class="prop-pill ${statusBadgeClass}" style="cursor:pointer; font-size:0.75rem; white-space:nowrap;">${statusText}</span>
-                        </td>
-                        <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation();">
-                            <div style="display: inline-flex; gap: 4px;">
-                                <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="openEditBookingModal(${idx})" title="編輯此筆預約時程">
-                                    <i class="fa-solid fa-pen-to-square"></i> 編輯
-                                </button>
-                                <button type="button" class="n-btn n-btn-danger" style="padding: 2px 7px; font-size: 0.72rem;" onclick="deleteBookingItem(${idx})" title="刪除此筆時程">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
         // ==========================================
-        // VIEW 3: SPOT GUIDES
+        // UNIFIED SPOT GUIDES & BOOKING SCHEDULE (合併景點攻略與預約搶票時程)
         // ==========================================
-        // ==========================================
-        // VIEW 3: SPOT GUIDES (核心景點速通攻略 ＆ 行程安排勾選標記)
-        // ==========================================
-        let spotGuidesFilterMode = 'all'; // 'all', 'pending', 'scheduled'
+        let spotGuidesFilterMode = 'all'; // 'all', 'scheduled', 'pending', 'booking'
 
         function setSpotGuideFilter(mode) {
-            spotGuidesFilterMode = mode;
+            spotGuidesFilterMode = mode || 'all';
             renderSpotGuidesView();
         }
 
-        // 智慧偵測：檢查行程天數的活動中是否已包含此景點
-        function detectSpotInPlanEvents(plan, spotName) {
-            if (!plan || !plan.days || !spotName) return null;
-            // 去除常見綴詞做模糊匹配
+        // 自動將舊版獨立 bookingSchedule 無損合併至統一的 spotTips 景點攻略中
+        function ensureUnifiedSpotGuides(plan) {
+            if (!plan) return [];
+            if (!Array.isArray(plan.spotTips)) plan.spotTips = [];
+
+            // 確保每筆景點攻略擁有穩定唯一 ID
+            plan.spotTips.forEach((st, i) => {
+                if (!st.id) {
+                    st.id = 'sg_' + Date.now().toString(36) + '_' + i + '_' + Math.random().toString(36).slice(2, 6);
+                }
+            });
+
+            if (Array.isArray(plan.bookingSchedule) && plan.bookingSchedule.length > 0 && !plan._bookingMergedV3) {
+                const dayMapInfo = (typeof buildPlanDateToDayMap === 'function') ? buildPlanDateToDayMap(plan) : { map: {}, startYmd: '' };
+                const startYear = dayMapInfo.startYmd ? dayMapInfo.startYmd.slice(0, 4) : String(new Date().getFullYear());
+
+                const normalizeLegacyMdToYmd = (rawDateStr) => {
+                    if (!rawDateStr) return '';
+                    const s = String(rawDateStr).trim();
+                    if (s === '即刻' || s === '-') return '即刻';
+                    const ymdM = s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+                    if (ymdM) return `${ymdM[1]}-${ymdM[2].padStart(2, '0')}-${ymdM[3].padStart(2, '0')}`;
+                    const mdM = s.match(/(\d{1,2})[.\-/](\d{1,2})/);
+                    if (mdM) return `${startYear}-${mdM[1].padStart(2, '0')}-${mdM[2].padStart(2, '0')}`;
+                    return s;
+                };
+
+                plan.bookingSchedule.forEach((rawB, bIdx) => {
+                    const nb = normalizeBookingItem(rawB);
+                    const targetText = (nb.target || '').trim();
+                    if (!targetText) return;
+
+                    // 嘗試與現有景點攻略名稱匹配
+                    let matchedSpot = plan.spotTips.find(st => {
+                        if (!st.name) return false;
+                        const coreParts = st.name.split(/[＆&、/]/).map(x => x.trim()).filter(x => x.length >= 2);
+                        return targetText.includes(st.name) || st.name.includes(targetText) || coreParts.some(p => targetText.includes(p));
+                    });
+
+                    const parsedBDate = normalizeLegacyMdToYmd(nb.date);
+                    const parsedBTime = (nb.time && nb.time !== '-') ? nb.time.trim() : '';
+
+                    if (matchedSpot && !matchedSpot.hasBooking) {
+                        matchedSpot.hasBooking = true;
+                        matchedSpot.bookingDate = parsedBDate || '即刻';
+                        matchedSpot.bookingTime = parsedBTime;
+                        matchedSpot.bookingPlatform = nb.platform || '官方管道';
+                        matchedSpot.bookingDifficulty = nb.difficulty || '一般預約';
+                        matchedSpot.bookingStatus = nb.status || '待開放';
+                    } else if (!matchedSpot) {
+                        // 解析目標字串中可能附帶的 (D4) 或 (5/9 參觀日) 對應造訪日期
+                        let inferredVisitDate = '';
+                        const dMatch = targetText.match(/\(\s*D(\d+)/i);
+                        if (dMatch && dayMapInfo.startYmd && typeof bcalAddDays === 'function') {
+                            const dIdx = Math.max(0, parseInt(dMatch[1], 10) - 1);
+                            inferredVisitDate = bcalAddDays(dayMapInfo.startYmd, dIdx) || '';
+                        } else {
+                            const visitMd = targetText.match(/\((\d{1,2})\/(\d{1,2})/);
+                            if (visitMd) {
+                                inferredVisitDate = `${startYear}-${visitMd[1].padStart(2, '0')}-${visitMd[2].padStart(2, '0')}`;
+                            }
+                        }
+
+                        const cleanSpotName = targetText.replace(/\s*\([^)]*\)\s*$/, '').trim() || targetText;
+                        plan.spotTips.push({
+                            id: 'sg_migrated_' + bIdx + '_' + Date.now().toString(36),
+                            name: cleanSpotName,
+                            address: '',
+                            tip: `預約提醒：請透過「${nb.platform || '官方管道'}」提前預約搶票（原備註：${targetText}）。`,
+                            visitDate: inferredVisitDate,
+                            visitStartTime: '',
+                            visitEndTime: '',
+                            scheduled: !!inferredVisitDate,
+                            scheduleNote: '',
+                            hasBooking: true,
+                            bookingDate: parsedBDate || '即刻',
+                            bookingTime: parsedBTime,
+                            bookingPlatform: nb.platform || '官方管道',
+                            bookingDifficulty: nb.difficulty || '一般預約',
+                            bookingStatus: nb.status || '待開放'
+                        });
+                    }
+                });
+
+                plan._bookingMergedV3 = true;
+                plan.bookingSchedule = [];
+            }
+
+            return plan.spotTips;
+        }
+
+        // 智慧偵測：檢查行程天數的活動中是否已包含此景點（支援 spotGuideId 精準綁定與名稱模糊匹配）
+        function detectSpotInPlanEvents(plan, spotName, spotId) {
+            if (!plan || !Array.isArray(plan.days)) return null;
+
+            // 1. 優先以唯一 spotGuideId 精準匹配已串聯的行程項目
+            if (spotId) {
+                for (const d of plan.days) {
+                    for (const e of (d.events || [])) {
+                        if (e.spotGuideId && e.spotGuideId === spotId) {
+                            return { dayNum: d.dayNum, date: d.date, time: e.time, title: e.title, byId: true };
+                        }
+                    }
+                }
+            }
+
+            if (!spotName) return null;
             const cleanName = spotName.replace(/（[^）]*）|\([^)]*\)|景點|博物館|步道|酒店|飯店|公園|步行街|景區/g, '').trim();
+            const subKeywords = cleanName.split(/[＆&、/]/).map(s => s.trim()).filter(s => s.length >= 2);
             const keyword = cleanName.length >= 2 ? cleanName : spotName.trim();
 
             for (const d of plan.days) {
                 for (const e of (d.events || [])) {
                     const t = e.title || '';
                     const l = e.loc || '';
-                    if (t.includes(keyword) || l.includes(keyword) || spotName.includes(t)) {
-                        return { dayNum: d.dayNum, date: d.date, time: e.time, title: e.title };
+                    if (
+                        (keyword && (t.includes(keyword) || l.includes(keyword))) ||
+                        (t.length >= 2 && spotName.includes(t)) ||
+                        subKeywords.some(k => t.includes(k) || l.includes(k))
+                    ) {
+                        return { dayNum: d.dayNum, date: d.date, time: e.time, title: e.title, byId: false };
                     }
                 }
             }
             return null;
         }
 
+        // 解析景點攻略對應的「第幾天」與日期時間資訊
+        function resolveSpotScheduledDayInfo(plan, item) {
+            if (!plan || !item) return { isScheduled: false, dayNum: null, dateDisplay: '', timeDisplay: '' };
+
+            const autoDetected = detectSpotInPlanEvents(plan, item.name, item.id);
+            const matchedDayFromVisitDate = (item.visitDate && typeof resolvePlanDayByDate === 'function')
+                ? resolvePlanDayByDate(plan, item.visitDate)
+                : null;
+
+            const isScheduled = (item.scheduled === true) || (item.scheduled !== false && (!!matchedDayFromVisitDate || !!autoDetected));
+
+            let dayNum = null;
+            if (matchedDayFromVisitDate) {
+                dayNum = matchedDayFromVisitDate.dayNum;
+            } else if (autoDetected && autoDetected.dayNum) {
+                dayNum = autoDetected.dayNum;
+            } else if (item.scheduledDayNum) {
+                dayNum = Number(item.scheduledDayNum) || null;
+            } else if (item.scheduleNote) {
+                const m = String(item.scheduleNote).match(/(?:Day\s*|第\s*|D)(\d+)\s*天?/i);
+                if (m) dayNum = parseInt(m[1], 10);
+            }
+
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            let dateDisplay = '';
+            if (item.visitDate) {
+                const dt = (typeof bcalParseYMD === 'function') ? bcalParseYMD(item.visitDate) : null;
+                if (dt) {
+                    dateDisplay = `${dt.getMonth() + 1}/${dt.getDate()} (${weekdays[dt.getDay()]})`;
+                } else {
+                    dateDisplay = item.visitDate;
+                }
+            } else if (autoDetected && autoDetected.date) {
+                dateDisplay = autoDetected.date;
+            } else if (dayNum && Array.isArray(plan.days)) {
+                const dObj = plan.days.find(d => d.dayNum === dayNum);
+                if (dObj && dObj.date) dateDisplay = dObj.date;
+            }
+
+            let timeDisplay = '';
+            if (item.visitStartTime) {
+                timeDisplay = item.visitEndTime ? `${item.visitStartTime} - ${item.visitEndTime}` : item.visitStartTime;
+            } else if (autoDetected && autoDetected.time) {
+                timeDisplay = autoDetected.time;
+            }
+
+            return {
+                isScheduled,
+                dayNum,
+                dateDisplay,
+                timeDisplay,
+                autoDetected
+            };
+        }
+
+        function toggleSpotBookingStatus(idx) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            ensureUnifiedSpotGuides(plan);
+            const item = plan.spotTips[idx];
+            if (!item || !item.hasBooking) return;
+
+            item.bookingStatus = (item.bookingStatus === '已完成') ? '待開放' : '已完成';
+            saveState();
+            renderSpotGuidesView();
+            showToast('success', `「${item.name}」預約狀態已切換為：${item.bookingStatus}`);
+        }
+
+        // 向下相容舊呼叫點
+        function toggleBookingItemStatus(idx) {
+            toggleSpotBookingStatus(idx);
+        }
+
+        function renderBookingView() {
+            // 已整合併入 renderSpotGuidesView()
+        }
+
         function toggleSpotGuideScheduled(idx, isChecked) {
             const plan = getCurrentPlan();
-            if (!plan || !plan.spotTips || !plan.spotTips[idx]) return;
+            if (!plan) return;
+            ensureUnifiedSpotGuides(plan);
+            if (!plan.spotTips[idx]) return;
             const item = plan.spotTips[idx];
 
             item.scheduled = isChecked;
 
             if (isChecked) {
-                // 若勾選且目前沒有備註，自動嘗試從行程中偵測
-                if (!item.scheduleNote) {
-                    const detected = detectSpotInPlanEvents(plan, item.name);
-                    if (detected) {
-                        item.scheduleNote = `已排入 Day ${detected.dayNum}${detected.time ? ` (${detected.time})` : ''}`;
+                if (item.visitDate && typeof syncSpotGuideToDailySchedule === 'function') {
+                    const syncRes = syncSpotGuideToDailySchedule(plan, item);
+                    if (syncRes.synced) {
+                        showToast('success', `已將「${item.name}」串聯排入第 ${syncRes.dayNum} 天行程！`);
                     } else {
-                        item.scheduleNote = '已安排入行程';
+                        showToast('success', `已將「${item.name}」標記為已安排至行程`);
                     }
+                } else {
+                    const info = resolveSpotScheduledDayInfo(plan, item);
+                    showToast('success', info.dayNum ? `已標記「${item.name}」安排於第 ${info.dayNum} 天！` : `已將「${item.name}」標記為已安排至行程（可點編輯設定造訪日期）`);
                 }
-                if (typeof showToast === 'function') showToast('success', `已將「${item.name}」標記為已安排進行程！`);
             } else {
-                if (typeof showToast === 'function') showToast('info', `已取消「${item.name}」的行程安排標記`);
+                // 取消勾選時，若先前有透過 spotGuideId 自動串聯至行程，同步移除該筆自動串聯項目
+                if (item.id && Array.isArray(plan.days)) {
+                    plan.days.forEach(d => {
+                        if (Array.isArray(d.events)) {
+                            d.events = d.events.filter(ev => ev.spotGuideId !== item.id);
+                        }
+                    });
+                }
+                showToast('info', `已取消「${item.name}」的行程安排`);
             }
 
             saveState();
-            renderSpotGuidesView();
+            renderAll();
         }
 
         function editSpotGuideScheduleNote(idx) {
-            const plan = getCurrentPlan();
-            if (!plan || !plan.spotTips || !plan.spotTips[idx]) return;
-            const item = plan.spotTips[idx];
-
-            const currentNote = item.scheduleNote || '';
-            const detected = detectSpotInPlanEvents(plan, item.name);
-            const defaultPlaceholder = detected ? `例如：已排入 Day ${detected.dayNum} (${detected.time || '行程中'})` : '例如：已排入 Day 2 下午 14:00';
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: `🗓️ 設定「${item.name}」安排備註`,
-                    input: 'text',
-                    inputValue: currentNote,
-                    inputPlaceholder: defaultPlaceholder,
-                    showCancelButton: true,
-                    confirmButtonText: '儲存備註',
-                    cancelButtonText: '取消',
-                    confirmButtonColor: '#16a34a',
-                    inputValidator: (val) => {
-                        if (!val || !val.trim()) return '備註內容不可為空白！';
-                    }
-                }).then(result => {
-                    if (result.isConfirmed && result.value) {
-                        item.scheduleNote = result.value.trim();
-                        item.scheduled = true;
-                        saveState();
-                        renderSpotGuidesView();
-                        if (typeof showToast === 'function') showToast('success', '已更新行程安排備註！');
-                    }
-                });
-            } else {
-                const note = prompt(`請輸入「${item.name}」已安排進行程的備註提示：`, currentNote || defaultPlaceholder);
-                if (note && note.trim()) {
-                    item.scheduleNote = note.trim();
-                    item.scheduled = true;
-                    saveState();
-                    renderSpotGuidesView();
-                }
-            }
+            openAddSpotGuideModal(idx);
         }
 
         function renderSpotGuidesView() {
@@ -11092,90 +11319,138 @@ const firebaseConfig = {
             const container = document.getElementById('spotGuidesContainer');
             if (!plan || !container) return;
 
-            const list = plan.spotTips || [];
+            const list = ensureUnifiedSpotGuides(plan);
             if (list.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--notion-text-sub);">尚未建立景點攻略</div>`;
+                container.innerHTML = `<div style="text-align:center; padding:28px 16px; color:var(--notion-text-sub); background:#ffffff; border:1px dashed #cbd5e1; border-radius:10px;">尚未建立景點攻略，點擊右上角「＋ 新增景點攻略」即可設定景點指南、行程日期時間串聯與搶票提醒。</div>`;
                 return;
             }
 
-            // 統計已排入與待安排數量
+            // 統計各狀態數量
             const totalCount = list.length;
-            const scheduledCount = list.filter(item => {
-                if (item.scheduled) return true;
-                const auto = detectSpotInPlanEvents(plan, item.name);
-                return !!auto;
-            }).length;
+            let scheduledCount = 0;
+            let bookingCount = 0;
+            let bookingPendingCount = 0;
+
+            const resolvedList = list.map(item => {
+                const info = resolveSpotScheduledDayInfo(plan, item);
+                if (info.isScheduled) scheduledCount++;
+                if (item.hasBooking) {
+                    bookingCount++;
+                    if (item.bookingStatus !== '已完成') bookingPendingCount++;
+                }
+                return info;
+            });
             const pendingCount = totalCount - scheduledCount;
 
             // 頂部統計與篩選導覽列
             const filterBarHtml = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 8px;">
-                    <div style="font-size: 0.82rem; color: #475569; display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 8px;">
+                    <div style="font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span>共 <strong>${totalCount}</strong> 個景點</span>
                         <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #16a34a; font-weight: 700;">✅ 已安排行程：${scheduledCount} 個</span>
+                        <span style="color: #15803d; font-weight: 700;">✅ 已安排：${scheduledCount}</span>
                         <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #ea580c; font-weight: 700;">⏳ 待安排：${pendingCount} 個</span>
+                        <span style="color: #64748b; font-weight: 700;">⏳ 待安排：${pendingCount}</span>
+                        <span style="color: #cbd5e1;">|</span>
+                        <span style="color: #b45309; font-weight: 700;">🎫 需預約/搶票：${bookingCount}${bookingPendingCount > 0 ? ` (待搶 ${bookingPendingCount})` : ''}</span>
                     </div>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="n-btn ${spotGuidesFilterMode === 'all' ? 'n-btn-primary' : ''}" style="padding: 2px 7px; font-size: 0.72rem;" onclick="setSpotGuideFilter('all')">全部</button>
-                        <button class="n-btn ${spotGuidesFilterMode === 'pending' ? 'n-btn-primary' : ''}" style="padding: 2px 7px; font-size: 0.72rem;" onclick="setSpotGuideFilter('pending')">只看待安排</button>
-                        <button class="n-btn ${spotGuidesFilterMode === 'scheduled' ? 'n-btn-primary' : ''}" style="padding: 2px 7px; font-size: 0.72rem;" onclick="setSpotGuideFilter('scheduled')">只看已安排</button>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'all' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('all')">全部</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'scheduled' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('scheduled')">已安排行程</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'pending' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('pending')">待安排</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">🎫 需預約/搶票</button>
                     </div>
                 </div>
             `;
 
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
             const cardsHtml = list.map((item, idx) => {
-                // 檢查是否手動勾選或系統自動偵測
-                const autoDetected = detectSpotInPlanEvents(plan, item.name);
-                const isScheduled = !!item.scheduled || (item.scheduled !== false && !!autoDetected);
+                const info = resolvedList[idx];
+                const isScheduled = info.isScheduled;
 
                 // 篩選模式過濾
                 if (spotGuidesFilterMode === 'pending' && isScheduled) return '';
                 if (spotGuidesFilterMode === 'scheduled' && !isScheduled) return '';
+                if (spotGuidesFilterMode === 'booking' && !item.hasBooking) return '';
 
-                // 安排備註文字
-                let displayNote = item.scheduleNote || '';
-                if (!displayNote && autoDetected) {
-                    displayNote = `已排入 Day ${autoDetected.dayNum}${autoDetected.time ? ` (${autoDetected.time})` : ''} ‧ ${autoDetected.title}`;
+                const dayLabelText = info.dayNum ? `第 ${info.dayNum} 天` : '已安排（未指定天數）';
+                const timeMetaParts = [];
+                if (info.dateDisplay) timeMetaParts.push(info.dateDisplay);
+                if (info.timeDisplay) timeMetaParts.push(info.timeDisplay);
+                const visitDateTimeSummary = timeMetaParts.join(' ‧ ');
+
+                // 預約／搶票時程區塊
+                let bookingStripHtml = '';
+                if (item.hasBooking) {
+                    const isDone = (item.bookingStatus === '已完成');
+                    const diff = item.bookingDifficulty || '一般預約';
+                    let diffBadgeClass = 'pill-gray';
+                    let diffIcon = '📌';
+                    if (diff === '極難搶') { diffBadgeClass = 'pill-red'; diffIcon = '⚡'; }
+                    else if (diff === '手速關鍵') { diffBadgeClass = 'pill-orange'; diffIcon = '🔥'; }
+                    else if (diff === '優先預約') { diffBadgeClass = 'pill-blue'; diffIcon = '🌟'; }
+
+                    let bDateLabel = item.bookingDate || '即刻';
+                    const bDt = (bDateLabel !== '即刻' && typeof bcalParseYMD === 'function') ? bcalParseYMD(bDateLabel) : null;
+                    if (bDt) {
+                        bDateLabel = `${bDateLabel} (週${weekdays[bDt.getDay()]})`;
+                    }
+                    const bTimeLabel = (item.bookingTime && item.bookingTime !== '-') ? item.bookingTime : '';
+
+                    bookingStripHtml = `
+                        <div class="sg-card-booking-strip ${isDone ? 'is-done' : ''}">
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <span style="font-weight:800; color:${isDone ? '#15803d' : '#b45309'}; display:inline-flex; align-items:center; gap:4px;">
+                                    <i class="fa-solid fa-ticket"></i> 搶票／開放預約：${escapeHtml(bDateLabel)}${bTimeLabel ? ` <strong style="color:#0284c7;">${escapeHtml(bTimeLabel)}</strong>` : ''}
+                                </span>
+                                ${item.bookingPlatform ? `<span style="color:#475569; background:#ffffff; border:1px solid #e2e8f0; padding:1px 7px; border-radius:5px; font-size:0.74rem;"><i class="fa-solid fa-globe" style="color:#64748b;"></i> ${escapeHtml(item.bookingPlatform)}</span>` : ''}
+                                <span class="prop-pill ${diffBadgeClass}" style="font-size:0.72rem; padding:1px 7px;">${diffIcon} ${escapeHtml(diff)}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <button type="button" class="prop-pill ${isDone ? 'pill-green' : 'pill-yellow'}" style="cursor:pointer; border:none; font-size:0.74rem; font-weight:700; padding:2px 9px;" onclick="toggleSpotBookingStatus(${idx})" title="點擊切換預約狀態（待開放 ⇄ 已完成）">
+                                    ${isDone ? '✅ 預約已完成' : '⏳ 待開放／待搶票'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
                 }
 
                 return `
-                    <div class="spot-guide-card" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#86efac' : '#e2e8f0'}; border-radius:8px; padding:10px 14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
+                    <div class="spot-guide-card" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#86efac' : '#e2e8f0'}; border-radius:10px; padding:11px 14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
                             <div style="display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0;">
-                                <!-- 勾選核取方塊 (點擊標記為已安排) -->
                                 <div style="margin-top: 3px; flex-shrink: 0;">
                                     <input type="checkbox" class="n-checkbox" id="spotGuideCheck_${idx}" ${isScheduled ? 'checked' : ''} onchange="toggleSpotGuideScheduled(${idx}, this.checked)" title="勾選設定此景點是否已安排入行程">
                                 </div>
                                 <div style="flex: 1; min-width: 0;">
-                                    <!-- 景點名稱 + 旁邊保留已安排進行程、行程安排備註與地址導航 -->
-                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                        <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 1rem; color: var(--notion-text); cursor: pointer; margin: 0; white-space: nowrap;">
+                                    <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                                        <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 0.98rem; color: var(--notion-text); cursor: pointer; margin: 0;">
                                             <i class="fa-solid fa-location-dot" style="color: #b0654a;"></i> ${escapeHtml(item.name)}
                                         </label>
 
                                         ${isScheduled ? `
-                                            <span style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.72rem; font-weight: 700; padding: 1px 7px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
-                                                <i class="fa-solid fa-circle-check"></i> 已安排進行程
+                                            <span style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.74rem; font-weight: 800; padding: 1px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                                <i class="fa-solid fa-circle-check"></i> 已安排至行程：${escapeHtml(dayLabelText)}
                                             </span>
-                                            <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 0.76rem; padding: 1px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;">
-                                                <i class="fa-solid fa-calendar-check" style="color: #22c55e;"></i>
-                                                <span><strong>行程安排備註：</strong>${escapeHtml(displayNote || '已安排至行程')}</span>
-                                                <button type="button" class="n-btn" style="padding: 0px 5px; font-size: 0.68rem; color: #15803d; border-color: #86efac; background: #ffffff; margin-left: 2px;" onclick="editSpotGuideScheduleNote(${idx})" title="修改行程安排備註">
-                                                    <i class="fa-solid fa-pen-to-square"></i> 修改備註
-                                                </button>
-                                            </span>
+                                            ${visitDateTimeSummary ? `
+                                            <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.74rem; font-weight: 700; padding: 1px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                                <i class="fa-regular fa-clock"></i> ${escapeHtml(visitDateTimeSummary)}
+                                            </span>` : ''}
+                                            ${item.scheduleNote ? `
+                                            <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 0.74rem; padding: 1px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                                <span>💡 ${escapeHtml(item.scheduleNote)}</span>
+                                            </span>` : ''}
                                         ` : `
-                                            <span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 600; padding: 1px 7px; border-radius: 12px; white-space: nowrap;">
-                                                待安排
+                                            <span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap;">
+                                                待安排至行程
                                             </span>
                                         `}
 
                                         ${item.address ? `
-                                            <span style="font-size: 0.78rem; color: #0284c7; display: inline-flex; align-items: center; gap: 4px;">
+                                            <span style="font-size: 0.77rem; color: #0284c7; display: inline-flex; align-items: center; gap: 4px;">
                                                 <i class="fa-solid fa-map-pin"></i> <span>${escapeHtml(item.address)}</span>
-                                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.address)}" target="_blank" style="font-size: 0.74rem; color: #0369a1; text-decoration: underline; margin-left: 2px; white-space: nowrap;" title="開啟線上地圖搜尋導航">
+                                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.address)}" target="_blank" style="font-size: 0.73rem; color: #0369a1; text-decoration: underline; margin-left: 2px; white-space: nowrap;" title="開啟線上地圖搜尋導航">
                                                     <i class="fa-solid fa-arrow-up-right-from-square"></i> 導航定位
                                                 </a>
                                             </span>
@@ -11183,25 +11458,27 @@ const firebaseConfig = {
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                                <button class="n-btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="openAddSpotGuideModal(${idx})">
+                            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+                                <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx})">
                                     <i class="fa-solid fa-pen"></i> 編輯
                                 </button>
-                                <button class="n-btn n-btn-danger" style="padding: 2px 7px; font-size: 0.72rem;" onclick="deleteSpotGuideItem(${idx})">
+                                <button type="button" class="n-btn n-btn-danger" style="padding: 2px 8px; font-size: 0.73rem;" onclick="deleteSpotGuideItem(${idx})">
                                     <i class="fa-regular fa-trash-can"></i> 刪除
                                 </button>
                             </div>
                         </div>
 
                         <!-- 攻略說明 -->
-                        <div style="font-size: 0.86rem; color: var(--notion-text-sub); line-height: 1.5; margin-top: 4px; background:#f8fafc; padding:7px 10px; border-radius:4px; border-left:3px solid #ea580c;">
-                            ${escapeHtml(item.tip)}
+                        <div style="font-size: 0.85rem; color: var(--notion-text-sub); line-height: 1.5; margin-top: 4px; background:#f8fafc; padding:7px 10px; border-radius:6px; border-left:3px solid #0284c7;">
+                            ${escapeHtml(item.tip || '')}
                         </div>
+
+                        ${bookingStripHtml}
                     </div>
                 `;
             }).join('');
 
-            container.innerHTML = filterBarHtml + (cardsHtml || '<div style="text-align:center; padding:16px; color:#94a3b8; font-size:0.85rem;">當前篩選條件下無符合景點</div>');
+            container.innerHTML = filterBarHtml + (cardsHtml || '<div style="text-align:center; padding:18px; color:#94a3b8; font-size:0.85rem;">當前篩選條件下無符合的景點攻略</div>');
         }
 
         // ==========================================
@@ -13613,21 +13890,10 @@ const firebaseConfig = {
         // ==========================
         // 景點攻略與搶票時程次級分頁切換 (Spots & Booking Sub-tabs)
         // ==========================
-        let currentSpotsSubtab = 'all'; // 'all', 'guides', 'booking'
+        let currentSpotsSubtab = 'all';
 
         function switchSpotsSubtab(mode) {
             currentSpotsSubtab = mode || 'all';
-            const paneBooking = document.getElementById('spotsSubpane-booking');
-            const paneGuides = document.getElementById('spotsSubpane-guides');
-            if (paneBooking) paneBooking.style.display = (currentSpotsSubtab === 'all' || currentSpotsSubtab === 'booking') ? 'block' : 'none';
-            if (paneGuides) paneGuides.style.display = (currentSpotsSubtab === 'all' || currentSpotsSubtab === 'guides') ? 'block' : 'none';
-
-            ['all', 'guides', 'booking'].forEach(k => {
-                const btn = document.getElementById('spotsSubtabBtn-' + k);
-                if (btn) btn.classList.toggle('active', k === currentSpotsSubtab);
-            });
-
-            renderBookingView();
             renderSpotGuidesView();
         }
 
@@ -15158,8 +15424,16 @@ const firebaseConfig = {
                 }).join('');
             }
 
-            // 3. 搶票時間表
-            const bookingList = plan.bookingSchedule || [];
+            // 3. 搶票時間表（自動彙整整合至景點攻略中的預約時程）
+            ensureUnifiedSpotGuides(plan);
+            const bookingList = (plan.spotTips || []).filter(s => s.hasBooking).map(s => ({
+                date: s.bookingDate || '即刻',
+                time: s.bookingTime || '-',
+                target: s.name + (s.visitDate ? ` (${s.visitDate})` : ''),
+                platform: s.bookingPlatform || '官方管道',
+                difficulty: s.bookingDifficulty || '一般預約',
+                status: s.bookingStatus || '待開放'
+            }));
             let bookingTableHtml = '';
             if (bookingList.length > 0) {
                 bookingTableHtml = `
@@ -21215,239 +21489,745 @@ const firebaseConfig = {
             }
         }
 
-        // Booking Modal (支援新增與編輯，防呆與防閃退)
-        function openAddBookingModal(editIdx = null) {
+        // ==========================================================
+        // 景點攻略專屬彈窗：雙行事曆控制器 ＋ 24h 時分分離選單 ＋ 每日行程自動串聯
+        // ==========================================================
+        const sgCalStates = {
+            visit: {
+                selectedDate: '',
+                viewYear: 2026,
+                viewMonth: 0,
+                isOpen: false
+            },
+            booking: {
+                selectedDate: '',
+                viewYear: 2026,
+                viewMonth: 0,
+                isOpen: false
+            },
+            dayMap: {},
+            planStartYmd: '',
+            planEndYmd: ''
+        };
+
+        let _sgCalDocListenerBound = false;
+        function bindSgCalendarOutsideClose() {
+            if (_sgCalDocListenerBound) return;
+            _sgCalDocListenerBound = true;
+            document.addEventListener('click', (ev) => {
+                const vWrap = document.getElementById('sgVisitCalWrapper');
+                const bWrap = document.getElementById('sgBookingCalWrapper');
+                let changed = false;
+                if (sgCalStates.visit.isOpen && vWrap && !vWrap.contains(ev.target)) {
+                    sgCalStates.visit.isOpen = false;
+                    changed = true;
+                }
+                if (sgCalStates.booking.isOpen && bWrap && !bWrap.contains(ev.target)) {
+                    sgCalStates.booking.isOpen = false;
+                    changed = true;
+                }
+                if (changed) {
+                    renderSgCalendarUI('visit');
+                    renderSgCalendarUI('booking');
+                }
+            });
+        }
+
+        function ensureSg24hTimeSelectsPopulated() {
+            const populateHour = (id, allowEmpty, emptyLabel) => {
+                const sel = document.getElementById(id);
+                if (!sel || sel.dataset.populated === '1') return;
+                let html = allowEmpty ? `<option value="">${emptyLabel || '-- 時'}</option>` : '';
+                for (let h = 0; h < 24; h++) {
+                    const hh = String(h).padStart(2, '0');
+                    html += `<option value="${hh}">${hh} 時</option>`;
+                }
+                sel.innerHTML = html;
+                sel.dataset.populated = '1';
+            };
+
+            const populateMin = (id) => {
+                const sel = document.getElementById(id);
+                if (!sel || sel.dataset.populated === '1') return;
+                let html = '';
+                for (let m = 0; m < 60; m++) {
+                    const mm = String(m).padStart(2, '0');
+                    html += `<option value="${mm}">${mm} 分</option>`;
+                }
+                sel.innerHTML = html;
+                sel.dataset.populated = '1';
+            };
+
+            populateHour('sgVisitStartHour', true, '-- 時');
+            populateMin('sgVisitStartMin');
+            populateHour('sgVisitEndHour', true, '-- 時');
+            populateMin('sgVisitEndMin');
+            populateHour('sgBookingHour', true, '-- 時');
+            populateMin('sgBookingMin');
+        }
+
+        function setSg24hPairValues(hourId, minId, timeStr, defaultHour, defaultMin) {
+            ensureSg24hTimeSelectsPopulated();
+            const hSel = document.getElementById(hourId);
+            const mSel = document.getElementById(minId);
+            if (!hSel || !mSel) return;
+
+            let hh = defaultHour !== undefined ? defaultHour : '';
+            let mm = defaultMin !== undefined ? defaultMin : '00';
+
+            if (timeStr && timeStr !== '-') {
+                const m = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})/);
+                if (m) {
+                    const hNum = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+                    const mNum = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+                    hh = String(hNum).padStart(2, '0');
+                    mm = String(mNum).padStart(2, '0');
+                }
+            }
+
+            hSel.value = hh;
+            mSel.value = mm;
+            mSel.disabled = (hh === '');
+            mSel.style.opacity = (hh === '') ? '0.45' : '1';
+        }
+
+        function getSg24hPairTimeString(hourId, minId) {
+            const hSel = document.getElementById(hourId);
+            const mSel = document.getElementById(minId);
+            if (!hSel || !hSel.value) return '';
+            const mm = (mSel && mSel.value) ? mSel.value : '00';
+            return `${hSel.value}:${mm}`;
+        }
+
+        function onSgVisitTimeChange() {
+            const sh = document.getElementById('sgVisitStartHour');
+            const sm = document.getElementById('sgVisitStartMin');
+            const eh = document.getElementById('sgVisitEndHour');
+            const em = document.getElementById('sgVisitEndMin');
+            if (sm && sh) {
+                sm.disabled = !sh.value;
+                sm.style.opacity = sh.value ? '1' : '0.45';
+            }
+            if (em && eh) {
+                em.disabled = !eh.value;
+                em.style.opacity = eh.value ? '1' : '0.45';
+            }
+            updateSgScheduledDayStatusUI();
+        }
+
+        function onSgBookingTimeChange() {
+            const bh = document.getElementById('sgBookingHour');
+            const bm = document.getElementById('sgBookingMin');
+            const hint = document.getElementById('sgBookingTimeHint');
+            if (bm && bh) {
+                bm.disabled = !bh.value;
+                bm.style.opacity = bh.value ? '1' : '0.45';
+            }
+            if (hint) {
+                const t = getSg24hPairTimeString('sgBookingHour', 'sgBookingMin');
+                hint.textContent = t ? `24h 開放時間：${t}` : '未指定特定幾點';
+            }
+        }
+
+        function initSgCalendars(visitDateRaw, bookingDateRaw) {
+            bindSgCalendarOutsideClose();
+            const plan = getCurrentPlan();
+            const info = (typeof buildPlanDateToDayMap === 'function') ? buildPlanDateToDayMap(plan) : { map: {}, startYmd: '', endYmd: '' };
+            sgCalStates.dayMap = info.map || {};
+            sgCalStates.planStartYmd = info.startYmd || '';
+            sgCalStates.planEndYmd = info.endYmd || '';
+
+            const parseToYmdOrSpecial = (raw, allowImmediate) => {
+                if (!raw) return '';
+                const s = String(raw).trim();
+                if (allowImmediate && s === '即刻') return '即刻';
+                const ym = s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+                if (ym) return `${ym[1]}-${ym[2].padStart(2, '0')}-${ym[3].padStart(2, '0')}`;
+                const dm = s.match(/(?:Day\s*|第\s*|D)(\d+)/i);
+                if (dm && info.startYmd && typeof bcalAddDays === 'function') {
+                    return bcalAddDays(info.startYmd, Math.max(0, parseInt(dm[1], 10) - 1)) || '';
+                }
+                const md = s.match(/^(\d{1,2})[.\-/](\d{1,2})/);
+                if (md) {
+                    const yr = info.startYmd ? info.startYmd.slice(0, 4) : String(new Date().getFullYear());
+                    return `${yr}-${md[1].padStart(2, '0')}-${md[2].padStart(2, '0')}`;
+                }
+                return '';
+            };
+
+            const vYmd = parseToYmdOrSpecial(visitDateRaw, false);
+            sgCalStates.visit.selectedDate = vYmd;
+            sgCalStates.visit.isOpen = false;
+            const baseVisitRef = vYmd || info.startYmd || (typeof bcalFormatYMD === 'function' ? bcalFormatYMD(new Date()) : '');
+            const vDt = (baseVisitRef && typeof bcalParseYMD === 'function') ? bcalParseYMD(baseVisitRef) : new Date();
+            sgCalStates.visit.viewYear = vDt ? vDt.getFullYear() : new Date().getFullYear();
+            sgCalStates.visit.viewMonth = vDt ? vDt.getMonth() : new Date().getMonth();
+
+            const bVal = parseToYmdOrSpecial(bookingDateRaw, true);
+            sgCalStates.booking.selectedDate = bVal;
+            sgCalStates.booking.isOpen = false;
+            const baseBookRef = (bVal && bVal !== '即刻') ? bVal : (vYmd || info.startYmd || '');
+            const bDt = (baseBookRef && typeof bcalParseYMD === 'function') ? bcalParseYMD(baseBookRef) : new Date();
+            sgCalStates.booking.viewYear = bDt ? bDt.getFullYear() : new Date().getFullYear();
+            sgCalStates.booking.viewMonth = bDt ? bDt.getMonth() : new Date().getMonth();
+
+            const vHid = document.getElementById('sgVisitDate');
+            if (vHid) vHid.value = vYmd;
+            const bHid = document.getElementById('sgBookingDate');
+            if (bHid) bHid.value = bVal;
+
+            renderSgCalendarUI('visit');
+            renderSgCalendarUI('booking');
+            updateSgScheduledDayStatusUI();
+        }
+
+        function toggleSgCalendar(kind, ev) {
+            if (ev) ev.stopPropagation();
+            const targetState = sgCalStates[kind];
+            if (!targetState) return;
+            const otherKind = (kind === 'visit') ? 'booking' : 'visit';
+            sgCalStates[otherKind].isOpen = false;
+            targetState.isOpen = !targetState.isOpen;
+
+            if (targetState.isOpen && targetState.selectedDate && targetState.selectedDate !== '即刻' && typeof bcalParseYMD === 'function') {
+                const dt = bcalParseYMD(targetState.selectedDate);
+                if (dt) {
+                    targetState.viewYear = dt.getFullYear();
+                    targetState.viewMonth = dt.getMonth();
+                }
+            }
+            renderSgCalendarUI('visit');
+            renderSgCalendarUI('booking');
+        }
+
+        function navSgCalendarMonth(kind, delta, ev) {
+            if (ev) ev.stopPropagation();
+            const st = sgCalStates[kind];
+            if (!st) return;
+            const d = new Date(st.viewYear, st.viewMonth + delta, 1);
+            st.viewYear = d.getFullYear();
+            st.viewMonth = d.getMonth();
+            renderSgCalendarUI(kind);
+        }
+
+        function selectSgCalendarDate(kind, ymdOrSpecial, ev) {
+            if (ev) ev.stopPropagation();
+            const st = sgCalStates[kind];
+            if (!st) return;
+            st.selectedDate = ymdOrSpecial;
+            st.isOpen = false;
+
+            if (kind === 'visit') {
+                const hid = document.getElementById('sgVisitDate');
+                if (hid) hid.value = ymdOrSpecial;
+                if (ymdOrSpecial) {
+                    const schedCb = document.getElementById('sgScheduledCheck');
+                    if (schedCb && !schedCb.checked) schedCb.checked = true;
+                }
+                renderSgCalendarUI('visit');
+                updateSgScheduledDayStatusUI();
+            } else {
+                const hid = document.getElementById('sgBookingDate');
+                if (hid) hid.value = ymdOrSpecial;
+                renderSgCalendarUI('booking');
+            }
+        }
+
+        function applySgBookingAdvanceDays(daysBefore, ev) {
+            if (ev) ev.stopPropagation();
+            const baseYmd = sgCalStates.visit.selectedDate || sgCalStates.planStartYmd || (typeof bcalFormatYMD === 'function' ? bcalFormatYMD(new Date()) : '');
+            if (!baseYmd || typeof bcalAddDays !== 'function') return;
+            const targetYmd = bcalAddDays(baseYmd, -Math.abs(daysBefore));
+            if (targetYmd) {
+                selectSgCalendarDate('booking', targetYmd, ev);
+            }
+        }
+
+        function clearSpotGuideVisitDateTime() {
+            sgCalStates.visit.selectedDate = '';
+            sgCalStates.visit.isOpen = false;
+            const hid = document.getElementById('sgVisitDate');
+            if (hid) hid.value = '';
+            setSg24hPairValues('sgVisitStartHour', 'sgVisitStartMin', '', '', '00');
+            setSg24hPairValues('sgVisitEndHour', 'sgVisitEndMin', '', '', '00');
+            renderSgCalendarUI('visit');
+            updateSgScheduledDayStatusUI();
+        }
+
+        function renderSgCalendarUI(kind) {
+            const isVisit = (kind === 'visit');
+            const st = sgCalStates[kind];
+            const triggerEl = document.getElementById(isVisit ? 'sgVisitCalTrigger' : 'sgBookingCalTrigger');
+            const dispEl = document.getElementById(isVisit ? 'sgVisitCalDisplay' : 'sgBookingCalDisplay');
+            const badgeEl = document.getElementById(isVisit ? 'sgVisitDayBadge' : 'sgBookingDateBadge');
+            const panelEl = document.getElementById(isVisit ? 'sgVisitCalPanel' : 'sgBookingCalPanel');
+            if (!triggerEl || !dispEl || !panelEl) return;
+
+            triggerEl.classList.toggle('is-open', !!st.isOpen);
+            panelEl.classList.toggle('open', !!st.isOpen);
+
+            const plan = getCurrentPlan();
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const selVal = st.selectedDate;
+
+            if (selVal === '即刻') {
+                dispEl.innerHTML = `<span style="color:#b45309; font-weight:800;">⚡ 即刻開放預約</span>`;
+                if (badgeEl) badgeEl.textContent = '隨時可訂';
+            } else if (selVal) {
+                const selDt = (typeof bcalParseYMD === 'function') ? bcalParseYMD(selVal) : null;
+                if (selDt) {
+                    dispEl.innerHTML = `<span>${selVal}</span><span class="bcal-slot-weekday">週${weekdays[selDt.getDay()]}</span>`;
+                    if (isVisit && badgeEl) {
+                        const matchedDay = (typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, selVal) : null;
+                        if (matchedDay) {
+                            badgeEl.style.background = '#dcfce7';
+                            badgeEl.style.color = '#15803d';
+                            badgeEl.style.borderColor = '#86efac';
+                            badgeEl.textContent = `第 ${matchedDay.dayNum} 天`;
+                        } else {
+                            badgeEl.style.background = '#fffbeb';
+                            badgeEl.style.color = '#b45309';
+                            badgeEl.style.borderColor = '#fde68a';
+                            badgeEl.textContent = '非行程內日期';
+                        }
+                    } else if (!isVisit && badgeEl) {
+                        badgeEl.textContent = '開放搶票日';
+                    }
+                } else {
+                    dispEl.innerHTML = `<span>${escapeHtml(selVal)}</span>`;
+                }
+            } else {
+                dispEl.innerHTML = `<span class="bcal-slot-placeholder">${isVisit ? '點選行事曆選擇造訪日期' : '點選行事曆選擇搶票日期'}</span>`;
+                if (badgeEl) {
+                    if (isVisit) {
+                        badgeEl.style.background = '#f1f5f9';
+                        badgeEl.style.color = '#64748b';
+                        badgeEl.style.borderColor = '#cbd5e1';
+                        badgeEl.textContent = '未選日期';
+                    } else {
+                        badgeEl.textContent = '未選日期';
+                    }
+                }
+            }
+
+            if (!st.isOpen) return;
+
+            const year = st.viewYear;
+            const monthIdx = st.viewMonth;
+            const firstDay = new Date(year, monthIdx, 1).getDay();
+            const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+            const todayYmd = (typeof bcalFormatYMD === 'function') ? bcalFormatYMD(new Date()) : '';
+
+            let topShortcutsHtml = '';
+            if (isVisit) {
+                const entries = Object.entries(sgCalStates.dayMap);
+                if (entries.length > 0) {
+                    topShortcutsHtml = `<div style="display:flex; gap:5px; flex-wrap:wrap; padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid #e2e8f0;">` +
+                        entries.map(([dYmd, dNum]) => {
+                            const isAct = (dYmd === selVal);
+                            const shortMd = dYmd.slice(5).replace('-', '/');
+                            return `<button type="button" class="bcal-mini-btn ${isAct ? 'primary' : ''}" style="padding:2px 7px; font-size:0.7rem;" onclick="selectSgCalendarDate('visit', '${dYmd}', event)">第 ${dNum} 天 (${shortMd})</button>`;
+                        }).join('') +
+                        `</div>`;
+                }
+            } else {
+                topShortcutsHtml = `
+                    <div style="display:flex; gap:5px; flex-wrap:wrap; padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid #e2e8f0;">
+                        <button type="button" class="bcal-mini-btn ${selVal === '即刻' ? 'primary' : ''}" style="padding:2px 7px; font-size:0.7rem;" onclick="selectSgCalendarDate('booking', '即刻', event)">⚡ 即刻開放</button>
+                        <button type="button" class="bcal-mini-btn" style="padding:2px 7px; font-size:0.7rem;" onclick="applySgBookingAdvanceDays(7, event)">造訪前 7 天</button>
+                        <button type="button" class="bcal-mini-btn" style="padding:2px 7px; font-size:0.7rem;" onclick="applySgBookingAdvanceDays(14, event)">造訪前 14 天</button>
+                        <button type="button" class="bcal-mini-btn" style="padding:2px 7px; font-size:0.7rem;" onclick="applySgBookingAdvanceDays(30, event)">造訪前 30 天</button>
+                    </div>
+                `;
+            }
+
+            let wkHtml = '';
+            weekdays.forEach((w, i) => {
+                const cls = i === 0 ? 'weekend-sun' : (i === 6 ? 'weekend-sat' : '');
+                wkHtml += `<div class="bcal-weekday ${cls}">${w}</div>`;
+            });
+
+            let cellsHtml = '';
+            for (let i = 0; i < firstDay; i++) {
+                cellsHtml += `<div class="bcal-day empty"></div>`;
+            }
+            for (let d = 1; d <= daysInMonth; d++) {
+                const ymd = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const mappedDayNum = sgCalStates.dayMap[ymd];
+                const isSelected = (ymd === selVal);
+                const classes = ['bcal-day'];
+                if (ymd === todayYmd) classes.push('is-today');
+                if (mappedDayNum && !isSelected) classes.push('in-range');
+                if (isSelected) classes.push('is-start', 'single-unpaired');
+
+                const tagTxt = mappedDayNum ? `D${mappedDayNum}` : (isSelected ? '已選' : '');
+                cellsHtml += `<div class="${classes.join(' ')}" style="${mappedDayNum && !isSelected ? 'border-radius:6px;' : ''}" onclick="selectSgCalendarDate('${kind}', '${ymd}', event)">
+                    <span>${d}</span>
+                    ${tagTxt ? `<span class="bcal-day-tag">${tagTxt}</span>` : ''}
+                </div>`;
+            }
+
+            panelEl.innerHTML = `
+                <div onclick="event.stopPropagation();">
+                    ${topShortcutsHtml}
+                    <div class="bcal-month-header">
+                        <button type="button" class="bcal-nav-btn" onclick="navSgCalendarMonth('${kind}', -1, event)" title="上個月"><i class="fa-solid fa-chevron-left"></i></button>
+                        <div class="bcal-month-title">${year} 年 ${monthIdx + 1} 月</div>
+                        <button type="button" class="bcal-nav-btn" onclick="navSgCalendarMonth('${kind}', 1, event)" title="下個月"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="bcal-weekdays">${wkHtml}</div>
+                    <div class="bcal-days-grid">${cellsHtml}</div>
+                </div>
+            `;
+        }
+
+        function updateSgScheduledDayStatusUI() {
+            const schedCb = document.getElementById('sgScheduledCheck');
+            const badge = document.getElementById('sgScheduledDayLiveBadge');
+            if (!badge) return;
+
+            const plan = getCurrentPlan();
+            const isChecked = !!(schedCb && schedCb.checked);
+            const visitYmd = sgCalStates.visit.selectedDate || (document.getElementById('sgVisitDate')?.value || '');
+            const matchedDay = (visitYmd && typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, visitYmd) : null;
+
+            const startT = getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin');
+            const endT = getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin');
+            const timeTxt = startT ? (endT ? ` ‧ ${startT} - ${endT}` : ` ‧ ${startT}`) : '';
+
+            // 若尚未選日期，也嘗試從目前編輯中的景點名稱偵測既有行程天數
+            let fallbackDetectedDay = null;
+            if (!matchedDay && plan) {
+                const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
+                const curSpot = (editIdx >= 0 && plan.spotTips && plan.spotTips[editIdx]) ? plan.spotTips[editIdx] : null;
+                const nameVal = document.getElementById('sgNameInput')?.value.trim() || curSpot?.name || '';
+                const det = detectSpotInPlanEvents(plan, nameVal, curSpot?.id);
+                if (det && det.dayNum) fallbackDetectedDay = det.dayNum;
+            }
+
+            const finalDayNum = matchedDay ? matchedDay.dayNum : fallbackDetectedDay;
+
+            if (isChecked) {
+                if (finalDayNum) {
+                    badge.className = 'sg-day-pill-live';
+                    badge.innerHTML = `<i class="fa-solid fa-calendar-check"></i> 已安排：第 ${finalDayNum} 天${escapeHtml(timeTxt)}`;
+                } else if (visitYmd) {
+                    badge.className = 'sg-day-pill-live unmatched';
+                    badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i> 所選日期不在行程天數範圍內`;
+                } else {
+                    badge.className = 'sg-day-pill-live unmatched';
+                    badge.innerHTML = `<i class="fa-regular fa-hand-pointer"></i> 請點選上方造訪日期以對應第幾天`;
+                }
+            } else {
+                if (finalDayNum) {
+                    badge.className = 'sg-day-pill-live unmatched';
+                    badge.innerHTML = `對應第 ${finalDayNum} 天（勾選左側即可排入行程）`;
+                } else {
+                    badge.className = 'sg-day-pill-live unmatched';
+                    badge.textContent = '待安排至行程';
+                }
+            }
+        }
+
+        function toggleSgBookingFields() {
+            const cb = document.getElementById('sgHasBookingCheck');
+            const wrap = document.getElementById('sgBookingFieldsWrap');
+            if (!wrap) return;
+            const show = !!(cb && cb.checked);
+            wrap.style.display = show ? 'block' : 'none';
+            if (show) {
+                if (!sgCalStates.booking.selectedDate) {
+                    selectSgCalendarDate('booking', '即刻');
+                }
+                onSgBookingTimeChange();
+            }
+        }
+
+        // 將景點攻略依「造訪日期與時間」自動串接回每日行程，並依據 24h 時間排序與順移衝突項目
+        function syncSpotGuideToDailySchedule(plan, spotObj) {
+            if (!plan || !spotObj || !Array.isArray(plan.days) || plan.days.length === 0) {
+                return { synced: false, dayNum: null };
+            }
+
+            // 1. 先從所有天數移除舊的同 spotGuideId 項目（支援跨日修改日期自動搬移）
+            plan.days.forEach(d => {
+                if (Array.isArray(d.events)) {
+                    d.events = d.events.filter(ev => ev.spotGuideId !== spotObj.id);
+                }
+            });
+
+            if (!spotObj.scheduled || !spotObj.visitDate) {
+                return { synced: false, dayNum: null };
+            }
+
+            // 2. 比對造訪日期與行程天數，找出對應的 Day N
+            const targetDay = (typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, spotObj.visitDate) : null;
+            if (!targetDay) {
+                return { synced: false, dayNum: null };
+            }
+            if (!Array.isArray(targetDay.events)) targetDay.events = [];
+
+            const startT = (spotObj.visitStartTime || '').trim();
+            const endT = (spotObj.visitEndTime || '').trim();
+            const timeStr = (startT && endT) ? `${startT} - ${endT}` : (startT || '10:00');
+
+            const noteParts = [];
+            if (spotObj.scheduleNote) noteParts.push(spotObj.scheduleNote);
+            if (spotObj.hasBooking) {
+                const bTimeTxt = spotObj.bookingTime ? ` ${spotObj.bookingTime}` : '';
+                const bStatTxt = spotObj.bookingStatus === '已完成' ? '已預約' : `搶票日 ${spotObj.bookingDate || '即刻'}${bTimeTxt}`;
+                noteParts.push(`🎫 ${bStatTxt}`);
+            }
+            if (spotObj.tip) noteParts.push(spotObj.tip);
+
+            // 若當日已有同名且尚未綁定其他 ID 的手動景點項目，直接升級合併避免重複產生兩筆
+            const existingManualIdx = targetDay.events.findIndex(ev =>
+                !ev.spotGuideId && !ev.majorTransId && ev.title && spotObj.name &&
+                (ev.title === spotObj.name || ev.title.includes(spotObj.name))
+            );
+
+            if (existingManualIdx >= 0) {
+                const existEv = targetDay.events[existingManualIdx];
+                if (startT) existEv.time = timeStr;
+                existEv.title = spotObj.name;
+                if (spotObj.address) existEv.loc = spotObj.address;
+                existEv.notes = noteParts.join(' ‧ ');
+                existEv.spotGuideId = spotObj.id;
+                if (typeof sortDayEventsByTime === 'function') {
+                    targetDay.events = sortDayEventsByTime(targetDay.events);
+                }
+                return { synced: true, dayNum: targetDay.dayNum };
+            }
+
+            const newEv = {
+                time: timeStr,
+                title: spotObj.name,
+                type: 'spot',
+                loc: spotObj.address || '',
+                cost: 0,
+                notes: noteParts.join(' ‧ '),
+                spotGuideId: spotObj.id
+            };
+
+            // 3. 若有設定明確起訖時間，檢查當日既有一般項目是否衝突並順移時間（與新增交通一致）
+            if (startT && endT && typeof parseTimeString === 'function' && typeof shiftTimeString === 'function') {
+                const newParsed = parseTimeString(timeStr);
+                if (newParsed.startMinutes < 9999 && newParsed.hasEnd && newParsed.endMinutes > newParsed.startMinutes) {
+                    targetDay.events = sortDayEventsByTime(targetDay.events);
+                    let cursorEnd = newParsed.endMinutes;
+                    targetDay.events.forEach(ev => {
+                        if (ev.type === 'flight' || ev.majorTransId || ev.spotGuideId) return;
+                        const p = parseTimeString(ev.time);
+                        if (p.startMinutes < 9999 && p.startMinutes >= newParsed.startMinutes && p.startMinutes < cursorEnd) {
+                            const shiftMins = cursorEnd - p.startMinutes;
+                            ev.time = shiftTimeString(ev.time, shiftMins);
+                            const afterP = parseTimeString(ev.time);
+                            cursorEnd = afterP.hasEnd ? afterP.endMinutes : (afterP.startMinutes + 60);
+                        }
+                    });
+                }
+            }
+
+            // 4. 串接加入當日行程並依時間自動排序
+            targetDay.events.push(newEv);
+            if (typeof sortDayEventsByTime === 'function') {
+                targetDay.events = sortDayEventsByTime(targetDay.events);
+            }
+
+            return { synced: true, dayNum: targetDay.dayNum };
+        }
+
+        // 開啟新增／編輯景點攻略專屬彈窗
+        function openAddSpotGuideModal(editIdx = null, forceExpandBooking = false) {
             const plan = getCurrentPlan();
             if (!plan) return;
-            if (!plan.bookingSchedule) plan.bookingSchedule = [];
+            ensureUnifiedSpotGuides(plan);
+            ensureSg24hTimeSelectsPopulated();
 
-            const isEdit = (editIdx !== null && editIdx !== undefined && editIdx >= 0 && plan.bookingSchedule[editIdx]);
-            const rawItem = isEdit ? plan.bookingSchedule[editIdx] : {
-                date: '',
-                time: '',
-                target: '',
-                platform: '',
-                difficulty: '手速關鍵',
-                status: '待開放'
+            const isEdit = (editIdx !== null && editIdx !== undefined && editIdx >= 0 && plan.spotTips[editIdx]);
+            const curItem = isEdit ? plan.spotTips[editIdx] : {
+                name: '',
+                address: '',
+                tip: '',
+                visitDate: '',
+                visitStartTime: '09:30',
+                visitEndTime: '11:30',
+                scheduled: false,
+                scheduleNote: '',
+                hasBooking: !!forceExpandBooking,
+                bookingDate: '即刻',
+                bookingTime: '10:00',
+                bookingPlatform: '',
+                bookingDifficulty: '手速關鍵',
+                bookingStatus: '待開放'
             };
-            const item = normalizeBookingItem(rawItem);
 
-            const titleEl = document.getElementById('bookingModalTitle');
+            // 若編輯既有景點且尚未儲存過 visitDate，嘗試從行程自動反推對應日期與時間，方便使用者直接調整
+            let initVisitDate = curItem.visitDate || '';
+            let initStartT = curItem.visitStartTime || '';
+            let initEndT = curItem.visitEndTime || '';
+            let initScheduled = !!curItem.scheduled;
+
+            if (isEdit && !initVisitDate) {
+                const det = detectSpotInPlanEvents(plan, curItem.name, curItem.id);
+                if (det && det.dayNum) {
+                    if (curItem.scheduled !== false) initScheduled = true;
+                    const dayMapInfo = (typeof buildPlanDateToDayMap === 'function') ? buildPlanDateToDayMap(plan) : { startYmd: '' };
+                    if (dayMapInfo.startYmd && typeof bcalAddDays === 'function') {
+                        initVisitDate = bcalAddDays(dayMapInfo.startYmd, Math.max(0, det.dayNum - 1)) || '';
+                    }
+                    if (!initStartT && det.time) {
+                        const tm = String(det.time).match(/(\d{1,2}:\d{2})(?:\s*-\s*(\d{1,2}:\d{2}))?/);
+                        if (tm) {
+                            initStartT = tm[1];
+                            if (tm[2]) initEndT = tm[2];
+                        }
+                    }
+                }
+            }
+
+            const titleEl = document.getElementById('spotGuideModalTitle');
             if (titleEl) {
-                const targetText = isEdit ? ` (${escapeHtml(item.target || '時程')})` : '';
-                titleEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${isEdit ? '編輯預約 / 搶票時程' + targetText : '新增預約 / 搶票時程'}`;
+                titleEl.innerHTML = `<i class="fa-solid fa-landmark-dome" style="color:#0284c7;"></i> ${isEdit ? '編輯景點攻略' : '新增景點攻略'}`;
             }
-
-            const btnEl = document.getElementById('bookingSubmitBtn');
+            const btnEl = document.getElementById('sgSubmitBtn');
             if (btnEl) {
-                btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${isEdit ? '儲存時程變更' : '新增預約項目'}`;
+                btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${isEdit ? '儲存變更' : '新增景點攻略'}`;
             }
 
-            const editInput = document.getElementById('bEditIndex');
-            if (editInput) editInput.value = isEdit ? editIdx : '-1';
+            document.getElementById('sgEditIndex').value = isEdit ? editIdx : '-1';
+            document.getElementById('sgNameInput').value = curItem.name || '';
+            document.getElementById('sgAddressInput').value = curItem.address || '';
+            document.getElementById('sgTipInput').value = curItem.tip || '';
+            document.getElementById('sgScheduledCheck').checked = initScheduled;
+            document.getElementById('sgScheduleNoteInput').value = curItem.scheduleNote || '';
 
-            const setVal = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.value = val || '';
-            };
+            setSg24hPairValues('sgVisitStartHour', 'sgVisitStartMin', initStartT, isEdit ? '' : '09', '30');
+            setSg24hPairValues('sgVisitEndHour', 'sgVisitEndMin', initEndT, isEdit ? '' : '11', '30');
 
-            setVal('bDate', item.date);
-            setVal('bTime', item.time);
-            setVal('bTarget', item.target);
-            setVal('bPlatform', item.platform);
-            
-            const diffEl = document.getElementById('bDifficulty');
-            if (diffEl) {
-                diffEl.value = item.difficulty || '手速關鍵';
-            }
+            const hasB = !!(curItem.hasBooking || forceExpandBooking);
+            document.getElementById('sgHasBookingCheck').checked = hasB;
+            setSg24hPairValues('sgBookingHour', 'sgBookingMin', curItem.bookingTime || '', hasB ? '10' : '', '00');
+            document.getElementById('sgBookingPlatform').value = curItem.bookingPlatform || '';
+            document.getElementById('sgBookingDifficulty').value = curItem.bookingDifficulty || '手速關鍵';
+            document.getElementById('sgBookingStatus').value = curItem.bookingStatus || '待開放';
 
-            const statusEl = document.getElementById('bStatus');
-            if (statusEl) {
-                statusEl.value = item.status || '待開放';
-            }
+            initSgCalendars(initVisitDate, curItem.bookingDate || (hasB ? '即刻' : ''));
+            toggleSgBookingFields();
+            onSgVisitTimeChange();
+            onSgBookingTimeChange();
 
-            openModal('addBookingModal');
+            openModal('editSpotGuideModal');
         }
 
-        // 兼容別名
+        // 向下相容舊預約按鈕呼叫：直接打開整合後的景點攻略彈窗並展開預約時程區塊
+        function openAddBookingModal(editIdx = null) {
+            openAddSpotGuideModal(editIdx, true);
+        }
         function openEditBookingModal(editIdx) {
-            openAddBookingModal(editIdx);
+            openAddSpotGuideModal(editIdx, true);
         }
 
-        function handleSaveBookingSubmit(e) {
+        function handleSaveSpotGuideSubmit(e) {
             if (e) {
                 if (typeof e.preventDefault === 'function') e.preventDefault();
                 if (typeof e.stopPropagation === 'function') e.stopPropagation();
             }
 
-            try {
-                const plan = getCurrentPlan();
-                if (!plan) {
-                    showToast('danger', '找不到當前旅行計畫！');
-                    return false;
-                }
-                if (!plan.bookingSchedule) plan.bookingSchedule = [];
+            const plan = getCurrentPlan();
+            if (!plan) return false;
+            ensureUnifiedSpotGuides(plan);
 
-                const targetInput = document.getElementById('bTarget');
-                const target = targetInput ? targetInput.value.trim() : '';
-                if (!target) {
-                    showToast('danger', '請填寫目標項目 (參觀日 / 體驗內容)！');
-                    if (targetInput) targetInput.focus();
-                    return false;
-                }
+            const nameInput = document.getElementById('sgNameInput');
+            const tipInput = document.getElementById('sgTipInput');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const tip = tipInput ? tipInput.value.trim() : '';
 
-                const dateVal = document.getElementById('bDate')?.value.trim() || '即刻';
-                const timeVal = document.getElementById('bTime')?.value.trim() || '-';
-                const platformVal = document.getElementById('bPlatform')?.value.trim() || '官方管道';
-                const diffVal = document.getElementById('bDifficulty')?.value || '一般預約';
-                const statusVal = document.getElementById('bStatus')?.value || '待開放';
-
-                const editIdxVal = document.getElementById('bEditIndex')?.value;
-                const editIdx = (editIdxVal !== undefined && editIdxVal !== '') ? parseInt(editIdxVal) : -1;
-
-                const bookingData = {
-                    date: dateVal,
-                    time: timeVal,
-                    target: target,
-                    platform: platformVal,
-                    difficulty: diffVal,
-                    status: statusVal
-                };
-
-                if (editIdx >= 0 && editIdx < plan.bookingSchedule.length) {
-                    plan.bookingSchedule[editIdx] = bookingData;
-                } else {
-                    plan.bookingSchedule.push(bookingData);
-                }
-
-                saveState();
-                closeModal('addBookingModal');
-                renderBookingView();
-                showToast('success', editIdx >= 0 ? `已更新「${target}」搶票時程！` : `已成功加入「${target}」預約時程！`);
-            } catch (err) {
-                console.error('儲存預約時程時發生例外:', err);
-                showToast('danger', '儲存失敗：' + (err.message || '未知錯誤'));
+            if (!name) {
+                showToast('danger', '請填寫「景點名稱」！');
+                if (nameInput) nameInput.focus();
+                return false;
+            }
+            if (!tip) {
+                showToast('danger', '請填寫「速通攻略與防雷指南」！');
+                if (tipInput) tipInput.focus();
+                return false;
             }
 
-            return false;
-        }
+            const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
+            const prevItem = (editIdx >= 0 && plan.spotTips[editIdx]) ? plan.spotTips[editIdx] : null;
+            const itemId = prevItem?.id || ('sg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
 
-        function deleteBookingItem(idx) {
-            const plan = getCurrentPlan();
-            if (!plan || !plan.bookingSchedule || !plan.bookingSchedule[idx]) return;
-            const targetName = plan.bookingSchedule[idx].target || '此筆時程';
-            if (confirm(`確定要刪除「${targetName}」這筆搶票時程嗎？`)) {
-                plan.bookingSchedule.splice(idx, 1);
-                saveState();
-                renderBookingView();
-                showToast('success', '已刪除搶票時程項目');
-            }
-        }
+            const visitDate = (document.getElementById('sgVisitDate')?.value || sgCalStates.visit.selectedDate || '').trim();
+            const visitStartTime = getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin');
+            const visitEndTime = getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin');
+            const scheduled = !!document.getElementById('sgScheduledCheck')?.checked;
+            const scheduleNote = (document.getElementById('sgScheduleNoteInput')?.value || '').trim();
 
-        // Spot Guides Modal (支援新增與編輯，含地址欄位)
-        function openAddSpotGuideModal(editIdx = null) {
-            const plan = getCurrentPlan();
-            if (!plan) return;
-            const isEdit = (editIdx !== null && editIdx !== undefined && plan.spotTips && plan.spotTips[editIdx]);
-            const curItem = isEdit ? plan.spotTips[editIdx] : { name: '', address: '', tip: '' };
+            const hasBooking = !!document.getElementById('sgHasBookingCheck')?.checked;
+            const bookingDate = hasBooking ? ((document.getElementById('sgBookingDate')?.value || sgCalStates.booking.selectedDate || '即刻').trim()) : '';
+            const bookingTime = hasBooking ? getSg24hPairTimeString('sgBookingHour', 'sgBookingMin') : '';
+            const bookingPlatform = hasBooking ? (document.getElementById('sgBookingPlatform')?.value.trim() || '官方管道') : '';
+            const bookingDifficulty = hasBooking ? (document.getElementById('sgBookingDifficulty')?.value || '一般預約') : '一般預約';
+            const bookingStatus = hasBooking ? (document.getElementById('sgBookingStatus')?.value || '待開放') : '待開放';
 
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: isEdit ? '✏️ 編輯核心景點攻略與地址' : '➕ 新增核心景點攻略',
-                    width: 520,
-                    customClass: {
-                        popup: 'swal2-compact-popup'
-                    },
-                    html: `
-                        <div style="text-align: left; font-size: 0.82rem; color: #64748b; margin-bottom: 12px;">
-                            完善景點與地址資訊，方便隨身導航與排入每日行程：
-                        </div>
-                        <div style="text-align: left; display: flex; flex-direction: column; gap: 10px;">
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 3px;">
-                                    景點名稱 <span style="color:#ef4444;">*</span>
-                                </label>
-                                <input id="swalSpotName" class="form-input" placeholder="例如：故宮博物院 或 洪崖洞" value="${curItem.name ? curItem.name.replace(/"/g, '&quot;') : ''}" style="width: 100%; font-size: 0.88rem; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 3px;">
-                                    景點詳細地址 (選填，用於導航定位)
-                                </label>
-                                <input id="swalSpotAddress" class="form-input" placeholder="例如：北京市東城區景山前街4號" value="${curItem.address ? curItem.address.replace(/"/g, '&quot;') : ''}" style="width: 100%; font-size: 0.88rem; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 3px;">
-                                    速通攻略與防雷指南 <span style="color:#ef4444;">*</span>
-                                </label>
-                                <textarea id="swalSpotTip" class="form-input" placeholder="例如：建議傍晚前往，避開人潮；必看珍寶館與夜間燈光秀..." style="width: 100%; font-size: 0.86rem; line-height: 1.5; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; min-height: 85px; box-sizing: border-box; resize: vertical;">${curItem.tip ? curItem.tip.replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
-                            </div>
-                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px;">
-                                <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 5px;">
-                                    <input type="checkbox" id="swalSpotScheduled" ${curItem.scheduled ? 'checked' : ''} class="n-checkbox" style="cursor: pointer;">
-                                    <label for="swalSpotScheduled" style="font-size: 0.82rem; font-weight: 700; color: #15803d; cursor: pointer; margin: 0;">
-                                        已安排至行程中
-                                    </label>
-                                </div>
-                                <input id="swalSpotScheduleNote" class="form-input" placeholder="安排備註 (選填，例如：已排入 Day 2 早上 09:30)" value="${curItem.scheduleNote ? curItem.scheduleNote.replace(/"/g, '&quot;') : ''}" style="width: 100%; font-size: 0.82rem; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; background: #ffffff;">
-                            </div>
-                        </div>
-                    `,
-                    showCancelButton: true,
-                    confirmButtonText: isEdit ? '儲存更新' : '新增',
-                    cancelButtonText: '取消',
-                    confirmButtonColor: '#ea580c',
-                    preConfirm: () => {
-                        const name = document.getElementById('swalSpotName').value.trim();
-                        const address = document.getElementById('swalSpotAddress').value.trim();
-                        const tip = document.getElementById('swalSpotTip').value.trim();
-                        const scheduled = document.getElementById('swalSpotScheduled').checked;
-                        const scheduleNote = document.getElementById('swalSpotScheduleNote').value.trim();
-                        if (!name || !tip) {
-                            Swal.showValidationMessage('請至少填寫「景點名稱」與「攻略指南」！');
-                            return false;
-                        }
-                        return { name, address, tip, scheduled, scheduleNote };
-                    }
-                }).then(result => {
-                    if (result.isConfirmed && result.value) {
-                        if (!plan.spotTips) plan.spotTips = [];
-                        if (isEdit) {
-                            plan.spotTips[editIdx] = result.value;
-                        } else {
-                            plan.spotTips.push(result.value);
-                        }
-                        saveState();
-                        renderSpotGuidesView();
-                        showToast('success', isEdit ? '已成功更新景點攻略與地址！' : '已新增景點攻略');
-                    }
-                });
+            const matchedDay = (visitDate && typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, visitDate) : null;
+
+            const spotObj = {
+                id: itemId,
+                name,
+                address: (document.getElementById('sgAddressInput')?.value || '').trim(),
+                tip,
+                visitDate,
+                visitStartTime,
+                visitEndTime,
+                scheduled,
+                scheduledDayNum: matchedDay ? matchedDay.dayNum : (prevItem?.scheduledDayNum || null),
+                scheduleNote,
+                hasBooking,
+                bookingDate,
+                bookingTime,
+                bookingPlatform,
+                bookingDifficulty,
+                bookingStatus
+            };
+
+            if (editIdx >= 0 && editIdx < plan.spotTips.length) {
+                plan.spotTips[editIdx] = spotObj;
             } else {
-                const name = prompt('請輸入景點名稱：', curItem.name || '');
-                if (!name) return;
-                const address = prompt('請輸入景點地址（選填）：', curItem.address || '');
-                const tip = prompt('請輸入攻略與防雷指南：', curItem.tip || '');
-                if (!tip) return;
-                if (!plan.spotTips) plan.spotTips = [];
-                const itemData = { name, address: address || '', tip };
-                if (isEdit) {
-                    plan.spotTips[editIdx] = itemData;
-                } else {
-                    plan.spotTips.push(itemData);
-                }
-                saveState();
-                renderSpotGuidesView();
-                showToast('success', isEdit ? '已更新景點攻略' : '已新增景點攻略');
+                plan.spotTips.push(spotObj);
             }
+
+            const syncRes = syncSpotGuideToDailySchedule(plan, spotObj);
+
+            saveState();
+            closeModal('editSpotGuideModal');
+            renderAll();
+
+            if (syncRes.synced) {
+                showToast('success', `${editIdx >= 0 ? '已更新景點攻略' : '已新增景點攻略'}，並同步排入第 ${syncRes.dayNum} 天行程！`);
+            } else {
+                showToast('success', editIdx >= 0 ? `已更新「${name}」景點攻略！` : `已新增「${name}」景點攻略！`);
+            }
+            return false;
         }
 
         function deleteSpotGuideItem(idx) {
             const plan = getCurrentPlan();
-            if (!plan || !plan.spotTips) return;
-            if (confirm('確定要刪除此景點攻略嗎？')) {
+            if (!plan || !plan.spotTips || !plan.spotTips[idx]) return;
+            const target = plan.spotTips[idx];
+            if (confirm(`確定要刪除「${target.name || '此景點攻略'}」嗎？`)) {
+                if (target.id && Array.isArray(plan.days)) {
+                    plan.days.forEach(d => {
+                        if (Array.isArray(d.events)) {
+                            d.events = d.events.filter(ev => ev.spotGuideId !== target.id);
+                        }
+                    });
+                }
                 plan.spotTips.splice(idx, 1);
                 saveState();
-                renderSpotGuidesView();
-                showToast('success', '已刪除攻略');
+                renderAll();
+                showToast('success', '已刪除景點攻略');
             }
         }
 
