@@ -265,17 +265,17 @@
       position: relative;
     }
 
-    /* 左側：統計儀表板 (Dashboard) */
+    /* 左側：統計儀表板 (Dashboard - 精緻緊湊比例) */
     .sidebar-dashboard {
-      width: 380px;
+      width: 295px;
       flex-shrink: 0;
       background: var(--bg-surface);
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      padding: 20px;
-      gap: 16px;
+      padding: 14px;
+      gap: 11px;
     }
 
     /* 總額對比大卡片 (Budget vs Actual Hero Card) */
@@ -283,10 +283,10 @@
       background: var(--bg-subtle);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 16px 18px;
+      padding: 11px 13px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 7px;
     }
 
     .stat-hero-header {
@@ -296,37 +296,56 @@
     }
 
     .stat-hero-label {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
       color: var(--text-muted);
     }
 
     .hero-dual-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 4px;
+      gap: 8px;
+      margin-top: 1px;
     }
 
     .hero-stat-box {
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
 
     .hero-stat-caption {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hero-stat-amount {
-      font-size: 24px;
+      font-size: 17px;
       font-weight: 800;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.02em;
       color: var(--text-main);
       font-feature-settings: "tnum";
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.25;
+      margin-top: 1px;
+    }
+
+    .hero-stat-amount .currency-unit {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-left: 1px;
     }
 
     .hero-stat-amount.actual {
@@ -338,21 +357,22 @@
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 8px 12px;
+      padding: 5px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .diff-badge {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 2px 7px;
+      padding: 1.5px 6px;
       border-radius: 4px;
       display: inline-flex;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
+      white-space: nowrap;
     }
     .diff-badge.saving {
       background: var(--status-saving-bg);
@@ -375,15 +395,47 @@
       border: 1px solid var(--status-unpaid-border);
     }
 
-    /* 分類支出分佈 */
+    /* 人均與外幣折合 (工整緊緻排版) */
+    .stat-hero-sub {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border-color);
+      gap: 6px;
+    }
+
+    .stat-sub-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .stat-sub-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .stat-sub-val {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      font-feature-settings: "tnum";
+      white-space: nowrap;
+    }
+
+    /* 分類支出分佈 (緊湊比例) */
     .breakdown-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 7px;
     }
 
     .section-title {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -394,7 +446,7 @@
     }
 
     .stacked-bar-container {
-      height: 10px;
+      height: 6px;
       width: 100%;
       background: var(--bg-subtle);
       border-radius: var(--radius-full);
@@ -410,17 +462,17 @@
     .category-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 3px;
     }
 
     .category-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 10px;
+      padding: 5px 8px;
       border-radius: var(--radius-sm);
       background: var(--bg-base);
-      font-size: 13px;
+      font-size: 11.5px;
       cursor: pointer;
       transition: background 0.15s ease;
     }
@@ -431,18 +483,23 @@
     .category-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      min-width: 0;
     }
 
     .cat-dot {
-      width: 10px;
-      height: 10px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
     .category-name {
       font-weight: 600;
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .category-amounts {
@@ -450,16 +507,18 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      flex-shrink: 0;
     }
 
     .category-amount-val {
       font-weight: 700;
+      font-size: 11.5px;
       color: var(--text-main);
       font-feature-settings: "tnum";
     }
 
     .category-amount-sub {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--text-muted);
     }
 
@@ -467,9 +526,9 @@
     .daily-trend-chart {
       display: flex;
       align-items: flex-end;
-      gap: 6px;
-      height: 80px;
-      padding: 6px 0 0 0;
+      gap: 4px;
+      height: 52px;
+      padding: 3px 0 0 0;
       border-bottom: 1px solid var(--border-color);
     }
 
@@ -489,9 +548,9 @@
 
     .daily-bar-wrap {
       width: 100%;
-      max-width: 22px;
+      max-width: 18px;
       background: var(--bg-subtle);
-      border-radius: 4px 4px 0 0;
+      border-radius: 3px 3px 0 0;
       height: 100%;
       display: flex;
       align-items: flex-end;
@@ -501,7 +560,7 @@
     .daily-bar-fill {
       width: 100%;
       background: #94a3b8;
-      border-radius: 4px 4px 0 0;
+      border-radius: 3px 3px 0 0;
       transition: height 0.3s ease, background 0.15s ease;
     }
     .daily-bar-fill.active {
@@ -509,13 +568,12 @@
     }
 
     .daily-col-label {
-      font-size: 11px;
+      font-size: 9.5px;
       font-weight: 600;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 2px;
       white-space: nowrap;
     }
-
     /* 右側：主內容區 */
     .main-content {
       flex: 1;
@@ -2277,8 +2335,8 @@
       const displayActual = isBase ? stats.totalActualBase : stats.totalActualForeign;
       const displayPerPersonActual = isBase ? stats.perPersonActualBase : convertAmount(stats.perPersonActualBase, trip.baseCurrency, trip.foreignCurrency);
 
-      document.getElementById("totalBudgetDisplay").textContent = `${formatCurrency(displayBudget)} ${curCode}`;
-      document.getElementById("totalActualDisplay").textContent = `${formatCurrency(displayActual)} ${curCode}`;
+      document.getElementById("totalBudgetDisplay").innerHTML = `${formatCurrency(displayBudget)} <span class="currency-unit">${curCode}</span>`;
+      document.getElementById("totalActualDisplay").innerHTML = `${formatCurrency(displayActual)} <span class="currency-unit">${curCode}</span>`;
       document.getElementById("perPersonActualDisplay").textContent = `${formatCurrency(displayPerPersonActual)} ${curCode}`;
 
       const foreignAltActual = isBase ? stats.totalActualForeign : stats.totalActualBase;
