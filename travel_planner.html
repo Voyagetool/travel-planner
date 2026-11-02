@@ -5255,6 +5255,55 @@
             margin-top: 10px;
         }
 
+        /* 新增交通彈窗：合併類別與項目內容 + 日期行事曆與使用時間 */
+        .mt-merged-cat-row {
+            display: grid;
+            grid-template-columns: 235px 1fr;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .mt-date-time-row {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+        .mt-single-cal-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: #ffffff;
+            border: 1px solid var(--notion-border, #cbd5e1);
+            border-radius: 6px;
+            padding: 7px 10px;
+            min-height: 38px;
+            cursor: pointer;
+            transition: all 0.16s ease;
+        }
+        .mt-single-cal-trigger:hover,
+        .mt-single-cal-trigger.is-open {
+            border-color: #2f6fed;
+            box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.12);
+        }
+        .mt-time-combo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mt-time-combo .form-input {
+            padding: 6px 8px;
+            font-weight: 700;
+            color: #0f172a;
+            min-height: 38px;
+        }
+        @media (max-width: 560px) {
+            .mt-merged-cat-row,
+            .mt-date-time-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -5477,7 +5526,7 @@
                                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                                     <h3 class="logistics-clean-title">
                                         <i class="fa-solid fa-van-shuttle" style="color:#4a5785; font-size:0.88rem;"></i>
-                                        包車・機場接送・大交通
+                                        包車・機場接送・交通
                                     </h3>
                                     <span id="majorTransEmptyHint" style="font-size:0.74rem; color:#94a3b8; font-weight:500;"></span>
                                 </div>
@@ -7520,48 +7569,68 @@ const firebaseConfig = {
     </div>
 
 
-    <!-- MODAL: 新增 / 編輯 包車・機場接送・大項目交通 -->
+    <!-- MODAL: 新增 / 編輯 交通 -->
     <div class="modal-backdrop" id="editMajorTransportModal" onclick="handleBackdropClick(event, 'editMajorTransportModal')">
-        <div class="modal-dialog" style="max-width: 620px;" onclick="event.stopPropagation();">
+        <div class="modal-dialog" style="max-width: 640px;" onclick="event.stopPropagation();">
             <div class="modal-header">
-                <div class="modal-title" id="majorTransportModalTitle">🚐 新增包車 / 機場接送 / 大項目交通</div>
+                <div class="modal-title" id="majorTransportModalTitle">🚐 新增交通</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editMajorTransportModal')"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form onsubmit="handleSaveMajorTransportSubmit(event)">
                 <input type="hidden" id="majorTransEditIndex" value="-1">
                 <div class="modal-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">交通大項目類別</label>
-                            <select id="majorTransCategory" class="form-input">
+                    <!-- 合併：交通項目類別 ＋ 填寫此項目內容 -->
+                    <div class="form-group">
+                        <label class="form-label">交通項目類別與內容</label>
+                        <div class="mt-merged-cat-row">
+                            <select id="majorTransCategory" class="form-input" onchange="onMajorTransCategoryChange()">
                                 <option value="transfer">🚐 機場專車接送 (接機 / 送機)</option>
                                 <option value="charter">🚗 包車一日遊 / 專屬包車</option>
                                 <option value="rail">🚄 跨城高鐵 / 新幹線 / 火車</option>
                                 <option value="ferry">⛴️ 船票 / 渡輪 / 遊輪</option>
                                 <option value="bus">🚌 機場巴士 / 長途客運</option>
                                 <option value="domestic_flight">✈️ 國內線航班</option>
-                                <option value="other">🎫 交通周遊券 / 其他大交通</option>
+                                <option value="other">🎫 交通周遊券 / 其他交通</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">使用日期 / 時段說明</label>
-                            <input type="text" id="majorTransDate" class="form-input" placeholder="例如：2026-05-08 08:30 或 Day 1 接機">
+                            <input type="text" id="majorTransTitle" class="form-input" placeholder="填寫項目內容（如：桃園機場 T2 送機專車 / 成田機場接機）">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">項目名稱 *</label>
-                        <input type="text" id="majorTransTitle" class="form-input" placeholder="例如：慕田峪長城專屬 7 人座包車往返 / 桃園機場送機專車" required>
+                    <!-- 使用日期（行事曆選取，自動對應行程 Day N）＋ 使用時間（出發 / 預計抵達） -->
+                    <div class="mt-date-time-row" style="margin-bottom: 12px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label"><i class="fa-regular fa-calendar-check" style="color:#2f6fed;"></i> 使用日期（點選行事曆同步行程）</label>
+                            <input type="hidden" id="majorTransDate">
+                            <div class="bcal-wrapper" id="mtCalWrapper">
+                                <div class="mt-single-cal-trigger" id="mtCalTrigger" onclick="toggleMajorTransCalendar()">
+                                    <div class="bcal-slot-value" id="mtCalDateDisplay" style="font-size:0.88rem;">--</div>
+                                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                                        <span class="bcal-nights-pill" id="mtCalDayMatchBadge" style="font-size:0.69rem; padding:1px 7px;">--</span>
+                                        <i class="fa-solid fa-calendar-days" style="color:#64748b; font-size:0.82rem;"></i>
+                                    </div>
+                                </div>
+                                <div class="bcal-dropdown-panel" id="mtCalPanel"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label"><i class="fa-regular fa-clock" style="color:#1f5f78;"></i> 使用時間（出發時間 / 預計抵達）</label>
+                            <div class="mt-time-combo">
+                                <input type="time" id="majorTransTimeStart" class="form-input" value="08:30" title="出發 / 接送開始時間">
+                                <span style="color:#94a3b8; font-size:0.78rem; font-weight:700;">~</span>
+                                <input type="time" id="majorTransTimeEnd" class="form-input" title="預計抵達 / 結束時間（選填）">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">出發地點 (上車點)</label>
-                            <input type="text" id="majorTransDep" class="form-input" placeholder="例如：王府井璞隱酒店大廳">
+                            <input type="text" id="majorTransDep" class="form-input" placeholder="例如：飯店大廳 / 台北住家">
                         </div>
                         <div class="form-group">
                             <label class="form-label">抵達地點 (目的地)</label>
-                            <input type="text" id="majorTransArr" class="form-input" placeholder="例如：慕田峪長城 P1 停車場">
+                            <input type="text" id="majorTransArr" class="form-input" placeholder="例如：桃園國際機場 T2 / 河口湖站">
                         </div>
                     </div>
 
@@ -7576,7 +7645,7 @@ const firebaseConfig = {
                         </div>
                     </div>
 
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:9px; padding:12px 14px; margin-bottom:14px;">
                         <div style="font-weight:700; font-size:0.84rem; color:#0f172a; margin-bottom:8px;">
                             💰 費用與計價方式 (自動同步納入全程總預算與實付核銷)
                         </div>
@@ -7617,9 +7686,15 @@ const firebaseConfig = {
                         <input type="text" id="majorTransNotes" class="form-input" placeholder="例如：含高速過路費與停車費，逾時每小時 ¥50">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="n-btn" onclick="closeModal('editMajorTransportModal')">取消</button>
-                    <button type="submit" class="n-btn n-btn-primary" style="background:#2563eb; border-color:#1d4ed8;">儲存大項目交通</button>
+                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:#0369a1; cursor:pointer; user-select:none; font-weight:700;">
+                        <input type="checkbox" id="majorTransSyncSchedule" checked>
+                        <i class="fa-solid fa-rotate"></i> 依使用日期與時間自動串接並排序至每日行程
+                    </label>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="n-btn" onclick="closeModal('editMajorTransportModal')">取消</button>
+                        <button type="submit" class="n-btn n-btn-primary">儲存交通</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -13572,16 +13647,320 @@ const firebaseConfig = {
         // V3.0 交通與住宿大項目分頁 (Transit & Stay) 與包車/接送管理
         // ==========================================================
         const MAJOR_TRANS_CATEGORIES = {
-            transfer: { label: '機場接送', icon: 'fa-van-shuttle', bg: '#eaf2f6', text: '#286678', border: '#cde0e8' },
-            charter: { label: '包車專車', icon: 'fa-car-side', bg: '#edf2f8', text: '#466282', border: '#d5dfec' },
-            rail: { label: '跨城高鐵/火車', icon: 'fa-train-subway', bg: '#e8f3ee', text: '#2b6b50', border: '#c6e0d3' },
-            ferry: { label: '船票/渡輪', icon: 'fa-ship', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
-            bus: { label: '巴士/客運', icon: 'fa-bus', bg: '#faf3e6', text: '#966420', border: '#ead9bc' },
-            domestic_flight: { label: '國內航段', icon: 'fa-plane', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
-            other: { label: '交通票券/其他', icon: 'fa-ticket', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' }
+            transfer: { label: '機場專車接送', shortLabel: '機場接送', icon: 'fa-van-shuttle', bg: '#eaf2f6', text: '#286678', border: '#cde0e8', placeholder: '填寫項目內容（如：桃園機場 T2 送機專車 / 成田機場接機）' },
+            charter: { label: '包車一日遊 / 專屬包車', shortLabel: '包車專車', icon: 'fa-car-side', bg: '#edf2f8', text: '#466282', border: '#d5dfec', placeholder: '填寫項目內容（如：河口湖一日專屬 7 人座包車）' },
+            rail: { label: '跨城高鐵 / 新幹線 / 火車', shortLabel: '跨城高鐵/火車', icon: 'fa-train-subway', bg: '#e8f3ee', text: '#2b6b50', border: '#c6e0d3', placeholder: '填寫項目內容（如：東京 ➔ 輕井澤北陸新幹線指定席）' },
+            ferry: { label: '船票 / 渡輪 / 遊輪', shortLabel: '船票/渡輪', icon: 'fa-ship', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：宮島聯絡船往返船票）' },
+            bus: { label: '機場巴士 / 長途客運', shortLabel: '巴士/客運', icon: 'fa-bus', bg: '#faf3e6', text: '#966420', border: '#ead9bc', placeholder: '填寫項目內容（如：利木津巴士 成田機場 ➔ 新宿）' },
+            domestic_flight: { label: '國內線航班', shortLabel: '國內航段', icon: 'fa-plane', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：東京羽田 ➔ 札幌新千歲國內線）' },
+            other: { label: '交通周遊券 / 其他交通', shortLabel: '交通票券/其他', icon: 'fa-ticket', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：JR 東京廣域周遊券 3 日券 / Suica 儲值）' }
         };
 
         let currentLogisticsSubtab = 'all';
+
+        // 單日點選行事曆狀態（供新增/編輯交通項目使用，自動對照旅行計畫 Day 1 ~ Day N）
+        const mtCalState = {
+            selectedDate: '',
+            viewYear: 2026,
+            viewMonth: 0,
+            isOpen: false,
+            planStartYmd: '',
+            planEndYmd: '',
+            dayMap: {} // { 'YYYY-MM-DD': dayNum }
+        };
+
+        function buildPlanDateToDayMap(plan) {
+            const map = {};
+            let startYmd = '';
+            let endYmd = '';
+            if (!plan) return { map, startYmd, endYmd };
+
+            const daysLen = Array.isArray(plan.days) ? plan.days.length : 0;
+            if (typeof bcalParseExistingDateRange === 'function' && plan.dateRange) {
+                const parsed = bcalParseExistingDateRange(plan.dateRange, daysLen || 5);
+                startYmd = parsed.startDate || '';
+                endYmd = parsed.endDate || '';
+            }
+
+            if (startYmd && daysLen > 0 && typeof bcalAddDays === 'function') {
+                for (let i = 0; i < daysLen; i++) {
+                    const ymd = bcalAddDays(startYmd, i);
+                    const dNum = plan.days[i]?.dayNum || (i + 1);
+                    if (ymd) map[ymd] = dNum;
+                }
+                endYmd = bcalAddDays(startYmd, daysLen - 1) || endYmd;
+            }
+            return { map, startYmd, endYmd };
+        }
+
+        function resolvePlanDayByDate(plan, ymd) {
+            if (!plan || !ymd || !Array.isArray(plan.days) || plan.days.length === 0) return null;
+            const info = buildPlanDateToDayMap(plan);
+            if (info.map[ymd]) {
+                return plan.days.find(d => d.dayNum === info.map[ymd]) || plan.days[info.map[ymd] - 1] || null;
+            }
+            // 備援：比對 M/D 字串（例如 day.date 為 "5/8 (五)"）
+            const dt = (typeof bcalParseYMD === 'function') ? bcalParseYMD(ymd) : null;
+            if (dt) {
+                const mdPrefix = `${dt.getMonth() + 1}/${dt.getDate()}`;
+                const hit = plan.days.find(d => d.date && (d.date === mdPrefix || d.date.startsWith(mdPrefix + ' ') || d.date.startsWith(mdPrefix + '(')));
+                if (hit) return hit;
+            }
+            return null;
+        }
+
+        function onMajorTransCategoryChange() {
+            const sel = document.getElementById('majorTransCategory');
+            const titleInput = document.getElementById('majorTransTitle');
+            if (!sel || !titleInput) return;
+            const cat = MAJOR_TRANS_CATEGORIES[sel.value] || MAJOR_TRANS_CATEGORIES.other;
+            titleInput.placeholder = cat.placeholder || '填寫此交通項目內容';
+        }
+
+        function initMajorTransCalendar(initialDateStr) {
+            const plan = getCurrentPlan();
+            const info = buildPlanDateToDayMap(plan);
+            mtCalState.dayMap = info.map;
+            mtCalState.planStartYmd = info.startYmd;
+            mtCalState.planEndYmd = info.endYmd;
+            mtCalState.isOpen = false;
+
+            let validYmd = '';
+            if (initialDateStr) {
+                const m = String(initialDateStr).match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+                if (m) {
+                    validYmd = `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+                } else {
+                    const dayMatch = String(initialDateStr).match(/Day\s*(\d+)/i);
+                    if (dayMatch && info.startYmd && typeof bcalAddDays === 'function') {
+                        const dIdx = Math.max(0, parseInt(dayMatch[1], 10) - 1);
+                        validYmd = bcalAddDays(info.startYmd, dIdx);
+                    }
+                }
+            }
+            if (!validYmd) {
+                validYmd = info.startYmd || (typeof bcalFormatYMD === 'function' ? bcalFormatYMD(new Date()) : new Date().toISOString().split('T')[0]);
+            }
+
+            mtCalState.selectedDate = validYmd;
+            const dt = (typeof bcalParseYMD === 'function') ? bcalParseYMD(validYmd) : new Date();
+            mtCalState.viewYear = dt ? dt.getFullYear() : new Date().getFullYear();
+            mtCalState.viewMonth = dt ? dt.getMonth() : new Date().getMonth();
+
+            const hidInput = document.getElementById('majorTransDate');
+            if (hidInput) hidInput.value = validYmd;
+
+            renderMajorTransCalendarUI();
+        }
+
+        function toggleMajorTransCalendar(forceState) {
+            mtCalState.isOpen = (typeof forceState === 'boolean') ? forceState : !mtCalState.isOpen;
+            if (mtCalState.isOpen && mtCalState.selectedDate && typeof bcalParseYMD === 'function') {
+                const dt = bcalParseYMD(mtCalState.selectedDate);
+                if (dt) {
+                    mtCalState.viewYear = dt.getFullYear();
+                    mtCalState.viewMonth = dt.getMonth();
+                }
+            }
+            renderMajorTransCalendarUI();
+        }
+
+        function navMajorTransCalendarMonth(delta, ev) {
+            if (ev) ev.stopPropagation();
+            const d = new Date(mtCalState.viewYear, mtCalState.viewMonth + delta, 1);
+            mtCalState.viewYear = d.getFullYear();
+            mtCalState.viewMonth = d.getMonth();
+            renderMajorTransCalendarUI();
+        }
+
+        function selectMajorTransDate(ymd, ev) {
+            if (ev) ev.stopPropagation();
+            mtCalState.selectedDate = ymd;
+            mtCalState.isOpen = false;
+            const hidInput = document.getElementById('majorTransDate');
+            if (hidInput) hidInput.value = ymd;
+            renderMajorTransCalendarUI();
+        }
+
+        function renderMajorTransCalendarUI() {
+            const triggerEl = document.getElementById('mtCalTrigger');
+            const dispEl = document.getElementById('mtCalDateDisplay');
+            const badgeEl = document.getElementById('mtCalDayMatchBadge');
+            const panelEl = document.getElementById('mtCalPanel');
+            if (!triggerEl || !dispEl || !panelEl) return;
+
+            triggerEl.classList.toggle('is-open', !!mtCalState.isOpen);
+            panelEl.classList.toggle('open', !!mtCalState.isOpen);
+
+            const plan = getCurrentPlan();
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const selYmd = mtCalState.selectedDate;
+            const selDt = (typeof bcalParseYMD === 'function') ? bcalParseYMD(selYmd) : null;
+
+            if (selDt) {
+                dispEl.innerHTML = `<span>${selYmd}</span><span class="bcal-slot-weekday">週${weekdays[selDt.getDay()]}</span>`;
+                const matchedDay = resolvePlanDayByDate(plan, selYmd);
+                if (badgeEl) {
+                    if (matchedDay) {
+                        badgeEl.style.background = '#e6f4ef';
+                        badgeEl.style.color = '#1b6b50';
+                        badgeEl.style.borderColor = '#a7f3d0';
+                        badgeEl.textContent = `對應 Day ${matchedDay.dayNum}`;
+                    } else {
+                        badgeEl.style.background = '#fffbeb';
+                        badgeEl.style.color = '#b45309';
+                        badgeEl.style.borderColor = '#fde68a';
+                        badgeEl.textContent = '非行程內日期';
+                    }
+                }
+            } else {
+                dispEl.innerHTML = `<span class="bcal-slot-placeholder">點選使用日期</span>`;
+                if (badgeEl) badgeEl.textContent = '--';
+            }
+
+            if (!mtCalState.isOpen) return;
+
+            const year = mtCalState.viewYear;
+            const monthIdx = mtCalState.viewMonth;
+            const firstDay = new Date(year, monthIdx, 1).getDay();
+            const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+            const todayYmd = (typeof bcalFormatYMD === 'function') ? bcalFormatYMD(new Date()) : '';
+
+            // 行程各天快捷選取膠囊列
+            let quickDaysHtml = '';
+            const entries = Object.entries(mtCalState.dayMap);
+            if (entries.length > 0) {
+                quickDaysHtml = `<div style="display:flex; gap:5px; flex-wrap:wrap; padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid #e2e8f0;">` +
+                    entries.map(([dYmd, dNum]) => {
+                        const isAct = (dYmd === selYmd);
+                        const shortMd = dYmd.slice(5).replace('-', '/');
+                        return `<button type="button" class="bcal-mini-btn ${isAct ? 'primary' : ''}" style="padding:2px 7px; font-size:0.7rem;" onclick="selectMajorTransDate('${dYmd}', event)">Day ${dNum} (${shortMd})</button>`;
+                    }).join('') +
+                    `</div>`;
+            }
+
+            let wkHtml = '';
+            weekdays.forEach((w, i) => {
+                const cls = i === 0 ? 'weekend-sun' : (i === 6 ? 'weekend-sat' : '');
+                wkHtml += `<div class="bcal-weekday ${cls}">${w}</div>`;
+            });
+
+            let cellsHtml = '';
+            for (let i = 0; i < firstDay; i++) {
+                cellsHtml += `<div class="bcal-day empty"></div>`;
+            }
+            for (let d = 1; d <= daysInMonth; d++) {
+                const ymd = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const mappedDayNum = mtCalState.dayMap[ymd];
+                const isSelected = (ymd === selYmd);
+                const classes = ['bcal-day'];
+                if (ymd === todayYmd) classes.push('is-today');
+                if (mappedDayNum && !isSelected) classes.push('in-range');
+                if (isSelected) classes.push('is-start', 'single-unpaired');
+
+                const tagTxt = mappedDayNum ? `D${mappedDayNum}` : (isSelected ? '已選' : '');
+                cellsHtml += `<div class="${classes.join(' ')}" style="${mappedDayNum && !isSelected ? 'border-radius:6px;' : ''}" onclick="selectMajorTransDate('${ymd}', event)">
+                    <span>${d}</span>
+                    ${tagTxt ? `<span class="bcal-day-tag">${tagTxt}</span>` : ''}
+                </div>`;
+            }
+
+            panelEl.innerHTML = `
+                <div onclick="event.stopPropagation();">
+                    ${quickDaysHtml}
+                    <div class="bcal-month-header">
+                        <button type="button" class="bcal-nav-btn" onclick="navMajorTransCalendarMonth(-1, event)" title="上個月"><i class="fa-solid fa-chevron-left"></i></button>
+                        <div class="bcal-month-title">${year} 年 ${monthIdx + 1} 月</div>
+                        <button type="button" class="bcal-nav-btn" onclick="navMajorTransCalendarMonth(1, event)" title="下個月"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="bcal-weekdays">${wkHtml}</div>
+                    <div class="bcal-days-grid">${cellsHtml}</div>
+                </div>
+            `;
+        }
+
+        // 將交通項目依「使用日期」比對行程天數串接至每日行程，並依「使用時間」自動排序與移動重疊項目
+        function syncMajorTransportToDailySchedule(plan, itemObj) {
+            if (!plan || !itemObj || !Array.isArray(plan.days) || plan.days.length === 0) {
+                return { synced: false, dayNum: null };
+            }
+
+            // 1. 先從所有天數中移除舊的同 ID 串接項目（支援修改日期跨天搬移！）
+            plan.days.forEach(d => {
+                if (Array.isArray(d.events)) {
+                    d.events = d.events.filter(ev => ev.majorTransId !== itemObj.id);
+                }
+            });
+
+            if (itemObj.syncToSchedule === false || !itemObj.useDate) {
+                return { synced: false, dayNum: null };
+            }
+
+            // 2. 比對日期與行程天數，找出對應的 Day
+            const targetDay = resolvePlanDayByDate(plan, itemObj.useDate);
+            if (!targetDay) {
+                return { synced: false, dayNum: null };
+            }
+            if (!Array.isArray(targetDay.events)) targetDay.events = [];
+
+            const catMeta = MAJOR_TRANS_CATEGORIES[itemObj.category] || MAJOR_TRANS_CATEGORIES.other;
+            const startT = (itemObj.useTime || '').trim();
+            const endT = (itemObj.useEndTime || '').trim();
+            const timeStr = (startT && endT) ? `${startT} - ${endT}` : (startT || '09:00');
+
+            const displayTitle = itemObj.title
+                ? (itemObj.title.includes(catMeta.shortLabel) ? itemObj.title : `【${catMeta.shortLabel}】${itemObj.title}`)
+                : catMeta.label;
+
+            const routeText = (itemObj.dep && itemObj.arr)
+                ? `${itemObj.dep} ➔ ${itemObj.arr}`
+                : (itemObj.arr || itemObj.dep || '');
+
+            const noteParts = [];
+            if (itemObj.dep && itemObj.arr) noteParts.push(`路線：${itemObj.dep} ➔ ${itemObj.arr}`);
+            if (itemObj.provider) noteParts.push(`平台/車行：${itemObj.provider}`);
+            if (itemObj.bookingNo) noteParts.push(`單號/聯絡：${itemObj.bookingNo}`);
+            if (itemObj.notes) noteParts.push(itemObj.notes);
+            if (Number(itemObj.cost) > 0) noteParts.push(`（費用已納入交通設定統一統計）`);
+
+            const newEv = {
+                time: timeStr,
+                title: displayTitle,
+                type: itemObj.category === 'domestic_flight' ? 'flight' : 'trans',
+                loc: routeText || itemObj.arr || itemObj.dep || '',
+                cost: 0, // 避免與 calcPlanMajorTransportStats 重複計算總預算
+                notes: noteParts.join(' ‧ '),
+                majorTransId: itemObj.id
+            };
+
+            // 3. 若有設定明確的出發與抵達時間，檢查當天既有非航班項目是否與此交通時段衝突並自動順移時間
+            if (startT && endT && typeof parseTimeString === 'function' && typeof shiftTimeString === 'function') {
+                const newParsed = parseTimeString(timeStr);
+                if (newParsed.startMinutes < 9999 && newParsed.hasEnd && newParsed.endMinutes > newParsed.startMinutes) {
+                    // 先依時間排好既有項目，推進重疊項目
+                    targetDay.events = sortDayEventsByTime(targetDay.events);
+                    let cursorEnd = newParsed.endMinutes;
+                    targetDay.events.forEach(ev => {
+                        if (ev.type === 'flight' || ev.majorTransId) return;
+                        const p = parseTimeString(ev.time);
+                        if (p.startMinutes < 9999 && p.startMinutes >= newParsed.startMinutes && p.startMinutes < cursorEnd) {
+                            const shiftMins = cursorEnd - p.startMinutes;
+                            ev.time = shiftTimeString(ev.time, shiftMins);
+                            const afterP = parseTimeString(ev.time);
+                            cursorEnd = afterP.hasEnd ? afterP.endMinutes : (afterP.startMinutes + 60);
+                        }
+                    });
+                }
+            }
+
+            // 4. 串接加入當日行程，並依據使用時間自動重新排序移動當天所有行程項目！
+            targetDay.events.push(newEv);
+            if (typeof sortDayEventsByTime === 'function') {
+                targetDay.events = sortDayEventsByTime(targetDay.events);
+            }
+
+            return { synced: true, dayNum: targetDay.dayNum };
+        }
 
         function calcPlanMajorTransportStats(plan) {
             const curr = getPlanCurrency(plan);
@@ -13698,7 +14077,7 @@ const firebaseConfig = {
                         <div class="logistics-seg-sub">${fStats.isSet ? `每人票價 ‧ 全團 NT$ ${fStats.groupTwd.toLocaleString()}` : '點擊設定航班與票價'}</div>
                     </div>
 
-                    <div class="logistics-seg-cell" onclick="openEditMajorTransportModal(-1)" title="點擊新增包車、機場接送或大項目交通">
+                    <div class="logistics-seg-cell" onclick="openEditMajorTransportModal(-1)" title="點擊新增交通項目">
                         <div class="logistics-seg-label">包車・機場接送</div>
                         <div class="logistics-seg-val ${mtStats.count === 0 ? 'accent-amber' : ''}">${mtStats.count > 0 ? `${mtStats.count} 項` : '0'}</div>
                         <div class="logistics-seg-sub">${mtStats.count > 0 ? `每人 NT$ ${mtStats.personTwd.toLocaleString()} ‧ 全團 NT$ ${mtStats.groupTwd.toLocaleString()}` : '尚未新增，點擊建立'}</div>
@@ -13758,16 +14137,22 @@ const firebaseConfig = {
                 const hasAct = (item.actualCost !== undefined && item.actualCost !== null && item.actualCost !== '' && !isNaN(Number(item.actualCost)));
                 const actBrk = hasAct ? calcCostItemBreakdown(item.actualCost, cType, mode, m, curr, curr.rate) : null;
                 const isPaid = !!(item.paid || hasAct);
+                const matchedDay = item.useDate ? resolvePlanDayByDate(plan, item.useDate) : null;
+                const dateBadgeTxt = item.date || [
+                    item.useDate || '',
+                    matchedDay ? `(Day ${matchedDay.dayNum})` : '',
+                    item.useTime ? (item.useEndTime ? `${item.useTime}-${item.useEndTime}` : item.useTime) : ''
+                ].filter(Boolean).join(' ');
 
                 return `
-                    <div class="major-trans-card" onclick="openEditMajorTransportModal(${idx})" title="點擊編輯此筆大項目交通">
+                    <div class="major-trans-card" onclick="openEditMajorTransportModal(${idx})" title="點擊編輯此筆交通項目">
                         <div>
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:4px;">
                                 <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
                                     <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.7rem; font-weight:700; padding:1px 7px; border-radius:999px; background:${cat.bg}; color:${cat.text}; border:1px solid ${cat.border};">
-                                        <i class="fa-solid ${cat.icon}"></i> ${cat.label}
+                                        <i class="fa-solid ${cat.icon}"></i> ${cat.shortLabel || cat.label}
                                     </span>
-                                    ${item.date ? `<span style="font-size:0.71rem; font-weight:600; color:#475569; background:#f1f5f9; padding:1px 6px; border-radius:5px;">${escapeHtml(item.date)}</span>` : ''}
+                                    ${dateBadgeTxt ? `<span style="font-size:0.71rem; font-weight:700; color:#1e40af; background:#eff6ff; border:1px solid #bfdbfe; padding:1px 6px; border-radius:5px;"><i class="fa-regular fa-clock"></i> ${escapeHtml(dateBadgeTxt)}</span>` : ''}
                                     ${isPaid ? `<span style="font-size:0.68rem; font-weight:700; color:#2b6b50; background:#e8f3ee; border:1px solid #c5dfd2; padding:0 6px; border-radius:999px;">✓ 已付</span>` : ''}
                                 </div>
                                 <div style="display:flex; gap:4px;" onclick="event.stopPropagation();">
@@ -13777,7 +14162,7 @@ const firebaseConfig = {
                             </div>
 
                             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                                <strong style="font-size:0.88rem; color:#0f172a;">${escapeHtml(item.title || '未命名交通項目')}</strong>
+                                <strong style="font-size:0.88rem; color:#0f172a;">${escapeHtml(item.title || cat.label)}</strong>
                                 ${(item.dep || item.arr) ? `<span style="font-size:0.74rem; color:#475569; font-weight:600;"><i class="fa-solid fa-route" style="color:#286678;"></i> ${escapeHtml(item.dep || '出發')} ➔ ${escapeHtml(item.arr || '目的')}</span>` : ''}
                             </div>
 
@@ -13825,12 +14210,32 @@ const firebaseConfig = {
 
             document.getElementById('majorTransEditIndex').value = idx;
             const titleEl = document.getElementById('majorTransportModalTitle');
+            const syncCb = document.getElementById('majorTransSyncSchedule');
 
             if (idx >= 0 && plan.majorTransports[idx]) {
                 const it = plan.majorTransports[idx];
-                if (titleEl) titleEl.innerText = '🚐 編輯包車 / 機場接送 / 大項目交通';
+                if (titleEl) titleEl.innerText = '🚐 編輯交通';
                 document.getElementById('majorTransCategory').value = it.category || 'transfer';
-                document.getElementById('majorTransDate').value = it.date || '';
+                onMajorTransCategoryChange();
+
+                // 相容解析舊字串中的時間（如 "2026-05-08 08:30"）
+                let initStartT = it.useTime || '';
+                let initEndT = it.useEndTime || '';
+                if (!initStartT && it.date) {
+                    const tm = String(it.date).match(/(\d{1,2}:\d{2})(?:\s*-\s*(\d{1,2}:\d{2}))?/);
+                    if (tm) {
+                        const p1 = tm[1].split(':');
+                        initStartT = `${p1[0].padStart(2, '0')}:${p1[1]}`;
+                        if (tm[2]) {
+                            const p2 = tm[2].split(':');
+                            initEndT = `${p2[0].padStart(2, '0')}:${p2[1]}`;
+                        }
+                    }
+                }
+                initMajorTransCalendar(it.useDate || it.date || '');
+                document.getElementById('majorTransTimeStart').value = initStartT;
+                document.getElementById('majorTransTimeEnd').value = initEndT;
+
                 document.getElementById('majorTransTitle').value = it.title || '';
                 document.getElementById('majorTransDep').value = it.dep || '';
                 document.getElementById('majorTransArr').value = it.arr || '';
@@ -13842,10 +14247,14 @@ const firebaseConfig = {
                 document.getElementById('majorTransActualCost').value = (it.actualCost !== undefined && it.actualCost !== null && it.actualCost !== '') ? it.actualCost : '';
                 document.getElementById('majorTransPaid').checked = !!it.paid;
                 document.getElementById('majorTransNotes').value = it.notes || '';
+                if (syncCb) syncCb.checked = (it.syncToSchedule !== false);
             } else {
-                if (titleEl) titleEl.innerText = '🚐 新增包車 / 機場接送 / 大項目交通';
+                if (titleEl) titleEl.innerText = '🚐 新增交通';
                 document.getElementById('majorTransCategory').value = 'transfer';
-                document.getElementById('majorTransDate').value = '';
+                onMajorTransCategoryChange();
+                initMajorTransCalendar('');
+                document.getElementById('majorTransTimeStart').value = '08:30';
+                document.getElementById('majorTransTimeEnd').value = '';
                 document.getElementById('majorTransTitle').value = '';
                 document.getElementById('majorTransDep').value = '';
                 document.getElementById('majorTransArr').value = '';
@@ -13857,6 +14266,7 @@ const firebaseConfig = {
                 document.getElementById('majorTransActualCost').value = '';
                 document.getElementById('majorTransPaid').checked = false;
                 document.getElementById('majorTransNotes').value = '';
+                if (syncCb) syncCb.checked = true;
             }
 
             openModal('editMajorTransportModal');
@@ -13870,11 +14280,33 @@ const firebaseConfig = {
 
             const idx = parseInt(document.getElementById('majorTransEditIndex').value, 10);
             const rawActStr = document.getElementById('majorTransActualCost').value.trim();
+            const categoryVal = document.getElementById('majorTransCategory').value || 'transfer';
+            const catMeta = MAJOR_TRANS_CATEGORIES[categoryVal] || MAJOR_TRANS_CATEGORIES.other;
+
+            const useDateVal = (document.getElementById('majorTransDate').value || mtCalState.selectedDate || '').trim();
+            const useTimeVal = (document.getElementById('majorTransTimeStart')?.value || '').trim();
+            const useEndTimeVal = (document.getElementById('majorTransTimeEnd')?.value || '').trim();
+            const rawTitleVal = document.getElementById('majorTransTitle').value.trim();
+            const finalTitle = rawTitleVal || catMeta.label;
+            const syncToSchedule = document.getElementById('majorTransSyncSchedule')?.checked ?? true;
+
+            const matchedDay = useDateVal ? resolvePlanDayByDate(plan, useDateVal) : null;
+            const formattedDateSummary = [
+                useDateVal,
+                matchedDay ? `Day ${matchedDay.dayNum}` : '',
+                useTimeVal ? (useEndTimeVal ? `${useTimeVal}-${useEndTimeVal}` : useTimeVal) : ''
+            ].filter(Boolean).join(' ');
+
+            const existingId = (idx >= 0 && plan.majorTransports[idx]?.id) ? plan.majorTransports[idx].id : ('mt-' + Date.now());
 
             const itemObj = {
-                category: document.getElementById('majorTransCategory').value || 'transfer',
-                date: document.getElementById('majorTransDate').value.trim(),
-                title: document.getElementById('majorTransTitle').value.trim(),
+                id: existingId,
+                category: categoryVal,
+                useDate: useDateVal,
+                useTime: useTimeVal,
+                useEndTime: useEndTimeVal,
+                date: formattedDateSummary,
+                title: finalTitle,
                 dep: document.getElementById('majorTransDep').value.trim(),
                 arr: document.getElementById('majorTransArr').value.trim(),
                 provider: document.getElementById('majorTransProvider').value.trim(),
@@ -13884,7 +14316,8 @@ const firebaseConfig = {
                 cost: Number(document.getElementById('majorTransCost').value) || 0,
                 actualCost: rawActStr !== '' ? Number(rawActStr) : '',
                 paid: document.getElementById('majorTransPaid').checked,
-                notes: document.getElementById('majorTransNotes').value.trim()
+                notes: document.getElementById('majorTransNotes').value.trim(),
+                syncToSchedule: syncToSchedule
             };
 
             if (idx >= 0 && plan.majorTransports[idx]) {
@@ -13893,16 +14326,35 @@ const firebaseConfig = {
                 plan.majorTransports.push(itemObj);
             }
 
+            // 同步比對日期串接至對應天數之每日行程，並依使用時間自動排序/移動行程項目
+            const syncRes = syncMajorTransportToDailySchedule(plan, itemObj);
+
             saveState();
             closeModal('editMajorTransportModal');
             renderAll();
-            showToast('success', '已儲存大項目交通並同步更新預算！');
+
+            if (syncRes.synced) {
+                showToast('success', `已儲存「${finalTitle}」，並依時間自動串接排序至 Day ${syncRes.dayNum} 每日行程！`);
+            } else {
+                showToast('success', `已儲存「${finalTitle}」並同步更新預算！`);
+            }
         }
 
         function deleteMajorTransportItem(idx) {
             const plan = getCurrentPlan();
             if (!plan || !Array.isArray(plan.majorTransports) || !plan.majorTransports[idx]) return;
-            const targetName = plan.majorTransports[idx].title || '此筆交通項目';
+            const targetItem = plan.majorTransports[idx];
+            const targetName = targetItem.title || '此筆交通項目';
+
+            // 同步清除串接於每日行程中的對應活動
+            if (targetItem.id && Array.isArray(plan.days)) {
+                plan.days.forEach(d => {
+                    if (Array.isArray(d.events)) {
+                        d.events = d.events.filter(ev => ev.majorTransId !== targetItem.id);
+                    }
+                });
+            }
+
             plan.majorTransports.splice(idx, 1);
             saveState();
             renderAll();
