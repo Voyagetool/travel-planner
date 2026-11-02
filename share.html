@@ -3825,6 +3825,92 @@
             border-color: #a9c6d2 !important;
         }
 
+
+        /* 7. 縮小行程大綱與頂部指標高度，將視覺重心聚焦於下方每日詳細行程 */
+        .okr-workspace-main {
+            padding: 12px 24px 56px !important;
+            gap: 10px !important;
+        }
+        .okr-kpi-grid {
+            gap: 12px !important;
+            margin-bottom: 10px !important;
+        }
+        .okr-kpi-card {
+            padding: 12px 16px !important;
+            border-radius: 12px !important;
+        }
+        .okr-kpi-value {
+            font-size: 1.32rem !important;
+        }
+        .okr-kpi-icon-box {
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 10px !important;
+            font-size: 1rem !important;
+        }
+        .okr-kpi-progress {
+            margin-top: 6px !important;
+            height: 5px !important;
+        }
+        .okr-kpi-sub {
+            margin-top: 4px !important;
+            font-size: 0.73rem !important;
+        }
+
+        /* 精簡版行程總結大綱容器 */
+        #tripSummaryBox.trip-summary-box {
+            border-radius: 11px !important;
+            margin-bottom: 10px !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        #tripSummaryBox .trip-summary-header {
+            padding: 8px 14px !important;
+            min-height: 40px;
+            border-bottom: none !important;
+            background: #ffffff;
+        }
+        #tripSummaryBox.expanded .trip-summary-header {
+            border-bottom: 1px solid #edf2f7 !important;
+            background: #f9fbfc;
+        }
+        #tripSummaryBox .trip-summary-body {
+            padding: 10px 14px 12px !important;
+        }
+
+        /* 展開時改為緊湊多欄小卡片網格，不再佔據整面螢幕高度 */
+        .trip-summary-compact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 8px;
+        }
+        .summary-mini-day-card {
+            background: #ffffff;
+            border: 1px solid #e3e8ef;
+            border-radius: 8px;
+            padding: 7px 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+        .summary-mini-day-card:hover {
+            border-color: #9ec0ce;
+            background: #f6fafc;
+            transform: translateY(-1px);
+        }
+        .summary-mini-day-card.active-day {
+            border-color: #286678;
+            background: #f2f8fa;
+            box-shadow: 0 1px 4px rgba(40, 102, 120, 0.1);
+        }
+        .day-filter-chips {
+            margin-bottom: 10px !important;
+            padding-bottom: 4px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -7870,9 +7956,9 @@ const firebaseConfig = {
         }
 
         // ==========================================
-        // TRIP SUMMARY & QUICK NAVIGATION
+        // TRIP SUMMARY & QUICK NAVIGATION (精簡預設收合版，聚焦下方每日行程)
         // ==========================================
-        let isTripSummaryExpanded = true;
+        let isTripSummaryExpanded = false;
 
         function toggleTripSummary() {
             isTripSummaryExpanded = !isTripSummaryExpanded;
@@ -7891,44 +7977,38 @@ const firebaseConfig = {
             const stats = calculatePlanBudgetStats(plan);
             const days = plan.days || [];
             const legs = plan.flights?.legs || [];
-            const flightSummary = legs.map(l => `${l.airline} ${l.flightNo} (${l.depLoc} ➔ ${l.arrLoc})`).join(' ｜ ');
+            const flightSummary = legs.map(l => `${l.airline} ${l.flightNo}`).filter(Boolean).join(' / ');
+            const flightFullSummary = legs.map(l => `${l.airline} ${l.flightNo} (${l.depLoc} ➔ ${l.arrLoc})`).join(' ｜ ');
 
             let dailyCardsHtml = days.map(d => {
                 const spotNames = (d.events || [])
                     .filter(e => e.type === 'spot')
                     .map(e => e.title.split('(')[0].trim());
-                const spotText = spotNames.length > 0 ? spotNames.slice(0, 4).join(' ➔ ') : '重點自由探索';
+                const spotText = spotNames.length > 0 ? spotNames.slice(0, 3).join(' · ') : '自由探索';
 
                 const costLocal = d.budget || 0;
-                const costTwd = d.budgetTwd || Math.round(costLocal * curr.rate);
+                const isAct = (d.dayNum === appState.activeDayTab);
 
                 return `
-                    <div class="trip-summary-day-row" onclick="selectDayTab(${d.dayNum})" title="點擊切換查看 Day ${d.dayNum} 詳細時間軸">
-                        <div class="summary-row-badge">
-                            <span class="summary-day-pill">Day ${d.dayNum}</span>
-                            <span class="summary-date-sub">${d.date || ''}</span>
-                        </div>
-                        <div class="summary-row-content">
-                            <div class="summary-row-title">${escapeHtml(d.title)}</div>
-                            <div class="summary-row-meta">
-                                <span class="summary-row-route"><i class="fa-solid fa-location-dot" style="color:#64748b; font-size:0.75rem;"></i> ${escapeHtml(spotText)}</span>
-                                <span style="color:#cbd5e1;">|</span>
-                                <span class="summary-row-meals"><i class="fa-solid fa-utensils" style="color:#64748b; font-size:0.75rem;"></i> 早:${escapeHtml(d.breakfast || '自理')} ‧ 午:${escapeHtml(d.lunch || '自理')} ‧ 晚:${escapeHtml(d.dinner || '自理')}${d.snack ? ` ‧ 點心:${escapeHtml(d.snack)}` : ''}</span>
+                    <div class="summary-mini-day-card ${isAct ? 'active-day' : ''}" onclick="selectDayTab(${d.dayNum})" title="點擊切換至下方 Day ${d.dayNum} 詳細行程">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                            <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                                <span class="summary-day-pill" style="font-size:0.7rem; padding:1px 6px; border-radius:4px; flex-shrink:0;">Day ${d.dayNum}</span>
+                                <strong style="font-size:0.82rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(d.title)}</strong>
                             </div>
+                            <span style="font-size:0.76rem; font-weight:700; color:#286678; flex-shrink:0;">${curr.symbol}${costLocal.toLocaleString()}</span>
                         </div>
-                        <div class="summary-row-cost">
-                            <span class="summary-cost-local">${curr.symbol} ${costLocal.toLocaleString()}</span>
-                            <span class="summary-cost-twd">≈ NT$ ${costTwd.toLocaleString()}</span>
-                        </div>
-                        <div class="summary-row-arrow">
-                            <i class="fa-solid fa-chevron-right"></i>
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:0.72rem; color:#64748b;">
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><i class="fa-solid fa-location-dot" style="color:#b0654a; font-size:0.68rem;"></i> ${escapeHtml(spotText)}</span>
+                            <span style="flex-shrink:0; font-size:0.69rem; color:#94a3b8;">${escapeHtml(d.date || '')}</span>
                         </div>
                     </div>
                 `;
             }).join('');
 
             const hotelList = (plan.hotels && plan.hotels.length > 0) ? plan.hotels : (plan.hotel ? [plan.hotel] : []);
-            const hotelSummaryHtml = hotelList.map(h => `<strong>${escapeHtml(h.name)}</strong> ${h.stayLabel ? `<span style="color:#64748b; font-size:0.74rem;">(${escapeHtml(h.stayLabel)})</span>` : ''} ${h.addr ? `<span style="color:#0284c7; font-size:0.74rem;">[📍 ${escapeHtml(h.addr)}]</span>` : ''}`).join(' ｜ ');
+            const hotelShortNames = hotelList.map(h => h.name).filter(Boolean).join('、');
+            const hotelSummaryHtml = hotelList.map(h => `<strong>${escapeHtml(h.name)}</strong> ${h.stayLabel ? `<span style="color:#64748b; font-size:0.74rem;">(${escapeHtml(h.stayLabel)})</span>` : ''}`).join(' ｜ ');
 
             const totalEventsCount = days.reduce((acc, d) => acc + ((d.events || []).length), 0);
             const toolsArr = plan.tools || [];
@@ -7937,17 +8017,22 @@ const firebaseConfig = {
             const hasBigItems = (stats.flightStats.isSet || stats.hotelStats.isSet || (stats.majorTransportStats && stats.majorTransportStats.isSet));
             const mtCount = stats.majorTransportStats ? stats.majorTransportStats.count : 0;
 
+            const inlineQuickLogistics = [
+                flightSummary ? `<i class="fa-solid fa-plane-departure" style="color:#568294;"></i> ${escapeHtml(flightSummary)}` : '',
+                hotelShortNames ? `<i class="fa-solid fa-hotel" style="color:#568294;"></i> ${escapeHtml(hotelShortNames)}` : ''
+            ].filter(Boolean).join('<span style="color:#cbd5e1; margin:0 6px;">|</span>');
+
             container.innerHTML = `
-                <!-- 第三張截圖風格：頂部 4 欄大圓角純白 KPI 指標卡片列 -->
+                <!-- 緊湊版 4 欄核心指標卡 -->
                 <div class="okr-kpi-grid">
                     <div class="okr-kpi-card clickable" onclick="openEditPlanBaseModal()" title="點擊調整旅行天數、日期與人數">
                         <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">行程規劃天數與規模</div>
+                            <div class="okr-kpi-label">行程規模與準備進度</div>
                             <div class="okr-kpi-value">${days.length} 天 ‧ ${plan.memberCount || 1} 人</div>
                             <div class="okr-kpi-progress">
                                 <div class="okr-kpi-progress-bar" style="width:${prepPct}%;"></div>
                             </div>
-                            <div class="okr-kpi-sub">共排入 <strong>${totalEventsCount}</strong> 個行程點 ‧ 行前準備 ${prepPct}%</div>
+                            <div class="okr-kpi-sub">共 <strong>${totalEventsCount}</strong> 個行程點 ‧ 準備 ${prepPct}%</div>
                         </div>
                         <div class="okr-kpi-icon-box blue"><i class="fa-solid fa-chart-line"></i></div>
                     </div>
@@ -7957,7 +8042,7 @@ const firebaseConfig = {
                             <div class="okr-kpi-label">交通與住宿大項目</div>
                             <div class="okr-kpi-value">${legs.length} 航段 ‧ ${hotelList.length} 飯店</div>
                             <div class="okr-kpi-sub">
-                                ${mtCount > 0 ? `<span style="color:#334155; font-weight:700;">含 ${mtCount} 筆包車/接送</span> ‧ ` : ''}<span style="color:#475569; font-weight:600;">管理機酒與包車接送 ➔</span>
+                                ${mtCount > 0 ? `<span style="color:#334155; font-weight:700;">含 ${mtCount} 筆包車/接送</span> ‧ ` : ''}<span style="color:#286678; font-weight:600;">管理機酒與接送 ➔</span>
                             </div>
                         </div>
                         <div class="okr-kpi-icon-box purple"><i class="fa-regular fa-compass"></i></div>
@@ -7965,7 +8050,7 @@ const firebaseConfig = {
 
                     <div class="okr-kpi-card clickable" onclick="switchView('expenses'); switchExpensesSubtab('budget');" title="點擊查看每人預算統計分析">
                         <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">單人全程總預估 ${hasBigItems ? '(含機酒大項)' : '(當地)'}</div>
+                            <div class="okr-kpi-label">單人全程總預估 ${hasBigItems ? '(含機酒)' : '(當地)'}</div>
                             <div class="okr-kpi-value">NT$ ${(hasBigItems ? stats.grandTwdTotalBudget : stats.twdTotalBudget).toLocaleString()}</div>
                             <div class="okr-kpi-sub">
                                 <span style="color:#334155; font-weight:700;">當地 ${curr.symbol}${stats.totalBudget.toLocaleString()}</span> ‧ 日均 NT$ ${stats.twdAvgBudget.toLocaleString()}
@@ -7979,47 +8064,45 @@ const firebaseConfig = {
                             <div class="okr-kpi-label">全團總預估 (${plan.memberCount || 1} 人合計)</div>
                             <div class="okr-kpi-value">NT$ ${(hasBigItems ? stats.grandTwdGroupTotalBudget : stats.twdGroupTotalBudget).toLocaleString()}</div>
                             <div class="okr-kpi-sub">
-                                匯率 1 ${curr.code} ≈ NT$ ${curr.rate} ‧ 點擊核銷記帳
+                                1 ${curr.code} ≈ NT$ ${curr.rate} ‧ 點擊核銷記帳
                             </div>
                         </div>
                         <div class="okr-kpi-icon-box emerald"><i class="fa-solid fa-award"></i></div>
                     </div>
                 </div>
 
-                <div class="trip-summary-box" id="tripSummaryBox">
-                    <div class="trip-summary-header">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <div class="okr-brand-icon" style="width:34px !important; height:34px !important; border-radius:9px !important; flex-shrink:0;">${formatBrandIconHtml(plan.emoji || '✈️')}</div>
-                            <div>
-                                <strong style="font-size:1.02rem; color:#0f172a;">本次旅行行程總結大綱 (Trip Summary)</strong>
-                                <div style="font-size:0.78rem; color:#64748b;">${escapeHtml(plan.title)} ‧ ${escapeHtml(plan.dateRange || '')} (共 ${days.length} 天)</div>
-                            </div>
+                <!-- 單行濃縮版行程大綱條 (預設收合，不擠壓下方每日詳細行程) -->
+                <div class="trip-summary-box ${isTripSummaryExpanded ? 'expanded' : ''}" id="tripSummaryBox">
+                    <div class="trip-summary-header" onclick="toggleTripSummary()" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;" title="點擊展開或收合各日路線速覽">
+                        <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
+                            <span style="font-size:0.82rem; font-weight:800; color:#235a6b; background:#eaf2f6; border:1px solid #cde0e8; padding:2px 8px; border-radius:6px; white-space:nowrap;">
+                                <i class="fa-solid fa-list-ul"></i> 行程大綱 (${days.length}天)
+                            </span>
+                            ${inlineQuickLogistics ? `
+                            <span onclick="event.stopPropagation(); switchView('logistics');" style="font-size:0.78rem; color:#475569; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" title="點擊管理交通與住宿">
+                                ${inlineQuickLogistics}
+                            </span>` : `<span style="font-size:0.78rem; color:#64748b;">點擊展開查看 ${days.length} 天路線速覽</span>`}
                         </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <button class="n-btn" style="padding:3px 9px; font-size:0.74rem;" onclick="copyTripSummaryText()" title="一鍵複製文字大綱至剪貼簿">
-                                <i class="fa-regular fa-copy"></i> 複製行程大綱
+                        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;" onclick="event.stopPropagation();">
+                            <button class="n-btn" style="padding:2px 8px; font-size:0.73rem;" onclick="copyTripSummaryText()" title="一鍵複製文字大綱至剪貼簿">
+                                <i class="fa-regular fa-copy"></i> 複製大綱
                             </button>
-                            <button class="n-btn" style="padding:3px 9px; font-size:0.74rem;" onclick="toggleTripSummary()">
-                                <i class="fa-solid ${isTripSummaryExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}"></i> ${isTripSummaryExpanded ? '收合' : '展開總結'}
+                            <button class="n-btn" style="padding:2px 9px; font-size:0.73rem; color:#286678; border-color:#c8dce5; background:#f4f9fb;" onclick="toggleTripSummary()">
+                                <i class="fa-solid ${isTripSummaryExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}"></i> ${isTripSummaryExpanded ? '收合大綱' : '展開速覽'}
                             </button>
                         </div>
                     </div>
 
                     ${isTripSummaryExpanded ? `
                     <div class="trip-summary-body">
-                        <!-- 航班、包車接送與住宿快速摘要列 (點擊直達交通與住宿分頁) -->
-                        <div class="trip-summary-logistics" onclick="switchView('logistics')" style="cursor:pointer;" title="點擊進入「✈️ 交通與住宿」分頁查看與編輯完整明細">
-                            ${flightSummary ? `<div><i class="fa-solid fa-plane-departure" style="color:#475569;"></i> <strong>主交通航班：</strong><span>${flightSummary}</span> ${stats.flightStats.isSet ? `<span style="color:#0369a1; font-size:0.75rem; font-weight:700; margin-left:4px;">(機票每人 ≈ NT$ ${stats.flightStats.personTwd.toLocaleString()})</span>` : ''}</div>` : ''}
-                            ${(stats.majorTransportStats && stats.majorTransportStats.count > 0) ? `<div><i class="fa-solid fa-van-shuttle" style="color:#475569;"></i> <strong>包車與機場接送：</strong><span>已安排 ${stats.majorTransportStats.count} 筆大項目交通 (每人均攤 ≈ NT$ ${stats.majorTransportStats.personTwd.toLocaleString()})</span></div>` : ''}
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                                <div><i class="fa-solid fa-hotel" style="color:#475569;"></i> <strong>入住飯店：</strong><span>${hotelSummaryHtml || '尚未填寫'}</span> ${stats.hotelStats.isSet ? `<span style="color:#0f766e; font-size:0.75rem; font-weight:700; margin-left:4px;">(住宿每人 ≈ NT$ ${stats.hotelStats.totalPersonTwd.toLocaleString()})</span>` : ''}</div>
-                                <span style="font-size:0.74rem; font-weight:600; color:#334155; background:#ffffff; border:1px solid #cbd5e1; padding:2px 9px; border-radius:6px;">管理交通與住宿 <i class="fa-solid fa-arrow-right"></i></span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:6px 10px; margin-bottom:8px; background:#f4f8fa; border:1px solid #dde8ee; border-radius:8px; font-size:0.76rem; color:#334155; cursor:pointer;" onclick="switchView('logistics')">
+                            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                ${flightFullSummary ? `<span><i class="fa-solid fa-plane-departure" style="color:#286678;"></i> ${flightFullSummary}</span>` : ''}
+                                <span><i class="fa-solid fa-hotel" style="color:#2b6b50;"></i> ${hotelSummaryHtml || '尚未填寫飯店'}</span>
                             </div>
+                            <span style="font-size:0.72rem; font-weight:700; color:#286678;">管理交通住宿 <i class="fa-solid fa-arrow-right"></i></span>
                         </div>
-
-                        <!-- 逐日精華動線（一天一行呈現） -->
-                        <div style="font-weight:700; font-size:0.82rem; color:#475569; margin:10px 0 6px;">📅 每日精華路線與打卡亮點 (一天一行呈現，點擊可快速切換查看詳細時間軸)：</div>
-                        <div class="trip-summary-days-list">
+                        <div class="trip-summary-compact-grid">
                             ${dailyCardsHtml}
                         </div>
                     </div>` : ''}
