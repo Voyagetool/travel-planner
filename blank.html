@@ -3446,34 +3446,41 @@
 
 
         /* =====================================================================
-           v2.22 MINIMALIST COLOR REFINEMENT & PERFECT ICON CENTERING
-           極簡無彩度干擾配色系統 ＋ 標題圖示像素級置中
+           v2.22 MUTED SLATE-TEAL & WARM OCHRE PALETTE (參考第三張圖溫潤低飽和配色)
+           不採用沉重純黑、不採用高飽和刺眼色，保留柔和商務色彩層次與置中圖示
            ===================================================================== */
         :root {
-            --dash-bg: #f8fafc;
+            --dash-bg: #f5f7fa;
             --dash-surface: #ffffff;
-            --dash-border: #e2e8f0;
+            --dash-border: #e3e8ef;
             --dash-border-strong: #cbd5e1;
-            --dash-ink: #0f172a;
+            --dash-ink: #1e293b;
             --dash-ink-secondary: #334155;
             --dash-ink-muted: #64748b;
-            --dash-primary: #0f172a;
-            --dash-primary-hover: #1e293b;
-            --dash-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
-            --dash-shadow-hover: 0 6px 16px rgba(15, 23, 42, 0.06);
+            --dash-primary: #286678;          /* 第三張圖主調：沉穩湖青藍 */
+            --dash-primary-soft: #568294;     /* 第三張圖按鈕：柔和霧灰青藍 */
+            --dash-primary-tint: #e8f1f5;     /* 第三張圖 P3 膠囊：淡霧青底 */
+            --dash-sage-tint: #e8f3ee;        /* 第三張圖 Yes 膠囊：淡鼠尾草綠底 */
+            --dash-sage-ink: #2b6b50;         /* 鼠尾草森林綠字 */
+            --dash-ochre-tint: #faf3e6;       /* 第三張圖 SQA 膠囊：淡米杏底 */
+            --dash-ochre-ink: #9a6721;        /* 溫潤琥珀金棕字 */
+            --dash-coral-tint: #f9ecec;       /* 柔和珊瑚淡底 */
+            --dash-coral-ink: #b84a4a;        /* 第三張圖磚紅警示字 */
+            --dash-shadow-card: 0 1px 4px rgba(30, 41, 59, 0.04), 0 1px 2px rgba(30, 41, 59, 0.02);
+            --dash-shadow-hover: 0 6px 18px rgba(39, 102, 120, 0.08);
         }
 
-        /* 1. 標題圖示盒：去漸層、沉穩極簡單色、水平與垂直 100% 絕對置中 */
+        /* 1. 標題圖示盒：溫潤莫蘭迪青灰藍 (絕不用黑色)，水平與垂直 100% 絕對置中 */
         .okr-brand-icon {
             width: 42px !important;
             height: 42px !important;
             padding: 0 !important;
             margin: 0 !important;
             border-radius: 11px !important;
-            background: #1e293b !important;
-            border: 1px solid #0f172a !important;
+            background: #3b7386 !important;
+            border: 1px solid #316273 !important;
             color: #ffffff !important;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+            box-shadow: 0 2px 6px rgba(40, 102, 120, 0.16) !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -3483,9 +3490,9 @@
             overflow: hidden;
         }
         .okr-brand-icon:hover {
-            background: #334155 !important;
+            background: #2f6375 !important;
             transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12) !important;
+            box-shadow: 0 4px 10px rgba(40, 102, 120, 0.22) !important;
         }
         .okr-brand-icon .okr-brand-code {
             display: flex;
@@ -3515,182 +3522,307 @@
             padding: 0;
         }
 
-        /* 2. 計畫切換膠囊與副標列去彩度化 */
+        .okr-main-title {
+            color: #1e293b !important;
+        }
+
+        /* 2. 計畫切換膠囊：柔和淡霧青底 (同第三張圖 P3 狀態膠囊) */
         .okr-plan-badge-pill {
-            background: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-            color: #475569 !important;
+            background: #eaf2f6 !important;
+            border: 1px solid #cde0e8 !important;
+            color: #286678 !important;
             padding: 3px 10px !important;
         }
         .okr-plan-select {
-            color: #1e293b !important;
-            font-weight: 600 !important;
+            color: #235a6b !important;
+            font-weight: 700 !important;
         }
         .okr-meta-edit-hint {
-            color: #475569 !important;
-            background: #f1f5f9 !important;
-            border: 1px solid #e2e8f0;
+            color: #286678 !important;
+            background: #edf4f7 !important;
+            border: 1px solid #d2e3ea;
         }
 
-        /* 3. 頂部右側動作按鈕列：全面收斂為純白細框灰黑字，僅主動作使用深曜石黑 */
-        .okr-action-pill.mint-outline,
-        .okr-action-pill.teal-solid,
-        .okr-action-pill.purple-outline,
-        .okr-action-pill.green-outline,
+        /* 3. 頂部右側動作按鈕列：參考第三張圖右上角柔和霧灰青藍與清爽白框 */
+        .okr-action-pill.slate-outline,
         .okr-action-pill.blue-outline,
-        .okr-action-pill.rose-outline,
-        .okr-action-pill.slate-outline {
+        .okr-action-pill.purple-outline {
             background: #ffffff !important;
-            border: 1px solid #e2e8f0 !important;
-            color: #334155 !important;
+            border: 1px solid #dce4ec !important;
+            color: #3b4d63 !important;
             box-shadow: none !important;
             font-weight: 600 !important;
         }
-        .okr-action-pill.mint-outline:hover,
-        .okr-action-pill.teal-solid:hover,
-        .okr-action-pill.purple-outline:hover,
-        .okr-action-pill.green-outline:hover,
-        .okr-action-pill.blue-outline:hover,
-        .okr-action-pill.rose-outline:hover,
-        .okr-action-pill.slate-outline:hover {
-            background: #f8fafc !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+        .okr-action-pill.mint-outline,
+        .okr-action-pill.green-outline {
+            background: #f2f8f5 !important;
+            border: 1px solid #cbe2d6 !important;
+            color: #2b6b50 !important;
+            box-shadow: none !important;
+            font-weight: 600 !important;
         }
-        .okr-action-pill i {
-            color: #64748b;
+        .okr-action-pill.teal-solid {
+            background: #eef5f8 !important;
+            border: 1px solid #c6dce5 !important;
+            color: #286678 !important;
+            box-shadow: none !important;
+            font-weight: 700 !important;
         }
-        .okr-action-pill:hover i {
-            color: #0f172a;
+        .okr-action-pill.rose-outline {
+            background: #fcf4f4 !important;
+            border: 1px solid #ebd2d2 !important;
+            color: #a84848 !important;
+            box-shadow: none !important;
+            font-weight: 600 !important;
         }
+        .okr-action-pill:hover {
+            background: #eef5f8 !important;
+            border-color: #b5d1dc !important;
+            color: #1f5363 !important;
+        }
+        /* 主動作按鈕：完全對齊第三張圖右上角「匯入 Excel」的溫潤霧灰藍青 (#568294) */
         .okr-action-pill.primary-solid {
-            background: #0f172a !important;
-            border-color: #0f172a !important;
+            background: #4e7d90 !important;
+            border-color: #426d7f !important;
             color: #ffffff !important;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14) !important;
+            box-shadow: 0 2px 5px rgba(40, 102, 120, 0.16) !important;
         }
         .okr-action-pill.primary-solid i {
             color: #ffffff !important;
         }
         .okr-action-pill.primary-solid:hover {
-            background: #1e293b !important;
-            border-color: #1e293b !important;
+            background: #3d697b !important;
+            border-color: #345c6c !important;
             color: #ffffff !important;
         }
 
-        /* 全域主要按鈕同步沉穩極簡化 */
-        .n-btn-primary, .n-btn-accent {
-            background: #0f172a !important;
-            border-color: #0f172a !important;
+        /* 全域主按鈕同步改為溫潤湖青藍，不再使用黑色或刺眼橘色 */
+        .n-btn-primary {
+            background: #3b7386 !important;
+            border-color: #316273 !important;
             color: #ffffff !important;
         }
-        .n-btn-primary:hover, .n-btn-accent:hover {
-            background: #1e293b !important;
-            border-color: #1e293b !important;
+        .n-btn-primary:hover {
+            background: #2d5f70 !important;
+            border-color: #265160 !important;
             color: #ffffff !important;
+        }
+        .n-btn-accent {
+            background: #568294 !important;
+            border-color: #487182 !important;
+            color: #ffffff !important;
+        }
+        .n-btn-accent:hover {
+            background: #446d7e !important;
+            border-color: #395e6d !important;
+            color: #ffffff !important;
+        }
+        .n-btn-danger {
+            color: #b84a4a !important;
+        }
+        .n-btn-danger:hover {
+            background: #f9ecec !important;
+            border-color: #e6c3c3 !important;
         }
 
-        /* 4. 第二層水平膠囊導覽列：深曜石黑選中膠囊 + 極簡分段次級選單 */
+        /* 4. 第二層水平膠囊導覽列：選中採用第三張圖「月」按鈕同款沉穩湖青藍 (#286678) */
         .okr-pill-navbar .view-tab-btn {
-            color: #64748b !important;
+            color: #526377 !important;
             font-weight: 600 !important;
         }
         .okr-pill-navbar .view-tab-btn:hover {
-            background: #f1f5f9 !important;
-            color: #0f172a !important;
+            background: #eef4f7 !important;
+            color: #235868 !important;
         }
         .okr-pill-navbar .view-tab-btn.active {
-            background: #0f172a !important;
+            background: #286678 !important;
             color: #ffffff !important;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16) !important;
+            box-shadow: 0 2px 8px rgba(40, 102, 120, 0.2) !important;
         }
 
         .expenses-subtabs-bar {
-            background: #f1f5f9 !important;
-            border: 1px solid #e2e8f0 !important;
+            background: #edf2f6 !important;
+            border: 1px solid #dde5ee !important;
             padding: 3px !important;
             border-radius: 10px !important;
         }
         .expenses-subtab-btn {
-            color: #64748b !important;
+            color: #55667a !important;
             font-weight: 600 !important;
         }
         .expenses-subtab-btn.active {
-            background: #ffffff !important;
-            color: #0f172a !important;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+            background: #286678 !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 4px rgba(40, 102, 120, 0.18) !important;
         }
 
-        /* 5. KPI 指標卡片：統一深墨黑數值 + 單一極簡淺冷灰圖示盒 */
+        /* 5. KPI 指標卡片：保留淡雅莫蘭迪四色圖示盒與湖青進度條 */
         .okr-kpi-card {
-            border-color: #e2e8f0 !important;
+            border-color: #e4eaf1 !important;
         }
         .okr-kpi-card.clickable:hover {
-            border-color: #cbd5e1 !important;
+            border-color: #bdd3de !important;
         }
         .okr-kpi-value {
-            color: #0f172a !important;
+            color: #1e293b !important;
         }
         .okr-kpi-progress-bar {
-            background: #334155 !important;
+            background: #286678 !important;
         }
-        .okr-kpi-icon-box,
-        .okr-kpi-icon-box.blue,
-        .okr-kpi-icon-box.purple,
-        .okr-kpi-icon-box.amber,
+        .okr-kpi-icon-box.blue {
+            background: #e8f2f6 !important;
+            color: #286678 !important;
+            border: 1px solid #cfe2ea;
+        }
+        .okr-kpi-icon-box.purple {
+            background: #edf2f8 !important;
+            color: #466282 !important;
+            border: 1px solid #d6e0ec;
+        }
+        .okr-kpi-icon-box.amber {
+            background: #faf3e6 !important;
+            color: #9e6b24 !important;
+            border: 1px solid #ebd9bc;
+        }
         .okr-kpi-icon-box.emerald {
-            background: #f1f5f9 !important;
-            color: #475569 !important;
-            border: 1px solid #e2e8f0;
-        }
-        .okr-kpi-card.clickable:hover .okr-kpi-icon-box {
-            background: #e2e8f0 !important;
-            color: #0f172a !important;
+            background: #e8f3ee !important;
+            color: #2b6b50 !important;
+            border: 1px solid #c7e2d5;
         }
 
-        /* 6. 行程總結與每日時間軸去高彩度化 */
+        /* 6. 第二張圖全面優化：天數切換列、Day 卡片標頭、早午晚餐標籤、小計列與時間軸 */
+        .day-chip {
+            border-color: #dbe3ec !important;
+            color: #475569 !important;
+            background: #ffffff !important;
+        }
+        .day-chip:hover {
+            background: #f0f6f8 !important;
+            border-color: #bfd6e0 !important;
+            color: #235868 !important;
+        }
+        .day-chip.active {
+            background: #286678 !important;
+            border-color: #286678 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(40, 102, 120, 0.18) !important;
+        }
+
+        /* Day 1 左上角標籤：柔和霧青膠囊 (同第三張圖 P3 膠囊，取代刺眼亮橘紅) */
+        .day-badge-num {
+            background: #e4f0f5 !important;
+            color: #235a6b !important;
+            border: 1px solid #c4dce6 !important;
+            border-radius: 6px !important;
+            padding: 3px 10px !important;
+            font-weight: 800 !important;
+        }
+
+        /* 早午晚餐點心橫條與金額小標籤：溫潤米杏琥珀 (同第三張圖 SQA 開始標籤) */
+        .day-meals-bar {
+            background: #f9fbfc !important;
+            border: 1px solid #e4eaf1 !important;
+            border-radius: 10px !important;
+        }
+        .meal-cost-badge {
+            color: #966420 !important;
+            background: #faf3e6 !important;
+            border: 1px solid #ead9bc !important;
+            border-radius: 5px !important;
+            font-weight: 700 !important;
+        }
+
+        /* 當日總計膠囊：柔和溫潤霧青色 (取代原本刺眼的大橘紅條) */
+        .day-total-chip {
+            background: #356f82 !important;
+            color: #ffffff !important;
+            border: 1px solid #2b5e6f !important;
+            border-radius: 6px !important;
+            padding: 4px 11px !important;
+            font-weight: 700 !important;
+        }
+        .day-total-chip:hover {
+            background: #285d6e !important;
+            opacity: 1 !important;
+        }
+
+        /* 每日精華總結列表 */
         .trip-summary-logistics {
-            background: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
+            background: #f4f8fa !important;
+            border: 1px solid #d9e6ec !important;
             color: #334155 !important;
+            border-radius: 10px !important;
         }
         .summary-day-pill {
-            background: #f1f5f9 !important;
-            color: #0f172a !important;
-            border: 1px solid #cbd5e1 !important;
+            background: #e6f1f5 !important;
+            color: #235a6b !important;
+            border: 1px solid #c6dde7 !important;
             font-weight: 700 !important;
         }
         .summary-row-route {
-            color: #334155 !important;
+            color: #2b5d6e !important;
             font-weight: 600 !important;
         }
         .summary-cost-local {
-            color: #0f172a !important;
+            color: #286678 !important;
             font-weight: 800 !important;
         }
         .summary-cost-twd {
             color: #64748b !important;
         }
-        .day-chip.active {
-            background: #0f172a !important;
-            border-color: #0f172a !important;
-            color: #ffffff !important;
+
+        /* 時間軸圓點、時間標籤、停留時間與活動分類小膠囊全部改為溫潤低飽和色系 */
+        .timeline-events-list::before {
+            background: #d8e3ec !important;
         }
+        .timeline-node-dot {
+            border-color: #3b7386 !important;
+        }
+        .timeline-time-tag {
+            background: #e8f1f5 !important;
+            color: #245a6b !important;
+            border: 1px solid #cfe1e9;
+            border-radius: 5px !important;
+        }
+        .timeline-duration-badge {
+            background: #e8f3ee !important;
+            border-color: #c5dfd2 !important;
+            color: #2b6b50 !important;
+            border-radius: 5px !important;
+        }
+        .timeline-duration-badge:hover {
+            background: #dcece4 !important;
+            border-color: #a8cfbc !important;
+            color: #215740 !important;
+        }
+        .event-cat-spot { background: #e8f2f6 !important; color: #265f70 !important; border-color: #cbe0e8 !important; }
+        .event-cat-food { background: #faf3e6 !important; color: #966420 !important; border-color: #ead9bc !important; }
+        .event-cat-trans { background: #edf2f7 !important; color: #435d7a !important; border-color: #d5dfec !important; }
+        .event-cat-flight { background: #eef1f8 !important; color: #4a5785 !important; border-color: #d6dced !important; }
+        .event-cat-hotel { background: #e8f3ee !important; color: #2b6b50 !important; border-color: #c5dfd2 !important; }
+        .event-cat-shopping { background: #f8f2ec !important; color: #8c5e3c !important; border-color: #e6d6c6 !important; }
+        .event-cat-relax { background: #ebf4f0 !important; color: #316b56 !important; border-color: #c8e0d6 !important; }
+        .event-cat-other { background: #f1f5f9 !important; color: #475569 !important; border-color: #dbe2ea !important; }
+
+        /* 預算頁長條圖對齊第三張圖湖青色長條圖 */
+        .budget-kpi-value.highlight,
+        .budget-bar-amount {
+            color: #286678 !important;
+        }
+        .budget-bar-fill {
+            background: #286678 !important;
+        }
+
+        /* 柔和標籤膠囊 */
+        .prop-pill.pill-blue { background: #e8f2f6 !important; color: #265f70 !important; border: 1px solid #cbe0e8; }
+        .prop-pill.pill-orange { background: #faf3e6 !important; color: #966420 !important; border: 1px solid #ead9bc; }
+        .prop-pill.pill-green { background: #e8f3ee !important; color: #2b6b50 !important; border: 1px solid #c5dfd2; }
+        .prop-pill.pill-purple { background: #eef1f8 !important; color: #4a5785 !important; border: 1px solid #d6dced; }
+
         #sideFlightCardsContainer .flight-side-card:hover,
         #sideHotelCardsContainer .hotel-side-card:hover,
         .major-trans-card:hover {
-            border-color: #94a3b8 !important;
-        }
-
-        /* 收斂標籤膠囊為低飽和淡雅色調 */
-        .prop-pill.pill-blue,
-        .prop-pill.pill-orange,
-        .prop-pill.pill-green,
-        .prop-pill.pill-purple {
-            background: #f1f5f9 !important;
-            color: #334155 !important;
-            border: 1px solid #e2e8f0;
+            border-color: #a9c6d2 !important;
         }
 
     </style>
@@ -4121,7 +4253,7 @@
                                 </h3>
                                 <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">包含早中晚餐飲、多趟交通安排、景點門票與自訂其他花費之單人與全團支出</div>
                             </div>
-                            <strong style="font-size: 1.05rem; color: #ea580c;" id="budgetSummaryHeader">總計: NT$ 0 / 人</strong>
+                            <strong style="font-size: 1.05rem; color: #286678;" id="budgetSummaryHeader">總計: NT$ 0 / 人</strong>
                         </div>
                         <div id="budgetBreakdownContainer">
                             <!-- Populated dynamically -->
@@ -4845,7 +4977,7 @@
                             <span id="transitFromEndTime" style="margin-left:auto; font-size:0.78rem; color:#64748b; font-weight:700; flex-shrink:0;"></span>
                         </div>
                         <div style="font-size:0.75rem; color:#64748b; padding-left:4px; margin-bottom:8px;" id="transitFromLocRow">
-                            <i class="fa-solid fa-location-dot" style="color:#ea580c;"></i> <span id="transitFromLoc"></span>
+                            <i class="fa-solid fa-location-dot" style="color:#b0654a;"></i> <span id="transitFromLoc"></span>
                         </div>
                         <div style="border-top:1px dashed #cbd5e1; margin:8px 0; position:relative; text-align:center;">
                             <span style="position:relative; top:-9px; background:#f8fafc; padding:0 8px; font-size:0.72rem; color:#64748b; font-weight:700;">
@@ -4858,7 +4990,7 @@
                             <span id="transitToStartTime" style="margin-left:auto; font-size:0.78rem; color:#64748b; font-weight:700; flex-shrink:0;"></span>
                         </div>
                         <div style="font-size:0.75rem; color:#64748b; padding-left:4px;" id="transitToLocRow">
-                            <i class="fa-solid fa-location-dot" style="color:#ea580c;"></i> <span id="transitToLoc"></span>
+                            <i class="fa-solid fa-location-dot" style="color:#b0654a;"></i> <span id="transitToLoc"></span>
                         </div>
                     </div>
 
@@ -5702,7 +5834,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label"><i class="fa-solid fa-location-dot" style="color: #ea580c;"></i> 中文詳細地址 (司機導航、叫車與步行指引)</label>
+                        <label class="form-label"><i class="fa-solid fa-location-dot" style="color: #b0654a;"></i> 中文詳細地址 (司機導航、叫車與步行指引)</label>
                         <input type="text" id="hAddr" class="form-input" placeholder="例如：市中心青年路77號 (解放碑國泰優活城市廣場旁)">
                     </div>
                     <div class="form-group">
@@ -7239,7 +7371,7 @@ const firebaseConfig = {
                         <!-- 詳細地址展示卡塊 (司機導航、叫車與步行指引) -->
                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 9px; margin-top: 4px;" onclick="event.stopPropagation();">
                             <div style="display: flex; align-items: flex-start; gap: 5px; font-size: 0.8rem; color: #334155;">
-                                <i class="fa-solid fa-location-dot" style="color: #ea580c; margin-top: 2px; flex-shrink: 0;"></i>
+                                <i class="fa-solid fa-location-dot" style="color: #b0654a; margin-top: 2px; flex-shrink: 0;"></i>
                                 <span style="flex: 1; word-break: break-all; line-height: 1.4;"><strong>地址：</strong>${escapeHtml(addrStr || '尚未填寫詳細地址')}</span>
                             </div>
                             ${addrStr ? `
@@ -8077,7 +8209,7 @@ const firebaseConfig = {
                     Day ${d.dayNum} ‧ ${d.date || ''}
                 </button>
             `).join('') + `
-                <button class="day-chip" style="border-style: dashed; color: #2383e2;" onclick="addNewDayToPlan()">
+                <button class="day-chip" style="border-style: dashed; color: #3b7386; border-color: #b8d2dc !important;" onclick="addNewDayToPlan()">
                     <i class="fa-solid fa-plus"></i> 新增 Day ${days.length + 1}
                 </button>
             `;
@@ -8103,9 +8235,9 @@ const firebaseConfig = {
                 const fRange = (fTransit.startTimeStr && fTransit.endTimeStr) ? `(${fTransit.startTimeStr} ➔ ${fTransit.endTimeStr})` : '';
 
                 firstTransitHtml = `
-                    <div class="timeline-transit-row" style="margin-bottom:8px; background:#f0f9ff; border:1px dashed #7dd3fc; border-radius:8px; padding:6px 10px;">
+                    <div class="timeline-transit-row" style="margin-bottom:8px; background:#f3f8fa; border:1px dashed #b9d4df; border-radius:8px; padding:6px 10px;">
                         <div class="timeline-transit-badge custom-set" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="點擊編輯首站起程出發交通設定" style="background:#fff; cursor:pointer;">
-                            <span style="background:#0284c7; color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:3px; font-weight:700; margin-right:4px;"><i class="fa-solid fa-location-arrow"></i> 起程接駁</span>
+                            <span style="background:#3b7386; color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:3px; font-weight:700; margin-right:4px;"><i class="fa-solid fa-location-arrow"></i> 起程接駁</span>
                             ${fTransit.title ? `<strong style="color:#0369a1; font-size:0.76rem; margin-right:4px;"><i class="fa-solid fa-diamond-turn-right" style="font-size:0.68rem;"></i> ${escapeHtml(fTransit.title)}</strong>` : ''}
                             <i class="fa-solid ${fModeInfo.icon}"></i>
                             <span>${fModeInfo.label}約 <strong>${formatDuration(fMinutes)}</strong></span>
@@ -8127,7 +8259,7 @@ const firebaseConfig = {
             } else if (events.length > 0) {
                 firstTransitHtml = `
                     <div style="display:flex; justify-content:flex-start; margin-bottom:10px;">
-                        <button type="button" class="n-btn" style="font-size:0.72rem; padding:3px 10px; color:#0284c7; background:#f0f9ff; border:1px dashed #7dd3fc; border-radius:6px; font-weight:600;" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="設定當日從出發地/飯店前往首站的起程交通接駁">
+                        <button type="button" class="n-btn" style="font-size:0.72rem; padding:3px 10px; color:#2b6576; background:#f3f8fa; border:1px dashed #b9d4df; border-radius:6px; font-weight:600;" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="設定當日從出發地/飯店前往首站的起程交通接駁">
                             <i class="fa-solid fa-location-arrow"></i> 設定當日起程交通 (專車出發/前往機場/地鐵)
                         </button>
                     </div>
@@ -8290,7 +8422,7 @@ const firebaseConfig = {
                                 </div>
                                 <h4 class="timeline-event-title">${escapeHtml(ev.title)}</h4>
                                 <div class="timeline-event-meta">
-                                    ${ev.loc ? `<span><i class="fa-solid fa-location-dot" style="color:#ea580c;"></i> ${escapeHtml(ev.loc)}</span>` : ''}
+                                    ${ev.loc ? `<span><i class="fa-solid fa-location-dot" style="color:#b0654a;"></i> ${escapeHtml(ev.loc)}</span>` : ''}
                                     ${ev.cost ? `<span><i class="fa-solid fa-coins" style="color:#0f766e;"></i> ${curr.symbol} ${Number(ev.cost).toLocaleString()} <span style="font-size:0.72rem; color:#64748b;">(≈ NT$ ${Math.round(Number(ev.cost) * curr.rate).toLocaleString()})</span></span>` : ''}
                                     ${(ev.actualCost !== undefined && ev.actualCost !== null) ? `
                                         <span style="background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; padding:1px 6px; border-radius:4px; font-weight:700; font-size:0.72rem;" title="實付金額">
@@ -8515,14 +8647,14 @@ const firebaseConfig = {
                                 🍽️ 餐食小計: <strong>${curr.symbol} ${dayMealsLocal.toLocaleString()}</strong> <span style="font-size:0.72rem; color:#64748b;">(≈ NT$ ${dayMealsTwd.toLocaleString()})</span> <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#94a3b8; margin-left:3px;"></i>
                             </span>
                             <span class="subtotal-item subtotal-item-clickable" onclick="openEditDayMetaModal(${activeDay.dayNum}, 'transport')" title="點擊直接修改交通花費明細">
-                                🚗 交通開銷${(Array.isArray(activeDay.transports) && activeDay.transports.length > 1) ? ` (${activeDay.transports.length}趟)` : ''}: <strong style="color:#0284c7;">${transDisplay}</strong> <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#0284c7; margin-left:3px;"></i>
+                                🚗 交通開銷${(Array.isArray(activeDay.transports) && activeDay.transports.length > 1) ? ` (${activeDay.transports.length}趟)` : ''}: <strong style="color:#286678;">${transDisplay}</strong> <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#568294; margin-left:3px;"></i>
                             </span>
                             <span class="subtotal-item subtotal-item-clickable" onclick="openEditDayMetaModal(${activeDay.dayNum}, 'spot')" title="點擊直接修改景點門票明細">
-                                🎫 景點門票${(Array.isArray(activeDay.spots) && activeDay.spots.length > 1) ? ` (${activeDay.spots.length}項)` : ''}: <strong style="color:#16a34a;">${spotDisplay}</strong> <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#16a34a; margin-left:3px;"></i>
+                                🎫 景點門票${(Array.isArray(activeDay.spots) && activeDay.spots.length > 1) ? ` (${activeDay.spots.length}項)` : ''}: <strong style="color:#2b6b50;">${spotDisplay}</strong> <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#4d856d; margin-left:3px;"></i>
                             </span>
                             ${(Array.isArray(activeDay.extraCosts) && activeDay.extraCosts.length > 0) ? `
                             <span class="subtotal-item subtotal-item-clickable" onclick="openEditDayMetaModal(${activeDay.dayNum}, 'extra')" title="點擊編輯自訂其他費用項目">
-                                💼 其他花費 (${activeDay.extraCosts.length}項): <strong style="color:#d97706;">${curr.symbol} ${dayExtraPersonLocal.toLocaleString()}</strong>${(memberCount > 1 && dayExtraGroupLocal !== dayExtraPersonLocal * memberCount) ? `<span style="font-size:0.7rem; color:#9a3412;"> (全團${curr.symbol}${dayExtraGroupLocal.toLocaleString()})</span>` : `<span style="font-size:0.72rem; color:#64748b;">(≈ NT$ ${dayExtraPersonTwd.toLocaleString()})</span>`} <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#d97706; margin-left:3px;"></i>
+                                💼 其他花費 (${activeDay.extraCosts.length}項): <strong style="color:#966420;">${curr.symbol} ${dayExtraPersonLocal.toLocaleString()}</strong>${(memberCount > 1 && dayExtraGroupLocal !== dayExtraPersonLocal * memberCount) ? `<span style="font-size:0.7rem; color:#9a3412;"> (全團${curr.symbol}${dayExtraGroupLocal.toLocaleString()})</span>` : `<span style="font-size:0.72rem; color:#64748b;">(≈ NT$ ${dayExtraPersonTwd.toLocaleString()})</span>`} <i class="fa-solid fa-pen" style="font-size:0.7rem; color:#d97706; margin-left:3px;"></i>
                             </span>
                             ` : ''}
                             <span class="day-total-chip" onclick="openEditDayMetaModal(${activeDay.dayNum})" title="點擊編輯當日所有費用與主題">
@@ -8817,7 +8949,7 @@ const firebaseConfig = {
                                     <!-- 景點名稱 + 旁邊保留已安排進行程、行程安排備註與地址導航 -->
                                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 1rem; color: var(--notion-text); cursor: pointer; margin: 0; white-space: nowrap;">
-                                            <i class="fa-solid fa-location-dot" style="color: #ea580c;"></i> ${escapeHtml(item.name)}
+                                            <i class="fa-solid fa-location-dot" style="color: #b0654a;"></i> ${escapeHtml(item.name)}
                                         </label>
 
                                         ${isScheduled ? `
@@ -9251,10 +9383,10 @@ const firebaseConfig = {
                         </span>
                     </div>
                     <div style="display:flex; gap:6px;">
-                        <button type="button" class="n-btn" onclick="setBudgetDisplayMode('perPerson')" style="font-size:0.75rem; padding:3px 10px; ${!isGroupMode ? 'background:#ea580c; color:white; border-color:#ea580c; font-weight:700;' : ''}">
+                        <button type="button" class="n-btn" onclick="setBudgetDisplayMode('perPerson')" style="font-size:0.75rem; padding:3px 10px; ${!isGroupMode ? 'background:#286678; color:white; border-color:#286678; font-weight:700;' : ''}">
                             <i class="fa-solid fa-user"></i> 每人平均花費
                         </button>
-                        <button type="button" class="n-btn" onclick="setBudgetDisplayMode('group')" style="font-size:0.75rem; padding:3px 10px; ${isGroupMode ? 'background:#ea580c; color:white; border-color:#ea580c; font-weight:700;' : ''}">
+                        <button type="button" class="n-btn" onclick="setBudgetDisplayMode('group')" style="font-size:0.75rem; padding:3px 10px; ${isGroupMode ? 'background:#286678; color:white; border-color:#286678; font-weight:700;' : ''}">
                             <i class="fa-solid fa-users"></i> 全團總預算 (${stats.memberCount}人)
                         </button>
                     </div>
@@ -11282,11 +11414,11 @@ const firebaseConfig = {
         // v2.22 交通與住宿大項目分頁 (Transit & Stay) 與包車/接送管理
         // ==========================================================
         const MAJOR_TRANS_CATEGORIES = {
-            transfer: { label: '機場接送', icon: 'fa-van-shuttle', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
-            charter: { label: '包車專車', icon: 'fa-car-side', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
-            rail: { label: '跨城高鐵/火車', icon: 'fa-train-subway', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
+            transfer: { label: '機場接送', icon: 'fa-van-shuttle', bg: '#eaf2f6', text: '#286678', border: '#cde0e8' },
+            charter: { label: '包車專車', icon: 'fa-car-side', bg: '#edf2f8', text: '#466282', border: '#d5dfec' },
+            rail: { label: '跨城高鐵/火車', icon: 'fa-train-subway', bg: '#e8f3ee', text: '#2b6b50', border: '#c6e0d3' },
             ferry: { label: '船票/渡輪', icon: 'fa-ship', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
-            bus: { label: '巴士/客運', icon: 'fa-bus', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
+            bus: { label: '巴士/客運', icon: 'fa-bus', bg: '#faf3e6', text: '#966420', border: '#ead9bc' },
             domestic_flight: { label: '國內航段', icon: 'fa-plane', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
             other: { label: '交通票券/其他', icon: 'fa-ticket', bg: '#f8fafc', text: '#334155', border: '#e2e8f0' }
         };
