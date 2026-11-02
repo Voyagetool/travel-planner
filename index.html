@@ -4404,6 +4404,326 @@
             }
         }
 
+
+        /* 11. 參考截圖多色商務調色盤 (森林綠/海青藍/皇家鈷藍/焦糖琥珀橘/朱砂紅) ＋ 俐落微直角邊框 */
+        :root {
+            --ref-green-bg: #dceddf;
+            --ref-green-border: #9ec5a6;
+            --ref-green-ink: #1d6f3d;
+            --ref-slate-bg: #dbe5ea;
+            --ref-slate-border: #b8ccd6;
+            --ref-slate-ink: #1f5f78;
+            --ref-cobalt-solid: #2f6fed;
+            --ref-cobalt-bg: #e8f0fe;
+            --ref-cobalt-border: #b6d0fb;
+            --ref-cobalt-ink: #1d56c4;
+            --ref-amber-solid: #c87000;
+            --ref-amber-bg: #fdf2df;
+            --ref-amber-border: #ecc58c;
+            --ref-amber-ink: #b45d00;
+            --ref-crimson-ink: #c93b3b;
+            --ref-crimson-bg: #fdecec;
+            --ref-crimson-border: #f1c1c1;
+            --ref-ice-tint: #f3f8f8;
+            --ref-crisp-border: #d5dee8;
+        }
+
+        /* A. 全站各區域外框、面板、卡片、按鈕全面收斂為更直角的俐落微導角 (3px ~ 4px) */
+        .okr-kpi-card,
+        #tripSummaryBox.trip-summary-box,
+        .day-card-container,
+        .okr-section-panel,
+        .logistics-segmented-strip,
+        .logistics-dual-card,
+        .notion-budget-widget,
+        .notion-table-wrapper,
+        .spot-guide-card,
+        #toolsCalloutBox.notion-callout,
+        .modal-card {
+            border-radius: 4px !important;
+            border-color: var(--ref-crisp-border) !important;
+        }
+
+        .timeline-event-row,
+        .day-meals-bar,
+        .summary-mini-day-card,
+        #sideFlightCardsContainer .flight-side-card,
+        #sideHotelCardsContainer .hotel-side-card,
+        .major-trans-card,
+        .compact-flight-route-bar,
+        .tool-compact-pill,
+        .okr-brand-icon,
+        .okr-kpi-icon-box,
+        .okr-action-pill,
+        .okr-pill-navbar .view-tab-btn,
+        .expenses-subtabs-bar,
+        .expenses-subtab-btn,
+        .day-chip,
+        .n-btn,
+        .okr-plan-badge-pill,
+        .unified-nav-selector-box,
+        .currency-input,
+        .form-input,
+        .form-select,
+        .day-badge-num,
+        .day-total-chip,
+        .timeline-time-tag,
+        .timeline-duration-badge,
+        .meal-cost-badge,
+        .tools-badge-title,
+        .summary-day-pill,
+        .event-cat-badge {
+            border-radius: 3px !important;
+        }
+
+        /* 對應截圖 P3 / ✓ Yes 的狀態小標籤保留微導角 4px，其餘內嵌小資訊框收斂為 3px 直角感 */
+        .prop-pill {
+            border-radius: 4px !important;
+        }
+        #currToggleContent,
+        #tripSummaryBox .trip-summary-body > div:first-child,
+        #sideHotelCardsContainer .hotel-side-card > div,
+        .major-trans-card > div:last-child {
+            border-radius: 3px !important;
+        }
+
+        /* 單筆行程活動中的當日支出重點數字點綴截圖同款溫潤朱砂紅 */
+        .day-badge-sub {
+            color: #475569 !important;
+        }
+        .timeline-event-meta .fa-coins {
+            color: var(--ref-amber-solid) !important;
+        }
+
+        /* B. 頂部標題列與右側多色商務按鈕層次 */
+        .okr-brand-icon {
+            background: #1f5f78 !important;
+            border: 1px solid #184c61 !important;
+        }
+        .okr-plan-badge-pill {
+            background: var(--ref-slate-bg) !important;
+            border: 1px solid var(--ref-slate-border) !important;
+            color: var(--ref-slate-ink) !important;
+        }
+        .okr-action-pill.mint-outline,
+        .okr-action-pill.green-outline {
+            background: var(--ref-green-bg) !important;
+            border: 1px solid var(--ref-green-border) !important;
+            color: var(--ref-green-ink) !important;
+            font-weight: 700 !important;
+        }
+        .okr-action-pill.teal-solid {
+            background: var(--ref-slate-bg) !important;
+            border: 1px solid var(--ref-slate-border) !important;
+            color: var(--ref-slate-ink) !important;
+            font-weight: 700 !important;
+        }
+        .okr-action-pill.purple-outline {
+            background: var(--ref-amber-bg) !important;
+            border: 1px solid var(--ref-amber-border) !important;
+            color: var(--ref-amber-ink) !important;
+            font-weight: 700 !important;
+        }
+        .okr-action-pill.blue-outline {
+            background: var(--ref-cobalt-bg) !important;
+            border: 1px solid var(--ref-cobalt-border) !important;
+            color: var(--ref-cobalt-ink) !important;
+            font-weight: 700 !important;
+        }
+        .okr-action-pill.primary-solid {
+            background: var(--ref-cobalt-solid) !important;
+            border: 1px solid #245cd4 !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 3px rgba(47, 111, 237, 0.22) !important;
+        }
+        .okr-action-pill.primary-solid:hover {
+            background: #235cd6 !important;
+            border-color: #1c4db8 !important;
+        }
+
+        /* 第二層導覽列與次級分頁：深海青藍 + 俐落微直角選中塊 */
+        .okr-pill-navbar .view-tab-btn.active {
+            background: #1f5f78 !important;
+            color: #ffffff !important;
+            box-shadow: none !important;
+        }
+        .expenses-subtab-btn.active {
+            background: #1f5f78 !important;
+            color: #ffffff !important;
+            box-shadow: none !important;
+        }
+
+        /* C. 行前提醒徽章：待辦採用截圖焦糖琥珀橘，全部完成採用截圖 ✓ Yes 森林綠 */
+        .tools-badge-title {
+            background: var(--ref-amber-bg) !important;
+            border: 1px solid var(--ref-amber-border) !important;
+            color: var(--ref-amber-ink) !important;
+        }
+        .tools-badge-title.all-done {
+            background: var(--ref-green-bg) !important;
+            border: 1px solid var(--ref-green-border) !important;
+            color: var(--ref-green-ink) !important;
+        }
+
+        /* D. 頂部 4 張 KPI 卡片：注入截圖四色左邊條 + 專屬多色數值與圖示盒 */
+        .okr-kpi-grid .okr-kpi-card:nth-child(1) {
+            border-left: 3px solid var(--ref-cobalt-solid) !important;
+        }
+        .okr-kpi-grid .okr-kpi-card:nth-child(2) {
+            border-left: 3px solid var(--ref-slate-ink) !important;
+        }
+        .okr-kpi-grid .okr-kpi-card:nth-child(3) {
+            border-left: 3px solid var(--ref-amber-solid) !important;
+        }
+        .okr-kpi-grid .okr-kpi-card:nth-child(3) .okr-kpi-value {
+            color: var(--ref-crimson-ink) !important;
+        }
+        .okr-kpi-grid .okr-kpi-card:nth-child(4) {
+            border-left: 3px solid var(--ref-green-ink) !important;
+        }
+        .okr-kpi-grid .okr-kpi-card:nth-child(4) .okr-kpi-value {
+            color: var(--ref-green-ink) !important;
+        }
+
+        .okr-kpi-progress-bar {
+            background: var(--ref-cobalt-solid) !important;
+            border-radius: 2px !important;
+        }
+        .okr-kpi-progress {
+            border-radius: 2px !important;
+        }
+        .okr-kpi-icon-box.blue {
+            background: var(--ref-cobalt-bg) !important;
+            color: var(--ref-cobalt-ink) !important;
+            border: 1px solid var(--ref-cobalt-border) !important;
+        }
+        .okr-kpi-icon-box.purple {
+            background: var(--ref-slate-bg) !important;
+            color: var(--ref-slate-ink) !important;
+            border: 1px solid var(--ref-slate-border) !important;
+        }
+        .okr-kpi-icon-box.amber {
+            background: var(--ref-amber-bg) !important;
+            color: var(--ref-amber-ink) !important;
+            border: 1px solid var(--ref-amber-border) !important;
+        }
+        .okr-kpi-icon-box.emerald {
+            background: var(--ref-green-bg) !important;
+            color: var(--ref-green-ink) !important;
+            border: 1px solid var(--ref-green-border) !important;
+        }
+
+        /* 交通與住宿 5 格連體指標列：頂部五色細色帶與截圖同款朱砂紅/焦糖橘/森林綠重點字 */
+        .logistics-segmented-strip .logistics-seg-cell:nth-child(1) {
+            border-top: 3px solid var(--ref-cobalt-solid) !important;
+        }
+        .logistics-segmented-strip .logistics-seg-cell:nth-child(2) {
+            border-top: 3px solid var(--ref-amber-solid) !important;
+        }
+        .logistics-segmented-strip .logistics-seg-cell:nth-child(3) {
+            border-top: 3px solid var(--ref-green-ink) !important;
+        }
+        .logistics-segmented-strip .logistics-seg-cell:nth-child(4) {
+            border-top: 3px solid var(--ref-crimson-ink) !important;
+        }
+        .logistics-segmented-strip .logistics-seg-cell:nth-child(4) .logistics-seg-val {
+            color: var(--ref-crimson-ink) !important;
+        }
+        .logistics-segmented-strip .logistics-seg-cell:nth-child(5) {
+            border-top: 3px solid var(--ref-slate-ink) !important;
+        }
+        .logistics-seg-val.accent-amber {
+            color: var(--ref-amber-solid) !important;
+        }
+
+        /* E. 每日行程卡片與時間軸：完美融入截圖的「海青藍 P3 ＋ 焦糖橘 SQA ＋ 皇家鈷藍 ＋ 森林綠 Yes ＋ 朱砂紅」 */
+        .day-chip.active {
+            background: #1f5f78 !important;
+            border-color: #184c61 !important;
+            color: #ffffff !important;
+            box-shadow: none !important;
+        }
+        .day-badge-num {
+            background: var(--ref-slate-bg) !important;
+            color: var(--ref-slate-ink) !important;
+            border: 1px solid var(--ref-slate-border) !important;
+        }
+        .day-meals-bar {
+            background: var(--ref-ice-tint) !important;
+            border: 1px solid #d4e3e6 !important;
+        }
+        .meal-cost-badge {
+            background: var(--ref-amber-bg) !important;
+            border: 1px solid var(--ref-amber-border) !important;
+            color: var(--ref-amber-ink) !important;
+        }
+        /* 當日總計採用截圖右側 SQA 同款暖焦糖琥珀橘實心塊 */
+        .day-total-chip {
+            background: var(--ref-amber-solid) !important;
+            border: 1px solid #ad6000 !important;
+            color: #ffffff !important;
+        }
+        .day-total-chip:hover {
+            background: #b06200 !important;
+        }
+
+        /* 時間軸標籤：時間用皇家鈷藍、停留時長用截圖 ✓ Yes 森林綠 */
+        .timeline-node-dot {
+            border-color: var(--ref-cobalt-solid) !important;
+        }
+        .timeline-time-tag {
+            background: var(--ref-cobalt-bg) !important;
+            border: 1px solid var(--ref-cobalt-border) !important;
+            color: var(--ref-cobalt-ink) !important;
+            font-weight: 700 !important;
+        }
+        .timeline-duration-badge {
+            background: var(--ref-green-bg) !important;
+            border: 1px solid var(--ref-green-border) !important;
+            color: var(--ref-green-ink) !important;
+            font-weight: 700 !important;
+        }
+        .timeline-event-row:hover {
+            border-color: #b5c7d9 !important;
+            background: #fafcfd !important;
+        }
+
+        /* 多彩活動分類小標籤 */
+        .event-cat-spot { background: var(--ref-slate-bg) !important; color: var(--ref-slate-ink) !important; border-color: var(--ref-slate-border) !important; }
+        .event-cat-food { background: var(--ref-amber-bg) !important; color: var(--ref-amber-ink) !important; border-color: var(--ref-amber-border) !important; }
+        .event-cat-flight { background: var(--ref-cobalt-bg) !important; color: var(--ref-cobalt-ink) !important; border-color: var(--ref-cobalt-border) !important; }
+        .event-cat-hotel { background: var(--ref-green-bg) !important; color: var(--ref-green-ink) !important; border-color: var(--ref-green-border) !important; }
+        .event-cat-shopping { background: var(--ref-crimson-bg) !important; color: var(--ref-crimson-ink) !important; border-color: var(--ref-crimson-border) !important; }
+        .event-cat-trans { background: #eef2f7 !important; color: #365375 !important; border-color: #cad6e6 !important; }
+
+        /* 通用標籤對應截圖 P3 / Yes / SQA / 朱砂紅 */
+        .prop-pill.pill-blue { background: var(--ref-slate-bg) !important; color: var(--ref-slate-ink) !important; border: 1px solid var(--ref-slate-border) !important; }
+        .prop-pill.pill-orange { background: var(--ref-amber-bg) !important; color: var(--ref-amber-ink) !important; border: 1px solid var(--ref-amber-border) !important; }
+        .prop-pill.pill-green { background: var(--ref-green-bg) !important; color: var(--ref-green-ink) !important; border: 1px solid var(--ref-green-border) !important; }
+        .prop-pill.pill-purple { background: var(--ref-cobalt-bg) !important; color: var(--ref-cobalt-ink) !important; border: 1px solid var(--ref-cobalt-border) !important; }
+        .prop-pill.pill-red { background: var(--ref-crimson-bg) !important; color: var(--ref-crimson-ink) !important; border: 1px solid var(--ref-crimson-border) !important; }
+
+        /* 表格與預算長條圖同步套用截圖冰青表頭、朱砂紅重點數字與多色進度條 */
+        .notion-table th {
+            background: var(--ref-ice-tint) !important;
+            color: #1f4e5f !important;
+            border-bottom: 1px solid #cbd8de !important;
+        }
+        .budget-kpi-value.highlight {
+            color: var(--ref-crimson-ink) !important;
+        }
+        .budget-bar-row:nth-child(odd) .budget-bar-fill {
+            background: var(--ref-cobalt-solid) !important;
+            border-radius: 2px !important;
+        }
+        .budget-bar-row:nth-child(even) .budget-bar-fill {
+            background: var(--ref-amber-solid) !important;
+            border-radius: 2px !important;
+        }
+        .budget-bar-track {
+            border-radius: 2px !important;
+        }
+
     </style>
 </head>
 <body>
