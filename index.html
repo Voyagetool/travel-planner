@@ -3912,6 +3912,277 @@
             padding-bottom: 4px !important;
         }
 
+
+        /* 8. 高密度資訊濃縮樣式：行前提醒單行膠囊化 ＋ 交通與住宿精簡版面 */
+        #toolsCalloutBox.notion-callout {
+            padding: 6px 12px !important;
+            border-radius: 10px !important;
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: #ffffff !important;
+        }
+        #toolsCalloutBox .notion-callout-content {
+            width: 100%;
+            min-width: 0;
+        }
+        .tools-compact-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .tools-compact-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex: 1;
+            min-width: 0;
+        }
+        .tools-badge-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            color: #966420;
+            background: #faf3e6;
+            border: 1px solid #ead9bc;
+            padding: 2px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .tools-badge-title.all-done {
+            color: #2b6b50;
+            background: #e8f3ee;
+            border-color: #c5dfd2;
+        }
+        .tools-inline-pills {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tool-compact-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 3px 8px;
+            font-size: 0.78rem;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.14s ease;
+            max-width: 100%;
+        }
+        .tool-compact-pill:hover {
+            border-color: #b4cad6;
+            background: #f2f7fa;
+        }
+        .tool-compact-pill.checked {
+            opacity: 0.65;
+            text-decoration: line-through;
+            background: #f1f5f9;
+        }
+        .tool-compact-pill .tool-pill-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            opacity: 0.55;
+            transition: opacity 0.14s ease;
+        }
+        .tool-compact-pill:hover .tool-pill-actions {
+            opacity: 1;
+        }
+        .tool-mini-act-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            line-height: 1;
+        }
+        .tool-mini-act-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .tool-mini-act-btn.del:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* 交通與住宿分頁：濃縮版頂部指標條與緊湊區塊面板 */
+        .logistics-kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .logistics-kpi-mini {
+            background: #ffffff;
+            border: 1px solid #e5ebf2;
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+            min-width: 0;
+        }
+        .logistics-kpi-mini:hover {
+            border-color: #9ec0ce;
+            background: #fafcfd;
+            transform: translateY(-1px);
+        }
+        .logistics-kpi-mini .mini-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.88rem;
+            flex-shrink: 0;
+        }
+        .logistics-kpi-mini .mini-body {
+            min-width: 0;
+            flex: 1;
+        }
+        .logistics-kpi-mini .mini-top {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .logistics-kpi-mini .mini-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .logistics-kpi-mini .mini-val {
+            font-size: 0.96rem;
+            font-weight: 800;
+            color: #0f172a;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .logistics-kpi-mini .mini-sub {
+            font-size: 0.7rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+
+        #view-logistics .okr-section-panel {
+            padding: 10px 14px !important;
+            margin-bottom: 10px !important;
+            border-radius: 12px !important;
+        }
+        #view-logistics .okr-section-head {
+            margin-bottom: 8px !important;
+            padding-bottom: 7px !important;
+            gap: 8px !important;
+        }
+        #view-logistics .okr-section-panel.is-empty-compact .okr-section-head {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+            border-bottom: none !important;
+        }
+        #view-logistics .okr-section-title {
+            font-size: 0.9rem !important;
+        }
+        #view-logistics #sideFlightCardsContainer,
+        #view-logistics #majorTransportCardsContainer,
+        #view-logistics #sideHotelCardsContainer {
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+            gap: 10px !important;
+        }
+        #view-logistics #sideFlightCardsContainer .flight-side-card,
+        #view-logistics #sideHotelCardsContainer .hotel-side-card,
+        #view-logistics .major-trans-card {
+            padding: 10px 13px !important;
+            border-radius: 10px !important;
+        }
+        /* 橫向緊湊登機證航線軸 */
+        .compact-flight-route-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #e5edf3;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-top: 5px;
+        }
+        .compact-flight-station {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .compact-flight-station.arr {
+            text-align: right;
+            align-items: flex-end;
+        }
+        .compact-flight-time {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
+        }
+        .compact-flight-loc {
+            font-size: 0.74rem;
+            color: #475569;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 135px;
+        }
+        .compact-flight-mid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 60px;
+            color: #64748b;
+            font-size: 0.69rem;
+            font-weight: 600;
+        }
+        .compact-flight-line {
+            width: 100%;
+            max-width: 90px;
+            height: 1.5px;
+            background: #cbd5e1;
+            position: relative;
+            margin: 2px 0;
+        }
+        @media (max-width: 1024px) {
+            .logistics-kpi-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 600px) {
+            .logistics-kpi-strip {
+                grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -4034,20 +4305,22 @@
     <main class="okr-workspace-main">
         <section class="notion-main-col" style="width: 100%; max-width: 100%;">
             
-            <!-- 行前準備必備工具 (無待辦提醒時自動縮到最小單行) -->
+            <!-- 行前準備必備工具 (高密度單行膠囊列) -->
             <div class="notion-callout" id="toolsCalloutBox">
-                <div class="notion-callout-icon" id="toolsCalloutIcon">💡</div>
+                <div class="notion-callout-icon" id="toolsCalloutIcon" style="display:none;">💡</div>
                 <div class="notion-callout-content">
-                    <div id="toolsCalloutHeader" style="font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                        <span id="toolsCalloutTitleText">行前必備工具與重要提醒 (點擊直接勾選確認狀態)</span>
-                        <div id="toolsCalloutHeaderActions" style="display: flex; align-items: center; gap: 6px;">
-                            <button class="n-btn" style="padding: 2px 8px; font-size: 0.74rem;" onclick="openAddToolModal()">
+                    <div class="tools-compact-bar" id="toolsCalloutHeader">
+                        <div class="tools-compact-left">
+                            <span id="toolsCalloutTitleText" class="tools-badge-title">💡 行前提醒</span>
+                            <div id="toolsCalloutList" class="tools-inline-pills">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <div id="toolsCalloutHeaderActions" style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+                            <button class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddToolModal()">
                                 <i class="fa-solid fa-plus"></i> 新增提醒
                             </button>
                         </div>
-                    </div>
-                    <div id="toolsCalloutList">
-                        <!-- Populated dynamically -->
                     </div>
                 </div>
             </div>
@@ -4066,55 +4339,45 @@
                 </div>
             </div>
 
-            <!-- VIEW 2 (NEW): TRANSIT & STAY (交通與住宿大項目專屬分頁：機票 / 包車 / 機場接送 / 飯店 / 匯率) -->
+            <!-- VIEW 2 (NEW): TRANSIT & STAY (交通與住宿大項目專屬分頁：濃縮高密度版) -->
             <div class="view-content-pane" id="view-logistics">
-                <!-- 頂部 4 張 OKR 風格交通與住宿大項目 KPI 卡片 -->
+                <!-- 頂部濃縮版 4 格大項目指標橫條 -->
                 <div id="logisticsKpiGrid"></div>
 
-                <!-- 次級篩選列與快速新增大項目按鈕 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+                <!-- 次級篩選列 (精簡不重複按鈕) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
                     <div class="expenses-subtabs-bar">
                         <button type="button" class="expenses-subtab-btn active" id="logisticsSubtabBtn-all" onclick="switchLogisticsSubtab('all')">
-                            <i class="fa-solid fa-layer-group"></i> 全部大項目總覽
+                            <i class="fa-solid fa-layer-group"></i> 全部總覽
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-transit" onclick="switchLogisticsSubtab('transit')">
-                            <i class="fa-solid fa-plane-departure"></i> 機票與包車接送
+                            <i class="fa-solid fa-plane-departure"></i> 機票與包車
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-hotel" onclick="switchLogisticsSubtab('hotel')">
-                            <i class="fa-solid fa-hotel"></i> 住宿飯店安排
+                            <i class="fa-solid fa-hotel"></i> 住宿飯店
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-currency" onclick="switchLogisticsSubtab('currency')">
-                            <i class="fa-solid fa-coins"></i> 當地匯率換算
+                            <i class="fa-solid fa-coins"></i> 匯率換算
                         </button>
                     </div>
-
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" class="okr-action-pill blue-outline" onclick="if(event){event.stopPropagation();event.preventDefault();} openEditFlightModal();">
-                            <i class="fa-solid fa-plane"></i> 編輯往返機票 / 主交通
-                        </button>
-                        <button type="button" class="okr-action-pill purple-outline" onclick="openEditMajorTransportModal(-1)">
-                            <i class="fa-solid fa-van-shuttle"></i> ＋ 新增包車 / 機場接送
-                        </button>
-                        <button type="button" class="okr-action-pill green-outline" onclick="openEditHotelModal()">
-                            <i class="fa-solid fa-bed"></i> ＋ 新增住宿飯店
-                        </button>
+                    <div style="font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-regular fa-lightbulb" style="color:#966420;"></i>
+                        <span>點擊任一卡片可直接編輯，大項目金額自動計入全程預算與核銷</span>
                     </div>
                 </div>
 
-                <!-- 板塊 1: ✈️ 往返機票 / 主交通航段 -->
+                <!-- 板塊 1: ✈️ 往返機票 / 主交通航段 (單行標題＋橫向登機證小卡) -->
                 <div class="okr-section-panel" id="side-transport-section">
                     <div class="okr-section-head">
-                        <div class="okr-section-title-group">
-                            <div class="okr-kpi-icon-box blue" style="width:40px; height:40px; font-size:1rem;">
+                        <div class="okr-section-title-group" style="gap:8px; flex-wrap:wrap;">
+                            <div class="okr-kpi-icon-box blue" style="width:28px !important; height:28px !important; font-size:0.8rem !important; border-radius:7px !important;">
                                 <i class="fa-solid fa-plane-departure"></i>
                             </div>
-                            <div>
-                                <h3 class="okr-section-title">往返機票與跨國/跨城主交通 (Main Flights & Transit)</h3>
-                                <div class="okr-section-desc">管理去回程航班、轉機資訊、訂位代號 (PNR) 與來回/單程票價，可一鍵同步時刻至每日行程</div>
-                            </div>
+                            <h3 class="okr-section-title">往返機票 / 主交通</h3>
+                            <div id="flightInlineCostSummary"></div>
                         </div>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <button type="button" class="n-btn n-btn-primary" style="border-radius:8px; padding:6px 12px;" onclick="if(event){event.stopPropagation();event.preventDefault();} openEditFlightModal();">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.76rem;" onclick="if(event){event.stopPropagation();event.preventDefault();} openEditFlightModal();">
                                 <i class="fa-solid fa-pen-to-square"></i> 設定航班與票價
                             </button>
                         </div>
@@ -4124,24 +4387,22 @@
                     </div>
                 </div>
 
-                <!-- 板塊 2: 🚐 包車 / 機場接送 / 跨城專車與大項目交通 -->
+                <!-- 板塊 2: 🚐 包車 / 機場接送 / 大項目交通 (無項目時自動縮成單行) -->
                 <div class="okr-section-panel" id="major-transport-section">
                     <div class="okr-section-head">
-                        <div class="okr-section-title-group">
-                            <div class="okr-kpi-icon-box purple" style="width:40px; height:40px; font-size:1rem;">
+                        <div class="okr-section-title-group" style="gap:8px; flex-wrap:wrap;">
+                            <div class="okr-kpi-icon-box purple" style="width:28px !important; height:28px !important; font-size:0.8rem !important; border-radius:7px !important;">
                                 <i class="fa-solid fa-van-shuttle"></i>
                             </div>
-                            <div>
-                                <h3 class="okr-section-title">包車・機場接送・其他大項目交通 (Charter, Airport Transfer & Major Transit)</h3>
-                                <div class="okr-section-desc">集中管理機場專車接送、一日遊包車、跨城高鐵/新幹線、觀光船票等大額交通項目，自動納入全程總預算與實付核銷</div>
-                            </div>
+                            <h3 class="okr-section-title">包車・機場接送・大交通</h3>
+                            <span id="majorTransEmptyHint" style="font-size:0.75rem; color:#94a3b8; font-weight:500;"></span>
                         </div>
-                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                            <button type="button" class="n-btn" style="border-radius:8px; padding:6px 11px; color:#475569;" onclick="importMajorTransportsFromDays()" title="掃描每日行程中的包車/接送項目並帶入此處集中管理">
-                                <i class="fa-solid fa-file-import" style="color:#475569;"></i> 從行程帶入包車/接送
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" class="n-btn" style="border-radius:7px; padding:4px 9px; font-size:0.75rem; color:#475569;" onclick="importMajorTransportsFromDays()" title="掃描每日行程中的包車/接送項目並帶入此處集中管理">
+                                <i class="fa-solid fa-file-import" style="color:#475569;"></i> 從行程帶入
                             </button>
-                            <button type="button" class="n-btn n-btn-primary" style="border-radius:8px; padding:6px 12px;" onclick="openEditMajorTransportModal(-1)">
-                                <i class="fa-solid fa-plus"></i> 新增包車 / 接送項目
+                            <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.76rem;" onclick="openEditMajorTransportModal(-1)">
+                                <i class="fa-solid fa-plus"></i> 新增包車 / 接送
                             </button>
                         </div>
                     </div>
@@ -4153,17 +4414,14 @@
                 <!-- 板塊 3: 🏨 入住飯店與住宿安排 -->
                 <div class="okr-section-panel" id="side-hotel-section">
                     <div class="okr-section-head">
-                        <div class="okr-section-title-group">
-                            <div class="okr-kpi-icon-box amber" style="width:40px; height:40px; font-size:1rem;">
+                        <div class="okr-section-title-group" style="gap:8px; flex-wrap:wrap;">
+                            <div class="okr-kpi-icon-box amber" style="width:28px !important; height:28px !important; font-size:0.8rem !important; border-radius:7px !important;">
                                 <i class="fa-solid fa-hotel"></i>
                             </div>
-                            <div>
-                                <h3 class="okr-section-title">入住飯店與住宿安排 (Hotels & Accommodations)</h3>
-                                <div class="okr-section-desc">記錄全程或分段入住飯店、入住退房日期、每晚/整段房費均攤、詳細地址定位導航與聯絡電話</div>
-                            </div>
+                            <h3 class="okr-section-title">住宿飯店安排</h3>
                         </div>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <button type="button" class="n-btn n-btn-primary" style="border-radius:8px; padding:6px 12px;" onclick="openEditHotelModal()">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.76rem;" onclick="openEditHotelModal()">
                                 <i class="fa-solid fa-plus"></i> 新增住宿飯店
                             </button>
                         </div>
@@ -4173,40 +4431,39 @@
                     </div>
                 </div>
 
-                <!-- 板塊 4: 💱 當地幣別與即時匯率換算器 -->
-                <div class="okr-section-panel" id="logistics-currency-section">
-                    <div class="okr-section-head" style="margin-bottom:12px; padding-bottom:10px;">
-                        <div class="okr-section-title-group">
-                            <div class="okr-kpi-icon-box emerald" style="width:40px; height:40px; font-size:1rem;">
-                                <i class="fa-solid fa-sterling-sign" style="display:none;"></i>
+                <!-- 板塊 4: 💱 當地幣別與即時匯率換算器 (單行濃縮橫條) -->
+                <div class="okr-section-panel" id="logistics-currency-section" style="padding: 9px 14px !important;">
+                    <span id="currToggleArrow" style="display:none;"></span>
+                    <div id="currToggleContent" style="display:flex !important; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                            <div class="okr-kpi-icon-box emerald" style="width:28px !important; height:28px !important; font-size:0.8rem !important; border-radius:7px !important;">
                                 <i class="fa-solid fa-money-bill-transfer"></i>
                             </div>
-                            <div>
-                                <h3 class="okr-section-title" id="sideCurrTitle">當地幣別與即時匯率換算 (<span id="sideCurrCodeTitle">CNY</span> ➔ TWD)</h3>
-                                <div class="okr-section-desc">支援一鍵同步網路最新即時匯率，套用後全站預算與台幣換算即刻自動更新</div>
+                            <h3 class="okr-section-title" id="sideCurrTitle" style="font-size:0.88rem !important;">匯率換算 (<span id="sideCurrCodeTitle">CNY</span> ➔ TWD)</h3>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; flex:1; justify-content:center;">
+                            <div class="currency-input-row" style="margin:0; font-size:0.8rem;">
+                                <span id="sideCurrLabel" style="font-weight:700; color:#334155;">1 人民幣 (CNY) = </span>
+                                <input type="number" id="calcRateInput" class="currency-input" value="4.65" step="any" oninput="calculateExchange(true)" style="width:86px; padding:3px 7px; font-size:0.8rem; font-weight:700;">
+                                <span style="font-weight:600; color:#64748b;">TWD</span>
+                            </div>
+                            <span style="color:#cbd5e1;">|</span>
+                            <div class="currency-input-row" style="margin:0; font-size:0.8rem;">
+                                <span style="font-weight:700; color:#334155;">試算：</span>
+                                <input type="number" id="calcAmountInput" class="currency-input" value="100" placeholder="當地幣" oninput="calculateExchange()" style="width:90px; padding:3px 7px; font-size:0.8rem; font-weight:700;">
+                                <span id="sideCalcUnitLabel" style="font-weight:600; color:#64748b;">CNY ➔ </span>
+                                <strong id="calcResultDisplay" style="color: #286678; font-size: 0.94rem; font-weight:800;">NT$ 465</strong>
                             </div>
                         </div>
-                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                            <button type="button" class="n-btn" style="border-radius:8px; padding:5px 11px; color:#0284c7; border-color:#7dd3fc; background:#f0f9ff;" onclick="syncOnlineRateToSidebar()" title="從網路同步此幣別最新即時匯率">
-                                <i class="fa-solid fa-rotate" id="sideSyncRateSpinner"></i> 取得網路即時匯率
+
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0;">
+                            <button type="button" class="n-btn" style="border-radius:7px; padding:4px 9px; font-size:0.74rem; color:#286678; border-color:#c6dce6; background:#f2f8fa;" onclick="syncOnlineRateToSidebar()" title="從網路同步此幣別最新即時匯率">
+                                <i class="fa-solid fa-rotate" id="sideSyncRateSpinner"></i> 同步即時匯率
                             </button>
-                            <button type="button" class="n-btn n-btn-primary" style="border-radius:8px; padding:5px 12px; background:#2563eb; border-color:#1d4ed8;" onclick="syncRateToCurrentPlan()" title="將調整後的匯率直接套用儲存至當前旅遊計畫">
-                                <i class="fa-solid fa-check"></i> 套用匯率至本計畫
+                            <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.74rem;" onclick="syncRateToCurrentPlan()" title="將調整後的匯率直接套用儲存至當前旅遊計畫">
+                                <i class="fa-solid fa-check"></i> 套用匯率
                             </button>
-                        </div>
-                    </div>
-                    <span id="currToggleArrow" style="display:none;"></span>
-                    <div id="currToggleContent" style="display:grid !important; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 18px;">
-                        <div class="currency-input-row" style="margin:0;">
-                            <span id="sideCurrLabel" style="font-weight:700; color:#334155;">1 人民幣 (CNY) = </span>
-                            <input type="number" id="calcRateInput" class="currency-input" value="4.65" step="any" oninput="calculateExchange(true)" style="width:105px; font-weight:700;">
-                            <span style="font-weight:600; color:#64748b;">台幣 (NTD)</span>
-                        </div>
-                        <div class="currency-input-row" style="margin:0;">
-                            <span style="font-weight:700; color:#334155;">快速試算：</span>
-                            <input type="number" id="calcAmountInput" class="currency-input" value="100" placeholder="當地幣" oninput="calculateExchange()" style="width:115px; font-weight:700;">
-                            <span id="sideCalcUnitLabel" style="font-weight:600; color:#64748b;">CNY ➔ </span>
-                            <strong id="calcResultDisplay" style="color: #0f172a; font-size: 1.08rem; font-weight:800;">NT$ 465</strong>
                         </div>
                     </div>
                 </div>
@@ -7986,10 +8243,12 @@ const firebaseConfig = {
 
             if (hotels.length === 0) {
                 container.innerHTML = `
-                    <div style="font-size: 0.8rem; color: var(--notion-text-muted); text-align: center; padding: 12px; cursor: pointer; border: 1px dashed var(--notion-border); border-radius: 6px;" onclick="openEditHotelModal()">
-                        <i class="fa-solid fa-bed"></i> 尚無住宿卡片，點擊新增
+                    <div style="grid-column: 1 / -1; font-size: 0.78rem; color: #64748b; padding: 6px 10px; cursor: pointer; border: 1px dashed #cbd5e1; border-radius: 8px; display:flex; align-items:center; justify-content:space-between;" onclick="openEditHotelModal()">
+                        <span><i class="fa-solid fa-bed" style="color:#966420;"></i> 尚未設定入住飯店，點擊此處快速新增住宿與導航地址</span>
+                        <span style="color:#286678; font-weight:700;">＋ 新增住宿</span>
                     </div>
                 `;
+                if (typeof renderLogisticsKpis === 'function') renderLogisticsKpis();
                 return;
             }
 
@@ -7998,96 +8257,77 @@ const firebaseConfig = {
                 const badgeClass = idx === 0 ? 'pill-blue' : 'pill-orange';
                 const addrStr = ht.addr || '';
 
+                let priceBarHtml = '';
+                if (ht.price && Number(ht.price) > 0) {
+                    const pType = ht.priceType || 'perNight';
+                    const nights = Number(ht.nights) || 1;
+                    const rooms = Number(ht.rooms) || 1;
+                    const m = Math.max(1, Number(plan.memberCount) || 1);
+                    const currInfo = getPlanCurrency(plan);
+                    const isTwd = (ht.costCurr === 'TWD');
+                    const rawTot = (pType === 'perNight') ? (Number(ht.price) * nights * rooms) : (Number(ht.price) * rooms);
+                    const totLocal = isTwd ? (currInfo.code === 'TWD' ? rawTot : Math.round(rawTot / currInfo.rate)) : rawTot;
+                    const totTwd = isTwd ? rawTot : Math.round(rawTot * currInfo.rate);
+                    const perPersonTwd = Math.round(totTwd / m);
+                    const hasAct = (ht.actualCost !== undefined && ht.actualCost !== null && Number(ht.actualCost) > 0);
+
+                    priceBarHtml = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; background:#f8fafc; border:1px solid #e5edf3; border-radius:6px; padding:4px 8px; margin-top:5px; font-size:0.74rem;">
+                            <span style="color:#334155; font-weight:600;">
+                                <i class="fa-solid fa-coins" style="color:#966420;"></i>
+                                每人 <strong>NT$ ${perPersonTwd.toLocaleString()}</strong>
+                                <span style="color:#64748b;">(全團 ${currInfo.symbol}${totLocal.toLocaleString()})</span>
+                            </span>
+                            ${hasAct
+                                ? `<span style="color:#2b6b50; font-weight:700;"><i class="fa-solid fa-receipt"></i> 實付 ${currInfo.symbol}${Number(ht.actualCost).toLocaleString()}</span>`
+                                : `<span style="color:#64748b; font-size:0.7rem;">${pType === 'perNight' ? `${currInfo.symbol}${Number(ht.price).toLocaleString()}/晚×${nights}晚` : '整段總價'}</span>`}
+                        </div>
+                    `;
+                }
+
                 return `
                     <div class="hotel-side-card" onclick="openEditHotelModal(${idx})" title="點擊編輯此住宿資訊">
-                        <!-- 頂部標籤與操作按鈕 -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span class="prop-pill ${badgeClass}" style="font-size: 0.72rem; padding: 1px 7px;">
-                                ${stayBadge}
-                            </span>
-                            <div style="display: flex; gap: 4px;" onclick="event.stopPropagation();">
-                                <button type="button" class="n-btn" style="padding: 2px 6px; font-size: 0.72rem;" onclick="openEditHotelModal(${idx})" title="編輯住宿">
-                                    <i class="fa-solid fa-pen-to-square"></i> 編輯
-                                </button>
-                                <button type="button" class="n-btn n-btn-danger" style="padding: 2px 6px; font-size: 0.72rem;" onclick="deleteHotelItem(${idx})" title="刪除此住宿">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 飯店名稱與城市標籤 -->
-                        <div class="hotel-side-title">
-                            <span style="font-size: 0.94rem; color: #0f172a;"><i class="fa-solid fa-hotel" style="color: #0f766e; font-size: 0.85rem; margin-right: 3px;"></i> ${escapeHtml(ht.name)}</span>
-                            ${ht.city ? `<span style="font-size: 0.72rem; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; white-space: nowrap;">${escapeHtml(ht.city)}</span>` : ''}
-                        </div>
-
-                        <!-- 入住與退房期間 -->
-                        ${(ht.checkIn || ht.checkOut) ? `
-                        <div style="font-size: 0.78rem; color: #0284c7; font-weight: 600; margin-bottom: 6px; display:flex; align-items:center; gap:5px;">
-                            <i class="fa-regular fa-calendar-check"></i>
-                            <span>${ht.checkIn || ''} ➔ ${ht.checkOut || ''} ${ht.nights ? `(${ht.nights} 晚)` : ''}</span>
-                        </div>` : ''}
-
-                        <!-- 💰 房費計算展示卡塊 -->
-                        ${(() => {
-                            if (!ht.price || Number(ht.price) <= 0) return '';
-                            const pType = ht.priceType || 'perNight';
-                            const nights = Number(ht.nights) || 1;
-                            const rooms = Number(ht.rooms) || 1;
-                            const m = Math.max(1, Number(plan.memberCount) || 1);
-                            const currInfo = getPlanCurrency(plan);
-                            const isTwd = (ht.costCurr === 'TWD');
-                            const rawTot = (pType === 'perNight') ? (Number(ht.price) * nights * rooms) : (Number(ht.price) * rooms);
-                            const totLocal = isTwd ? (currInfo.code === 'TWD' ? rawTot : Math.round(rawTot / currInfo.rate)) : rawTot;
-                            const totTwd = isTwd ? rawTot : Math.round(rawTot * currInfo.rate);
-                            const perPersonLocal = Math.round(totLocal / m);
-                            const perPersonTwd = Math.round(totTwd / m);
-
-                            return `
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 9px; margin-bottom: 6px;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#334155; font-weight:700;">
-                                        <span><i class="fa-solid fa-coins" style="color:#0f172a;"></i> 房費：${pType === 'perNight' ? `${currInfo.symbol} ${Number(ht.price).toLocaleString()}/晚 × ${nights}晚${rooms > 1 ? ` × ${rooms}間` : ''}` : `整段總價`}</span>
-                                        <span style="font-size:0.8rem; color:#0f172a;">總計 ${currInfo.symbol} ${totLocal.toLocaleString()}</span>
-                                    </div>
-                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.71rem; color:#64748b; margin-top:2px;">
-                                        <span>每人均攤 (${m}人)：<strong>${currInfo.symbol} ${perPersonLocal.toLocaleString()}</strong></span>
-                                        <span style="color:#0284c7; font-weight:600;">≈ NT$ ${perPersonTwd.toLocaleString()}</span>
-                                    </div>
-                                    ${(ht.actualCost !== undefined && ht.actualCost !== null && Number(ht.actualCost) > 0) ? `
-                                    <div style="margin-top:3px; padding-top:3px; border-top:1px dashed #fde047; font-size:0.7rem; color:#15803d; display:flex; justify-content:space-between;">
-                                        <span><i class="fa-solid fa-receipt"></i> 實付: ${currInfo.symbol} ${Number(ht.actualCost).toLocaleString()}</span>
-                                        <span>${Number(ht.actualCost) <= totLocal ? `省 ${currInfo.symbol} ${(totLocal - Number(ht.actualCost)).toLocaleString()}` : `超支 ${currInfo.symbol} ${(Number(ht.actualCost) - totLocal).toLocaleString()}`}</span>
-                                    </div>` : ''}
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <div style="display:flex; align-items:center; gap:6px; min-width:0; flex-wrap:wrap;">
+                                    <span class="prop-pill ${badgeClass}" style="font-size: 0.7rem; padding: 1px 6px;">${stayBadge}</span>
+                                    ${(ht.checkIn || ht.checkOut) ? `<span style="font-size:0.73rem; color:#286678; font-weight:700;"><i class="fa-regular fa-calendar-check"></i> ${ht.checkIn || ''}➔${ht.checkOut || ''}${ht.nights ? ` (${ht.nights}晚)` : ''}</span>` : (ht.nights ? `<span style="font-size:0.73rem; color:#286678; font-weight:700;">共 ${ht.nights} 晚</span>` : '')}
                                 </div>
-                            `;
-                        })()}
+                                <div style="display: flex; gap: 4px; flex-shrink:0;" onclick="event.stopPropagation();">
+                                    <button type="button" class="n-btn" style="padding: 1px 6px; font-size: 0.7rem;" onclick="openEditHotelModal(${idx})"><i class="fa-solid fa-pen"></i> 編輯</button>
+                                    <button type="button" class="n-btn n-btn-danger" style="padding: 1px 5px; font-size: 0.7rem;" onclick="deleteHotelItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
+                                </div>
+                            </div>
 
-                        <!-- 詳細地址展示卡塊 (司機導航、叫車與步行指引) -->
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 9px; margin-top: 4px;" onclick="event.stopPropagation();">
-                            <div style="display: flex; align-items: flex-start; gap: 5px; font-size: 0.8rem; color: #334155;">
-                                <i class="fa-solid fa-location-dot" style="color: #b0654a; margin-top: 2px; flex-shrink: 0;"></i>
-                                <span style="flex: 1; word-break: break-all; line-height: 1.4;"><strong>地址：</strong>${escapeHtml(addrStr || '尚未填寫詳細地址')}</span>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <strong style="font-size: 0.9rem; color: #0f172a;"><i class="fa-solid fa-hotel" style="color: #2b6b50; font-size: 0.8rem;"></i> ${escapeHtml(ht.name)}</strong>
+                                ${ht.city ? `<span style="font-size: 0.7rem; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 4px;">${escapeHtml(ht.city)}</span>` : ''}
+                            </div>
+
+                            ${priceBarHtml}
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #f8fafc; border: 1px solid #e5edf3; border-radius: 6px; padding: 5px 8px; margin-top: 6px;" onclick="event.stopPropagation();">
+                            <div style="display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #475569; min-width: 0; flex: 1;">
+                                <i class="fa-solid fa-location-dot" style="color: #b0654a; flex-shrink: 0;"></i>
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(addrStr || '尚未填寫詳細地址')}">${escapeHtml(addrStr || '尚未填寫詳細地址')}</span>
                             </div>
                             ${addrStr ? `
-                            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #e2e8f0;">
-                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ht.name + ' ' + addrStr)}" target="_blank" style="font-size: 0.73rem; color: #0284c7; text-decoration: none; display: flex; align-items: center; gap: 3px; font-weight:600;" title="地圖導航定位">
-                                    <i class="fa-solid fa-diamond-turn-right"></i> 導航定位
-                                </a>
-                                <a href="javascript:void(0)" onclick="copyHotelAddress(${idx})" style="font-size: 0.73rem; color: #64748b; text-decoration: none; display: flex; align-items: center; gap: 3px; font-weight:600;" title="複製地址">
-                                    <i class="fa-regular fa-copy"></i> 複製地址
-                                </a>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ht.name + ' ' + addrStr)}" target="_blank" style="font-size: 0.71rem; color: #286678; text-decoration: none; font-weight:700;" title="Google 地圖導航"><i class="fa-solid fa-diamond-turn-right"></i> 導航</a>
+                                <a href="javascript:void(0)" onclick="copyHotelAddress(${idx})" style="font-size: 0.71rem; color: #64748b; text-decoration: none; font-weight:600;" title="複製地址"><i class="fa-regular fa-copy"></i> 複製</a>
                             </div>` : ''}
                         </div>
 
-                        <!-- 備註說明與聯絡電話 -->
                         ${(ht.notes || ht.phone) ? `
-                        <div style="margin-top: 6px; font-size: 0.75rem; color: #64748b; line-height: 1.45;">
-                            ${ht.phone ? `<div><i class="fa-solid fa-phone" style="font-size:0.7rem; color:#64748b;"></i> <strong>電話：</strong>${escapeHtml(ht.phone)}</div>` : ''}
-                            ${ht.notes ? `<div style="margin-top:2px;">💡 ${escapeHtml(ht.notes)}</div>` : ''}
+                        <div style="margin-top: 4px; font-size: 0.72rem; color: #64748b; display:flex; gap:10px; flex-wrap:wrap; line-height:1.35;">
+                            ${ht.phone ? `<span><i class="fa-solid fa-phone" style="font-size:0.66rem;"></i> ${escapeHtml(ht.phone)}</span>` : ''}
+                            ${ht.notes ? `<span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;" title="${escapeHtml(ht.notes)}">💡 ${escapeHtml(ht.notes)}</span>` : ''}
                         </div>` : ''}
                     </div>
                 `;
             }).join('');
+            if (typeof renderLogisticsKpis === 'function') renderLogisticsKpis();
         }
 
         function copyHotelAddress(idx) {
@@ -8119,6 +8359,7 @@ const firebaseConfig = {
         function renderSidebarFlights() {
             const plan = getCurrentPlan();
             const container = document.getElementById('sideFlightCardsContainer');
+            const inlineCostEl = document.getElementById('flightInlineCostSummary');
             if (!plan || !container) return;
 
             const fl = plan.flights || {};
@@ -8126,144 +8367,109 @@ const firebaseConfig = {
             const transportType = fl.transportType || 'flight';
             const cfg = (typeof TRANSPORT_CONFIG !== 'undefined' && TRANSPORT_CONFIG[transportType]) ? TRANSPORT_CONFIG[transportType] : { name: '大交通', icon: 'fa-plane' };
 
+            const fStats = calcPlanFlightStats(plan);
+            if (inlineCostEl) {
+                if (fStats.isSet) {
+                    const currInfo = getPlanCurrency(plan);
+                    inlineCostEl.innerHTML = `
+                        <span onclick="if(event){event.stopPropagation();} openEditFlightModal();" style="display:inline-flex; align-items:center; gap:6px; font-size:0.74rem; font-weight:700; color:#2b6b50; background:#e8f3ee; border:1px solid #c5dfd2; padding:2px 9px; border-radius:999px; cursor:pointer;" title="點擊修改機票/主交通票價">
+                            <i class="fa-solid fa-ticket"></i>
+                            每人 NT$ ${fStats.personTwd.toLocaleString()} (${currInfo.symbol}${fStats.personLocal.toLocaleString()}) ‧ 全團 ${currInfo.symbol}${fStats.groupLocal.toLocaleString()}
+                            ${fStats.hasActual ? ` ‧ 實付 ${currInfo.symbol}${fStats.actualGroupLocal.toLocaleString()}` : ''}
+                        </span>
+                    `;
+                } else {
+                    inlineCostEl.innerHTML = `<span style="font-size:0.73rem; color:#94a3b8;">尚未填寫票價</span>`;
+                }
+            }
+
             if (legs.length === 0) {
                 container.innerHTML = `
-                    <div style="font-size: 0.8rem; color: var(--notion-text-muted); text-align: center; padding: 12px; cursor: pointer; border: 1px dashed var(--notion-border); border-radius: 6px;" onclick="if(event){event.stopPropagation();} openEditFlightModal();">
-                        <i class="fa-solid ${cfg.icon}"></i> 尚無${cfg.name}卡片，點擊新增
+                    <div style="grid-column: 1 / -1; font-size: 0.78rem; color: #64748b; padding: 6px 10px; cursor: pointer; border: 1px dashed #cbd5e1; border-radius: 8px; display:flex; align-items:center; justify-content:space-between;" onclick="if(event){event.stopPropagation();} openEditFlightModal();">
+                        <span><i class="fa-solid ${cfg.icon}" style="color:#286678;"></i> 尚未設定${cfg.name}航段，點擊此處新增航班時刻與票價</span>
+                        <span style="color:#286678; font-weight:700;">＋ 設定航班</span>
                     </div>
                 `;
+                if (typeof renderLogisticsKpis === 'function') renderLogisticsKpis();
                 return;
             }
 
             const cardsHtml = legs.map((leg, idx) => {
                 const isTrans = leg.isTransfer || !!leg.transferInfo || (leg.flightNo2 && leg.flightNo2.trim().length > 0);
                 const isOutbound = idx === 0 || leg.type === 'outbound';
-                const pillLabel = isOutbound ? (isTrans ? '🛫 去程 ‧ 轉乘' : '🛫 去程 ‧ 直達') : (isTrans ? '🛬 回程 ‧ 轉乘' : '🛬 回程 ‧ 直達');
+                const pillLabel = isOutbound ? (isTrans ? '🛫 去程‧轉乘' : '🛫 去程‧直達') : (isTrans ? '🛬 回程‧轉乘' : '🛬 回程‧直達');
                 const pillClass = isOutbound ? 'pill-blue' : 'pill-orange';
                 const pnrCode = leg.pnr || fl.pnr || '';
                 const legIcon = cfg.icon || 'fa-plane';
 
                 if (isTrans) {
-                    // 轉乘卡片模板
                     return `
-                        <div class="flight-side-card" onclick="if(event){event.stopPropagation();} openEditFlightModal();" title="點擊編輯此交通資訊 (支援中轉)">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span class="prop-pill ${pillClass}" style="font-size: 0.72rem; padding: 1px 7px;">${pillLabel}</span>
-                                    <button type="button" class="n-btn" style="background:#fff; border-color:${isOutbound ? '#7dd3fc' : '#fed7aa'}; color:${isOutbound ? '#0369a1' : '#c2410c'}; font-size:0.68rem; padding:1px 6px; font-weight:700; border-radius:4px;" onclick="event.stopPropagation(); syncFlightLegToDaySchedule(${idx})" title="點擊將此班次時間 (${leg.depTime} ➔ ${leg.arrTime2 || leg.arrTime}) 同步連動至 Day ${isOutbound ? 1 : '回程'} 行程活動">
-                                        <i class="fa-solid fa-calendar-check"></i> 同步至行程
+                        <div class="flight-side-card" onclick="if(event){event.stopPropagation();} openEditFlightModal();" title="點擊編輯此交通資訊">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0;">
+                                    <span class="prop-pill ${pillClass}" style="font-size: 0.7rem; padding: 1px 6px;">${pillLabel}</span>
+                                    <strong style="font-size: 0.86rem; color: #0f172a;"><i class="fa-solid ${legIcon}" style="color:#286678; font-size:0.78rem;"></i> ${escapeHtml(leg.airline || cfg.name)}</strong>
+                                    ${pnrCode ? `<span style="font-size: 0.69rem; font-weight: 700; color: #966420; background: #faf3e6; border:1px solid #ead9bc; padding: 0 5px; border-radius: 4px;">PNR: ${escapeHtml(pnrCode)}</span>` : ''}
+                                </div>
+                                <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+                                    <button type="button" class="n-btn" style="font-size:0.68rem; padding:1px 6px; color:#286678; border-color:#c6dce6; background:#f4f9fb;" onclick="event.stopPropagation(); syncFlightLegToDaySchedule(${idx})" title="同步時刻至行程">
+                                        <i class="fa-solid fa-calendar-check"></i> 同步行程
                                     </button>
-                                </div>
-                                <span class="flight-card-edit-badge"><i class="fa-solid fa-pen-to-square"></i> 編輯</span>
-                            </div>
-                            <div class="flight-airline-title">
-                                <i class="fa-solid ${legIcon}"></i> ${leg.airline || cfg.name}
-                                ${pnrCode ? `<span style="font-size: 0.73rem; font-weight: 700; color: #64748b; margin-left: auto; background: #fef3c7; padding: 1px 6px; border-radius: 4px;">代號: ${pnrCode}</span>` : ''}
-                            </div>
-
-                            <!-- 第 1 段 -->
-                            <div style="background: #ffffff; border: 1px solid #fed7aa; border-radius: 6px; padding: 6px 8px; margin-top: 4px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <strong style="color: #0369a1; font-size: 0.85rem;"><i class="fa-solid ${legIcon}" style="font-size:0.75rem;"></i> 第 1 段：${leg.flightNo || '班次 1'}</strong>
-                                    <span style="font-size: 0.76rem; color: #64748b; font-weight: 600;">${leg.depTime || '--:--'} ➔ ${leg.arrTime || '--:--'}</span>
-                                </div>
-                                <div style="font-size: 0.8rem; color: #334155; margin-top: 2px;">
-                                    ${leg.depLoc || '出發地'} ➔ ${leg.arrLoc || '轉乘地'}
+                                    <span class="flight-card-edit-badge" style="padding:1px 6px; font-size:0.68rem;"><i class="fa-solid fa-pen"></i></span>
                                 </div>
                             </div>
-
-                            <!-- 轉機/換乘停留說明膠囊 -->
-                            <div class="flight-transfer-box">
-                                <i class="fa-solid fa-rotate"></i>
-                                <span>${leg.transferInfo || '中轉換乘停留'}</span>
-                            </div>
-
-                            <!-- 第 2 段 -->
-                            <div style="background: #ffffff; border: 1px solid #fed7aa; border-radius: 6px; padding: 6px 8px; margin-bottom: 4px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <strong style="color: #ea580c; font-size: 0.85rem;"><i class="fa-solid ${legIcon}" style="font-size:0.75rem;"></i> 第 2 段：${leg.flightNo2 || '班次 2'}</strong>
-                                    <span style="font-size: 0.76rem; color: #64748b; font-weight: 600;">${leg.depTime2 || '--:--'} ➔ ${leg.arrTime2 || '--:--'}</span>
+                            <div style="background:#f8fafc; border:1px solid #e5edf3; border-radius:7px; padding:5px 9px; margin-top:5px; font-size:0.75rem; display:flex; flex-direction:column; gap:3px;">
+                                <div style="display:flex; justify-content:space-between; gap:6px;">
+                                    <span><strong style="color:#286678;">1段 ${escapeHtml(leg.flightNo || '')}</strong>：${escapeHtml(leg.depLoc || '出發')} ➔ ${escapeHtml(leg.arrLoc || '轉乘')}</span>
+                                    <span style="font-weight:700; color:#334155; font-variant-numeric:tabular-nums;">${escapeHtml(leg.depTime || '--:--')} - ${escapeHtml(leg.arrTime || '--:--')}</span>
                                 </div>
-                                <div style="font-size: 0.8rem; color: #334155; margin-top: 2px;">
-                                    ${leg.arrLoc || '轉乘地'} ➔ ${leg.arrLoc2 || '目的地'}
+                                <div style="font-size:0.7rem; color:#966420;">⟳ ${escapeHtml(leg.transferInfo || '中轉停留')} ${leg.duration ? `‧ 總時長 ${escapeHtml(leg.duration)}` : ''}</div>
+                                <div style="display:flex; justify-content:space-between; gap:6px;">
+                                    <span><strong style="color:#966420;">2段 ${escapeHtml(leg.flightNo2 || '')}</strong>：${escapeHtml(leg.arrLoc || '轉乘')} ➔ ${escapeHtml(leg.arrLoc2 || '目的')}</span>
+                                    <span style="font-weight:700; color:#334155; font-variant-numeric:tabular-nums;">${escapeHtml(leg.depTime2 || '--:--')} - ${escapeHtml(leg.arrTime2 || '--:--')}</span>
                                 </div>
-                            </div>
-
-                            <!-- 總時長標籤與航線標記 -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(223, 171, 1, 0.3); font-size: 0.75rem; color: var(--notion-text-sub);">
-                                <span><i class="fa-regular fa-clock"></i> 總時長：${leg.duration || '經轉乘'}</span>
-                                <span class="flight-intl-pill" style="margin: 0;">${leg.categoryTag || cfg.name}</span>
                             </div>
                         </div>
                     `;
                 } else {
-                    // 直達卡片模板
                     return `
-                        <div class="flight-side-card" onclick="if(event){event.stopPropagation();} openEditFlightModal();" title="點擊編輯此交通資訊">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span class="prop-pill ${pillClass}" style="font-size: 0.72rem; padding: 1px 7px;">${pillLabel}</span>
-                                    <button type="button" class="n-btn" style="background:#fff; border-color:${isOutbound ? '#7dd3fc' : '#fed7aa'}; color:${isOutbound ? '#0369a1' : '#c2410c'}; font-size:0.68rem; padding:1px 6px; font-weight:700; border-radius:4px;" onclick="event.stopPropagation(); syncFlightLegToDaySchedule(${idx})" title="點擊將此班次時間 (${leg.depTime} ➔ ${leg.arrTime}) 同步連動至 Day ${isOutbound ? 1 : '回程'} 行程活動">
-                                        <i class="fa-solid fa-calendar-check"></i> 同步至行程
+                        <div class="flight-side-card" onclick="if(event){event.stopPropagation();} openEditFlightModal();" title="點擊編輯此航班資訊">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0;">
+                                    <span class="prop-pill ${pillClass}" style="font-size: 0.7rem; padding: 1px 6px;">${pillLabel}</span>
+                                    <strong style="font-size: 0.87rem; color: #0f172a;"><i class="fa-solid ${legIcon}" style="color:#286678; font-size:0.78rem;"></i> ${escapeHtml(leg.airline || cfg.name)}</strong>
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">${escapeHtml(leg.flightNo || '')}</span>
+                                    ${pnrCode ? `<span style="font-size: 0.69rem; font-weight: 700; color: #966420; background: #faf3e6; border:1px solid #ead9bc; padding: 0 5px; border-radius: 4px;">PNR: ${escapeHtml(pnrCode)}</span>` : ''}
+                                </div>
+                                <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+                                    <button type="button" class="n-btn" style="font-size:0.68rem; padding:1px 6px; color:#286678; border-color:#c6dce6; background:#f4f9fb;" onclick="event.stopPropagation(); syncFlightLegToDaySchedule(${idx})" title="同步時刻至行程">
+                                        <i class="fa-solid fa-calendar-check"></i> 同步行程
                                     </button>
-                                </div>
-                                <span class="flight-card-edit-badge"><i class="fa-solid fa-pen-to-square"></i> 編輯</span>
-                            </div>
-                            <div class="flight-airline-title">
-                                <i class="fa-solid ${legIcon}"></i> ${leg.airline || cfg.name}
-                                ${pnrCode ? `<span style="font-size: 0.73rem; font-weight: 700; color: #64748b; margin-left: auto; background: #fef3c7; padding: 1px 6px; border-radius: 4px;">代號: ${pnrCode}</span>` : ''}
-                            </div>
-                            <div class="flight-code-line">${leg.flightNo || '班次直達'}</div>
-                            <div class="flight-route-info">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>${leg.depLoc || '出發地'}</span>
-                                    ${leg.depTime ? `<span style="font-weight: 600; color: #64748b;">${leg.depTime}</span>` : ''}
-                                </div>
-                                <div class="flight-duration-tag"><i class="fa-regular fa-clock"></i> ${leg.duration || '直達'}</div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>${leg.arrLoc || '目的地'}</span>
-                                    ${leg.arrTime ? `<span style="font-weight: 600; color: #64748b;">${leg.arrTime}</span>` : ''}
+                                    <span class="flight-card-edit-badge" style="padding:1px 6px; font-size:0.68rem;"><i class="fa-solid fa-pen"></i> 編輯</span>
                                 </div>
                             </div>
-                            <div class="flight-intl-pill" style="margin-top: 4px; margin-bottom: 0;">${leg.categoryTag || cfg.name}</div>
+
+                            <div class="compact-flight-route-bar">
+                                <div class="compact-flight-station">
+                                    ${leg.depTime ? `<span class="compact-flight-time">${escapeHtml(leg.depTime)}</span>` : ''}
+                                    <span class="compact-flight-loc" title="${escapeHtml(leg.depLoc || '出發地')}">${escapeHtml(leg.depLoc || '出發地')}</span>
+                                </div>
+                                <div class="compact-flight-mid">
+                                    <span><i class="fa-regular fa-clock"></i> ${escapeHtml(leg.duration || '直達')}</span>
+                                    <div class="compact-flight-line"></div>
+                                    ${leg.categoryTag ? `<span style="font-size:0.65rem; color:#94a3b8;">${escapeHtml(leg.categoryTag)}</span>` : ''}
+                                </div>
+                                <div class="compact-flight-station arr">
+                                    ${leg.arrTime ? `<span class="compact-flight-time">${escapeHtml(leg.arrTime)}</span>` : ''}
+                                    <span class="compact-flight-loc" title="${escapeHtml(leg.arrLoc || '目的地')}">${escapeHtml(leg.arrLoc || '目的地')}</span>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
             }).join('');
 
-            const fStats = calcPlanFlightStats(plan);
-            let costSummaryHtml = '';
-            if (fStats.isSet) {
-                const currInfo = getPlanCurrency(plan);
-                const isRoundtrip = fStats.pricingType === 'roundtrip';
-                let pricingNote = isRoundtrip
-                    ? `<span>🎫 來回合併票價 (維持1筆統計)</span>`
-                    : `<span>↔️ 去回分開：去 ${currInfo.symbol}${fStats.outCost.toLocaleString()} + 回 ${currInfo.symbol}${fStats.inCost.toLocaleString()}</span>`;
-
-                costSummaryHtml = `
-                    <div class="flight-side-card" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.8rem; color: #334155; cursor:pointer;" onclick="if(event){event.stopPropagation();} openEditFlightModal();" title="點擊修改大交通與費用">
-                        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:700;">
-                            <span><i class="fa-solid fa-coins" style="color:#15803d;"></i> ${cfg.name}費用</span>
-                            <span style="color:#15803d; font-size:0.8rem;">全團 ${currInfo.symbol} ${fStats.groupLocal.toLocaleString()}</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.71rem; color:#166534; margin-top:2px;">
-                            <span>每人平均 (${fStats.mode === 'single' ? '單人計費' : '均攤'})：<strong>${currInfo.symbol} ${fStats.personLocal.toLocaleString()}</strong></span>
-                            <span style="color:#0284c7; font-weight:600;">≈ NT$ ${fStats.personTwd.toLocaleString()}</span>
-                        </div>
-                        <div style="font-size:0.7rem; color:#15803d; margin-top:2px;">
-                            ${pricingNote}
-                        </div>
-                        ${fStats.hasActual ? `
-                        <div style="margin-top:3px; padding-top:3px; border-top:1px dashed #86efac; font-size:0.7rem; color:#0f766e; display:flex; justify-content:space-between;">
-                            <span><i class="fa-solid fa-receipt"></i> 實付: ${currInfo.symbol} ${fStats.actualGroupLocal.toLocaleString()}</span>
-                            <span style="font-weight:700; color:${fStats.actualGroupLocal <= fStats.groupLocal ? '#15803d' : '#ef4444'};">
-                                ${fStats.actualGroupLocal <= fStats.groupLocal ? `省 ${currInfo.symbol} ${(fStats.groupLocal - fStats.actualGroupLocal).toLocaleString()}` : `超支 ${currInfo.symbol} ${(fStats.actualGroupLocal - fStats.groupLocal).toLocaleString()}`}
-                            </span>
-                        </div>` : ''}
-                    </div>
-                `;
-            }
-            container.innerHTML = cardsHtml + costSummaryHtml;
+            container.innerHTML = cardsHtml;
             if (typeof renderLogisticsKpis === 'function') renderLogisticsKpis();
         }
 
@@ -8370,8 +8576,6 @@ const firebaseConfig = {
             const plan = getCurrentPlan();
             const container = document.getElementById('toolsCalloutList');
             const boxEl = document.getElementById('toolsCalloutBox');
-            const iconEl = document.getElementById('toolsCalloutIcon');
-            const headerEl = document.getElementById('toolsCalloutHeader');
             const titleTextEl = document.getElementById('toolsCalloutTitleText');
             const actionsEl = document.getElementById('toolsCalloutHeaderActions');
             if (!container || !plan) return;
@@ -8381,91 +8585,58 @@ const firebaseConfig = {
             const completedCount = tools.filter(t => t.checked).length;
             const pendingCount = totalCount - completedCount;
 
-            // 當無待辦提醒（全部已完成或尚無提醒）且未展開「顯示已勾選」時，自動縮到最小單行模式！
             if (pendingCount === 0 && !showCompletedTools) {
-                if (boxEl) {
-                    boxEl.style.padding = '5px 12px';
-                    boxEl.style.alignItems = 'center';
-                    boxEl.style.gap = '8px';
-                    boxEl.style.background = '#f8fafc';
-                }
-                if (iconEl) iconEl.style.fontSize = '0.95rem';
-                if (headerEl) {
-                    headerEl.style.marginBottom = '0';
-                    headerEl.style.fontSize = '0.8rem';
-                }
                 if (titleTextEl) {
-                    if (totalCount === 0) {
-                        titleTextEl.innerHTML = `行前必備提醒 <span style="font-weight:500; color:#94a3b8; font-size:0.75rem; margin-left:6px;">(目前無提醒事項)</span>`;
-                    } else {
-                        titleTextEl.innerHTML = `行前必備提醒 <span style="font-weight:600; color:#16a34a; font-size:0.75rem; margin-left:6px;"><i class="fa-solid fa-circle-check"></i> 無待辦提醒 (已完成並隱藏 ${completedCount} 項)</span>`;
-                    }
+                    titleTextEl.className = 'tools-badge-title all-done';
+                    titleTextEl.innerHTML = totalCount === 0
+                        ? `<i class="fa-regular fa-lightbulb"></i> 行前提醒`
+                        : `<i class="fa-solid fa-circle-check"></i> 行前提醒 (${completedCount}項完成)`;
                 }
+                container.style.display = 'inline-flex';
+                container.innerHTML = `<span style="font-size:0.75rem; color:#94a3b8;">${totalCount === 0 ? '目前無待辦提醒事項' : '無待辦提醒，已隱藏完成項目'}</span>`;
                 if (actionsEl) {
                     actionsEl.innerHTML = `
                         ${completedCount > 0 ? `
-                            <button type="button" class="n-btn" style="padding: 1px 7px; font-size: 0.72rem;" onclick="toggleShowCompletedTools()">
-                                <i class="fa-solid fa-eye"></i> 顯示已勾選 (${completedCount})
+                            <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="toggleShowCompletedTools()">
+                                <i class="fa-regular fa-eye"></i> 已勾選 (${completedCount})
                             </button>
                         ` : ''}
-                        <button type="button" class="n-btn" style="padding: 1px 7px; font-size: 0.72rem;" onclick="openAddToolModal()">
-                            <i class="fa-solid fa-plus"></i> 新增提醒
+                        <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="openAddToolModal()">
+                            <i class="fa-solid fa-plus"></i> 新增
                         </button>
                     `;
                 }
-                container.style.display = 'none';
-                container.innerHTML = '';
                 return;
             }
 
-            // 有待辦提醒或已展開查看已勾選項目：恢復標準展開模式
-            if (boxEl) {
-                boxEl.style.padding = '12px 16px';
-                boxEl.style.alignItems = 'flex-start';
-                boxEl.style.gap = '12px';
-                boxEl.style.background = '#f7f6f3';
-            }
-            if (iconEl) iconEl.style.fontSize = '1.2rem';
-            if (headerEl) {
-                headerEl.style.marginBottom = '6px';
-                headerEl.style.fontSize = '0.86rem';
-            }
             if (titleTextEl) {
-                titleTextEl.innerText = '行前必備工具與重要提醒 (點擊直接勾選確認狀態)';
+                titleTextEl.className = 'tools-badge-title';
+                titleTextEl.innerHTML = `<i class="fa-solid fa-lightbulb"></i> 行前提醒 (${pendingCount})`;
             }
             if (actionsEl) {
                 actionsEl.innerHTML = `
                     ${completedCount > 0 ? `
-                        <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.74rem;" onclick="toggleShowCompletedTools()">
-                            ${showCompletedTools ? '<i class="fa-solid fa-eye-slash"></i> 隱藏已勾選' : `<i class="fa-solid fa-eye"></i> 顯示已勾選 (${completedCount})`}
+                        <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="toggleShowCompletedTools()">
+                            ${showCompletedTools ? '<i class="fa-regular fa-eye-slash"></i> 隱藏完成' : `<i class="fa-regular fa-eye"></i> 已勾選 (${completedCount})`}
                         </button>
                     ` : ''}
-                    <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.74rem;" onclick="openAddToolModal()">
-                        <i class="fa-solid fa-plus"></i> 新增提醒
+                    <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="openAddToolModal()">
+                        <i class="fa-solid fa-plus"></i> 新增
                     </button>
                 `;
             }
-            container.style.display = 'block';
+            container.style.display = 'inline-flex';
 
-            // 生成清單 HTML (若未開啟查看已完成，則隱藏 checked: true 的項目)
             const itemsHtml = tools.map((item, idx) => {
-                if (item.checked && !showCompletedTools) {
-                    return '';
-                }
+                if (item.checked && !showCompletedTools) return '';
                 return `
-                    <div class="checklist-item ${item.checked ? 'checked' : ''}">
-                        <div class="checklist-item-content" onclick="toggleToolItem(${idx})" title="點擊切換勾選狀態（已勾選項目將自動隱藏且不印入小冊）" ondblclick="editToolItem(${idx})">
-                            <input type="checkbox" class="n-checkbox" ${item.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleToolItem(${idx})">
-                            <span class="checklist-item-text">${escapeHtml(item.title)}</span>
-                        </div>
-                        <div class="checklist-item-actions">
-                            <button type="button" class="checklist-item-btn" onclick="editToolItem(${idx})" title="編輯文字">
-                                <i class="fa-solid fa-pen-to-square"></i> 編輯
-                            </button>
-                            <button type="button" class="checklist-item-btn btn-delete" onclick="deleteToolItem(${idx})" title="刪除此項目">
-                                <i class="fa-regular fa-trash-can"></i>
-                            </button>
-                        </div>
+                    <div class="tool-compact-pill ${item.checked ? 'checked' : ''}" onclick="toggleToolItem(${idx})" ondblclick="editToolItem(${idx})" title="點擊勾選完成，雙擊可編輯文字">
+                        <input type="checkbox" class="n-checkbox" style="margin:0; width:13px; height:13px;" ${item.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleToolItem(${idx})">
+                        <span style="line-height:1.25;">${escapeHtml(item.title)}</span>
+                        <span class="tool-pill-actions" onclick="event.stopPropagation();">
+                            <button type="button" class="tool-mini-act-btn" onclick="editToolItem(${idx})" title="編輯"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" class="tool-mini-act-btn del" onclick="deleteToolItem(${idx})" title="刪除"><i class="fa-regular fa-trash-can"></i></button>
+                        </span>
                     </div>
                 `;
             }).join('');
@@ -12198,7 +12369,6 @@ const firebaseConfig = {
             const plan = getCurrentPlan();
             if (!container || !plan) return;
 
-            const curr = getPlanCurrency(plan);
             const m = Math.max(1, Number(plan.memberCount) || 1);
             const fStats = calcPlanFlightStats(plan);
             const mtStats = calcPlanMajorTransportStats(plan);
@@ -12218,52 +12388,49 @@ const firebaseConfig = {
             const paidPct = totalBigGroupTwd > 0 ? Math.min(100, Math.round((paidTwd / totalBigGroupTwd) * 100)) : 0;
 
             container.innerHTML = `
-                <div class="okr-kpi-grid">
-                    <div class="okr-kpi-card clickable" onclick="openEditFlightModal()" title="點擊設定往返機票或跨城主交通">
-                        <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">往返機票 / 主交通</div>
-                            <div class="okr-kpi-value">${fStats.isSet ? `NT$ ${fStats.personTwd.toLocaleString()}` : `${legsCount} 航段`}</div>
-                            <div class="okr-kpi-sub">
-                                ${fStats.isSet ? `<strong style="color:#334155;">每人票價</strong> ‧ 全團 NT$ ${fStats.groupTwd.toLocaleString()} (${legsCount} 段)` : '點擊設定航班時刻與來回票價'}
+                <div class="logistics-kpi-strip">
+                    <div class="logistics-kpi-mini" onclick="openEditFlightModal()" title="點擊設定往返機票或跨城主交通">
+                        <div class="mini-icon okr-kpi-icon-box blue" style="width:32px !important; height:32px !important; font-size:0.86rem !important;"><i class="fa-solid fa-plane-up"></i></div>
+                        <div class="mini-body">
+                            <div class="mini-top">
+                                <span class="mini-label">往返機票 / 主交通</span>
+                                <span class="mini-val">${fStats.isSet ? `NT$ ${fStats.personTwd.toLocaleString()}` : `${legsCount} 航段`}</span>
                             </div>
+                            <div class="mini-sub">${fStats.isSet ? `每人票價 ‧ 全團 NT$ ${fStats.groupTwd.toLocaleString()}` : '點擊設定航班與票價'}</div>
                         </div>
-                        <div class="okr-kpi-icon-box blue"><i class="fa-solid fa-plane-up"></i></div>
                     </div>
 
-                    <div class="okr-kpi-card clickable" onclick="openEditMajorTransportModal(-1)" title="點擊新增包車、機場接送或大項目交通">
-                        <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">包車・機場接送・大交通</div>
-                            <div class="okr-kpi-value">${mtStats.count > 0 ? `${mtStats.count} 項安排` : '尚未新增'}</div>
-                            <div class="okr-kpi-sub">
-                                ${mtStats.count > 0 ? `每人均攤 <strong style="color:#0f172a;">NT$ ${mtStats.personTwd.toLocaleString()}</strong> ‧ 全團 NT$ ${mtStats.groupTwd.toLocaleString()}` : '點擊「＋」新增機場接送或包車一日遊'}
+                    <div class="logistics-kpi-mini" onclick="openEditMajorTransportModal(-1)" title="點擊新增包車、機場接送或大項目交通">
+                        <div class="mini-icon okr-kpi-icon-box purple" style="width:32px !important; height:32px !important; font-size:0.86rem !important;"><i class="fa-solid fa-van-shuttle"></i></div>
+                        <div class="mini-body">
+                            <div class="mini-top">
+                                <span class="mini-label">包車・機場接送</span>
+                                <span class="mini-val">${mtStats.count > 0 ? `${mtStats.count} 項` : '尚未新增'}</span>
                             </div>
+                            <div class="mini-sub">${mtStats.count > 0 ? `每人 NT$ ${mtStats.personTwd.toLocaleString()} ‧ 全團 NT$ ${mtStats.groupTwd.toLocaleString()}` : '點擊「＋」新增接送或包車'}</div>
                         </div>
-                        <div class="okr-kpi-icon-box purple"><i class="fa-solid fa-van-shuttle"></i></div>
                     </div>
 
-                    <div class="okr-kpi-card clickable" onclick="openEditHotelModal()" title="點擊管理入住飯店與房費">
-                        <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">住宿飯店安排 (${hotelsList.length} 間)</div>
-                            <div class="okr-kpi-value">${hStats.isSet ? `NT$ ${hStats.totalPersonTwd.toLocaleString()}` : (totalNights > 0 ? `共 ${totalNights} 晚` : `${hotelsList.length} 間飯店`)}</div>
-                            <div class="okr-kpi-sub">
-                                ${hStats.isSet ? `<strong style="color:#334155;">每人房費</strong> (${totalNights || '-'}晚) ‧ 全團 NT$ ${hStats.totalGroupTwd.toLocaleString()}` : (hotelsList[0]?.name ? escapeHtml(hotelsList[0].name) : '點擊新增入住飯店與地址')}
+                    <div class="logistics-kpi-mini" onclick="openEditHotelModal()" title="點擊管理入住飯店與房費">
+                        <div class="mini-icon okr-kpi-icon-box amber" style="width:32px !important; height:32px !important; font-size:0.86rem !important;"><i class="fa-solid fa-hotel"></i></div>
+                        <div class="mini-body">
+                            <div class="mini-top">
+                                <span class="mini-label">住宿飯店 (${hotelsList.length}間)</span>
+                                <span class="mini-val">${hStats.isSet ? `NT$ ${hStats.totalPersonTwd.toLocaleString()}` : (totalNights > 0 ? `共 ${totalNights} 晚` : `${hotelsList.length} 間`)}</span>
                             </div>
+                            <div class="mini-sub">${hStats.isSet ? `每人房費 (${totalNights || '-'}晚) ‧ 全團 NT$ ${hStats.totalGroupTwd.toLocaleString()}` : (hotelsList[0]?.name ? escapeHtml(hotelsList[0].name) : '點擊新增入住飯店')}</div>
                         </div>
-                        <div class="okr-kpi-icon-box amber"><i class="fa-solid fa-hotel"></i></div>
                     </div>
 
-                    <div class="okr-kpi-card clickable" onclick="switchView('expenses'); switchExpensesSubtab('actual-expenses');" title="點擊前往實際費用核銷中心查看明細">
-                        <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">交通＋住宿大項目總計</div>
-                            <div class="okr-kpi-value">NT$ ${totalBigPersonTwd.toLocaleString()} <small style="font-size:0.75rem; font-weight:600; color:#64748b;">/人</small></div>
-                            <div class="okr-kpi-progress">
-                                <div class="okr-kpi-progress-bar" style="width:${paidPct}%;"></div>
+                    <div class="logistics-kpi-mini" onclick="switchView('expenses'); switchExpensesSubtab('actual-expenses');" title="點擊前往實際費用核銷中心查看明細">
+                        <div class="mini-icon okr-kpi-icon-box emerald" style="width:32px !important; height:32px !important; font-size:0.86rem !important;"><i class="fa-solid fa-suitcase-rolling"></i></div>
+                        <div class="mini-body">
+                            <div class="mini-top">
+                                <span class="mini-label">機酒＋接送總計</span>
+                                <span class="mini-val" style="color:#286678;">NT$ ${totalBigPersonTwd.toLocaleString()}<small style="font-size:0.68rem; font-weight:600; color:#64748b;">/人</small></span>
                             </div>
-                            <div class="okr-kpi-sub" style="margin-top:5px;">
-                                全團合計 <strong>NT$ ${totalBigGroupTwd.toLocaleString()}</strong> ‧ 已核銷 ${paidPct}%
-                            </div>
+                            <div class="mini-sub">全團 NT$ ${totalBigGroupTwd.toLocaleString()} ‧ 已核銷 ${paidPct}%</div>
                         </div>
-                        <div class="okr-kpi-icon-box emerald"><i class="fa-solid fa-shield-check" style="display:none;"></i><i class="fa-solid fa-suitcase-rolling"></i></div>
                     </div>
                 </div>
             `;
@@ -12271,6 +12438,8 @@ const firebaseConfig = {
 
         function renderMajorTransportsSection() {
             const container = document.getElementById('majorTransportCardsContainer');
+            const secEl = document.getElementById('major-transport-section');
+            const hintEl = document.getElementById('majorTransEmptyHint');
             const plan = getCurrentPlan();
             if (!container || !plan) return;
 
@@ -12280,25 +12449,16 @@ const firebaseConfig = {
             const m = Math.max(1, Number(plan.memberCount) || 1);
 
             if (list.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 14px; padding: 24px 20px; text-align: center;">
-                        <div style="font-size: 1.5rem; margin-bottom: 6px;">🚐</div>
-                        <div style="font-weight: 800; color: #334155; font-size: 0.92rem;">目前尚未建立包車、機場接送或跨城大項目交通</div>
-                        <div style="font-size: 0.78rem; color: #64748b; margin: 4px 0 12px;">
-                            建議將「桃園/當地機場專車接送」、「長城/郊區包車一日遊」、「跨城高鐵票」集中在此管理，不與每日零星打車混淆！
-                        </div>
-                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
-                            <button type="button" class="okr-action-pill purple-outline" onclick="openEditMajorTransportModal(-1)">
-                                <i class="fa-solid fa-plus"></i> 新增第一筆包車 / 機場接送
-                            </button>
-                            <button type="button" class="okr-action-pill slate-outline" onclick="importMajorTransportsFromDays()">
-                                <i class="fa-solid fa-wand-magic-sparkles" style="color:#475569;"></i> 自動從每日行程擷取包車/接送
-                            </button>
-                        </div>
-                    </div>
-                `;
+                if (secEl) secEl.classList.add('is-empty-compact');
+                if (hintEl) hintEl.textContent = '（目前無項目，可集中管理機場接送、包車一日遊、跨城高鐵）';
+                container.style.display = 'none';
+                container.innerHTML = '';
                 return;
             }
+
+            if (secEl) secEl.classList.remove('is-empty-compact');
+            if (hintEl) hintEl.textContent = `（共 ${list.length} 筆）`;
+            container.style.display = '';
 
             container.innerHTML = list.map((item, idx) => {
                 const cat = MAJOR_TRANS_CATEGORIES[item.category] || MAJOR_TRANS_CATEGORIES.other;
@@ -12313,59 +12473,42 @@ const firebaseConfig = {
                 return `
                     <div class="major-trans-card" onclick="openEditMajorTransportModal(${idx})" title="點擊編輯此筆大項目交通">
                         <div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
-                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                    <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.73rem; font-weight:700; padding:2px 9px; border-radius:999px; background:${cat.bg}; color:${cat.text}; border:1px solid ${cat.border};">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:4px;">
+                                <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                                    <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.7rem; font-weight:700; padding:1px 7px; border-radius:999px; background:${cat.bg}; color:${cat.text}; border:1px solid ${cat.border};">
                                         <i class="fa-solid ${cat.icon}"></i> ${cat.label}
                                     </span>
-                                    ${item.date ? `<span style="font-size:0.74rem; font-weight:600; color:#475569; background:#f1f5f9; padding:2px 8px; border-radius:6px;"><i class="fa-regular fa-calendar"></i> ${escapeHtml(item.date)}</span>` : ''}
-                                    ${isPaid ? `<span style="font-size:0.7rem; font-weight:700; color:#059669; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 7px; border-radius:999px;">✓ 已付</span>` : ''}
+                                    ${item.date ? `<span style="font-size:0.71rem; font-weight:600; color:#475569; background:#f1f5f9; padding:1px 6px; border-radius:5px;">${escapeHtml(item.date)}</span>` : ''}
+                                    ${isPaid ? `<span style="font-size:0.68rem; font-weight:700; color:#2b6b50; background:#e8f3ee; border:1px solid #c5dfd2; padding:0 6px; border-radius:999px;">✓ 已付</span>` : ''}
                                 </div>
                                 <div style="display:flex; gap:4px;" onclick="event.stopPropagation();">
-                                    <button type="button" class="n-btn" style="padding:2px 7px; font-size:0.72rem;" onclick="openEditMajorTransportModal(${idx})">
-                                        <i class="fa-solid fa-pen"></i> 編輯
-                                    </button>
-                                    <button type="button" class="n-btn n-btn-danger" style="padding:2px 7px; font-size:0.72rem;" onclick="deleteMajorTransportItem(${idx})">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
+                                    <button type="button" class="n-btn" style="padding:1px 6px; font-size:0.7rem;" onclick="openEditMajorTransportModal(${idx})"><i class="fa-solid fa-pen"></i></button>
+                                    <button type="button" class="n-btn n-btn-danger" style="padding:1px 5px; font-size:0.7rem;" onclick="deleteMajorTransportItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
                                 </div>
                             </div>
 
-                            <div style="font-size:0.98rem; font-weight:800; color:#0f172a; margin-bottom:6px; line-height:1.35;">
-                                ${escapeHtml(item.title || '未命名交通項目')}
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                                <strong style="font-size:0.88rem; color:#0f172a;">${escapeHtml(item.title || '未命名交通項目')}</strong>
+                                ${(item.dep || item.arr) ? `<span style="font-size:0.74rem; color:#475569; font-weight:600;"><i class="fa-solid fa-route" style="color:#286678;"></i> ${escapeHtml(item.dep || '出發')} ➔ ${escapeHtml(item.arr || '目的')}</span>` : ''}
                             </div>
 
-                            ${(item.dep || item.arr) ? `
-                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:7px 10px; font-size:0.8rem; color:#334155; margin-bottom:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                <i class="fa-solid fa-route" style="color:#2563eb;"></i>
-                                <span><strong>${escapeHtml(item.dep || '出發地')}</strong></span>
-                                <i class="fa-solid fa-arrow-right-long" style="color:#94a3b8;"></i>
-                                <span><strong>${escapeHtml(item.arr || '目的地')}</strong></span>
+                            ${(item.provider || item.bookingNo || item.notes) ? `
+                            <div style="font-size:0.72rem; color:#64748b; margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;">
+                                ${item.provider ? `<span>車行/平台：<strong>${escapeHtml(item.provider)}</strong></span>` : ''}
+                                ${item.bookingNo ? `<span style="color:#966420; background:#faf3e6; padding:0 5px; border-radius:4px; font-weight:700;">單號：${escapeHtml(item.bookingNo)}</span>` : ''}
+                                ${item.notes ? `<span>💡 ${escapeHtml(item.notes)}</span>` : ''}
                             </div>` : ''}
-
-                            ${(item.provider || item.bookingNo) ? `
-                            <div style="font-size:0.76rem; color:#475569; margin-bottom:6px; display:flex; gap:10px; flex-wrap:wrap;">
-                                ${item.provider ? `<span><i class="fa-solid fa-building-shield" style="color:#64748b;"></i> 平台/車行：<strong>${escapeHtml(item.provider)}</strong></span>` : ''}
-                                ${item.bookingNo ? `<span style="color:#b45309; background:#fef3c7; padding:0 6px; border-radius:4px; font-weight:700;">單號/聯絡：${escapeHtml(item.bookingNo)}</span>` : ''}
-                            </div>` : ''}
-
-                            ${item.notes ? `<div style="font-size:0.75rem; color:#64748b; margin-bottom:8px;">💡 ${escapeHtml(item.notes)}</div>` : ''}
                         </div>
 
-                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 11px; margin-top:4px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:#0f172a; font-weight:700;">
-                                <span>${mode === 'group' ? `👥 全團總價 (${m}人均攤)` : `👤 單人票價 × ${m}人`}</span>
-                                <span style="font-size:0.86rem;">全團 NT$ ${brk.groupTwd.toLocaleString()}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.73rem; color:#64748b; margin-top:2px;">
-                                <span>原幣預估：${cSym} ${Number(item.cost || 0).toLocaleString()} (${mode === 'group' ? '整團' : '每人'})</span>
-                                <span>每人均攤 ≈ <strong>NT$ ${brk.personTwd.toLocaleString()}</strong></span>
-                            </div>
-                            ${actBrk ? `
-                            <div style="margin-top:4px; padding-top:4px; border-top:1px dashed #c4b5fd; font-size:0.72rem; color:#059669; font-weight:700; display:flex; justify-content:space-between;">
-                                <span>🧾 實付全團：NT$ ${actBrk.groupTwd.toLocaleString()}</span>
-                                <span>${actBrk.groupTwd <= brk.groupTwd ? `省 NT$ ${(brk.groupTwd - actBrk.groupTwd).toLocaleString()}` : `超支 NT$ ${(actBrk.groupTwd - brk.groupTwd).toLocaleString()}`}</span>
-                            </div>` : ''}
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; background:#f8fafc; border:1px solid #e5edf3; border-radius:6px; padding:4px 8px; margin-top:6px; font-size:0.74rem;">
+                            <span style="color:#334155; font-weight:600;">
+                                每人 <strong>NT$ ${brk.personTwd.toLocaleString()}</strong>
+                                <span style="color:#64748b;">(${cSym}${Number(item.cost || 0).toLocaleString()} ${mode === 'group' ? '整團' : '單人'})</span>
+                            </span>
+                            <span style="font-weight:700; color:#286678;">
+                                全團 NT$ ${brk.groupTwd.toLocaleString()}
+                                ${actBrk ? ` <span style="color:#2b6b50;">‧ 實付 NT$ ${actBrk.groupTwd.toLocaleString()}</span>` : ''}
+                            </span>
                         </div>
                     </div>
                 `;
