@@ -15,6 +15,9 @@
     
     <!-- FontAwesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flag Icons SVG (跨平台真實彩色國旗支援，解決 Windows 無國旗字型問題) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css">
+
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -2869,7 +2872,7 @@
         }
 
         /* =====================================================================
-           v2.22 FULL-WIDTH DASHBOARD & TYPOGRAPHY SYSTEM (截圖二字體 + 截圖三卡片與導覽)
+           V3.0 FULL-WIDTH DASHBOARD & TYPOGRAPHY SYSTEM (截圖二字體 + 截圖三卡片與導覽)
            ===================================================================== */
         :root {
             --dash-bg: #f4f6fa;
@@ -3443,7 +3446,7 @@
 
 
         /* =====================================================================
-           v2.22 MUTED SLATE-TEAL & WARM OCHRE PALETTE (參考第三張圖溫潤低飽和配色)
+           V3.0 MUTED SLATE-TEAL & WARM OCHRE PALETTE (參考第三張圖溫潤低飽和配色)
            不採用沉重純黑、不採用高飽和刺眼色，保留柔和商務色彩層次與置中圖示
            ===================================================================== */
         :root {
@@ -4726,16 +4729,89 @@
             border-radius: 4px !important;
         }
 
+
+        /* 12. V3.0 真實彩色國旗徽章與版本標籤樣式 */
+        .okr-brand-icon.is-flag {
+            width: 46px !important;
+            height: 34px !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1) !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .okr-brand-icon.is-flag:hover {
+            border-color: #2f6fed !important;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(47, 111, 237, 0.18) !important;
+        }
+        .okr-brand-icon .okr-flag-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+        .okr-version-tag {
+            background: #e8f0fe !important;
+            color: #1d56c4 !important;
+            border: 1px solid #b6d0fb !important;
+            font-weight: 800 !important;
+            font-size: 0.72rem !important;
+            padding: 2px 8px !important;
+            border-radius: 5px !important;
+            letter-spacing: 0.02em !important;
+        }
+        .flag-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin: 10px 0 14px;
+            text-align: left;
+        }
+        .flag-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 9px;
+            background: #f8fafc;
+            border: 1px solid #dce4ec;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            transition: all 0.14s ease;
+        }
+        .flag-picker-item:hover {
+            background: #e8f0fe;
+            border-color: #2f6fed;
+            color: #1d56c4;
+        }
+        .flag-picker-item img {
+            width: 24px;
+            height: 18px;
+            object-fit: cover;
+            border-radius: 3px;
+            border: 1px solid #cbd5e1;
+            flex-shrink: 0;
+        }
+
     </style>
 </head>
 <body>
 
         <!-- ====================================================
-         v2.22 INTEGRATED FULL-WIDTH DASHBOARD HEADER (對齊第三張截圖樣式)
+         V3.0 INTEGRATED FULL-WIDTH DASHBOARD HEADER (對齊第三張截圖樣式)
          ==================================================== -->
     <header class="okr-top-header">
         <div class="okr-brand-left">
-            <div class="okr-brand-icon" id="pageEmojiIcon" onclick="changeEmojiIcon()" title="點擊更換計畫圖標"><span class="okr-brand-glyph">🏯</span></div>
+            <div class="okr-brand-icon is-flag" id="pageEmojiIcon" onclick="changeEmojiIcon()" title="點擊切換國家國旗或代表圖示"><img src="https://flagcdn.com/jp.svg" alt="JP" class="okr-flag-img"></div>
             <div class="okr-title-stack">
                 <div class="okr-title-line">
                     <h1 class="okr-main-title" id="pageTitleText">北京 7 天 6 夜・頂級美食與皇家精華 🇨🇳</h1>
@@ -4752,7 +4828,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag">v2.22</span>
+                    <span class="okr-version-tag">V3.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8642,10 +8718,13 @@ const firebaseConfig = {
             }
         }
 
-        // 將國旗 Regional Indicator (如 🇯🇵) 轉為純英文字母縮寫 (如 JP)，徹底解決 Windows 國旗字元偏下不置中問題
+        // V3.0 真實彩色國旗解析與智慧國家推斷 (徹底解決 Windows 把國旗顯示成 JP 字母的問題)
         function extractRegionCodeFromEmoji(raw) {
             if (!raw) return '';
-            const chars = Array.from(String(raw).trim());
+            const trimmed = String(raw).trim();
+            const bracketMatch = trimmed.match(/^\[([A-Za-z]{2})\]$/);
+            if (bracketMatch) return bracketMatch[1].toUpperCase();
+            const chars = Array.from(trimmed);
             if (chars.length === 2) {
                 const c1 = chars[0].codePointAt(0);
                 const c2 = chars[1].codePointAt(0);
@@ -8653,26 +8732,107 @@ const firebaseConfig = {
                     return String.fromCharCode(65 + (c1 - 0x1F1E6)) + String.fromCharCode(65 + (c2 - 0x1F1E6));
                 }
             }
-            if (/^[A-Za-z]{1,3}$/.test(String(raw).trim())) {
-                return String(raw).trim().toUpperCase();
+            if (/^[A-Za-z]{2}$/.test(trimmed)) {
+                return trimmed.toUpperCase();
             }
             return '';
         }
 
-        function formatBrandIconHtml(rawEmoji) {
-            const val = (rawEmoji || '✈️').trim();
-            const code = extractRegionCodeFromEmoji(val);
-            if (code) {
-                return `<span class="okr-brand-code">${escapeHtml(code)}</span>`;
+        function inferCountryCodeFromPlan(plan) {
+            if (!plan) return '';
+            if (plan.countryCode && /^[A-Za-z]{2}$/.test(plan.countryCode)) {
+                return plan.countryCode.toUpperCase();
             }
+            const directCode = extractRegionCodeFromEmoji(plan.emoji);
+            if (directCode) return directCode;
+
+            // 若使用者明確設定自訂非國旗 Emoji，尊重自訂圖示
+            if (plan.forceCustomEmoji) return '';
+
+            const textBlob = `${plan.title || ''} ${plan.destination || ''} ${plan.subtitle || ''}`;
+            // 檢查標題中是否含有國旗 Emoji
+            const chars = Array.from(textBlob);
+            for (let i = 0; i < chars.length - 1; i++) {
+                const c1 = chars[i].codePointAt(0);
+                const c2 = chars[i + 1].codePointAt(0);
+                if (c1 >= 0x1F1E6 && c1 <= 0x1F1FF && c2 >= 0x1F1E6 && c2 <= 0x1F1FF) {
+                    return String.fromCharCode(65 + (c1 - 0x1F1E6)) + String.fromCharCode(65 + (c2 - 0x1F1E6));
+                }
+            }
+
+            const keywordMap = [
+                { code: 'JP', kws: ['日本', '東京', '大阪', '京都', '北海道', '沖繩', '福岡', '名古屋', '神戶', '奈良', '橫濱', '箱根', '富士山', '九州', '四國', '東北', '仙台', '廣島', '金澤', '輕井澤', '熊本', '鹿兒島', '札幌', '函館', 'Tokyo', 'Osaka', 'Kyoto', 'Japan'] },
+                { code: 'KR', kws: ['韓國', '首爾', '釜山', '濟州', '大邱', '仁川', '慶州', 'Seoul', 'Busan', 'Korea'] },
+                { code: 'TW', kws: ['台灣', '臺灣', '台北', '臺北', '台南', '臺南', '高雄', '台中', '臺中', '花蓮', '台東', '臺東', '宜蘭', '墾丁', '澎湖', '金門', '馬祖', '阿里山', '日月潭', 'Taiwan', 'Taipei'] },
+                { code: 'HK', kws: ['香港', '九龍', '尖沙咀', '中環', 'Hong Kong'] },
+                { code: 'MO', kws: ['澳門', '氹仔', '路環', 'Macau', 'Macao'] },
+                { code: 'CN', kws: ['中國', '重慶', '北京', '上海', '成都', '杭州', '蘇州', '廣州', '深圳', '西安', '南京', '武漢', '長沙', '廈門', '青島', '哈爾濱', '雲南', '麗江', '大理', '張家界', '桂林', '九寨溝', '新疆', '西藏', 'Chongqing', 'Beijing', 'Shanghai'] },
+                { code: 'TH', kws: ['泰國', '曼谷', '清邁', '普吉', '芭達雅', '蘇美島', '華欣', 'Bangkok', 'Thailand'] },
+                { code: 'VN', kws: ['越南', '富國島', '河內', '峴港', '胡志明', '會安', '下龍灣', '芽莊', 'Vietnam'] },
+                { code: 'SG', kws: ['新加坡', '獅城', '聖淘沙', 'Singapore'] },
+                { code: 'MY', kws: ['馬來西亞', '吉隆坡', '檳城', '沙巴', '亞庇', '馬六甲', '蘭卡威', '新山', 'Malaysia'] },
+                { code: 'PH', kws: ['菲律賓', '宿霧', '長灘島', '馬尼拉', '巴拉望', '薄荷島', 'Philippines'] },
+                { code: 'ID', kws: ['印尼', '峇里島', '巴厘島', '雅加達', '日惹', 'Bali', 'Indonesia'] },
+                { code: 'FR', kws: ['法國', '巴黎', '尼斯', '南法', '里昂', '馬賽', 'Paris', 'France'] },
+                { code: 'GB', kws: ['英國', '倫敦', '愛丁堡', '牛津', '劍橋', '曼徹斯特', '蘇格蘭', 'London', 'UK'] },
+                { code: 'IT', kws: ['義大利', '羅馬', '米蘭', '威尼斯', '佛羅倫斯', '拿坡里', '五漁村', 'Italy', 'Rome'] },
+                { code: 'DE', kws: ['德國', '慕尼黑', '柏林', '法蘭克福', '科隆', '漢堡', 'Germany'] },
+                { code: 'CH', kws: ['瑞士', '蘇黎世', '策馬特', '少女峰', '琉森', '日內瓦', '因特拉肯', 'Switzerland'] },
+                { code: 'ES', kws: ['西班牙', '巴塞隆納', '馬德里', '塞維亞', '格拉納達', 'Spain'] },
+                { code: 'PT', kws: ['葡萄牙', '里斯本', '波多', 'Portugal'] },
+                { code: 'NL', kws: ['荷蘭', '阿姆斯特丹', '鹿特丹', '羊角村', 'Netherlands'] },
+                { code: 'AT', kws: ['奧地利', '維也納', '薩爾斯堡', '哈修塔特', 'Austria'] },
+                { code: 'CZ', kws: ['捷克', '布拉格', '庫倫洛夫', 'Prague', 'Czech'] },
+                { code: 'IS', kws: ['冰島', '雷克雅維克', 'Iceland'] },
+                { code: 'TR', kws: ['土耳其', '伊斯坦堡', '卡帕多奇亞', 'Turkey'] },
+                { code: 'US', kws: ['美國', '紐約', '洛杉磯', '舊金山', '西雅圖', '拉斯維加斯', '夏威夷', '關島', '波士頓', '芝加哥', '奧蘭多', 'USA', 'Hawaii'] },
+                { code: 'CA', kws: ['加拿大', '溫哥華', '多倫多', '班夫', '蒙特婁', '黃刀鎮', 'Canada'] },
+                { code: 'AU', kws: ['澳洲', '澳大利亞', '雪梨', '墨爾本', '布里斯本', '黃金海岸', '凱恩斯', 'Australia', 'Sydney'] },
+                { code: 'NZ', kws: ['紐西蘭', '奧克蘭', '皇后鎮', '基督城', 'New Zealand'] }
+            ];
+            for (const entry of keywordMap) {
+                if (entry.kws.some(k => textBlob.includes(k))) {
+                    return entry.code;
+                }
+            }
+
+            const currCode = String(plan.currency || (typeof getPlanCurrency === 'function' ? getPlanCurrency(plan)?.code : '') || '').toUpperCase();
+            const currToCountry = {
+                JPY: 'JP', KRW: 'KR', TWD: 'TW', CNY: 'CN', RMB: 'CN',
+                HKD: 'HK', MOP: 'MO', THB: 'TH', VND: 'VN', SGD: 'SG',
+                MYR: 'MY', PHP: 'PH', IDR: 'ID', GBP: 'GB', CHF: 'CH',
+                AUD: 'AU', NZD: 'NZ', CAD: 'CA', USD: 'US'
+            };
+            if (currToCountry[currCode]) return currToCountry[currCode];
+
+            return '';
+        }
+
+        function formatBrandIconHtml(rawEmoji, planObj = null) {
+            const code = planObj ? inferCountryCodeFromPlan(planObj) : extractRegionCodeFromEmoji(rawEmoji);
+            if (code) {
+                const lower = code.toLowerCase();
+                return `<img src="https://flagcdn.com/${lower}.svg" alt="${escapeHtml(code)}" class="okr-flag-img" onerror="this.style.display='none'; if(this.nextElementSibling){this.nextElementSibling.style.display='inline-block';}"><span class="fi fi-${lower}" style="display:none; width:100%; height:100%; background-size:cover;"></span>`;
+            }
+            const val = (rawEmoji || '✈️').trim();
             return `<span class="okr-brand-glyph">${escapeHtml(val)}</span>`;
         }
 
-        function formatPlanOptionPrefix(rawEmoji) {
-            const val = (rawEmoji || '✈️').trim();
-            const code = extractRegionCodeFromEmoji(val);
-            return code ? `[${code}]` : val;
+        function updateBrandIconElement(plan) {
+            const emojiEl = document.getElementById('pageEmojiIcon');
+            if (!emojiEl || !plan) return;
+            const code = inferCountryCodeFromPlan(plan);
+            emojiEl.classList.toggle('is-flag', !!code);
+            emojiEl.innerHTML = formatBrandIconHtml(plan.emoji || '✈️', plan);
         }
+
+        function formatPlanOptionPrefix(rawEmoji, planObj = null) {
+            const code = planObj ? inferCountryCodeFromPlan(planObj) : extractRegionCodeFromEmoji(rawEmoji);
+            if (code) return `[${code}]`;
+            const val = (rawEmoji || '✈️').trim();
+            return val;
+        }
+
         function renderPlanSelectDropdown() {
             const select = document.getElementById('travelPlanSelect');
             if (!select) return;
@@ -8680,7 +8840,7 @@ const firebaseConfig = {
             Object.values(appState.plans).forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                opt.innerText = `${formatPlanOptionPrefix(p.emoji)} ${p.title}`;
+                opt.innerText = `${formatPlanOptionPrefix(p.emoji, p)} ${p.title}`;
                 if (p.id === appState.activePlanId) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -8696,8 +8856,7 @@ const firebaseConfig = {
             const subtitleEl = document.getElementById('pageSubtitleText');
             if (subtitleEl) subtitleEl.innerText = plan.subtitle || '';
 
-            const emojiEl = document.getElementById('pageEmojiIcon');
-            if (emojiEl) emojiEl.innerHTML = formatBrandIconHtml(plan.emoji || '🏯');
+            updateBrandIconElement(plan);
             
             const coverEl = document.getElementById('pageCoverImg');
             if (coverEl && plan.coverUrl) {
@@ -12833,7 +12992,7 @@ const firebaseConfig = {
         // ==========================
 
         // ==========================================================
-        // v2.22 交通與住宿大項目分頁 (Transit & Stay) 與包車/接送管理
+        // V3.0 交通與住宿大項目分頁 (Transit & Stay) 與包車/接送管理
         // ==========================================================
         const MAJOR_TRANS_CATEGORIES = {
             transfer: { label: '機場接送', icon: 'fa-van-shuttle', bg: '#eaf2f6', text: '#286678', border: '#cde0e8' },
@@ -19320,41 +19479,82 @@ const firebaseConfig = {
             }
         }
 
-        // Emoji 選擇與更換 (健壯 fallback，不卡死)
+        // 國旗與代表圖標選擇器 (支援一鍵點選真實彩色國旗或輸入國碼/自訂 Emoji)
+        const POPULAR_TRAVEL_FLAGS = [
+            { code: 'JP', name: '日本' }, { code: 'KR', name: '韓國' }, { code: 'TW', name: '台灣' }, { code: 'CN', name: '中國' },
+            { code: 'HK', name: '香港' }, { code: 'MO', name: '澳門' }, { code: 'TH', name: '泰國' }, { code: 'VN', name: '越南' },
+            { code: 'SG', name: '新加坡' }, { code: 'MY', name: '馬來西亞' }, { code: 'PH', name: '菲律賓' }, { code: 'ID', name: '印尼' },
+            { code: 'US', name: '美國' }, { code: 'CA', name: '加拿大' }, { code: 'GB', name: '英國' }, { code: 'FR', name: '法國' },
+            { code: 'IT', name: '義大利' }, { code: 'DE', name: '德國' }, { code: 'CH', name: '瑞士' }, { code: 'AU', name: '澳洲' }
+        ];
+
+        window.pickPlanFlagQuick = function(code) {
+            applyNewEmoji(code, false);
+            if (typeof Swal !== 'undefined') Swal.close();
+        };
+
         function changeEmojiIcon() {
-            const currentEmoji = getCurrentPlan()?.emoji || '🌶️';
-            
+            const plan = getCurrentPlan();
+            const currentCode = inferCountryCodeFromPlan(plan);
+            const currentVal = currentCode || plan?.emoji || 'JP';
+
             if (typeof Swal !== 'undefined') {
+                const gridHtml = POPULAR_TRAVEL_FLAGS.map(f => `
+                    <button type="button" class="flag-picker-item" onclick="window.pickPlanFlagQuick('${f.code}')">
+                        <img src="https://flagcdn.com/${f.code.toLowerCase()}.svg" alt="${f.code}">
+                        <span>${f.name}</span>
+                    </button>
+                `).join('');
+
                 Swal.fire({
-                    title: '選擇代表 Emoji 圖標',
-                    input: 'text',
-                    inputValue: currentEmoji,
-                    inputPlaceholder: '輸入 Emoji，如 🌶️, 🏯, ✈️, 🗼, 🍜, 🏔️',
+                    title: '選擇國家國旗或代表圖示',
+                    html: `
+                        <div style="font-size:0.8rem; color:#64748b; text-align:left; margin-bottom:4px;">點擊下方國家直接切換為該國國旗：</div>
+                        <div class="flag-picker-grid">${gridHtml}</div>
+                        <div style="font-size:0.78rem; color:#64748b; text-align:left; margin-bottom:4px;">或手動輸入 2 碼國家縮寫 (如 ES、NL、IS) 或自訂 Emoji：</div>
+                        <input id="swalCustomFlagInput" class="swal2-input" style="margin:0; width:100%; height:38px; font-size:0.9rem;" value="${escapeHtml(currentVal)}" placeholder="例如：JP、KR、FR 或 ✈️">
+                    `,
                     showCancelButton: true,
-                    confirmButtonText: '確定',
-                    cancelButtonText: '取消'
+                    confirmButtonText: '套用設定',
+                    cancelButtonText: '取消',
+                    preConfirm: () => {
+                        const inp = document.getElementById('swalCustomFlagInput');
+                        return inp ? inp.value.trim() : '';
+                    }
                 }).then(result => {
                     if (result.isConfirmed && result.value) {
-                        applyNewEmoji(result.value.trim());
+                        const raw = result.value.trim();
+                        const isFlagCode = !!extractRegionCodeFromEmoji(raw);
+                        applyNewEmoji(raw, !isFlagCode);
                     }
                 });
             } else {
-                const val = prompt('請輸入旅行代表 Emoji 圖標 (如 🌶️, 🏯, ✈️, 🗼, 🍜)：', currentEmoji);
+                const val = prompt('請輸入 2 碼國家代碼 (如 JP、KR、TW、CN、TH、US、FR) 或自訂 Emoji：', currentVal);
                 if (val && val.trim()) {
-                    applyNewEmoji(val.trim());
+                    const raw = val.trim();
+                    const isFlagCode = !!extractRegionCodeFromEmoji(raw);
+                    applyNewEmoji(raw, !isFlagCode);
                 }
             }
         }
 
-        function applyNewEmoji(newEmoji) {
+        function applyNewEmoji(newVal, isCustomEmoji = false) {
             const plan = getCurrentPlan();
-            if (plan && newEmoji) {
-                plan.emoji = newEmoji;
+            if (plan && newVal) {
+                const code = extractRegionCodeFromEmoji(newVal);
+                if (code) {
+                    plan.countryCode = code;
+                    plan.emoji = code;
+                    plan.forceCustomEmoji = false;
+                } else {
+                    plan.emoji = newVal;
+                    plan.countryCode = '';
+                    plan.forceCustomEmoji = !!isCustomEmoji;
+                }
                 saveState();
-                const iconEl = document.getElementById('pageEmojiIcon');
-                if (iconEl) iconEl.innerText = newEmoji;
+                updateBrandIconElement(plan);
                 renderPlanSelectDropdown();
-                showToast('success', '圖標已更新');
+                showToast('success', code ? `已切換為 ${code} 國旗圖示` : '圖示已更新');
             }
         }
 
