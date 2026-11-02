@@ -4428,7 +4428,7 @@
             --ref-crisp-border: #d5dee8;
         }
 
-        /* A. 全站各區域外框、面板、卡片、按鈕全面收斂為更直角的俐落微導角 (3px ~ 4px) */
+        /* A. 全站各區域外框、面板、卡片、按鈕採用柔和適中圓角層級 (9px / 7px / 6px)，不過於圓潤亦不生硬直角 */
         .okr-kpi-card,
         #tripSummaryBox.trip-summary-box,
         .day-card-container,
@@ -4440,7 +4440,7 @@
         .spot-guide-card,
         #toolsCalloutBox.notion-callout,
         .modal-card {
-            border-radius: 4px !important;
+            border-radius: 9px !important;
             border-color: var(--ref-crisp-border) !important;
         }
 
@@ -4451,17 +4451,20 @@
         #sideHotelCardsContainer .hotel-side-card,
         .major-trans-card,
         .compact-flight-route-bar,
-        .tool-compact-pill,
         .okr-brand-icon,
         .okr-kpi-icon-box,
         .okr-action-pill,
         .okr-pill-navbar .view-tab-btn,
         .expenses-subtabs-bar,
+        .unified-nav-selector-box {
+            border-radius: 7px !important;
+        }
+
+        .tool-compact-pill,
         .expenses-subtab-btn,
         .day-chip,
         .n-btn,
         .okr-plan-badge-pill,
-        .unified-nav-selector-box,
         .currency-input,
         .form-input,
         .form-select,
@@ -4473,18 +4476,18 @@
         .tools-badge-title,
         .summary-day-pill,
         .event-cat-badge {
-            border-radius: 3px !important;
+            border-radius: 6px !important;
         }
 
-        /* 對應截圖 P3 / ✓ Yes 的狀態小標籤保留微導角 4px，其餘內嵌小資訊框收斂為 3px 直角感 */
+        /* 對應狀態小標籤與內嵌小資訊框採用柔和 6px ~ 8px 圓角 */
         .prop-pill {
-            border-radius: 4px !important;
+            border-radius: 8px !important;
         }
         #currToggleContent,
         #tripSummaryBox .trip-summary-body > div:first-child,
         #sideHotelCardsContainer .hotel-side-card > div,
         .major-trans-card > div:last-child {
-            border-radius: 3px !important;
+            border-radius: 6px !important;
         }
 
         /* 單筆行程活動中的當日支出重點數字點綴截圖同款溫潤朱砂紅 */
@@ -4587,10 +4590,10 @@
 
         .okr-kpi-progress-bar {
             background: var(--ref-cobalt-solid) !important;
-            border-radius: 2px !important;
+            border-radius: 4px !important;
         }
         .okr-kpi-progress {
-            border-radius: 2px !important;
+            border-radius: 4px !important;
         }
         .okr-kpi-icon-box.blue {
             background: var(--ref-cobalt-bg) !important;
@@ -4714,14 +4717,14 @@
         }
         .budget-bar-row:nth-child(odd) .budget-bar-fill {
             background: var(--ref-cobalt-solid) !important;
-            border-radius: 2px !important;
+            border-radius: 4px !important;
         }
         .budget-bar-row:nth-child(even) .budget-bar-fill {
             background: var(--ref-amber-solid) !important;
-            border-radius: 2px !important;
+            border-radius: 4px !important;
         }
         .budget-bar-track {
-            border-radius: 2px !important;
+            border-radius: 4px !important;
         }
 
     </style>
