@@ -4782,7 +4782,7 @@
             <button class="okr-action-pill teal-solid" onclick="openBookletModal()" title="產生隨身旅遊小手冊">
                 <i class="fa-solid fa-book-open"></i> <span class="topbar-btn-text">隨身手冊</span>
             </button>
-            <a href="expenses.html" class="okr-action-pill purple-outline" title="開啟極簡旅遊支出計算中心">
+            <a href="expenses.html" target="_blank" rel="noopener noreferrer" onclick="if(event){event.preventDefault();} navigateToExpenses(); return false;" class="okr-action-pill purple-outline" title="以新視窗開啟極簡旅遊支出計算中心 (原視窗保持不跳轉)">
                 <i class="fa-solid fa-calculator"></i> <span class="topbar-btn-text">支出計算機</span>
             </a>
             <button class="okr-action-pill green-outline" onclick="openExportModal()" title="匯出至 iPhone 行事曆、備忘錄或 JSON 備份">
@@ -12164,10 +12164,30 @@ const firebaseConfig = {
         // ==========================
         // 統一導覽下拉選單選取處理 (Unified Navigation Select)
         // ==========================
+        function restoreUnifiedNavSelectToActiveView() {
+            const sel = document.getElementById('unifiedNavSelect');
+            if (!sel) return;
+            const activePane = document.querySelector('.view-content-pane.active');
+            const activeId = activePane ? activePane.id.replace('view-', '') : 'timeline';
+            if (activeId === 'expenses') {
+                sel.value = (typeof currentExpensesSubtab !== 'undefined' && currentExpensesSubtab === 'actual-expenses') ? 'actual-expenses' : 'budget';
+            } else {
+                sel.value = activeId || 'timeline';
+            }
+        }
+
+        function navigateToExpenses() {
+            const win = window.open('expenses.html', '_blank', 'noopener,noreferrer');
+            if (win) {
+                win.opener = null;
+            }
+        }
+
         function handleUnifiedNavSelect(val) {
             if (!val) return;
             if (val === 'page-expenses') {
-                window.location.href = 'expenses.html';
+                navigateToExpenses();
+                restoreUnifiedNavSelectToActiveView();
                 return;
             } else if (val === 'transport' || val === 'hotel') {
                 quickNavTo(val);
