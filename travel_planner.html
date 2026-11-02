@@ -4802,6 +4802,330 @@
             flex-shrink: 0;
         }
 
+        /* ====================================================
+           V3.0 機酒預訂風格互動式區間行事曆 (Flight/Hotel Range Calendar)
+           ==================================================== */
+        .bcal-wrapper {
+            position: relative;
+            width: 100%;
+            user-select: none;
+        }
+        .bcal-trigger-bar {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+        .bcal-trigger-bar:hover {
+            border-color: #2f6fed;
+            background: #f8fafc;
+        }
+        .bcal-trigger-bar.is-open {
+            border-color: #2f6fed;
+            box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
+            background: #ffffff;
+        }
+        .bcal-slot {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .bcal-slot.active-step {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+        .bcal-slot-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.02em;
+        }
+        .bcal-slot-value {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .bcal-slot-weekday {
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: #1f5f78;
+            background: #e0f2fe;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+        .bcal-slot-placeholder {
+            color: #2f6fed;
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+        .bcal-center-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 0 4px;
+        }
+        .bcal-nights-pill {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #1b6b50;
+            background: #e6f4ef;
+            border: 1px solid #a7f3d0;
+            padding: 2px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        .bcal-arrow-icon {
+            font-size: 0.72rem;
+            color: #94a3b8;
+        }
+        .bcal-chevron-box {
+            color: #64748b;
+            font-size: 0.85rem;
+            padding-left: 4px;
+            transition: transform 0.2s ease;
+        }
+        .bcal-trigger-bar.is-open .bcal-chevron-box {
+            transform: rotate(180deg);
+            color: #2f6fed;
+        }
+        .bcal-dropdown-panel {
+            display: none;
+            margin-top: 8px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 9px;
+            padding: 12px 14px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+            animation: bcalFadeIn 0.16s ease-out;
+        }
+        .bcal-dropdown-panel.open {
+            display: block;
+        }
+        @keyframes bcalFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bcal-top-hint-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+        .bcal-step-badge {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #1e40af;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 3px 9px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bcal-step-badge.step-end {
+            color: #b45309;
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+        .bcal-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bcal-mini-btn {
+            font-size: 0.73rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.14s ease;
+        }
+        .bcal-mini-btn:hover {
+            border-color: #2f6fed;
+            color: #2f6fed;
+            background: #eff6ff;
+        }
+        .bcal-mini-btn.primary {
+            background: #1f5f78;
+            border-color: #1f5f78;
+            color: #ffffff;
+        }
+        .bcal-mini-btn.primary:hover {
+            background: #164659;
+        }
+        .bcal-months-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 560px) {
+            .bcal-months-container {
+                grid-template-columns: 1fr;
+            }
+            .bcal-month-col.second-month {
+                display: none;
+            }
+            .bcal-trigger-bar {
+                grid-template-columns: 1fr auto 1fr;
+                padding: 7px 9px;
+            }
+            .bcal-chevron-box {
+                display: none;
+            }
+        }
+        .bcal-month-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            height: 28px;
+        }
+        .bcal-month-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.02em;
+        }
+        .bcal-nav-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.14s ease;
+        }
+        .bcal-nav-btn:hover {
+            background: #e8f0fe;
+            border-color: #2f6fed;
+            color: #2f6fed;
+        }
+        .bcal-nav-spacer {
+            width: 26px;
+            height: 26px;
+        }
+        .bcal-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .bcal-weekday {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #64748b;
+            padding: 3px 0;
+        }
+        .bcal-weekday.weekend-sun { color: #c84b31; }
+        .bcal-weekday.weekend-sat { color: #d97724; }
+        .bcal-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            row-gap: 3px;
+        }
+        .bcal-day {
+            position: relative;
+            height: 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.1s ease, color 0.1s ease;
+            line-height: 1.05;
+        }
+        .bcal-day.empty {
+            cursor: default;
+            pointer-events: none;
+        }
+        .bcal-day:not(.empty):not(.is-start):not(.is-end):hover {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .bcal-day.is-today:not(.is-start):not(.is-end)::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #d97724;
+        }
+        .bcal-day.in-range {
+            background: #e8f0fe;
+            color: #1e40af;
+            border-radius: 0;
+        }
+        .bcal-day.in-hover-range {
+            background: #eff6ff;
+            color: #2563eb;
+            border-radius: 0;
+            border-top: 1px dashed #93c5fd;
+            border-bottom: 1px dashed #93c5fd;
+        }
+        .bcal-day.is-start {
+            background: #2f6fed !important;
+            color: #ffffff !important;
+            border-radius: 7px 0 0 7px;
+            z-index: 2;
+            box-shadow: 0 2px 6px rgba(47, 111, 237, 0.28);
+        }
+        .bcal-day.is-end {
+            background: #1f5f78 !important;
+            color: #ffffff !important;
+            border-radius: 0 7px 7px 0;
+            z-index: 2;
+            box-shadow: 0 2px 6px rgba(31, 95, 120, 0.28);
+        }
+        .bcal-day.is-start.is-end,
+        .bcal-day.is-start.single-unpaired {
+            border-radius: 7px;
+        }
+        .bcal-day-tag {
+            font-size: 0.56rem;
+            font-weight: 700;
+            opacity: 0.95;
+            margin-top: 1px;
+            letter-spacing: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -5501,7 +5825,7 @@
          ==================================================== -->
     <!-- 1. 建立全新旅行計畫 -->
     <div class="modal-backdrop" id="createPlanModal" onclick="handleBackdropClick(event, 'createPlanModal')">
-        <div class="modal-dialog" style="max-width: 520px;" onclick="event.stopPropagation();">
+        <div class="modal-dialog" style="max-width: 620px;" onclick="event.stopPropagation();">
             <div class="modal-header">
                 <div class="modal-title"><i class="fa-solid fa-suitcase-rolling" style="color: #2383e2;"></i> 建立全新旅行計畫</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('createPlanModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -5523,7 +5847,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">行程天數</label>
-                            <input type="number" id="newPlanDaysCount" class="form-input" value="5" min="1" max="30">
+                            <input type="number" id="newPlanDaysCount" class="form-input" value="5" min="1" max="60" oninput="handleNewPlanDaysManualInput(this.value)">
                         </div>
                         <div class="form-group">
                             <label class="form-label">出遊人數 (人)</label>
@@ -5547,14 +5871,27 @@
                             <input type="number" id="newPlanExchangeRate" class="form-input" value="4.65" step="any" min="0" style="font-weight:700; color:#0284c7;">
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">出發日期</label>
-                            <input type="date" id="newPlanStartDate" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">結束日期</label>
-                            <input type="date" id="newPlanEndDate" class="form-input" required>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label"><i class="fa-regular fa-calendar-check" style="color:#2f6fed;"></i> 出發與回程日期區間（點選行事曆設定）</label>
+                        <input type="hidden" id="newPlanStartDate">
+                        <input type="hidden" id="newPlanEndDate">
+                        <div class="bcal-wrapper" id="bcalWrapper_create">
+                            <div class="bcal-trigger-bar" id="bcalTrigger_create" onclick="toggleBookingCalendar('create')">
+                                <div class="bcal-slot" id="bcalSlotStart_create">
+                                    <span class="bcal-slot-label"><i class="fa-solid fa-plane-departure" style="color:#2f6fed;"></i> 出發日期</span>
+                                    <div class="bcal-slot-value" id="bcalStartDisplay_create">--</div>
+                                </div>
+                                <div class="bcal-center-badge">
+                                    <span class="bcal-nights-pill" id="bcalDurationPill_create">5 天 4 晚</span>
+                                    <i class="fa-solid fa-arrow-right-long bcal-arrow-icon"></i>
+                                </div>
+                                <div class="bcal-slot" id="bcalSlotEnd_create">
+                                    <span class="bcal-slot-label"><i class="fa-solid fa-plane-arrival" style="color:#1f5f78;"></i> 回程日期</span>
+                                    <div class="bcal-slot-value" id="bcalEndDisplay_create">--</div>
+                                </div>
+                                <div class="bcal-chevron-box"><i class="fa-solid fa-calendar-days"></i></div>
+                            </div>
+                            <div class="bcal-dropdown-panel" id="bcalPanel_create"></div>
                         </div>
                     </div>
                 </div>
@@ -5568,7 +5905,7 @@
 
     <!-- 2. 編輯基本設定 (支援同行出遊人數與成員設定、當地幣別與匯率) -->
     <div class="modal-backdrop" id="editPlanBaseModal" onclick="handleBackdropClick(event, 'editPlanBaseModal')">
-        <div class="modal-dialog" style="max-width: 580px;" onclick="event.stopPropagation();">
+        <div class="modal-dialog" style="max-width: 620px;" onclick="event.stopPropagation();">
             <div class="modal-header">
                 <div class="modal-title"><i class="fa-solid fa-pen-to-square"></i> 編輯計畫基本設定</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editPlanBaseModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -5640,13 +5977,27 @@
                         💡 試算：100 當地幣 (¥) ≈ NT$ 465 新台幣。費用將以當地幣登記，預算統計自動估算台幣總額！
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">日期區間</label>
-                        <input type="text" id="basePlanDateRange" class="form-input" placeholder="例如：2026.10.23 - 10.29 (7天)">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">封面圖片 URL</label>
-                        <input type="text" id="basePlanCoverUrl" class="form-input" placeholder="assets/hero_travel_cover.png 或 https://...">
+                    <div class="form-group" style="margin-bottom: 4px;">
+                        <label class="form-label"><i class="fa-regular fa-calendar-check" style="color:#2f6fed;"></i> 日期區間（點選行事曆設定出發與回程日）</label>
+                        <input type="hidden" id="basePlanDateRange">
+                        <div class="bcal-wrapper" id="bcalWrapper_base">
+                            <div class="bcal-trigger-bar" id="bcalTrigger_base" onclick="toggleBookingCalendar('base')">
+                                <div class="bcal-slot" id="bcalSlotStart_base">
+                                    <span class="bcal-slot-label"><i class="fa-solid fa-plane-departure" style="color:#2f6fed;"></i> 出發 / 入住日</span>
+                                    <div class="bcal-slot-value" id="bcalStartDisplay_base">--</div>
+                                </div>
+                                <div class="bcal-center-badge">
+                                    <span class="bcal-nights-pill" id="bcalDurationPill_base">--</span>
+                                    <i class="fa-solid fa-arrow-right-long bcal-arrow-icon"></i>
+                                </div>
+                                <div class="bcal-slot" id="bcalSlotEnd_base">
+                                    <span class="bcal-slot-label"><i class="fa-solid fa-plane-arrival" style="color:#1f5f78;"></i> 回程 / 退房日</span>
+                                    <div class="bcal-slot-value" id="bcalEndDisplay_base">--</div>
+                                </div>
+                                <div class="bcal-chevron-box"><i class="fa-solid fa-calendar-days"></i></div>
+                            </div>
+                            <div class="bcal-dropdown-panel" id="bcalPanel_base"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -14931,6 +15282,357 @@ const firebaseConfig = {
             }
         }
 
+        // ====================================================
+        // V3.0 機酒預訂風格互動式區間行事曆 (Flight/Hotel Range Calendar)
+        // ====================================================
+        const BCAL_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+        const bcalState = {
+            base: { startDate: '', endDate: '', hoverDate: '', viewYear: 2026, viewMonth: 0, pickingEnd: false, isOpen: false },
+            create: { startDate: '', endDate: '', hoverDate: '', viewYear: 2026, viewMonth: 0, pickingEnd: false, isOpen: false }
+        };
+
+        function bcalFormatYMD(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function bcalParseYMD(ymd) {
+            if (!ymd || typeof ymd !== 'string') return null;
+            const m = ymd.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (!m) return null;
+            const dt = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+
+        function bcalAddDays(ymd, deltaDays) {
+            const dt = bcalParseYMD(ymd);
+            if (!dt) return '';
+            dt.setDate(dt.getDate() + deltaDays);
+            return bcalFormatYMD(dt);
+        }
+
+        function bcalDiffDaysInclusive(startYmd, endYmd) {
+            const s = bcalParseYMD(startYmd);
+            const e = bcalParseYMD(endYmd);
+            if (!s || !e) return 0;
+            const diff = Math.round((e.getTime() - s.getTime()) / 86400000);
+            return diff >= 0 ? diff + 1 : 0;
+        }
+
+        function bcalFormatDayLabel(ymd) {
+            const dt = bcalParseYMD(ymd);
+            if (!dt) return '';
+            return `${dt.getMonth() + 1}/${dt.getDate()} (${BCAL_WEEKDAYS[dt.getDay()]})`;
+        }
+
+        function bcalParseExistingDateRange(rangeStr, fallbackDaysCount) {
+            const today = new Date();
+            const defStart = bcalFormatYMD(today);
+            const defDays = Math.max(1, parseInt(fallbackDaysCount, 10) || 5);
+            const defEnd = bcalAddDays(defStart, defDays - 1);
+            if (!rangeStr || typeof rangeStr !== 'string') {
+                return { startDate: defStart, endDate: defEnd };
+            }
+            // 1. 優先匹配雙完整年份：YYYY[.-/]MM[.-/]DD ... YYYY[.-/]MM[.-/]DD
+            const fullMatch = rangeStr.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})\s*(?:~|-|–|—|至|到)\s*(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+            if (fullMatch) {
+                const s = `${fullMatch[1]}-${fullMatch[2].padStart(2, '0')}-${fullMatch[3].padStart(2, '0')}`;
+                const e = `${fullMatch[4]}-${fullMatch[5].padStart(2, '0')}-${fullMatch[6].padStart(2, '0')}`;
+                if (bcalParseYMD(s) && bcalParseYMD(e) && e >= s) {
+                    return { startDate: s, endDate: e };
+                }
+            }
+            // 2. 匹配省略結束年份：YYYY[.-/]MM[.-/]DD ... MM[.-/]DD
+            const shortMatch = rangeStr.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})\s*(?:~|-|–|—|至|到)\s*(\d{1,2})[.\-/](\d{1,2})/);
+            if (shortMatch) {
+                const sYear = parseInt(shortMatch[1], 10);
+                const sMonth = parseInt(shortMatch[2], 10);
+                const sDay = parseInt(shortMatch[3], 10);
+                const eMonth = parseInt(shortMatch[4], 10);
+                const eDay = parseInt(shortMatch[5], 10);
+                const eYear = (eMonth < sMonth || (eMonth === sMonth && eDay < sDay)) ? sYear + 1 : sYear;
+                const s = `${sYear}-${String(sMonth).padStart(2, '0')}-${String(sDay).padStart(2, '0')}`;
+                const e = `${eYear}-${String(eMonth).padStart(2, '0')}-${String(eDay).padStart(2, '0')}`;
+                if (bcalParseYMD(s) && bcalParseYMD(e) && e >= s) {
+                    return { startDate: s, endDate: e };
+                }
+            }
+            return { startDate: defStart, endDate: defEnd };
+        }
+
+        function initBookingCalendar(mode, startYmd, endYmd, autoOpen = false) {
+            const st = bcalState[mode];
+            if (!st) return;
+            const validStart = bcalParseYMD(startYmd) ? startYmd : bcalFormatYMD(new Date());
+            const validEnd = (bcalParseYMD(endYmd) && endYmd >= validStart) ? endYmd : validStart;
+            st.startDate = validStart;
+            st.endDate = validEnd;
+            st.hoverDate = '';
+            st.pickingEnd = false;
+            st.isOpen = !!autoOpen;
+            const dt = bcalParseYMD(validStart);
+            st.viewYear = dt.getFullYear();
+            st.viewMonth = dt.getMonth();
+            syncBookingCalendarOutputs(mode);
+            renderBookingCalendarUI(mode);
+        }
+
+        function toggleBookingCalendar(mode, forceState) {
+            const st = bcalState[mode];
+            if (!st) return;
+            st.isOpen = (typeof forceState === 'boolean') ? forceState : !st.isOpen;
+            if (st.isOpen && st.startDate) {
+                const dt = bcalParseYMD(st.startDate);
+                if (dt) {
+                    st.viewYear = dt.getFullYear();
+                    st.viewMonth = dt.getMonth();
+                }
+            }
+            renderBookingCalendarUI(mode);
+            if (st.isOpen) {
+                setTimeout(() => {
+                    const panel = document.getElementById(`bcalPanel_${mode}`);
+                    if (panel && panel.scrollIntoView) {
+                        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 60);
+            }
+        }
+
+        function navigateBookingCalendarMonth(mode, deltaMonths, ev) {
+            if (ev) ev.stopPropagation();
+            const st = bcalState[mode];
+            if (!st) return;
+            const d = new Date(st.viewYear, st.viewMonth + deltaMonths, 1);
+            st.viewYear = d.getFullYear();
+            st.viewMonth = d.getMonth();
+            renderBookingCalendarUI(mode);
+        }
+
+        function jumpBookingCalendarToday(mode, ev) {
+            if (ev) ev.stopPropagation();
+            const st = bcalState[mode];
+            if (!st) return;
+            const now = new Date();
+            st.viewYear = now.getFullYear();
+            st.viewMonth = now.getMonth();
+            renderBookingCalendarUI(mode);
+        }
+
+        function onBookingDayClick(mode, ymd, ev) {
+            if (ev) ev.stopPropagation();
+            const st = bcalState[mode];
+            if (!st) return;
+
+            if (!st.pickingEnd) {
+                // 第 1 下：設定出發 / 入住日
+                st.startDate = ymd;
+                st.endDate = '';
+                st.hoverDate = ymd;
+                st.pickingEnd = true;
+            } else {
+                // 第 2 下：若早於出發日，改設為新出發日；否則鎖定回程 / 退房日
+                if (ymd < st.startDate) {
+                    st.startDate = ymd;
+                    st.endDate = '';
+                    st.hoverDate = ymd;
+                    st.pickingEnd = true;
+                } else {
+                    st.endDate = ymd;
+                    st.hoverDate = '';
+                    st.pickingEnd = false;
+                    syncBookingCalendarOutputs(mode);
+                }
+            }
+            renderBookingCalendarUI(mode);
+        }
+
+        function onBookingDayHover(mode, ymd) {
+            const st = bcalState[mode];
+            if (!st || !st.pickingEnd) return;
+            if (st.hoverDate !== ymd) {
+                st.hoverDate = ymd;
+                renderBookingCalendarUI(mode);
+            }
+        }
+
+        function syncBookingCalendarOutputs(mode) {
+            const st = bcalState[mode];
+            if (!st || !st.startDate) return;
+            const effectiveEnd = st.endDate || st.startDate;
+            const days = Math.max(1, bcalDiffDaysInclusive(st.startDate, effectiveEnd));
+
+            if (mode === 'base') {
+                const input = document.getElementById('basePlanDateRange');
+                if (input) {
+                    input.value = `${st.startDate} ~ ${effectiveEnd} (${days}天)`;
+                }
+            } else if (mode === 'create') {
+                const sInput = document.getElementById('newPlanStartDate');
+                const eInput = document.getElementById('newPlanEndDate');
+                const dInput = document.getElementById('newPlanDaysCount');
+                if (sInput) sInput.value = st.startDate;
+                if (eInput) eInput.value = effectiveEnd;
+                if (dInput) dInput.value = String(days);
+            }
+        }
+
+        function handleNewPlanDaysManualInput(val) {
+            const count = Math.max(1, Math.min(60, parseInt(val, 10) || 1));
+            const st = bcalState.create;
+            if (!st || !st.startDate) return;
+            st.endDate = bcalAddDays(st.startDate, count - 1);
+            st.pickingEnd = false;
+            const eInput = document.getElementById('newPlanEndDate');
+            if (eInput) eInput.value = st.endDate;
+            renderBookingCalendarUI('create');
+        }
+
+        function renderSingleBookingMonthHTML(mode, year, monthIndex, navPosition) {
+            const st = bcalState[mode];
+            const firstDay = new Date(year, monthIndex, 1).getDay();
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            const todayYmd = bcalFormatYMD(new Date());
+            const previewEnd = st.pickingEnd
+                ? ((st.hoverDate && st.hoverDate >= st.startDate) ? st.hoverDate : '')
+                : st.endDate;
+
+            const leftBtn = (navPosition === 'left' || navPosition === 'both')
+                ? `<button type="button" class="bcal-nav-btn" onclick="navigateBookingCalendarMonth('${mode}', -1, event)" title="上個月"><i class="fa-solid fa-chevron-left"></i></button>`
+                : `<span class="bcal-nav-spacer"></span>`;
+            const rightBtn = (navPosition === 'right' || navPosition === 'both')
+                ? `<button type="button" class="bcal-nav-btn" onclick="navigateBookingCalendarMonth('${mode}', 1, event)" title="下個月"><i class="fa-solid fa-chevron-right"></i></button>`
+                : `<span class="bcal-nav-spacer"></span>`;
+
+            let weekdaysHtml = '';
+            BCAL_WEEKDAYS.forEach((w, idx) => {
+                const cls = idx === 0 ? 'weekend-sun' : (idx === 6 ? 'weekend-sat' : '');
+                weekdaysHtml += `<div class="bcal-weekday ${cls}">${w}</div>`;
+            });
+
+            let cellsHtml = '';
+            for (let i = 0; i < firstDay; i++) {
+                cellsHtml += `<div class="bcal-day empty"></div>`;
+            }
+            for (let d = 1; d <= daysInMonth; d++) {
+                const ymd = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const classes = ['bcal-day'];
+                let subTag = '';
+
+                if (ymd === todayYmd) classes.push('is-today');
+                const isStart = (st.startDate && ymd === st.startDate);
+                const isEnd = (!st.pickingEnd && st.endDate && ymd === st.endDate);
+                const isHoverEnd = (st.pickingEnd && previewEnd && ymd === previewEnd && ymd !== st.startDate);
+
+                if (isStart) {
+                    classes.push('is-start');
+                    if (!previewEnd) classes.push('single-unpaired');
+                    subTag = (isEnd && st.startDate === st.endDate) ? '當日' : '出發';
+                }
+                if (isEnd) {
+                    classes.push('is-end');
+                    if (!isStart) subTag = '回程';
+                } else if (isHoverEnd) {
+                    classes.push('is-end');
+                    subTag = '回程';
+                }
+
+                if (st.startDate && previewEnd && ymd > st.startDate && ymd < previewEnd) {
+                    classes.push(st.pickingEnd ? 'in-hover-range' : 'in-range');
+                }
+
+                cellsHtml += `<div class="${classes.join(' ')}" onclick="onBookingDayClick('${mode}', '${ymd}', event)" onmouseenter="onBookingDayHover('${mode}', '${ymd}')">
+                    <span>${d}</span>
+                    ${subTag ? `<span class="bcal-day-tag">${subTag}</span>` : ''}
+                </div>`;
+            }
+
+            const extraColClass = (navPosition === 'right') ? 'second-month' : '';
+            return `
+                <div class="bcal-month-col ${extraColClass}">
+                    <div class="bcal-month-header">
+                        ${leftBtn}
+                        <div class="bcal-month-title">${year} 年 ${monthIndex + 1} 月</div>
+                        ${rightBtn}
+                    </div>
+                    <div class="bcal-weekdays">${weekdaysHtml}</div>
+                    <div class="bcal-days-grid">${cellsHtml}</div>
+                </div>
+            `;
+        }
+
+        function renderBookingCalendarUI(mode) {
+            const st = bcalState[mode];
+            if (!st) return;
+
+            const triggerEl = document.getElementById(`bcalTrigger_${mode}`);
+            const panelEl = document.getElementById(`bcalPanel_${mode}`);
+            const startDispEl = document.getElementById(`bcalStartDisplay_${mode}`);
+            const endDispEl = document.getElementById(`bcalEndDisplay_${mode}`);
+            const pillEl = document.getElementById(`bcalDurationPill_${mode}`);
+            const slotStartEl = document.getElementById(`bcalSlotStart_${mode}`);
+            const slotEndEl = document.getElementById(`bcalSlotEnd_${mode}`);
+
+            if (!triggerEl || !panelEl) return;
+
+            triggerEl.classList.toggle('is-open', !!st.isOpen);
+            panelEl.classList.toggle('open', !!st.isOpen);
+
+            const formatSlotHTML = (ymd, emptyHint) => {
+                const dt = bcalParseYMD(ymd);
+                if (!dt) return `<span class="bcal-slot-placeholder">${emptyHint}</span>`;
+                return `<span>${ymd}</span><span class="bcal-slot-weekday">週${BCAL_WEEKDAYS[dt.getDay()]}</span>`;
+            };
+
+            if (startDispEl) startDispEl.innerHTML = formatSlotHTML(st.startDate, '點選出發日');
+
+            const displayEndYmd = st.pickingEnd
+                ? ((st.hoverDate && st.hoverDate >= st.startDate) ? st.hoverDate : '')
+                : st.endDate;
+
+            if (endDispEl) {
+                endDispEl.innerHTML = displayEndYmd
+                    ? formatSlotHTML(displayEndYmd, '點選回程日')
+                    : `<span class="bcal-slot-placeholder">請點選回程日...</span>`;
+            }
+
+            if (slotStartEl) slotStartEl.classList.toggle('active-step', st.isOpen && !st.pickingEnd);
+            if (slotEndEl) slotEndEl.classList.toggle('active-step', st.isOpen && st.pickingEnd);
+
+            const days = (st.startDate && displayEndYmd) ? bcalDiffDaysInclusive(st.startDate, displayEndYmd) : 1;
+            const nights = Math.max(0, days - 1);
+            if (pillEl) {
+                pillEl.textContent = days === 1 ? '1 天 (當日)' : `${days} 天 ${nights} 晚`;
+            }
+
+            if (!st.isOpen) return;
+
+            const nextMonthDate = new Date(st.viewYear, st.viewMonth + 1, 1);
+            const isNarrow = window.innerWidth <= 560;
+            const m1Html = renderSingleBookingMonthHTML(mode, st.viewYear, st.viewMonth, isNarrow ? 'both' : 'left');
+            const m2Html = isNarrow ? '' : renderSingleBookingMonthHTML(mode, nextMonthDate.getFullYear(), nextMonthDate.getMonth(), 'right');
+
+            const stepHintHtml = st.pickingEnd
+                ? `<span class="bcal-step-badge step-end"><i class="fa-solid fa-hand-pointer"></i> 請點選「回程 / 退房日期」（滑鼠移過可預覽區間）</span>`
+                : `<span class="bcal-step-badge"><i class="fa-regular fa-calendar-check"></i> 點擊任一日期重新選擇「出發日」與「回程日」</span>`;
+
+            panelEl.innerHTML = `
+                <div class="bcal-top-hint-bar" onclick="event.stopPropagation();">
+                    ${stepHintHtml}
+                    <div class="bcal-quick-actions">
+                        <button type="button" class="bcal-mini-btn" onclick="jumpBookingCalendarToday('${mode}', event)">今天</button>
+                        <button type="button" class="bcal-mini-btn primary" onclick="if(bcalState['${mode}'].pickingEnd){bcalState['${mode}'].endDate=bcalState['${mode}'].startDate;bcalState['${mode}'].pickingEnd=false;syncBookingCalendarOutputs('${mode}');} toggleBookingCalendar('${mode}', false);">完成收合</button>
+                    </div>
+                </div>
+                <div class="bcal-months-container" onclick="event.stopPropagation();">
+                    ${m1Html}
+                    ${m2Html}
+                </div>
+            `;
+        }
+
         // Create New Plan
         function openCreatePlanModal() {
             document.getElementById('newPlanTitle').value = '';
@@ -14940,8 +15642,9 @@ const firebaseConfig = {
             document.getElementById('newPlanMemberCount').value = '4';
             document.getElementById('newPlanCurrencySelect').value = 'CNY|人民幣|¥|4.65';
             document.getElementById('newPlanExchangeRate').value = '4.65';
-            document.getElementById('newPlanStartDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('newPlanEndDate').value = new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0];
+            const defStart = bcalFormatYMD(new Date());
+            const defEnd = bcalAddDays(defStart, 4);
+            initBookingCalendar('create', defStart, defEnd, false);
             openModal('createPlanModal');
         }
 
@@ -14950,10 +15653,10 @@ const firebaseConfig = {
             const title = document.getElementById('newPlanTitle').value;
             const subtitle = document.getElementById('newPlanSubtitle').value;
             const emoji = document.getElementById('newPlanEmoji').value || '✈️';
-            const count = parseInt(document.getElementById('newPlanDaysCount').value) || 5;
-            const mCount = parseInt(document.getElementById('newPlanMemberCount').value) || 4;
-            const sDate = document.getElementById('newPlanStartDate').value;
-            const eDate = document.getElementById('newPlanEndDate').value;
+            const sDate = document.getElementById('newPlanStartDate').value || bcalState.create.startDate || bcalFormatYMD(new Date());
+            const eDate = document.getElementById('newPlanEndDate').value || bcalState.create.endDate || sDate;
+            const count = Math.max(1, bcalDiffDaysInclusive(sDate, eDate) || parseInt(document.getElementById('newPlanDaysCount').value, 10) || 5);
+            const mCount = parseInt(document.getElementById('newPlanMemberCount').value, 10) || 4;
 
             // 貨幣與匯率設定
             const currVal = document.getElementById('newPlanCurrencySelect').value;
@@ -14966,9 +15669,10 @@ const firebaseConfig = {
             const newId = 'plan-' + Date.now();
             const daysArr = [];
             for (let i = 1; i <= count; i++) {
+                const curDayYmd = bcalAddDays(sDate, i - 1);
                 daysArr.push({
                     dayNum: i,
-                    date: `第 ${i} 天`,
+                    date: bcalFormatDayLabel(curDayYmd) || `第 ${i} 天`,
                     title: `Day ${i} 探索行程`,
                     breakfast: '自理',
                     breakfastCost: (cCode === 'JPY' ? 500 : cCode === 'KRW' ? 5000 : 30),
@@ -15011,7 +15715,7 @@ const firebaseConfig = {
                         phone: '',
                         checkIn: sDate,
                         checkOut: eDate,
-                        nights: count,
+                        nights: Math.max(1, count - 1),
                         notes: ''
                     }
                 ],
@@ -15086,8 +15790,14 @@ const firebaseConfig = {
             const noteEl = document.getElementById('basePlanRateStatusNote');
             if (noteEl) noteEl.style.display = 'none';
 
-            document.getElementById('basePlanDateRange').value = plan.dateRange || '';
-            document.getElementById('basePlanCoverUrl').value = plan.coverUrl || '';
+            // 初始化機酒風格區間行事曆
+            const parsedDates = bcalParseExistingDateRange(plan.dateRange || '', Array.isArray(plan.days) ? plan.days.length : 5);
+            initBookingCalendar('base', parsedDates.startDate, parsedDates.endDate, false);
+            if (plan.dateRange) {
+                const drInput = document.getElementById('basePlanDateRange');
+                if (drInput) drInput.value = plan.dateRange;
+            }
+
             openModal('editPlanBaseModal');
 
             // 打開時若為外幣，自動由網路取得最新即時匯率
@@ -15099,6 +15809,15 @@ const firebaseConfig = {
         function handleSavePlanBaseSubmit(e) {
             if (e && e.preventDefault) e.preventDefault();
             if (e && e.stopPropagation) e.stopPropagation();
+
+            // 若使用者在月曆只點了出發日尚未點回程日就按儲存，自動視為單日或補齊
+            if (bcalState.base.pickingEnd && bcalState.base.startDate) {
+                bcalState.base.endDate = bcalState.base.hoverDate && bcalState.base.hoverDate >= bcalState.base.startDate
+                    ? bcalState.base.hoverDate
+                    : bcalState.base.startDate;
+                bcalState.base.pickingEnd = false;
+                syncBookingCalendarOutputs('base');
+            }
 
             // 【最優先保證】立即關閉彈窗
             closeModal('editPlanBaseModal');
@@ -15113,6 +15832,7 @@ const firebaseConfig = {
                     return el ? (el.value || '').trim() : def;
                 };
 
+                const prevDateRange = plan.dateRange || '';
                 plan.title = getVal('basePlanTitle', plan.title || '旅行計畫');
                 plan.subtitle = getVal('basePlanSubtitle', plan.subtitle || '');
                 plan.emoji = getVal('basePlanEmoji', plan.emoji || '✈️');
@@ -15139,11 +15859,47 @@ const firebaseConfig = {
                     plan.currencySymbol = parts[2] || '¥';
                 }
 
-                plan.dateRange = getVal('basePlanDateRange', plan.dateRange || '');
-                plan.coverUrl = getVal('basePlanCoverUrl', plan.coverUrl || 'assets/hero_travel_cover.png');
+                // 同步更新日期區間與每日行程對應月/日(週X)
+                const sYmd = bcalState.base.startDate;
+                const eYmd = bcalState.base.endDate || sYmd;
+                if (sYmd && eYmd && bcalParseYMD(sYmd) && bcalParseYMD(eYmd)) {
+                    const newDaysTotal = Math.max(1, bcalDiffDaysInclusive(sYmd, eYmd));
+                    const formattedRange = `${sYmd} ~ ${eYmd} (${newDaysTotal}天)`;
+                    plan.dateRange = formattedRange;
+
+                    if (Array.isArray(plan.days)) {
+                        // 若新區間天數增加，自動補齊缺少的空白日程
+                        while (plan.days.length < newDaysTotal) {
+                            const nextNum = plan.days.length + 1;
+                            plan.days.push({
+                                dayNum: nextNum,
+                                date: bcalFormatDayLabel(bcalAddDays(sYmd, nextNum - 1)),
+                                title: `Day ${nextNum} 探索行程`,
+                                breakfast: '自理', breakfastCost: 0,
+                                lunch: '自理', lunchCost: 0,
+                                dinner: '自理', dinnerCost: 0,
+                                transportCost: 0, transportNote: '',
+                                spotCost: 0, spotNote: '',
+                                budget: 0,
+                                events: []
+                            });
+                        }
+                        // 若日期區間有變更，同步刷新既有每一天的月/日(週X)標記
+                        if (prevDateRange !== formattedRange) {
+                            plan.days.forEach((dObj, idx) => {
+                                dObj.dayNum = idx + 1;
+                                const label = bcalFormatDayLabel(bcalAddDays(sYmd, idx));
+                                if (label) dObj.date = label;
+                            });
+                        }
+                    }
+                } else {
+                    plan.dateRange = getVal('basePlanDateRange', plan.dateRange || '');
+                }
+
                 saveState();
                 renderAll();
-                showToast('success', `基本設定已更新！幣別：${plan.currencyName} (${plan.currencySymbol})，人數：${mCount} 人`);
+                showToast('success', `基本設定已更新！日期：${plan.dateRange}`);
                 return false;
             } catch (err) {
                 console.error('儲存基本設定時發生錯誤:', err);
