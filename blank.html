@@ -5475,7 +5475,7 @@
                             <i class="fa-solid fa-table-columns"></i> 左右雙欄總覽
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-transit" onclick="switchLogisticsSubtab('transit')">
-                            <i class="fa-solid fa-plane-departure"></i> 僅看交通 (機票/包車)
+                            <i class="fa-solid fa-plane-departure"></i> 僅看交通 (機票/其他交通)
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-hotel" onclick="switchLogisticsSubtab('hotel')">
                             <i class="fa-solid fa-hotel"></i> 僅看住宿飯店
@@ -5493,7 +5493,7 @@
                 <div class="logistics-split-grid" id="logisticsSplitGrid">
                     <!-- 左欄卡片：往返機票 ＋ 包車・機場接送 -->
                     <div class="logistics-dual-card" id="logisticsColLeft">
-                        <!-- 子區塊 1A: 往返機票 / 主交通（含搭乘方式與載具類型設定） -->
+                        <!-- 子區塊 1A: 往返機票 / 主交通 -->
                         <div class="logistics-sub-block" id="side-transport-section">
                             <div class="logistics-clean-head">
                                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -5507,39 +5507,38 @@
                                     <i class="fa-solid fa-pen-to-square"></i> 設定航班與票價
                                 </button>
                             </div>
-                            <!-- 搭乘方式 / 載具類型快速設定列（由彈窗移至此處直接切換） -->
-                            <div class="logistics-transport-mode-bar" id="logisticsTransportModeBar">
-                                <span class="ltm-label"><i class="fa-solid fa-route" style="color:#1f5f78;"></i> 搭乘方式 / 載具類型</span>
-                                <div class="ltm-btn-group" id="transportTypeButtonGroup">
-                                    <button type="button" class="ltm-pill active" id="btnTransportFlight" onclick="selectPlanTransportType('flight')">✈️ 飛機 / 航班</button>
-                                    <button type="button" class="ltm-pill" id="btnTransportTrain" onclick="selectPlanTransportType('train')">🚄 高鐵 / 火車</button>
-                                    <button type="button" class="ltm-pill" id="btnTransportBus" onclick="selectPlanTransportType('bus')">🚌 長途巴士 / 客運</button>
-                                    <button type="button" class="ltm-pill" id="btnTransportCruise" onclick="selectPlanTransportType('cruise')">🚢 遊輪 / 輪渡</button>
-                                    <button type="button" class="ltm-pill" id="btnTransportCar" onclick="selectPlanTransportType('car')">🚗 專車 / 包車接送</button>
-                                </div>
-                            </div>
                             <div class="flight-side-stack" id="sideFlightCardsContainer">
                                 <!-- Populated dynamically by renderSidebarFlights() -->
                             </div>
                         </div>
 
-                        <!-- 子區塊 1B: 包車・機場接送・大交通 -->
+                        <!-- 子區塊 1B: 其他交通（含非航班搭乘方式 / 載具類型設定） -->
                         <div class="logistics-sub-block logistics-sub-divider" id="major-transport-section">
                             <div class="logistics-clean-head" id="majorTransHeadRow">
                                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                                     <h3 class="logistics-clean-title">
                                         <i class="fa-solid fa-van-shuttle" style="color:#4a5785; font-size:0.88rem;"></i>
-                                        包車・機場接送・交通
+                                        其他交通
                                     </h3>
                                     <span id="majorTransEmptyHint" style="font-size:0.74rem; color:#94a3b8; font-weight:500;"></span>
                                 </div>
                                 <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                                    <button type="button" class="n-btn" style="border-radius:7px; padding:3px 8px; font-size:0.73rem; color:#475569;" onclick="importMajorTransportsFromDays()" title="掃描每日行程中的包車/接送項目並帶入此處集中管理">
+                                    <button type="button" class="n-btn" style="border-radius:7px; padding:3px 8px; font-size:0.73rem; color:#475569;" onclick="importMajorTransportsFromDays()" title="掃描每日行程中的其他交通項目並帶入此處集中管理">
                                         <i class="fa-solid fa-file-import" style="color:#475569;"></i> 從行程帶入
                                     </button>
                                     <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.75rem;" onclick="openEditMajorTransportModal(-1)">
-                                        <i class="fa-solid fa-plus"></i> 新增包車 / 接送
+                                        <i class="fa-solid fa-plus"></i> 新增交通
                                     </button>
+                                </div>
+                            </div>
+                            <!-- 搭乘方式 / 載具類型設定列（已移除航班選項，連動其他交通新增預設類別） -->
+                            <div class="logistics-transport-mode-bar" id="logisticsTransportModeBar" style="margin-top: 8px;">
+                                <span class="ltm-label"><i class="fa-solid fa-route" style="color:#1f5f78;"></i> 搭乘方式 / 載具類型</span>
+                                <div class="ltm-btn-group" id="transportTypeButtonGroup">
+                                    <button type="button" class="ltm-pill" id="btnTransportTrain" onclick="selectOtherTransportType('train')">🚄 高鐵 / 火車</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportBus" onclick="selectOtherTransportType('bus')">🚌 長途巴士 / 客運</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportCruise" onclick="selectOtherTransportType('cruise')">🚢 遊輪 / 輪渡</button>
+                                    <button type="button" class="ltm-pill active" id="btnTransportCar" onclick="selectOtherTransportType('car')">🚗 專車 / 包車接送</button>
                                 </div>
                             </div>
                             <div id="majorTransportCardsContainer">
@@ -7664,7 +7663,7 @@ const firebaseConfig = {
                                 <option value="ferry">⛴️ 船票 / 渡輪 / 遊輪</option>
                                 <option value="bus">🚌 機場巴士 / 長途客運</option>
                                 <option value="domestic_flight">✈️ 國內線航班</option>
-                                <option value="other">🎫 交通周遊券 / 其他交通</option>
+                                <option value="other">🚕 其他交通</option>
                             </select>
                             <input type="text" id="majorTransTitle" class="form-input" placeholder="填寫項目內容（如：桃園機場 T2 送機專車 / 成田機場接機）">
                         </div>
@@ -9089,25 +9088,10 @@ const firebaseConfig = {
 
             const fl = plan.flights || {};
             const legs = fl.legs || [];
-            const transportType = fl.transportType || 'flight';
-            const cfg = (typeof TRANSPORT_CONFIG !== 'undefined' && TRANSPORT_CONFIG[transportType])
-                ? TRANSPORT_CONFIG[transportType]
+            const transportType = 'flight';
+            const cfg = (typeof TRANSPORT_CONFIG !== 'undefined' && TRANSPORT_CONFIG.flight)
+                ? TRANSPORT_CONFIG.flight
                 : { name: '飛機 / 航班', sectionTitle: '往返機票 / 主交通', actionBtnText: '設定航班與票價', icon: 'fa-plane' };
-
-            // 同步第二張截圖位置的載具切換膠囊與標題
-            const btns = document.querySelectorAll('#transportTypeButtonGroup .ltm-pill');
-            btns.forEach(b => b.classList.remove('active'));
-            const activeBtn = document.getElementById(`btnTransport${transportType.charAt(0).toUpperCase() + transportType.slice(1)}`);
-            if (activeBtn) activeBtn.classList.add('active');
-
-            const secTitleEl = document.getElementById('sideTransportSectionTitle');
-            if (secTitleEl) {
-                secTitleEl.innerHTML = `<i class="fa-solid ${cfg.icon}" style="color:#286678; font-size:0.9rem;"></i> ${cfg.sectionTitle || '往返機票 / 主交通'}`;
-            }
-            const secBtnEl = document.getElementById('sideTransportEditBtn');
-            if (secBtnEl) {
-                secBtnEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> ${cfg.actionBtnText || '設定航班與票價'}`;
-            }
 
             const fStats = calcPlanFlightStats(plan);
             if (inlineCostEl) {
@@ -13051,10 +13035,22 @@ const firebaseConfig = {
             ferry: { label: '船票 / 渡輪 / 遊輪', shortLabel: '船票/渡輪', icon: 'fa-ship', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：宮島聯絡船往返船票）' },
             bus: { label: '機場巴士 / 長途客運', shortLabel: '巴士/客運', icon: 'fa-bus', bg: '#faf3e6', text: '#966420', border: '#ead9bc', placeholder: '填寫項目內容（如：利木津巴士 成田機場 ➔ 新宿）' },
             domestic_flight: { label: '國內線航班', shortLabel: '國內航段', icon: 'fa-plane', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：東京羽田 ➔ 札幌新千歲國內線）' },
-            other: { label: '交通周遊券 / 其他交通', shortLabel: '交通票券/其他', icon: 'fa-ticket', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：JR 東京廣域周遊券 3 日券 / Suica 儲值）' }
+            other: { label: '其他交通', shortLabel: '其他交通', icon: 'fa-taxi', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：市區計程車 / 區間接駁 / 租車自駕）' }
         };
 
         let currentLogisticsSubtab = 'all';
+        let selectedOtherTransportMode = 'car';
+
+        function selectOtherTransportType(mode) {
+            selectedOtherTransportMode = mode || 'car';
+            const btns = document.querySelectorAll('#transportTypeButtonGroup .ltm-pill');
+            btns.forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById(`btnTransport${selectedOtherTransportMode.charAt(0).toUpperCase() + selectedOtherTransportMode.slice(1)}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const modeToName = { train: '高鐵 / 火車', bus: '長途巴士 / 客運', cruise: '遊輪 / 輪渡', car: '專車 / 包車接送' };
+            showToast('info', `已選擇「${modeToName[selectedOtherTransportMode] || '其他交通'}」，點擊「＋ 新增交通」將自動帶入此類別`);
+        }
 
         // 單日點選行事曆狀態（供新增/編輯交通項目使用，自動對照旅行計畫 Day 1 ~ Day N）
         const mtCalState = {
@@ -13475,8 +13471,8 @@ const firebaseConfig = {
                         <div class="logistics-seg-sub">${fStats.isSet ? `每人票價 ‧ 全團 NT$ ${fStats.groupTwd.toLocaleString()}` : '點擊設定航班與票價'}</div>
                     </div>
 
-                    <div class="logistics-seg-cell" onclick="openEditMajorTransportModal(-1)" title="點擊新增交通項目">
-                        <div class="logistics-seg-label">包車・機場接送</div>
+                    <div class="logistics-seg-cell" onclick="openEditMajorTransportModal(-1)" title="點擊新增其他交通項目">
+                        <div class="logistics-seg-label">其他交通</div>
                         <div class="logistics-seg-val ${mtStats.count === 0 ? 'accent-amber' : ''}">${mtStats.count > 0 ? `${mtStats.count} 項` : '0'}</div>
                         <div class="logistics-seg-sub">${mtStats.count > 0 ? `每人 NT$ ${mtStats.personTwd.toLocaleString()} ‧ 全團 NT$ ${mtStats.groupTwd.toLocaleString()}` : '尚未新增，點擊建立'}</div>
                     </div>
@@ -13648,7 +13644,9 @@ const firebaseConfig = {
                 if (syncCb) syncCb.checked = (it.syncToSchedule !== false);
             } else {
                 if (titleEl) titleEl.innerText = '🚐 新增交通';
-                document.getElementById('majorTransCategory').value = 'transfer';
+                const modeToCat = { train: 'rail', bus: 'bus', cruise: 'ferry', car: 'transfer' };
+                const defaultCat = modeToCat[selectedOtherTransportMode] || 'transfer';
+                document.getElementById('majorTransCategory').value = defaultCat;
                 onMajorTransCategoryChange();
                 initMajorTransCalendar('');
                 document.getElementById('majorTransTimeStart').value = '08:30';
@@ -17267,25 +17265,7 @@ const firebaseConfig = {
             const input = document.getElementById('fTransportType');
             if (input) input.value = type;
 
-            // 更新第二張截圖位置的載具類型膠囊按鈕 active 狀態
-            const btns = document.querySelectorAll('#transportTypeButtonGroup .ltm-pill');
-            btns.forEach(b => {
-                b.classList.remove('active');
-            });
-            const activeBtn = document.getElementById(`btnTransport${type.charAt(0).toUpperCase() + type.slice(1)}`);
-            if (activeBtn) {
-                activeBtn.classList.add('active');
-            }
-
-            // 同步更新第二張截圖區塊標題與按鈕文字
-            const secTitleEl = document.getElementById('sideTransportSectionTitle');
-            if (secTitleEl) {
-                secTitleEl.innerHTML = `<i class="fa-solid ${cfg.icon}" style="color:#286678; font-size:0.9rem;"></i> ${cfg.sectionTitle}`;
-            }
-            const secBtnEl = document.getElementById('sideTransportEditBtn');
-            if (secBtnEl) {
-                secBtnEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> ${cfg.actionBtnText}`;
-            }
+            // 航班區塊標題固定維持往返機票設定
 
             // 切換飛機專用下拉選單/拆碼欄位 vs 其他載具通用輸入框
             const isFlight = (type === 'flight');
@@ -17501,8 +17481,8 @@ const firebaseConfig = {
                 const l1 = legs[0] || {};
                 const l2 = legs[1] || {};
 
-                const transportType = fl.transportType || 'flight';
-                setTransportType(transportType);
+                const transportType = 'flight';
+                setTransportType('flight');
 
                 const setVal = (id, val) => {
                     const el = document.getElementById(id);
