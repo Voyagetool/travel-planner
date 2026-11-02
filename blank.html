@@ -3414,8 +3414,8 @@
             position: relative;
         }
 
-        /* 響應式自適應調整 */
-        @media (max-width: 1180px) {
+        /* 響應式自適應調整：支援瀏覽器任意縮放比例維持單排 4 欄，僅手機窄螢幕才換行 */
+        @media (max-width: 640px) {
             .okr-kpi-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -3430,10 +3430,7 @@
             .okr-workspace-main {
                 padding: 14px 12px 48px !important;
             }
-            .okr-kpi-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
+            /* .okr-kpi-grid 改由 640px/520px 斷點控制，確保電腦縮放比例改變時維持單排 4 欄 */
             #sideFlightCardsContainer,
             #majorTransportCardsContainer,
             #sideHotelCardsContainer {
@@ -4340,6 +4337,69 @@
         @media (max-width: 640px) {
             .logistics-segmented-strip {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+
+        /* 10. 瀏覽器縮放比例穩定保護 (Zoom-Resilient Layout)：縮放改變時仍維持單排 4 欄與雙欄並排 */
+        @media (min-width: 641px) {
+            .okr-kpi-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: clamp(8px, 1vw, 14px) !important;
+            }
+            .okr-kpi-card {
+                padding: clamp(9px, 1vw, 13px) clamp(10px, 1.25vw, 16px) !important;
+                gap: clamp(6px, 0.8vw, 12px) !important;
+                min-width: 0 !important;
+            }
+            .okr-kpi-label {
+                font-size: clamp(0.68rem, 0.82vw, 0.78rem) !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .okr-kpi-value {
+                font-size: clamp(1.02rem, 1.45vw, 1.34rem) !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .okr-kpi-sub {
+                font-size: clamp(0.66rem, 0.78vw, 0.73rem) !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .okr-kpi-icon-box {
+                width: clamp(30px, 2.8vw, 38px) !important;
+                height: clamp(30px, 2.8vw, 38px) !important;
+                font-size: clamp(0.82rem, 1vw, 1rem) !important;
+                border-radius: 9px !important;
+            }
+
+            /* 交通與住宿分頁在縮放時同樣保持連體單排與左右雙欄 */
+            .logistics-segmented-strip {
+                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            }
+            .logistics-seg-cell {
+                padding: clamp(9px, 1vw, 13px) clamp(10px, 1.2vw, 18px) !important;
+                border-bottom: none !important;
+                border-right: 1px solid #edf1f6 !important;
+            }
+            .logistics-seg-cell:last-child {
+                border-right: none !important;
+            }
+            .logistics-seg-val {
+                font-size: clamp(1.05rem, 1.5vw, 1.48rem) !important;
+            }
+            .logistics-split-grid:not(.single-col) {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+                gap: clamp(10px, 1.2vw, 16px) !important;
+            }
+        }
+        @media (max-width: 520px) {
+            .okr-kpi-grid {
+                grid-template-columns: 1fr !important;
             }
         }
 
