@@ -3419,7 +3419,7 @@
     }
 
     // ==========================================
-    // 🔄 一鍵從主規劃手帳 (index.html) 同步資料
+    // 🔄 一鍵從主規劃手帳 (index.html) 同步資料 (具備獨立房間隔離防護)
     // ==========================================
     function syncFromMainPlan() {
       const roomId = getCloudRoomId();
@@ -3428,27 +3428,31 @@
         if (!plan) return false;
 
         const memberCount = Number(plan.memberCount) || 2;
-        const exchangeRate = Number(plan.exchangeRate) || 4.65;
+        const exchangeRate = Number(plan.exchangeRate) || (roomId === DEFAULT_ROOM_ID ? 4.65 : 1);
         const daysCount = (plan.days && plan.days.length) ? plan.days.length : 7;
-        const tripTitle = plan.title || "重慶自由行";
+        const tripTitle = plan.title || (roomId === DEFAULT_ROOM_ID ? "重慶自由行" : `旅行支出 (${roomId})`);
+        const tripCurrency = plan.currencyCode || plan.currency || (roomId === DEFAULT_ROOM_ID ? "CNY" : "USD");
 
         appState.tripInfo.title = tripTitle;
         appState.tripInfo.memberCount = memberCount;
         appState.tripInfo.exchangeRate = exchangeRate;
         appState.tripInfo.daysCount = daysCount;
+        appState.tripInfo.foreignCurrency = tripCurrency;
 
-        // 1. 同步大項交通 (機票)
+        // 1. 同步大項交通 (機票 / 高鐵等)
         if (plan.flights && plan.flights.items && plan.flights.items.length > 0) {
           plan.flights.items.forEach(fl => {
             const cost = Number(fl.cost) || 0;
             if (cost > 0) {
-              const existingIdx = appState.majorExpenses.findIndex(m => m.name.includes(fl.flightNo || fl.depAir || "機票"));
+              const dep = fl.depAir || fl.depCity || "出發地";
+              const arr = fl.arrAir || fl.arrCity || "目的地";
+              const existingIdx = appState.majorExpenses.findIndex(m => m.name.includes(fl.flightNo || dep || "機票"));
               const itemData = {
                 id: "m_sync_" + (fl.flightNo || Date.now()),
                 category: "flight",
                 transitType: "flight_round",
-                route: `${fl.depAir || "松山"} ⇋ ${fl.arrAir || "江北"}`,
-                name: `${fl.depAir || "出發地"} ⇋ ${fl.arrAir || "目的地"} 航班 (${fl.flightNo || "機票"})`,
+                route: `${dep} ⇋ ${arr}`,
+                name: `${dep} ⇋ ${arr} 航班 (${fl.flightNo || "機票"})`,
                 amount: cost,
                 actualAmount: fl.actualCost ? Number(fl.actualCost) : cost,
                 isPaid: true,
@@ -3462,7 +3466,7 @@
           });
         }
 
-        // 2. 同步住宿
+        // 2. 同步住宿 (支援各國幣別與多日區間)
         if (plan.hotels && plan.hotels.length > 0) {
           plan.hotels.forEach((h, idx) => {
             const nights = Number(h.nights) || 1;
@@ -3473,7 +3477,7 @@
               const existingIdx = appState.accommodations.findIndex(a => a.name.includes(h.name));
               const accData = {
                 id: "acc_sync_" + idx,
-                name: h.name || "預定飯店",
+                name: h.name || "預定住宿飯店",
                 mode: nights > 1 ? "range" : "daily",
                 startDay: idx === 0 ? 1 : 4,
                 endDay: idx === 0 ? nights : (4 + nights - 1),
@@ -3483,7 +3487,7 @@
                 amount: cost > 0 ? cost : 800,
                 actualAmount: cost > 0 ? cost : 800,
                 isPaid: true,
-                currency: h.currency || "CNY",
+                currency: h.currency || tripCurrency,
                 roomCount: Number(h.roomCount) || 1,
                 note: h.stayLabel || h.city || "主行程同步飯店"
               };
@@ -3493,7 +3497,7 @@
           });
         }
 
-        // 3. 同步每日時間軸活動
+        // 3. 同步每日時間軸活動 (智慧語意辨識多國美食與交通)
         if (plan.days && plan.days.length > 0) {
           plan.days.forEach((dayObj, dayIdx) => {
             const dayNum = dayIdx + 1;
@@ -3507,13 +3511,14 @@
                   let sub = "ticket";
                   const n = (ev.name + " " + (ev.note || "")).toLowerCase();
 
-                  if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓/.test(n)) {
+                  // 多國美食辨識：台式、川渝、日式、西式料理通用
+                  if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n)) {
                     cat = "dining";
-                    sub = /午/.test(n) ? "lunch" : (/晚|夜市/.test(n) ? "dinner" : (/早/.test(n) ? "breakfast" : "snack"));
-                  } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車/.test(n)) {
+                    sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
+                  } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(n)) {
                     cat = "transit";
-                    sub = /滴滴|計程車/.test(n) ? "taxi" : (/地鐵|捷運/.test(n) ? "metro" : "bus");
-                  } else if (/伴手禮|特產|底料|買|購物/.test(n)) {
+                    sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : (/地鐵|捷運|jr|新幹線|metro|train/.test(n) ? "metro" : "bus");
+                  } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
                     cat = "other";
                     sub = "gift";
                   }
@@ -3530,7 +3535,7 @@
                     amount: bCost > 0 ? bCost : aCost,
                     actualAmount: aCost,
                     isPaid: true,
-                    currency: plan.currencyCode || "CNY",
+                    currency: plan.currencyCode || tripCurrency,
                     pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
                     note: ev.note || ""
                   };
@@ -3555,32 +3560,50 @@
           if (doc.exists) {
             const data = doc.data();
             if (data && data.appState && data.appState.plans) {
-              const activePlanId = data.appState.activePlanId || 'plan-chongqing';
-              const targetPlan = data.appState.plans[activePlanId] || Object.values(data.appState.plans)[0];
-              synced = processPlanSync(targetPlan);
+              const plans = data.appState.plans;
+              let targetPlan = null;
+              // 優先抓取作用中行程；若無則抓取該房間內的第一個行程
+              if (data.appState.activePlanId && plans[data.appState.activePlanId]) {
+                targetPlan = plans[data.appState.activePlanId];
+              } else {
+                const planKeys = Object.keys(plans);
+                if (planKeys.length > 0) targetPlan = plans[planKeys[0]];
+              }
+
+              if (targetPlan) {
+                synced = processPlanSync(targetPlan);
+              }
             }
           }
 
-          if (!synced) {
+          // 嚴格房間隔離：只有在預設重慶房間 (chongqing-2026) 且雲端無資料時，才允許 fallback 讀取本機快取；
+          // 其他獨立房間絕不讀取本機重慶快取，杜絕跨旅行資料混淆！
+          if (!synced && roomId === DEFAULT_ROOM_ID) {
             synced = trySyncFromLocalStorage();
           }
 
           if (synced) {
-            alert(`🎉 成功由主規劃手帳同步行程資料！\n已更新：旅程名稱、人數、匯率、機票大項、住宿與各天消費活動。`);
+            alert(`🎉 成功同步【${appState.tripInfo.title}】行程資料！\n已更新：旅程名稱、人數、幣別、匯率、大項交通、住宿與各天消費活動。`);
           } else {
-            alert("未在雲端或本地找到主行程資料，已保留現有帳本。您可直接手動記帳或載入範例。");
+            if (roomId === DEFAULT_ROOM_ID) {
+              alert("未在雲端或本地找到重慶主行程資料，已保留現有帳本。您可手動記帳或載入精選範本。");
+            } else {
+              alert(`未在雲端房間【${roomId}】中找到主行程資料。\n\n提示：請先在主行程手帳 (index.html?room=${roomId}) 建立並儲存行程，或直接在此頁面手動記帳。`);
+            }
           }
         }).catch(err => {
-          console.error("同步失敗，嘗試讀取本機", err);
-          if (trySyncFromLocalStorage()) {
+          console.error("同步失敗，嘗試檢查本機", err);
+          if (roomId === DEFAULT_ROOM_ID && trySyncFromLocalStorage()) {
             alert("成功由本機主規劃快取同步行程資料！");
+          } else {
+            alert(`連線雲端房間【${roomId}】發生錯誤，請檢查網路連線。`);
           }
         });
       } else {
-        if (trySyncFromLocalStorage()) {
+        if (roomId === DEFAULT_ROOM_ID && trySyncFromLocalStorage()) {
           alert("成功由本機主規劃快取同步行程資料！");
         } else {
-          alert("請確認主行程頁面 (index.html) 是否已儲存過行程。");
+          alert(`請確認主行程頁面 (index.html?room=${roomId}) 是否已儲存過行程。`);
         }
       }
 
@@ -3590,9 +3613,17 @@
           if (raw) {
             const mainAppState = JSON.parse(raw);
             if (mainAppState.plans) {
-              const activePlanId = mainAppState.activePlanId || 'plan-chongqing';
-              const targetPlan = mainAppState.plans[activePlanId] || Object.values(mainAppState.plans)[0];
-              return processPlanSync(targetPlan);
+              const plans = mainAppState.plans;
+              let targetPlan = null;
+              if (mainAppState.activePlanId && plans[mainAppState.activePlanId]) {
+                targetPlan = plans[mainAppState.activePlanId];
+              } else {
+                const planKeys = Object.keys(plans);
+                if (planKeys.length > 0) targetPlan = plans[planKeys[0]];
+              }
+              if (targetPlan) {
+                return processPlanSync(targetPlan);
+              }
             }
           }
         } catch(e) {}
