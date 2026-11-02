@@ -5126,6 +5126,135 @@
             letter-spacing: 0;
         }
 
+        /* ====================================================
+           V3.0 交通載具切換列（第二張截圖位置）與智慧航班欄位樣式
+           ==================================================== */
+        .logistics-transport-mode-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 10px;
+        }
+        .ltm-label {
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .ltm-btn-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .ltm-pill {
+            appearance: none;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            font-size: 0.73rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            line-height: 1.35;
+        }
+        .ltm-pill:hover {
+            border-color: #286678;
+            color: #1f5f78;
+            background: #f0f9ff;
+        }
+        .ltm-pill.active {
+            background: #1f5f78;
+            border-color: #1f5f78;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(31, 95, 120, 0.22);
+        }
+        .flight-code-combo {
+            display: flex;
+            align-items: stretch;
+            border: 1px solid var(--notion-border, #cbd5e1);
+            border-radius: 6px;
+            overflow: hidden;
+            background: #ffffff;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .flight-code-combo:focus-within {
+            border-color: #2f6fed;
+            box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.14);
+        }
+        .flight-code-prefix {
+            width: 52px;
+            border: none !important;
+            border-right: 1px solid #e2e8f0 !important;
+            background: #eff6ff !important;
+            color: #1d4ed8 !important;
+            font-weight: 800 !important;
+            font-size: 0.86rem !important;
+            text-align: center;
+            padding: 6px 4px !important;
+            outline: none;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .flight-code-num {
+            flex: 1;
+            min-width: 0;
+            border: none !important;
+            background: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 0.88rem !important;
+            color: #0f172a !important;
+            padding: 6px 8px !important;
+            outline: none;
+        }
+        .flight-auto-hint {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 0.72rem;
+            color: #334155;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 5px 9px;
+            margin: 4px 0 8px 0;
+            line-height: 1.4;
+        }
+        .flight-layover-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 7px;
+            padding: 7px 10px;
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+            color: #92400e;
+        }
+        .flight-transfer-card {
+            display: none;
+            background: #fffaf5;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1.5px dashed #fdba74;
+            margin-top: 10px;
+        }
+
     </style>
 </head>
 <body>
@@ -5315,19 +5444,30 @@
                 <div class="logistics-split-grid" id="logisticsSplitGrid">
                     <!-- 左欄卡片：往返機票 ＋ 包車・機場接送 -->
                     <div class="logistics-dual-card" id="logisticsColLeft">
-                        <!-- 子區塊 1A: 往返機票 / 主交通 -->
+                        <!-- 子區塊 1A: 往返機票 / 主交通（含搭乘方式與載具類型設定） -->
                         <div class="logistics-sub-block" id="side-transport-section">
                             <div class="logistics-clean-head">
                                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                                    <h3 class="logistics-clean-title">
+                                    <h3 class="logistics-clean-title" id="sideTransportSectionTitle">
                                         <i class="fa-solid fa-plane-departure" style="color:#286678; font-size:0.9rem;"></i>
                                         往返機票 / 主交通
                                     </h3>
                                     <div id="flightInlineCostSummary"></div>
                                 </div>
-                                <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.75rem;" onclick="if(event){event.stopPropagation();event.preventDefault();} openEditFlightModal();">
+                                <button type="button" class="n-btn n-btn-primary" id="sideTransportEditBtn" style="border-radius:7px; padding:4px 10px; font-size:0.75rem;" onclick="if(event){event.stopPropagation();event.preventDefault();} openEditFlightModal();">
                                     <i class="fa-solid fa-pen-to-square"></i> 設定航班與票價
                                 </button>
+                            </div>
+                            <!-- 搭乘方式 / 載具類型快速設定列（由彈窗移至此處直接切換） -->
+                            <div class="logistics-transport-mode-bar" id="logisticsTransportModeBar">
+                                <span class="ltm-label"><i class="fa-solid fa-route" style="color:#1f5f78;"></i> 搭乘方式 / 載具類型</span>
+                                <div class="ltm-btn-group" id="transportTypeButtonGroup">
+                                    <button type="button" class="ltm-pill active" id="btnTransportFlight" onclick="selectPlanTransportType('flight')">✈️ 飛機 / 航班</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportTrain" onclick="selectPlanTransportType('train')">🚄 高鐵 / 火車</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportBus" onclick="selectPlanTransportType('bus')">🚌 長途巴士 / 客運</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportCruise" onclick="selectPlanTransportType('cruise')">🚢 遊輪 / 輪渡</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportCar" onclick="selectPlanTransportType('car')">🚗 專車 / 包車接送</button>
+                                </div>
                             </div>
                             <div class="flight-side-stack" id="sideFlightCardsContainer">
                                 <!-- Populated dynamically by renderSidebarFlights() -->
@@ -6726,177 +6866,246 @@
         </div>
     </div>
 
-    <!-- 5. 編輯航班資訊 (交通：支援飛機/高鐵/巴士/遊輪，直飛/直達與中轉/換乘) -->
+    <!-- 5. 編輯交通資訊 (智慧航班自動帶入、航空公司選單與自動中轉時間計算) -->
     <div class="modal-backdrop" id="editFlightModal" onclick="handleBackdropClick(event, 'editFlightModal')">
-        <div class="modal-dialog" style="max-width: 760px;" onclick="event.stopPropagation();">
+        <div class="modal-dialog" style="max-width: 780px;" onclick="event.stopPropagation();">
             <div class="modal-header">
-                <div class="modal-title" id="flightModalHeaderTitle"><i class="fa-solid fa-plane" style="color: #2383e2;"></i> 編輯大交通資訊 (支援多種載具與轉機/換乘)</div>
+                <div class="modal-title" id="flightModalHeaderTitle"><i class="fa-solid fa-plane" style="color: #2383e2;"></i> 編輯交通資訊</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editFlightModal')"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="editFlightForm" onsubmit="handleSaveFlightSubmit(event); return false;" novalidate>
                 <div class="modal-body">
-                    <!-- 載具類型切換列 -->
-                    <div style="background: #f1f5f9; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label style="font-size: 0.86rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; margin: 0;">
-                                <i class="fa-solid fa-route" style="color:#0284c7;"></i> 大交通搭乘方式 / 載具類型
-                            </label>
-                            <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">點擊切換，表單欄位即時自適應</span>
-                        </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="transportTypeButtonGroup">
-                            <button type="button" class="n-btn transport-btn active" id="btnTransportFlight" onclick="setTransportType('flight')" style="font-weight:700; background:#0284c7; color:#fff;">✈️ 飛機 / 航班</button>
-                            <button type="button" class="n-btn transport-btn" id="btnTransportTrain" onclick="setTransportType('train')">🚄 高鐵 / 火車</button>
-                            <button type="button" class="n-btn transport-btn" id="btnTransportBus" onclick="setTransportType('bus')">🚌 長途巴士 / 客運</button>
-                            <button type="button" class="n-btn transport-btn" id="btnTransportCruise" onclick="setTransportType('cruise')">🚢 遊輪 / 輪渡</button>
-                            <button type="button" class="n-btn transport-btn" id="btnTransportCar" onclick="setTransportType('car')">🚗 專車 / 包車接送</button>
-                        </div>
-                        <input type="hidden" id="fTransportType" value="flight">
+                    <input type="hidden" id="fTransportType" value="flight">
+
+                    <!-- 網路航空公司同步與轉機設定列 -->
+                    <div id="airlineOnlineSyncBar" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 7px; padding: 6px 11px; margin-bottom: 10px; font-size: 0.74rem; color: #0369a1;">
+                        <span id="airlineOnlineSyncBadge"><i class="fa-solid fa-plane-circle-check"></i> 常用航空置頂（華航/長榮/國泰/虎航/樂桃）‧ 輸入班機數字自動帶入最新時刻與航廈</span>
+                        <button type="button" class="n-btn" style="font-size: 0.7rem; padding: 1px 7px; border-color: #7dd3fc; color: #0284c7; background: #ffffff;" onclick="fetchOnlineAirlinesCatalog(true)">
+                            <i class="fa-solid fa-rotate"></i> 更新網路航空清單
+                        </button>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #fafaf9; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--notion-border); margin-bottom: 14px;">
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 700; color: #ea580c; cursor: pointer;">
-                            <input type="checkbox" id="fIsTransferCheckbox" onchange="toggleFlightTransferFields()">
-                            <span id="fIsTransferCheckboxSpan">🔄 本次大交通包含「轉機 / 中轉換乘」航段 (開啟第 2 段與中轉停留欄位)</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; background: #fafaf9; padding: 8px 12px; border-radius: 7px; border: 1px solid var(--notion-border); margin-bottom: 12px;">
+                        <label style="display: flex; align-items: center; gap: 7px; font-size: 0.85rem; font-weight: 700; color: #ea580c; cursor: pointer;">
+                            <input type="checkbox" id="fIsTransferCheckbox" onchange="toggleFlightTransferFields('master')">
+                            <span id="fIsTransferCheckboxSpan">🔄 包含「轉機」航段</span>
                         </label>
-                        <div style="display: flex; gap: 6px;">
-                            <button type="button" class="n-btn" style="font-size: 0.74rem; padding: 2px 7px;" onclick="fillTransferExample()">轉機航段範例</button>
-                            <button type="button" class="n-btn" style="font-size: 0.74rem; padding: 2px 7px;" onclick="fillDirectExample()">直飛航段範例</button>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <span style="font-size: 0.71rem; color: #64748b;">⚠️ 若航空公司調整航班時間，可直接微調時間欄位</span>
+                            <button type="button" class="n-btn" style="font-size: 0.72rem; padding: 2px 7px;" onclick="fillTransferExampleChongqing()">轉機範例</button>
+                            <button type="button" class="n-btn" style="font-size: 0.72rem; padding: 2px 7px;" onclick="fillDirectExampleBeijing()">直飛範例</button>
                         </div>
                     </div>
 
-                    <!-- 去程航段 -->
+                    <!-- 去程航班 -->
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <h4 style="font-size: 0.94rem; font-weight: 800; color: #0284c7;" id="labelOutSectionTitle">🛫 去程航段 (第 1 段或起發航段)</h4>
-                            <span class="prop-pill pill-blue">去程</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
+                            <h4 style="font-size: 0.95rem; font-weight: 800; color: #0284c7; margin: 0;" id="labelOutSectionTitle">🛫 去程航班</h4>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.76rem; font-weight: 700; color: #c2410c; background: #fff7ed; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="fOutIsTransfer" onchange="toggleFlightTransferFields('sub')">
+                                    <span>🔄 去程轉機</span>
+                                </label>
+                                <span class="prop-pill pill-blue">去程</span>
+                            </div>
                         </div>
+
                         <div class="form-row-4">
                             <div class="form-group">
                                 <label class="form-label" id="labelOutAirline">航空公司</label>
-                                <input type="text" id="fOutAirline" class="form-input" placeholder="國泰航空 / 中華航空">
+                                <select id="fAirlineSelect_Out1" class="form-input" onchange="onSegmentAirlineChange('Out1', true)"></select>
+                                <input type="text" id="fAirlineCustom_Out1" class="form-input" style="display:none; margin-top:4px;" placeholder="輸入名稱" oninput="syncSegmentCombinedFields('Out1')">
+                                <input type="hidden" id="fOutAirline">
                             </div>
                             <div class="form-group">
                                 <label class="form-label" id="labelOutNo">班機代號</label>
-                                <input type="text" id="fOutNo" class="form-input" placeholder="CX 407">
+                                <div class="flight-code-combo" id="fFlightCodeCombo_Out1">
+                                    <input type="text" id="fCodePrefix_Out1" class="flight-code-prefix" placeholder="CI" maxlength="3" readonly oninput="syncSegmentCombinedFields('Out1')">
+                                    <input type="text" id="fCodeNum_Out1" class="flight-code-num" inputmode="numeric" placeholder="填入數字" oninput="onSegmentFlightNumInput('Out1')">
+                                </div>
+                                <input type="text" id="fLegacyNo_Out1" class="form-input" style="display:none;" placeholder="輸入班次編號" oninput="syncSegmentCombinedFields('Out1')">
+                                <input type="hidden" id="fOutNo">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">起飛時間</label>
-                                <input type="text" id="fOutDepTime" class="form-input" placeholder="08:00">
+                                <input type="text" id="fOutDepTime" class="form-input" placeholder="08:55" oninput="onSegmentTimeManualChange('Out1')">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">抵達時間</label>
-                                <input type="text" id="fOutArrTime1" class="form-input" placeholder="10:00">
+                                <input type="text" id="fOutArrTime1" class="form-input" placeholder="13:15" oninput="onSegmentTimeManualChange('Out1')">
                             </div>
                         </div>
+                        <div id="fAutoHint_Out1" class="flight-auto-hint"></div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" id="labelOutDepLoc">起飛機場 / 航廈</label>
-                                <input type="text" id="fOutDepLoc" class="form-input" placeholder="台北桃園 (TPE) T1">
+                                <input type="text" id="fOutDepLoc" class="form-input" placeholder="台北桃園 (TPE) T2">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" id="fOutArrLabel1">抵達機場 (直飛目的地或轉機地)</label>
-                                <input type="text" id="fOutArrLoc1" class="form-input" placeholder="香港 (HKG) T1">
+                                <label class="form-label" id="fOutArrLabel1">抵達機場 / 航廈</label>
+                                <input type="text" id="fOutArrLoc1" class="form-input" placeholder="東京成田 (NRT) T2" oninput="recalcDirectionTransferAndDuration('Out')">
                             </div>
                         </div>
 
-                        <!-- 去程轉機區塊 -->
-                        <div id="transferOutboundFields" style="display: none; background: #fff7ed; padding: 12px; border-radius: 6px; border: 1px dashed #fed7aa; margin-top: 10px;">
-                            <div class="form-group">
-                                <label class="form-label" id="labelOutTransferInfo" style="color: #ea580c;">🔄 去程轉機地點與停留時間說明</label>
-                                <input type="text" id="fTransferInfoOut" class="form-input" placeholder="香港國際機場 (HKG) 轉機停留 3 小時 35 分鐘">
-                            </div>
-                            <h5 style="font-size: 0.85rem; font-weight: 800; color: #ea580c; margin-bottom: 6px;" id="labelOutNo2Title">去程第 2 段交通資訊</h5>
-                            <div class="form-row-3">
-                                <div class="form-group">
-                                    <label class="form-label" id="labelOutNo2">第 2 段班機代號</label>
-                                    <input type="text" id="fOutNo2" class="form-input" placeholder="CX 928">
+                        <!-- 去程轉機區塊（與主航段一致之設定介面 + 自動中轉時間計算） -->
+                        <div id="transferOutboundFields" class="flight-transfer-card">
+                            <div class="flight-layover-banner">
+                                <div id="fLayoverCalcBadgeOut" style="font-weight: 700;">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> 系統將依據兩段航班自動計算中轉時間
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">第 2 段起飛時間</label>
-                                    <input type="text" id="fOutDepTime2" class="form-input" placeholder="13:35">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">最終抵達時間</label>
-                                    <input type="text" id="fOutArrTime2" class="form-input" placeholder="16:10">
-                                </div>
+                                <input type="text" id="fTransferInfoOut" class="form-input" style="max-width: 310px; font-size: 0.76rem; padding: 4px 8px; height: 28px; background: #ffffff;" placeholder="自動計算中轉地點與停留時間">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" id="labelOutArrLoc2">最終目的地機場 / 航廈</label>
-                                <input type="text" id="fOutArrLoc2" class="form-input" placeholder="東京成田 (NRT) T3">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h5 style="font-size: 0.86rem; font-weight: 800; color: #ea580c; margin: 0;" id="labelOutNo2Title">✈️ 去程轉機（第 2 段航班）</h5>
+                                <span style="font-size: 0.7rem; font-weight: 700; color: #9a3412; background: #ffedd5; padding: 1px 7px; border-radius: 999px;">去程第 2 段</span>
                             </div>
-                        </div>
-
-                        <div class="form-group" style="margin-top: 8px;">
-                            <label class="form-label">去程時長備註</label>
-                            <input type="text" id="fOutDuration" class="form-input" placeholder="例如：8 hrs 10 mins (經香港轉機)">
-                        </div>
-                    </div>
-
-                    <!-- 回程航段 -->
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <h4 style="font-size: 0.94rem; font-weight: 800; color: #ea580c;" id="labelInSectionTitle">🛬 回程航段 (第 1 段或返航航段)</h4>
-                            <span class="prop-pill pill-orange">回程</span>
-                        </div>
                         <div class="form-row-4">
                             <div class="form-group">
-                                <label class="form-label" id="labelInAirline">航空公司</label>
-                                <input type="text" id="fInAirline" class="form-input" placeholder="國泰航空 / 中華航空">
+                                <label class="form-label" id="labelOutAirline2">航空公司</label>
+                                <select id="fAirlineSelect_Out2" class="form-input" onchange="onSegmentAirlineChange('Out2', true)"></select>
+                                <input type="text" id="fAirlineCustom_Out2" class="form-input" style="display:none; margin-top:4px;" placeholder="輸入名稱" oninput="syncSegmentCombinedFields('Out2')">
+                                <input type="hidden" id="fOutAirline2">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" id="labelInNo">班機代號</label>
-                                <input type="text" id="fInNo" class="form-input" placeholder="CX 945">
+                                <label class="form-label" id="labelOutNo2">班機代號</label>
+                                <div class="flight-code-combo" id="fFlightCodeCombo_Out2">
+                                    <input type="text" id="fCodePrefix_Out2" class="flight-code-prefix" placeholder="CI" maxlength="3" readonly oninput="syncSegmentCombinedFields('Out2')">
+                                    <input type="text" id="fCodeNum_Out2" class="flight-code-num" inputmode="numeric" placeholder="填入數字" oninput="onSegmentFlightNumInput('Out2')">
+                                </div>
+                                <input type="text" id="fLegacyNo_Out2" class="form-input" style="display:none;" placeholder="輸入班次編號" oninput="syncSegmentCombinedFields('Out2')">
+                                <input type="hidden" id="fOutNo2">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">起飛時間</label>
-                                <input type="text" id="fInDepTime" class="form-input" placeholder="10:50">
+                                <input type="text" id="fOutDepTime2" class="form-input" placeholder="08:55" oninput="onSegmentTimeManualChange('Out2')">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">抵達時間</label>
-                                <input type="text" id="fInArrTime1" class="form-input" placeholder="14:25">
+                                <input type="text" id="fOutArrTime2" class="form-input" placeholder="13:15" oninput="onSegmentTimeManualChange('Out2')">
                             </div>
                         </div>
+                        <div id="fAutoHint_Out2" class="flight-auto-hint"></div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" id="labelInDepLoc">回程起飛機場 / 航廈</label>
-                                <input type="text" id="fInDepLoc" class="form-input" placeholder="東京成田 (NRT) T3">
+                                <label class="form-label" id="labelOutDepLoc2">起飛機場 / 航廈</label>
+                                <input type="text" id="fOutDepLoc2" class="form-input" placeholder="台北桃園 (TPE) T2">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" id="fInArrLabel1">抵達機場 (直飛目的地或轉機地)</label>
-                                <input type="text" id="fInArrLoc1" class="form-input" placeholder="香港 (HKG) T1">
+                                <label class="form-label" id="labelOutArrLoc2">抵達機場 / 航廈</label>
+                                <input type="text" id="fOutArrLoc2" class="form-input" placeholder="東京成田 (NRT) T2" >
+                            </div>
+                        </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 8px; margin-bottom: 0;">
+                            <label class="form-label">去程時長備註</label>
+                            <input type="text" id="fOutDuration" class="form-input" placeholder="自動依航班計算或手動備註" oninput="this.dataset.autoCalc=''">
+                        </div>
+                    </div>
+
+                    <!-- 回程航班 -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
+                            <h4 style="font-size: 0.95rem; font-weight: 800; color: #ea580c; margin: 0;" id="labelInSectionTitle">🛬 回程航班</h4>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.76rem; font-weight: 700; color: #c2410c; background: #fff7ed; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="fInIsTransfer" onchange="toggleFlightTransferFields('sub')">
+                                    <span>🔄 回程轉機</span>
+                                </label>
+                                <span class="prop-pill pill-orange">回程</span>
                             </div>
                         </div>
 
-                        <!-- 回程轉機區塊 -->
-                        <div id="transferInboundFields" style="display: none; background: #fff7ed; padding: 12px; border-radius: 6px; border: 1px dashed #fed7aa; margin-top: 10px;">
+                        <div class="form-row-4">
                             <div class="form-group">
-                                <label class="form-label" id="labelInTransferInfo" style="color: #ea580c;">🔄 回程轉機地點與停留時間說明</label>
-                                <input type="text" id="fTransferInfoIn" class="form-input" placeholder="香港國際機場 (HKG) 轉機停留 4 小時 50 分鐘">
-                            </div>
-                            <h5 style="font-size: 0.85rem; font-weight: 800; color: #ea580c; margin-bottom: 6px;" id="labelInNo2Title">回程第 2 段交通資訊 (返抵國門)</h5>
-                            <div class="form-row-3">
-                                <div class="form-group">
-                                    <label class="form-label" id="labelInNo2">第 2 段班機代號</label>
-                                    <input type="text" id="fInNo2" class="form-input" placeholder="CX 464">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">第 2 段起飛時間</label>
-                                    <input type="text" id="fInDepTime2" class="form-input" placeholder="19:35">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">最終返抵時間</label>
-                                    <input type="text" id="fInArrTime2" class="form-input" placeholder="21:20">
-                                </div>
+                                <label class="form-label" id="labelInAirline">航空公司</label>
+                                <select id="fAirlineSelect_In1" class="form-input" onchange="onSegmentAirlineChange('In1', true)"></select>
+                                <input type="text" id="fAirlineCustom_In1" class="form-input" style="display:none; margin-top:4px;" placeholder="輸入名稱" oninput="syncSegmentCombinedFields('In1')">
+                                <input type="hidden" id="fInAirline">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" id="labelInArrLoc2">最終返抵機場 / 航廈</label>
-                                <input type="text" id="fInArrLoc2" class="form-input" placeholder="台北桃園 (TPE) T1">
+                                <label class="form-label" id="labelInNo">班機代號</label>
+                                <div class="flight-code-combo" id="fFlightCodeCombo_In1">
+                                    <input type="text" id="fCodePrefix_In1" class="flight-code-prefix" placeholder="CI" maxlength="3" readonly oninput="syncSegmentCombinedFields('In1')">
+                                    <input type="text" id="fCodeNum_In1" class="flight-code-num" inputmode="numeric" placeholder="填入數字" oninput="onSegmentFlightNumInput('In1')">
+                                </div>
+                                <input type="text" id="fLegacyNo_In1" class="form-input" style="display:none;" placeholder="輸入班次編號" oninput="syncSegmentCombinedFields('In1')">
+                                <input type="hidden" id="fInNo">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">起飛時間</label>
+                                <input type="text" id="fInDepTime" class="form-input" placeholder="08:55" oninput="onSegmentTimeManualChange('In1')">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">抵達時間</label>
+                                <input type="text" id="fInArrTime1" class="form-input" placeholder="13:15" oninput="onSegmentTimeManualChange('In1')">
+                            </div>
+                        </div>
+                        <div id="fAutoHint_In1" class="flight-auto-hint"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" id="labelInDepLoc">起飛機場 / 航廈</label>
+                                <input type="text" id="fInDepLoc" class="form-input" placeholder="台北桃園 (TPE) T2">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="fInArrLabel1">抵達機場 / 航廈</label>
+                                <input type="text" id="fInArrLoc1" class="form-input" placeholder="東京成田 (NRT) T2" oninput="recalcDirectionTransferAndDuration('In')">
                             </div>
                         </div>
 
-                        <div class="form-group" style="margin-top: 8px;">
+                        <!-- 回程轉機區塊（與主航段一致之設定介面 + 自動中轉時間計算） -->
+                        <div id="transferInboundFields" class="flight-transfer-card">
+                            <div class="flight-layover-banner">
+                                <div id="fLayoverCalcBadgeIn" style="font-weight: 700;">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> 系統將依據兩段航班自動計算中轉時間
+                                </div>
+                                <input type="text" id="fTransferInfoIn" class="form-input" style="max-width: 310px; font-size: 0.76rem; padding: 4px 8px; height: 28px; background: #ffffff;" placeholder="自動計算中轉地點與停留時間">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h5 style="font-size: 0.86rem; font-weight: 800; color: #ea580c; margin: 0;" id="labelInNo2Title">✈️ 回程轉機（第 2 段航班）</h5>
+                                <span style="font-size: 0.7rem; font-weight: 700; color: #9a3412; background: #ffedd5; padding: 1px 7px; border-radius: 999px;">回程第 2 段</span>
+                            </div>
+                        <div class="form-row-4">
+                            <div class="form-group">
+                                <label class="form-label" id="labelInAirline2">航空公司</label>
+                                <select id="fAirlineSelect_In2" class="form-input" onchange="onSegmentAirlineChange('In2', true)"></select>
+                                <input type="text" id="fAirlineCustom_In2" class="form-input" style="display:none; margin-top:4px;" placeholder="輸入名稱" oninput="syncSegmentCombinedFields('In2')">
+                                <input type="hidden" id="fInAirline2">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="labelInNo2">班機代號</label>
+                                <div class="flight-code-combo" id="fFlightCodeCombo_In2">
+                                    <input type="text" id="fCodePrefix_In2" class="flight-code-prefix" placeholder="CI" maxlength="3" readonly oninput="syncSegmentCombinedFields('In2')">
+                                    <input type="text" id="fCodeNum_In2" class="flight-code-num" inputmode="numeric" placeholder="填入數字" oninput="onSegmentFlightNumInput('In2')">
+                                </div>
+                                <input type="text" id="fLegacyNo_In2" class="form-input" style="display:none;" placeholder="輸入班次編號" oninput="syncSegmentCombinedFields('In2')">
+                                <input type="hidden" id="fInNo2">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">起飛時間</label>
+                                <input type="text" id="fInDepTime2" class="form-input" placeholder="08:55" oninput="onSegmentTimeManualChange('In2')">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">抵達時間</label>
+                                <input type="text" id="fInArrTime2" class="form-input" placeholder="13:15" oninput="onSegmentTimeManualChange('In2')">
+                            </div>
+                        </div>
+                        <div id="fAutoHint_In2" class="flight-auto-hint"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" id="labelInDepLoc2">起飛機場 / 航廈</label>
+                                <input type="text" id="fInDepLoc2" class="form-input" placeholder="台北桃園 (TPE) T2">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="labelInArrLoc2">抵達機場 / 航廈</label>
+                                <input type="text" id="fInArrLoc2" class="form-input" placeholder="東京成田 (NRT) T2" >
+                            </div>
+                        </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 8px; margin-bottom: 0;">
                             <label class="form-label">回程時長備註</label>
-                            <input type="text" id="fInDuration" class="form-input" placeholder="例如：10 hrs 30 mins (經香港轉機)">
+                            <input type="text" id="fInDuration" class="form-input" placeholder="自動依航班計算或手動備註" oninput="this.dataset.autoCalc=''">
                         </div>
                     </div>
 
@@ -6911,18 +7120,17 @@
                         </div>
                     </div>
 
-                    <!-- 💰 機票 / 大交通費用計算設定區塊 -->
+                    <!-- 💰 交通費用計算設定區塊 -->
                     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin-top: 10px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h4 style="font-size: 0.92rem; font-weight: 800; color: #166534; margin: 0; display: flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-coins" style="color: #15803d;"></i> <span id="labelCostSectionTitle">大交通費用計算</span>
+                                <i class="fa-solid fa-coins" style="color: #15803d;"></i> <span id="labelCostSectionTitle">交通費用計算</span>
                             </h4>
                             <span style="font-size: 0.72rem; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
                                 自動連動旅行總預算與記帳
                             </span>
                         </div>
 
-                        <!-- 票價計算模式切換 (來回合併票價 vs 去回分開計價) -->
                         <div style="background: #ffffff; border: 1px solid #86efac; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;">
                             <div style="font-size: 0.78rem; font-weight: 700; color: #166534; margin-bottom: 6px;">
                                 <i class="fa-solid fa-tags" style="color:#15803d;"></i> 選擇計價模式：
@@ -6939,7 +7147,6 @@
                             </div>
                         </div>
 
-                        <!-- 去回分開計價時顯示的欄位 -->
                         <div id="pricingSeparateFields" style="display: none; margin-bottom: 8px;" class="form-row">
                             <div class="form-group" style="margin-bottom:0;">
                                 <label class="form-label" style="color: #0369a1; font-weight: 700;">🛫 去程票價 / 交通費用</label>
@@ -6951,7 +7158,6 @@
                             </div>
                         </div>
 
-                        <!-- 往返總票價 -->
                         <div class="form-group" style="margin-bottom: 8px;">
                             <label class="form-label" id="fTotalCostLabel" style="font-weight: 800; color: #15803d;">🎫 來回總票價 (往返總額一筆)</label>
                             <input type="number" id="fTotalCost" class="form-input" min="0" step="any" placeholder="例如：12500" oninput="calcFlightModalCost(true)">
@@ -6978,7 +7184,6 @@
                             <input type="number" id="fActualCost" class="form-input" min="0" step="any" placeholder="選填：實際刷卡付款總額" oninput="calcFlightModalCost()">
                         </div>
                         <div id="flightCostCalcHint" style="font-size: 0.78rem; color: #166534; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px dashed #86efac; margin-top: 6px;">
-                            <!-- 動態試算預覽 -->
                         </div>
                     </div>
                 </div>
@@ -8810,14 +9015,31 @@ const firebaseConfig = {
             const fl = plan.flights || {};
             const legs = fl.legs || [];
             const transportType = fl.transportType || 'flight';
-            const cfg = (typeof TRANSPORT_CONFIG !== 'undefined' && TRANSPORT_CONFIG[transportType]) ? TRANSPORT_CONFIG[transportType] : { name: '大交通', icon: 'fa-plane' };
+            const cfg = (typeof TRANSPORT_CONFIG !== 'undefined' && TRANSPORT_CONFIG[transportType])
+                ? TRANSPORT_CONFIG[transportType]
+                : { name: '飛機 / 航班', sectionTitle: '往返機票 / 主交通', actionBtnText: '設定航班與票價', icon: 'fa-plane' };
+
+            // 同步第二張截圖位置的載具切換膠囊與標題
+            const btns = document.querySelectorAll('#transportTypeButtonGroup .ltm-pill');
+            btns.forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById(`btnTransport${transportType.charAt(0).toUpperCase() + transportType.slice(1)}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const secTitleEl = document.getElementById('sideTransportSectionTitle');
+            if (secTitleEl) {
+                secTitleEl.innerHTML = `<i class="fa-solid ${cfg.icon}" style="color:#286678; font-size:0.9rem;"></i> ${cfg.sectionTitle || '往返機票 / 主交通'}`;
+            }
+            const secBtnEl = document.getElementById('sideTransportEditBtn');
+            if (secBtnEl) {
+                secBtnEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> ${cfg.actionBtnText || '設定航班與票價'}`;
+            }
 
             const fStats = calcPlanFlightStats(plan);
             if (inlineCostEl) {
                 if (fStats.isSet) {
                     const currInfo = getPlanCurrency(plan);
                     inlineCostEl.innerHTML = `
-                        <span onclick="if(event){event.stopPropagation();} openEditFlightModal();" style="display:inline-flex; align-items:center; gap:6px; font-size:0.74rem; font-weight:700; color:#2b6b50; background:#e8f3ee; border:1px solid #c5dfd2; padding:2px 9px; border-radius:999px; cursor:pointer;" title="點擊修改機票/主交通票價">
+                        <span onclick="if(event){event.stopPropagation();} openEditFlightModal();" style="display:inline-flex; align-items:center; gap:6px; font-size:0.74rem; font-weight:700; color:#2b6b50; background:#e8f3ee; border:1px solid #c5dfd2; padding:2px 9px; border-radius:999px; cursor:pointer;" title="點擊修改票價">
                             <i class="fa-solid fa-ticket"></i>
                             每人 NT$ ${fStats.personTwd.toLocaleString()} (${currInfo.symbol}${fStats.personLocal.toLocaleString()}) ‧ 全團 ${currInfo.symbol}${fStats.groupLocal.toLocaleString()}
                             ${fStats.hasActual ? ` ‧ 實付 ${currInfo.symbol}${fStats.actualGroupLocal.toLocaleString()}` : ''}
@@ -8831,8 +9053,8 @@ const firebaseConfig = {
             if (legs.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; font-size: 0.78rem; color: #64748b; padding: 6px 10px; cursor: pointer; border: 1px dashed #cbd5e1; border-radius: 8px; display:flex; align-items:center; justify-content:space-between;" onclick="if(event){event.stopPropagation();} openEditFlightModal();">
-                        <span><i class="fa-solid ${cfg.icon}" style="color:#286678;"></i> 尚未設定${cfg.name}航段，點擊此處新增航班時刻與票價</span>
-                        <span style="color:#286678; font-weight:700;">＋ 設定航班</span>
+                        <span><i class="fa-solid ${cfg.icon}" style="color:#286678;"></i> 尚未設定${cfg.name}資訊，點擊此處新增時刻與票價</span>
+                        <span style="color:#286678; font-weight:700;">＋ 新增設定</span>
                     </div>
                 `;
                 if (typeof renderLogisticsKpis === 'function') renderLogisticsKpis();
@@ -8842,35 +9064,39 @@ const firebaseConfig = {
             const cardsHtml = legs.map((leg, idx) => {
                 const isTrans = leg.isTransfer || !!leg.transferInfo || (leg.flightNo2 && leg.flightNo2.trim().length > 0);
                 const isOutbound = idx === 0 || leg.type === 'outbound';
-                const pillLabel = isOutbound ? (isTrans ? '🛫 去程‧轉乘' : '🛫 去程‧直達') : (isTrans ? '🛬 回程‧轉乘' : '🛬 回程‧直達');
+                const pillLabel = isOutbound ? (isTrans ? '🛫 去程‧轉機' : '🛫 去程‧直達') : (isTrans ? '🛬 回程‧轉機' : '🛬 回程‧直達');
                 const pillClass = isOutbound ? 'pill-blue' : 'pill-orange';
                 const pnrCode = leg.pnr || fl.pnr || '';
                 const legIcon = cfg.icon || 'fa-plane';
+                const air2Label = (leg.airline2 && leg.airline2 !== leg.airline) ? `${leg.airline} / ${leg.airline2}` : (leg.airline || cfg.name);
 
                 if (isTrans) {
+                    const dep2Port = leg.depLoc2 || leg.arrLoc || '轉機地';
                     return `
                         <div class="flight-side-card" onclick="if(event){event.stopPropagation();} openEditFlightModal();" title="點擊編輯此交通資訊">
                             <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0;">
                                     <span class="prop-pill ${pillClass}" style="font-size: 0.7rem; padding: 1px 6px;">${pillLabel}</span>
-                                    <strong style="font-size: 0.86rem; color: #0f172a;"><i class="fa-solid ${legIcon}" style="color:#286678; font-size:0.78rem;"></i> ${escapeHtml(leg.airline || cfg.name)}</strong>
+                                    <strong style="font-size: 0.86rem; color: #0f172a;"><i class="fa-solid ${legIcon}" style="color:#286678; font-size:0.78rem;"></i> ${escapeHtml(air2Label)}</strong>
                                     ${pnrCode ? `<span style="font-size: 0.69rem; font-weight: 700; color: #966420; background: #faf3e6; border:1px solid #ead9bc; padding: 0 5px; border-radius: 4px;">PNR: ${escapeHtml(pnrCode)}</span>` : ''}
                                 </div>
                                 <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
                                     <button type="button" class="n-btn" style="font-size:0.68rem; padding:1px 6px; color:#286678; border-color:#c6dce6; background:#f4f9fb;" onclick="event.stopPropagation(); syncFlightLegToDaySchedule(${idx})" title="同步時刻至行程">
                                         <i class="fa-solid fa-calendar-check"></i> 同步行程
                                     </button>
-                                    <span class="flight-card-edit-badge" style="padding:1px 6px; font-size:0.68rem;"><i class="fa-solid fa-pen"></i></span>
+                                    <span class="flight-card-edit-badge" style="padding:1px 6px; font-size:0.68rem;"><i class="fa-solid fa-pen"></i> 編輯</span>
                                 </div>
                             </div>
-                            <div style="background:#f8fafc; border:1px solid #e5edf3; border-radius:7px; padding:5px 9px; margin-top:5px; font-size:0.75rem; display:flex; flex-direction:column; gap:3px;">
-                                <div style="display:flex; justify-content:space-between; gap:6px;">
-                                    <span><strong style="color:#286678;">1段 ${escapeHtml(leg.flightNo || '')}</strong>：${escapeHtml(leg.depLoc || '出發')} ➔ ${escapeHtml(leg.arrLoc || '轉乘')}</span>
+                            <div style="background:#f8fafc; border:1px solid #e5edf3; border-radius:7px; padding:6px 10px; margin-top:5px; font-size:0.75rem; display:flex; flex-direction:column; gap:4px;">
+                                <div style="display:flex; justify-content:space-between; gap:6px; flex-wrap:wrap;">
+                                    <span><strong style="color:#286678;">第1段 ${escapeHtml(leg.flightNo || '')}</strong>：${escapeHtml(leg.depLoc || '出發')} ➔ ${escapeHtml(leg.arrLoc || '轉機地')}</span>
                                     <span style="font-weight:700; color:#334155; font-variant-numeric:tabular-nums;">${escapeHtml(leg.depTime || '--:--')} - ${escapeHtml(leg.arrTime || '--:--')}</span>
                                 </div>
-                                <div style="font-size:0.7rem; color:#966420;">⟳ ${escapeHtml(leg.transferInfo || '中轉停留')} ${leg.duration ? `‧ 總時長 ${escapeHtml(leg.duration)}` : ''}</div>
-                                <div style="display:flex; justify-content:space-between; gap:6px;">
-                                    <span><strong style="color:#966420;">2段 ${escapeHtml(leg.flightNo2 || '')}</strong>：${escapeHtml(leg.arrLoc || '轉乘')} ➔ ${escapeHtml(leg.arrLoc2 || '目的')}</span>
+                                <div style="font-size:0.71rem; color:#b45309; background:#fffbeb; border:1px dashed #fde68a; border-radius:5px; padding:2px 7px;">
+                                    ⏱️ ${escapeHtml(leg.transferInfo || '中轉停留')} ${leg.duration ? `‧ 總計 ${escapeHtml(leg.duration)}` : ''}
+                                </div>
+                                <div style="display:flex; justify-content:space-between; gap:6px; flex-wrap:wrap;">
+                                    <span><strong style="color:#966420;">第2段 ${escapeHtml(leg.flightNo2 || '')}</strong>：${escapeHtml(dep2Port)} ➔ ${escapeHtml(leg.arrLoc2 || '目的地')}</span>
                                     <span style="font-weight:700; color:#334155; font-variant-numeric:tabular-nums;">${escapeHtml(leg.depTime2 || '--:--')} - ${escapeHtml(leg.arrTime2 || '--:--')}</span>
                                 </div>
                             </div>
@@ -15525,287 +15751,1143 @@ const firebaseConfig = {
         }
 
         // ==========================================
-        // 交通航班與多載具編輯處理邏輯
+        // 交通航班與多載具編輯處理邏輯 (V3.0 智慧航班與中轉系統)
         // ==========================================
         const TRANSPORT_CONFIG = {
             flight: {
                 type: 'flight',
                 name: '飛機 / 航班',
+                sectionTitle: '往返機票 / 主交通',
+                actionBtnText: '設定航班與票價',
                 icon: 'fa-plane',
-                headerTitle: '<i class="fa-solid fa-plane" style="color: #2383e2;"></i> 編輯大交通資訊 (飛機 / 航班)',
-                outTitle: '🛫 去程航班 (第 1 段或起發航段)',
-                inTitle: '🛬 回程航班 (第 1 段或返航航段)',
+                headerTitle: '<i class="fa-solid fa-plane" style="color: #2383e2;"></i> 編輯交通資訊',
+                outTitle: '🛫 去程航班',
+                inTitle: '🛬 回程航班',
                 airlineLabel: '航空公司',
-                airlinePlaceholder: '國泰航空 / 中華航空',
+                airlinePlaceholder: '選擇或輸入航空公司',
                 noLabel: '班機代號',
-                noPlaceholder: 'CX 407',
+                noPlaceholder: '100',
                 depLocLabel: '起飛機場 / 航廈',
-                depLocPlaceholder: '台北桃園 (TPE) T1',
-                arrLocLabel: '抵達機場 (直飛目的地或轉機地)',
-                arrLocPlaceholder: '香港 (HKG) T1',
-                transferSpan: '🔄 本次大交通包含「轉機 / 中轉換乘」航段 (開啟第 2 段與中轉停留欄位)',
-                transferInfoLabel: '🔄 去程轉機地點與停留時間說明',
-                transferInfoPlaceholder: '香港國際機場 (HKG) 轉機停留 3 小時 35 分鐘',
-                no2Title: '去程第 2 段交通資訊',
-                no2Label: '第 2 段班機代號',
-                no2Placeholder: 'CX 928',
-                arrLoc2Label: '最終目的地機場 / 航廈',
-                arrLoc2Placeholder: '東京成田 (NRT) T3',
-                inAirlineLabel: '航空公司',
-                inAirlinePlaceholder: '國泰航空 / 中華航空',
-                inNoLabel: '班機代號',
-                inNoPlaceholder: 'CX 945',
-                inDepLocLabel: '回程起飛機場 / 航廈',
-                inDepLocPlaceholder: '東京成田 (NRT) T3',
-                inArrLocLabel: '抵達機場 (直飛目的地或轉機地)',
-                inArrLocPlaceholder: '香港 (HKG) T1',
-                inTransferInfoLabel: '🔄 回程轉機地點與停留時間說明',
-                inTransferInfoPlaceholder: '香港國際機場 (HKG) 轉機停留 4 小時 50 分鐘',
-                inNo2Title: '回程第 2 段交通資訊 (返抵國門)',
-                inNo2Label: '第 2 段班機代號',
-                inNo2Placeholder: 'CX 464',
-                inArrLoc2Label: '最終返抵機場 / 航廈',
-                inArrLoc2Placeholder: '台北桃園 (TPE) T1',
-                costSectionTitle: '機票 / 大交通費用計算'
+                depLocPlaceholder: '台北桃園 (TPE) T2',
+                arrLocLabel: '抵達機場 / 航廈',
+                arrLocPlaceholder: '東京成田 (NRT) T2',
+                transferSpan: '🔄 包含「轉機」航段',
+                out2Title: '✈️ 去程轉機（第 2 段航班）',
+                in2Title: '✈️ 回程轉機（第 2 段航班）',
+                costSectionTitle: '交通費用計算'
             },
             train: {
                 type: 'train',
                 name: '高鐵 / 火車',
+                sectionTitle: '往返高鐵 / 火車',
+                actionBtnText: '設定車次與票價',
                 icon: 'fa-train',
-                headerTitle: '<i class="fa-solid fa-train" style="color: #0284c7;"></i> 編輯大交通資訊 (高鐵 / 火車 / 鐵道)',
-                outTitle: '🚄 去程車次 (第 1 段或起發車站)',
-                inTitle: '🚄 回程車次 (第 1 段或返程車站)',
+                headerTitle: '<i class="fa-solid fa-train" style="color: #0284c7;"></i> 編輯交通資訊',
+                outTitle: '🚄 去程車次',
+                inTitle: '🚄 回程車次',
                 airlineLabel: '鐵路公司 / 列車種類',
                 airlinePlaceholder: '台灣高鐵 / JR / 中國鐵路',
                 noLabel: '車次編號',
                 noPlaceholder: '0603 次 / Nozomi 12',
                 depLocLabel: '出發車站 / 月台',
                 depLocPlaceholder: '台北車站 / 新大阪站',
-                arrLocLabel: '抵達車站 (到達地或轉乘站)',
+                arrLocLabel: '抵達車站 / 月台',
                 arrLocPlaceholder: '左營站 / 東京站',
-                transferSpan: '🔄 本次鐵路行程包含「中轉換乘」車次 (開啟第 2 段與換乘停留欄位)',
-                transferInfoLabel: '🔄 去程中轉車站與轉乘停留說明',
-                transferInfoPlaceholder: '名古屋站 換乘停留 25 分鐘',
-                no2Title: '去程第 2 段車次資訊',
-                no2Label: '第 2 段車次編號',
-                no2Placeholder: 'Hikari 512',
-                arrLoc2Label: '最終目的地車站',
-                arrLoc2Placeholder: '東京車站',
-                inAirlineLabel: '鐵路公司 / 列車種類',
-                inAirlinePlaceholder: '台灣高鐵 / JR / 中國鐵路',
-                inNoLabel: '車次編號',
-                inNoPlaceholder: '0672 次',
-                inDepLocLabel: '回程出發車站',
-                inDepLocPlaceholder: '左營站 / 東京站',
-                inArrLocLabel: '抵達車站 (直達或轉乘站)',
-                inArrLocPlaceholder: '台北車站',
-                inTransferInfoLabel: '🔄 回程中轉車站與換乘停留說明',
-                inTransferInfoPlaceholder: '新橫濱站 換乘停留 20 分鐘',
-                inNo2Title: '回程第 2 段車次資訊 (返程終點)',
-                inNo2Label: '第 2 段車次編號',
-                inNo2Placeholder: 'Kodama 720',
-                inArrLoc2Label: '最終返抵車站',
-                inArrLoc2Placeholder: '台北車站',
-                costSectionTitle: '火車 / 高鐵車票費用計算'
+                transferSpan: '🔄 包含「中轉換乘」車次',
+                out2Title: '🚄 去程換乘（第 2 段車次）',
+                in2Title: '🚄 回程換乘（第 2 段車次）',
+                costSectionTitle: '交通費用計算'
             },
             bus: {
                 type: 'bus',
                 name: '長途巴士 / 客運',
+                sectionTitle: '往返長途巴士 / 客運',
+                actionBtnText: '設定班次與票價',
                 icon: 'fa-bus',
-                headerTitle: '<i class="fa-solid fa-bus" style="color: #10b981;"></i> 編輯大交通資訊 (長途巴士 / 客運)',
-                outTitle: '🚌 去程巴士班次',
-                inTitle: '🚌 回程巴士班次',
+                headerTitle: '<i class="fa-solid fa-bus" style="color: #10b981;"></i> 編輯交通資訊',
+                outTitle: '🚌 去程巴士',
+                inTitle: '🚌 回程巴士',
                 airlineLabel: '客運公司 / 業者',
                 airlinePlaceholder: '國光客運 / 統聯客運 / Willer Express',
                 noLabel: '班次路線 / 車次',
-                noPlaceholder: '1819 路線 / 班次 02',
+                noPlaceholder: '1819 路線',
                 depLocLabel: '上車客運站 / 站牌',
                 depLocPlaceholder: '台北轉運站 / 新宿高速巴士總站',
-                arrLocLabel: '下車站點 (到達站或轉運點)',
-                arrLocPlaceholder: '日月潭站 / 名古屋站',
-                transferSpan: '🔄 本次巴士包含「中轉換乘」路線 (開啟第 2 段與轉運欄位)',
-                transferInfoLabel: '🔄 去程轉運站點與休息換乘說明',
-                transferInfoPlaceholder: '中途休息站 / 轉運站停留 30 分鐘',
-                no2Title: '去程第 2 段巴士班次',
-                no2Label: '第 2 段巴士班次',
-                no2Placeholder: '接駁路線 B',
-                arrLoc2Label: '最終目的地站點',
-                arrLoc2Placeholder: '飯店接駁點 / 終點站',
-                inAirlineLabel: '客運公司 / 業者',
-                inAirlinePlaceholder: '國光客運 / 統聯客運',
-                inNoLabel: '班次路線 / 車次',
-                inNoPlaceholder: '1819 路線',
-                inDepLocLabel: '回程上車站點',
-                inDepLocPlaceholder: '日月潭站 / 名古屋站',
-                inArrLocLabel: '返抵站點 (直達或轉乘)',
-                inArrLocPlaceholder: '台北轉運站',
-                inTransferInfoLabel: '🔄 回程轉乘休息說明',
-                inTransferInfoPlaceholder: '台中轉運站 換乘',
-                inNo2Title: '回程第 2 段車次 (返程終點)',
-                inNo2Label: '第 2 段車次',
-                inNo2Placeholder: '直達車',
-                inArrLoc2Label: '最終返抵客運站',
-                inArrLoc2Placeholder: '台北轉運站',
-                costSectionTitle: '巴士 / 客運車票費用計算'
+                arrLocLabel: '下車客運站 / 站牌',
+                arrLocPlaceholder: '日月潭站 / 河口湖站',
+                transferSpan: '🔄 包含「中轉換乘」路線',
+                out2Title: '🚌 去程轉乘（第 2 段巴士）',
+                in2Title: '🚌 回程轉乘（第 2 段巴士）',
+                costSectionTitle: '交通費用計算'
             },
             cruise: {
                 type: 'cruise',
                 name: '遊輪 / 輪渡',
+                sectionTitle: '往返遊輪 / 輪渡',
+                actionBtnText: '設定船班與票價',
                 icon: 'fa-ship',
-                headerTitle: '<i class="fa-solid fa-ship" style="color: #06b6d4;"></i> 編輯大交通資訊 (遊輪 / 輪渡 / 航運)',
-                outTitle: '🚢 去程船班 / 航次',
-                inTitle: '🚢 回程船班 / 返航航次',
+                headerTitle: '<i class="fa-solid fa-ship" style="color: #06b6d4;"></i> 編輯交通資訊',
+                outTitle: '🚢 去程船班',
+                inTitle: '🚢 回程船班',
                 airlineLabel: '郵輪船隊 / 航運公司',
                 airlinePlaceholder: '名勝世界壹號 / 歌詩達 / 澎湖輪',
                 noLabel: '航次代號 / 船名',
-                noPlaceholder: 'CR-2026 / 探索夢號',
+                noPlaceholder: 'CR-2026',
                 depLocLabel: '登船港口 / 碼頭',
                 depLocPlaceholder: '基隆港東岸旅客中心',
-                arrLocLabel: '靠泊港口 (到達港或中途島)',
+                arrLocLabel: '靠泊港口 / 碼頭',
                 arrLocPlaceholder: '那霸港 / 石垣島港',
-                transferSpan: '🔄 本次航程包含「中途靠港 / 換船」 (開啟第 2 段靠泊欄位)',
-                transferInfoLabel: '🔄 去程中途停靠港口與岸上觀光說明',
-                transferInfoPlaceholder: '石垣島 靠泊停留 8 小時',
-                no2Title: '去程第 2 段航程 / 駁船',
-                no2Label: '第 2 段航程 / 駁船',
-                no2Placeholder: 'Tender Boat 01',
-                arrLoc2Label: '最終靠泊港口',
-                arrLoc2Placeholder: '那霸港新港埠',
-                inAirlineLabel: '郵輪船隊 / 航運公司',
-                inAirlinePlaceholder: '名勝世界壹號',
-                inNoLabel: '返航航次代號',
-                inNoPlaceholder: 'CR-2026-RET',
-                inDepLocLabel: '回程登船港口',
-                inDepLocPlaceholder: '那霸港旅客碼頭',
-                inArrLocLabel: '返抵港口',
-                inArrLocPlaceholder: '基隆港西岸碼頭',
-                inTransferInfoLabel: '🔄 回程中途靠泊說明',
-                inTransferInfoPlaceholder: '公海巡航',
-                inNo2Title: '回程第 2 段船班 (返抵港口)',
-                inNo2Label: '第 2 段船班',
-                inNo2Placeholder: '接駁船',
-                inArrLoc2Label: '最終返抵港口',
-                inArrLoc2Placeholder: '基隆港東岸旅客中心',
-                costSectionTitle: '郵輪船票 / 航程費用計算'
+                transferSpan: '🔄 包含「中途靠港 / 換船」航段',
+                out2Title: '🚢 去程續航（第 2 段船班）',
+                in2Title: '🚢 回程續航（第 2 段船班）',
+                costSectionTitle: '交通費用計算'
             },
             car: {
                 type: 'car',
                 name: '專車 / 包車接送',
+                sectionTitle: '往返專車 / 包車接送',
+                actionBtnText: '設定專車與費用',
                 icon: 'fa-car',
-                headerTitle: '<i class="fa-solid fa-car" style="color: #f59e0b;"></i> 編輯大交通資訊 (專車 / 包車接送)',
-                outTitle: '🚗 去程專車 / 接送服務',
-                inTitle: '🚗 回程專車 / 送機服務',
+                headerTitle: '<i class="fa-solid fa-car" style="color: #f59e0b;"></i> 編輯交通資訊',
+                outTitle: '🚗 去程專車',
+                inTitle: '🚗 回程專車',
                 airlineLabel: '車隊服務商 / 車型',
-                airlinePlaceholder: 'Alphard 9人座 / 大都會專車',
-                noLabel: '預約單號 / 司機車牌',
-                noPlaceholder: 'ORD-8899 / 車號 ABC-888',
+                airlinePlaceholder: 'Alphard 9人座 / 機場接送專車',
+                noLabel: '預約單號 / 車牌',
+                noPlaceholder: 'ORD-8899',
                 depLocLabel: '上車出發地點',
                 depLocPlaceholder: '台北市區住家 / 飯店大廳',
-                arrLocLabel: '目的地地點',
-                arrLocPlaceholder: '桃園機場 / 宜蘭度假村',
-                transferSpan: '🔄 本次包含中途停靠景點 / 換乘 (開啟第 2 段欄位)',
-                transferInfoLabel: '🔄 去程中途停靠景點與停留時間',
-                transferInfoPlaceholder: '途中停靠休息站 30 分鐘',
-                no2Title: '去程第 2 段用車',
-                no2Label: '第 2 段用車',
-                no2Placeholder: '區間專車',
-                arrLoc2Label: '最終目的地',
-                arrLoc2Placeholder: '目的地飯店',
-                inAirlineLabel: '車隊服務商 / 車型',
-                inAirlinePlaceholder: '回程專車車隊',
-                inNoLabel: '回程預約單號',
-                inNoPlaceholder: 'ORD-8900',
-                inDepLocLabel: '回程上車地點',
-                inDepLocPlaceholder: '度假村大廳 / 機場接機處',
-                inArrLocLabel: '回程返抵地點',
-                inArrLocPlaceholder: '台北市區住家',
-                inTransferInfoLabel: '🔄 回程中途停靠說明',
-                inTransferInfoPlaceholder: '直接直達',
-                inNo2Title: '回程第 2 段專車 (返抵住家)',
-                inNo2Label: '第 2 段專車',
-                inNo2Placeholder: '市區接駁',
-                inArrLoc2Label: '最終返抵地址',
-                inArrLoc2Placeholder: '台北市區住家',
-                costSectionTitle: '專車 / 包車費用計算'
+                arrLocLabel: '抵達目的地',
+                arrLocPlaceholder: '桃園機場 / 度假村',
+                transferSpan: '🔄 包含「中途停靠 / 換乘」路段',
+                out2Title: '🚗 去程第 2 段專車',
+                in2Title: '🚗 回程第 2 段專車',
+                costSectionTitle: '交通費用計算'
             }
         };
+
+        // 1. 常用航空公司（依需求置頂：中華航空 / 長榮航空 / 國泰航空 / 台灣虎航 / 樂桃航空）
+        const FAVORITE_AIRLINES = [
+            { code: 'CI', icao: 'CAL', name: '中華航空', en: 'China Airlines', defaultTpeTerm: 'T2' },
+            { code: 'BR', icao: 'EVA', name: '長榮航空', en: 'EVA Air', defaultTpeTerm: 'T2' },
+            { code: 'CX', icao: 'CPA', name: '國泰航空', en: 'Cathay Pacific', defaultTpeTerm: 'T1' },
+            { code: 'IT', icao: 'TTW', name: '台灣虎航', en: 'Tigerair Taiwan', defaultTpeTerm: 'T1' },
+            { code: 'MM', icao: 'APJ', name: '樂桃航空', en: 'Peach Aviation', defaultTpeTerm: 'T1' }
+        ];
+
+        // 2. 亞太與國際主流航空公司內建清單（同時作為網路撈取前的即時基礎與離線備援）
+        const REGIONAL_AND_GLOBAL_AIRLINES = [
+            { code: 'JX', icao: 'SJX', name: '星宇航空', en: 'STARLUX Airlines', defaultTpeTerm: 'T1' },
+            { code: 'AE', icao: 'MDA', name: '華信航空', en: 'Mandarin Airlines', defaultTpeTerm: 'T2' },
+            { code: 'B7', icao: 'UIA', name: '立榮航空', en: 'UNI Air', defaultTpeTerm: 'T2' },
+            { code: 'JL', icao: 'JAL', name: '日本航空', en: 'Japan Airlines', defaultTpeTerm: 'T2' },
+            { code: 'NH', icao: 'ANA', name: '全日空', en: 'All Nippon Airways', defaultTpeTerm: 'T2' },
+            { code: 'TR', icao: 'TGW', name: '酷航', en: 'Scoot', defaultTpeTerm: 'T1' },
+            { code: 'GK', icao: 'JJP', name: '捷星日本航空', en: 'Jetstar Japan', defaultTpeTerm: 'T1' },
+            { code: 'SL', icao: 'TLM', name: '泰國獅航', en: 'Thai Lion Air', defaultTpeTerm: 'T1' },
+            { code: 'FD', icao: 'AIQ', name: '泰國亞洲航空', en: 'Thai AirAsia', defaultTpeTerm: 'T1' },
+            { code: 'AK', icao: 'AXM', name: '亞洲航空', en: 'AirAsia', defaultTpeTerm: 'T1' },
+            { code: 'D7', icao: 'XAX', name: '全亞洲航空', en: 'AirAsia X', defaultTpeTerm: 'T1' },
+            { code: 'Z2', icao: 'APG', name: '菲律賓亞洲航空', en: 'Philippines AirAsia', defaultTpeTerm: 'T1' },
+            { code: 'UO', icao: 'HKE', name: '香港快運航空', en: 'HK Express', defaultTpeTerm: 'T1' },
+            { code: 'HX', icao: 'CRK', name: '香港航空', en: 'Hong Kong Airlines', defaultTpeTerm: 'T2' },
+            { code: 'HB', icao: 'HGB', name: '大灣區航空', en: 'Greater Bay Airlines', defaultTpeTerm: 'T1' },
+            { code: 'NX', icao: 'AMU', name: '澳門航空', en: 'Air Macau', defaultTpeTerm: 'T1' },
+            { code: 'KE', icao: 'KAL', name: '大韓航空', en: 'Korean Air', defaultTpeTerm: 'T1' },
+            { code: 'OZ', icao: 'AAR', name: '韓亞航空', en: 'Asiana Airlines', defaultTpeTerm: 'T2' },
+            { code: '7C', icao: 'JJA', name: '濟州航空', en: 'Jeju Air', defaultTpeTerm: 'T1' },
+            { code: 'LJ', icao: 'JNA', name: '真航空', en: 'Jin Air', defaultTpeTerm: 'T1' },
+            { code: 'TW', icao: 'TWB', name: '德威航空', en: "T'way Air", defaultTpeTerm: 'T1' },
+            { code: 'BX', icao: 'ABL', name: '釜山航空', en: 'Air Busan', defaultTpeTerm: 'T2' },
+            { code: 'RF', icao: 'EOK', name: '可依航空', en: 'Aero K', defaultTpeTerm: 'T1' },
+            { code: 'SQ', icao: 'SIA', name: '新加坡航空', en: 'Singapore Airlines', defaultTpeTerm: 'T2' },
+            { code: 'VN', icao: 'HVN', name: '越南航空', en: 'Vietnam Airlines', defaultTpeTerm: 'T1' },
+            { code: 'VJ', icao: 'VJC', name: '越捷航空', en: 'VietJet Air', defaultTpeTerm: 'T1' },
+            { code: 'QH', icao: 'BAV', name: '竹子航空', en: 'Bamboo Airways', defaultTpeTerm: 'T1' },
+            { code: 'TG', icao: 'THA', name: '泰國國際航空', en: 'Thai Airways', defaultTpeTerm: 'T1' },
+            { code: 'VZ', icao: 'TVJ', name: '泰越捷航空', en: 'Thai VietJet Air', defaultTpeTerm: 'T1' },
+            { code: 'MH', icao: 'MAS', name: '馬來西亞航空', en: 'Malaysia Airlines', defaultTpeTerm: 'T1' },
+            { code: 'OD', icao: 'MXD', name: '馬印/巴澤航空', en: 'Batik Air Malaysia', defaultTpeTerm: 'T1' },
+            { code: 'PR', icao: 'PAL', name: '菲律賓航空', en: 'Philippine Airlines', defaultTpeTerm: 'T1' },
+            { code: '5J', icao: 'CEB', name: '宿霧太平洋航空', en: 'Cebu Pacific', defaultTpeTerm: 'T1' },
+            { code: 'CA', icao: 'CCA', name: '中國國際航空', en: 'Air China', defaultTpeTerm: 'T2' },
+            { code: 'MU', icao: 'CES', name: '中國東方航空', en: 'China Eastern', defaultTpeTerm: 'T2' },
+            { code: 'CZ', icao: 'CSN', name: '中國南方航空', en: 'China Southern', defaultTpeTerm: 'T2' },
+            { code: 'MF', icao: 'CXA', name: '廈門航空', en: 'XiamenAir', defaultTpeTerm: 'T2' },
+            { code: 'ZH', icao: 'CSZ', name: '深圳航空', en: 'Shenzhen Airlines', defaultTpeTerm: 'T2' },
+            { code: '3U', icao: 'CSC', name: '四川航空', en: 'Sichuan Airlines', defaultTpeTerm: 'T2' },
+            { code: 'FM', icao: 'CSH', name: '上海航空', en: 'Shanghai Airlines', defaultTpeTerm: 'T2' },
+            { code: 'HO', icao: 'DKH', name: '吉祥航空', en: 'Juneyao Air', defaultTpeTerm: 'T1' },
+            { code: '9C', icao: 'CQH', name: '春秋航空', en: 'Spring Airlines', defaultTpeTerm: 'T1' },
+            { code: 'EK', icao: 'UAE', name: '阿聯酋航空', en: 'Emirates', defaultTpeTerm: 'T1' },
+            { code: 'TK', icao: 'THY', name: '土耳其航空', en: 'Turkish Airlines', defaultTpeTerm: 'T2' },
+            { code: 'QR', icao: 'QTR', name: '卡達航空', en: 'Qatar Airways', defaultTpeTerm: 'T1' },
+            { code: 'EY', icao: 'ETD', name: '阿提哈德航空', en: 'Etihad Airways', defaultTpeTerm: 'T1' },
+            { code: 'UA', icao: 'UAL', name: '聯合航空', en: 'United Airlines', defaultTpeTerm: 'T2' },
+            { code: 'DL', icao: 'DAL', name: '達美航空', en: 'Delta Air Lines', defaultTpeTerm: 'T2' },
+            { code: 'AA', icao: 'AAL', name: '美國航空', en: 'American Airlines', defaultTpeTerm: 'T2' },
+            { code: 'AC', icao: 'ACA', name: '加拿大航空', en: 'Air Canada', defaultTpeTerm: 'T2' },
+            { code: 'KL', icao: 'KLM', name: '荷蘭皇家航空', en: 'KLM Royal Dutch', defaultTpeTerm: 'T2' },
+            { code: 'AF', icao: 'AFR', name: '法國航空', en: 'Air France', defaultTpeTerm: 'T2' },
+            { code: 'LH', icao: 'DLH', name: '德國漢莎航空', en: 'Lufthansa', defaultTpeTerm: 'T2' },
+            { code: 'BA', icao: 'BAW', name: '英國航空', en: 'British Airways', defaultTpeTerm: 'T2' },
+            { code: 'QF', icao: 'QFA', name: '澳洲航空', en: 'Qantas', defaultTpeTerm: 'T1' },
+            { code: 'NZ', icao: 'ANZ', name: '紐西蘭航空', en: 'Air New Zealand', defaultTpeTerm: 'T2' }
+        ];
+
+        let onlineExtraAirlines = [];
+        let onlineAirlinesLoaded = false;
+        let onlineAirlinesLoading = false;
+
+        // 機場代碼與航廈對照表（供線上 API 查得機場代碼時轉為繁體中文與正確航廈）
+        const AIRPORT_INFO_MAP = {
+            TPE: { name: '台北桃園 (TPE)', terms: { CI: 'T2', BR: 'T2', CX: 'T1', IT: 'T1', MM: 'T1', JX: 'T1', JL: 'T2', NH: 'T2', TR: 'T1', GK: 'T1', UO: 'T1', HX: 'T2', KE: 'T1', OZ: 'T2', SQ: 'T2', TG: 'T1', VN: 'T1', VJ: 'T1', CA: 'T2', MU: 'T2', CZ: 'T2', EK: 'T1', TK: 'T2', UA: 'T2', DL: 'T2', KL: 'T2', NZ: 'T2' }, defTerm: 'T1' },
+            TSA: { name: '台北松山 (TSA)', terms: { CI: 'T1', BR: 'T1', JL: 'T1', NH: 'T1', AE: 'T1', B7: 'T2', TW: 'T1', CA: 'T1', MU: 'T1', FM: 'T1' }, defTerm: 'T1' },
+            KHH: { name: '高雄小港 (KHH)', terms: {}, defTerm: '國際航廈' },
+            RMQ: { name: '台中國際機場 (RMQ)', terms: {}, defTerm: '國際航廈' },
+            NRT: { name: '東京成田 (NRT)', terms: { CI: 'T2', BR: 'T1', CX: 'T2', IT: 'T2', MM: 'T1', JX: 'T2', JL: 'T2', NH: 'T1', TR: 'T1', GK: 'T3' }, defTerm: 'T2' },
+            HND: { name: '東京羽田 (HND)', terms: { CI: 'T3', BR: 'T3', IT: 'T3', MM: 'T3', JL: 'T3', NH: 'T3', CX: 'T3' }, defTerm: 'T3' },
+            KIX: { name: '大阪關西 (KIX)', terms: { CI: 'T1', BR: 'T1', CX: 'T1', IT: 'T1', MM: 'T2', JX: 'T1', JL: 'T1', NH: 'T1', TR: 'T1' }, defTerm: 'T1' },
+            FUK: { name: '福岡機場 (FUK)', terms: {}, defTerm: '國際航廈' },
+            OKA: { name: '沖繩那霸 (OKA)', terms: {}, defTerm: '國際航廈' },
+            CTS: { name: '札幌新千歲 (CTS)', terms: {}, defTerm: '國際航廈' },
+            NGO: { name: '名古屋中部 (NGO)', terms: { IT: 'T1', MM: 'T1', CI: 'T1', BR: 'T1', CX: 'T1', JX: 'T1' }, defTerm: 'T1' },
+            SDJ: { name: '仙台機場 (SDJ)', terms: {}, defTerm: '' },
+            KMJ: { name: '熊本機場 (KMJ)', terms: {}, defTerm: '國際航廈' },
+            HIJ: { name: '廣島機場 (HIJ)', terms: {}, defTerm: '國際航廈' },
+            TAK: { name: '高松機場 (TAK)', terms: {}, defTerm: '' },
+            OKJ: { name: '岡山機場 (OKJ)', terms: {}, defTerm: '' },
+            HKD: { name: '函館機場 (HKD)', terms: {}, defTerm: '國際航廈' },
+            KMQ: { name: '小松機場 (KMQ)', terms: {}, defTerm: '' },
+            ICN: { name: '首爾仁川 (ICN)', terms: { CI: 'T2', BR: 'T1', CX: 'T1', IT: 'T1', MM: 'T1', KE: 'T2', OZ: 'T1', 7: 'T1', LJ: 'T2', TW: 'T1', TR: 'T1' }, defTerm: 'T1' },
+            GMP: { name: '首爾金浦 (GMP)', terms: {}, defTerm: '國際航廈' },
+            PUS: { name: '釜山金海 (PUS)', terms: {}, defTerm: '國際航廈' },
+            CJU: { name: '濟州國際機場 (CJU)', terms: {}, defTerm: '' },
+            HKG: { name: '香港國際機場 (HKG)', terms: {}, defTerm: 'T1' },
+            MFM: { name: '澳門國際機場 (MFM)', terms: {}, defTerm: 'T1' },
+            CKG: { name: '重慶江北 (CKG)', terms: {}, defTerm: 'T3' },
+            PEK: { name: '北京首都 (PEK)', terms: { CI: 'T3', BR: 'T3', CX: 'T3', CA: 'T3', MU: 'T2' }, defTerm: 'T3' },
+            PKX: { name: '北京大興 (PKX)', terms: {}, defTerm: '' },
+            PVG: { name: '上海浦東 (PVG)', terms: { CI: 'T1', BR: 'T2', CX: 'T2', CA: 'T2', MU: 'T1' }, defTerm: 'T2' },
+            SHA: { name: '上海虹橋 (SHA)', terms: {}, defTerm: 'T1' },
+            TFU: { name: '成都天府 (TFU)', terms: {}, defTerm: 'T1' },
+            CAN: { name: '廣州白雲 (CAN)', terms: {}, defTerm: 'T2' },
+            SZX: { name: '深圳寶安 (SZX)', terms: {}, defTerm: 'T3' },
+            XMN: { name: '廈門高崎 (XMN)', terms: {}, defTerm: 'T3' },
+            BKK: { name: '曼谷蘇凡納布 (BKK)', terms: {}, defTerm: '主航廈' },
+            DMK: { name: '曼谷廊曼 (DMK)', terms: {}, defTerm: 'T1' },
+            CNX: { name: '清邁國際機場 (CNX)', terms: {}, defTerm: '國際航廈' },
+            SIN: { name: '新加坡樟宜 (SIN)', terms: { CI: 'T3', BR: 'T3', CX: 'T4', IT: 'T1', TR: 'T1', JX: 'T1', SQ: 'T3' }, defTerm: 'T1' },
+            KUL: { name: '吉隆坡國際機場 (KUL)', terms: { CI: 'T1', BR: 'T1', JX: 'T1', AK: 'T2', D7: 'T2', MH: 'T1' }, defTerm: 'T1' },
+            SGN: { name: '胡志明市新山一 (SGN)', terms: {}, defTerm: 'T2' },
+            HAN: { name: '河內內排 (HAN)', terms: {}, defTerm: 'T2' },
+            DAD: { name: '峴港國際機場 (DAD)', terms: {}, defTerm: 'T2' },
+            MNL: { name: '馬尼拉尼諾伊 (MNL)', terms: { CI: 'T1', BR: 'T1', JX: 'T1', PR: 'T1', '5J': 'T3' }, defTerm: 'T1' },
+            DPS: { name: '峇里島伍拉賴 (DPS)', terms: {}, defTerm: '國際航廈' },
+            DXB: { name: '杜拜國際機場 (DXB)', terms: { EK: 'T3' }, defTerm: 'T1' },
+            IST: { name: '伊斯坦堡機場 (IST)', terms: {}, defTerm: '主航廈' },
+            LAX: { name: '洛杉磯 (LAX)', terms: {}, defTerm: 'TBIT' },
+            SFO: { name: '舊金山 (SFO)', terms: {}, defTerm: 'Intl' },
+            SEA: { name: '西雅圖 (SEA)', terms: {}, defTerm: 'S' },
+            JFK: { name: '紐約甘迺迪 (JFK)', terms: { CI: 'T4', BR: 'T1', CX: 'T8' }, defTerm: 'T1' },
+            YVR: { name: '溫哥華 (YVR)', terms: {}, defTerm: 'M' },
+            LHR: { name: '倫敦希斯洛 (LHR)', terms: { CI: 'T4', BR: 'T2', CX: 'T3' }, defTerm: 'T2' },
+            CDG: { name: '巴黎戴高樂 (CDG)', terms: { BR: 'T1', CX: 'T1', AF: 'T2E' }, defTerm: 'T1' },
+            AMS: { name: '阿姆斯特丹史基浦 (AMS)', terms: {}, defTerm: '' },
+            FRA: { name: '法蘭克福 (FRA)', terms: { CI: 'T2', LH: 'T1' }, defTerm: 'T2' },
+            VIE: { name: '維也納 (VIE)', terms: {}, defTerm: 'T3' },
+            SYD: { name: '雪梨 (SYD)', terms: {}, defTerm: 'T1' },
+            MEL: { name: '墨爾本 (MEL)', terms: {}, defTerm: 'T2' },
+            BNE: { name: '布里斯本 (BNE)', terms: {}, defTerm: 'Intl' },
+            AKL: { name: '奧克蘭 (AKL)', terms: {}, defTerm: 'Intl' }
+        };
+
+        // 3. 2025-2026 最新航季熱門航班精準時刻與航廈知識庫 (支援直飛與常見香港/東京/首爾轉機航段)
+        // 格式: 'IATA+數字(去前導0)': { depTime, arrTime, depAirport, depTerm, arrAirport, arrTerm, duration }
+        const FLIGHT_SCHEDULE_DB = {
+            // ===== 中華航空 CI (TPE 日韓美澳多在 T2，東南亞/港澳線在 T1) =====
+            'CI100': { depTime: '08:55', arrTime: '13:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 20 分鐘' },
+            'CI101': { depTime: '14:35', arrTime: '17:40', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 05 分鐘' },
+            'CI104': { depTime: '12:40', arrTime: '16:55', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 15 分鐘' },
+            'CI105': { depTime: '17:55', arrTime: '21:00', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 05 分鐘' },
+            'CI108': { depTime: '14:40', arrTime: '19:00', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 20 分鐘' },
+            'CI109': { depTime: '20:00', arrTime: '23:05', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 05 分鐘' },
+            'CI220': { depTime: '09:00', arrTime: '12:55', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '2 小時 55 分鐘' },
+            'CI221': { depTime: '14:30', arrTime: '17:15', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '3 小時 45 分鐘' },
+            'CI222': { depTime: '18:25', arrTime: '22:15', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '2 小時 50 分鐘' },
+            'CI223': { depTime: '07:55', arrTime: '10:55', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '4 小時 00 分鐘' },
+            'CI156': { depTime: '08:10', arrTime: '11:40', depLoc: '台北桃園 (TPE) T2', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 30 分鐘' },
+            'CI157': { depTime: '12:50', arrTime: '15:00', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 10 分鐘' },
+            'CI152': { depTime: '09:45', arrTime: '13:20', depLoc: '台北桃園 (TPE) T2', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 35 分鐘' },
+            'CI153': { depTime: '14:30', arrTime: '16:45', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 15 分鐘' },
+            'CI172': { depTime: '14:20', arrTime: '17:50', depLoc: '台北桃園 (TPE) T2', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 30 分鐘' },
+            'CI173': { depTime: '19:00', arrTime: '21:15', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 15 分鐘' },
+            'CI110': { depTime: '06:50', arrTime: '09:55', depLoc: '台北桃園 (TPE) T2', arrLoc: '福岡機場 (FUK) 國際航廈', duration: '2 小時 05 分鐘' },
+            'CI111': { depTime: '11:00', arrTime: '12:35', depLoc: '福岡機場 (FUK) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 35 分鐘' },
+            'CI116': { depTime: '16:25', arrTime: '19:35', depLoc: '台北桃園 (TPE) T2', arrLoc: '福岡機場 (FUK) 國際航廈', duration: '2 小時 10 分鐘' },
+            'CI117': { depTime: '20:35', arrTime: '22:20', depLoc: '福岡機場 (FUK) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 45 分鐘' },
+            'CI120': { depTime: '08:00', arrTime: '10:30', depLoc: '台北桃園 (TPE) T2', arrLoc: '沖繩那霸 (OKA) 國際航廈', duration: '1 小時 30 分鐘' },
+            'CI121': { depTime: '11:45', arrTime: '12:25', depLoc: '沖繩那霸 (OKA) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '1 小時 40 分鐘' },
+            'CI122': { depTime: '16:05', arrTime: '18:35', depLoc: '台北桃園 (TPE) T2', arrLoc: '沖繩那霸 (OKA) 國際航廈', duration: '1 小時 30 分鐘' },
+            'CI123': { depTime: '19:35', arrTime: '20:15', depLoc: '沖繩那霸 (OKA) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '1 小時 40 分鐘' },
+            'CI130': { depTime: '08:35', arrTime: '13:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '札幌新千歲 (CTS) 國際航廈', duration: '3 小時 40 分鐘' },
+            'CI131': { depTime: '14:40', arrTime: '18:15', depLoc: '札幌新千歲 (CTS) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 35 分鐘' },
+            'CI154': { depTime: '07:30', arrTime: '11:20', depLoc: '台北桃園 (TPE) T2', arrLoc: '名古屋中部 (NGO) T1', duration: '2 小時 50 分鐘' },
+            'CI155': { depTime: '12:20', arrTime: '14:50', depLoc: '名古屋中部 (NGO) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 30 分鐘' },
+            'CI160': { depTime: '07:50', arrTime: '11:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '首爾仁川 (ICN) T2', duration: '2 小時 25 分鐘' },
+            'CI161': { depTime: '12:25', arrTime: '14:10', depLoc: '首爾仁川 (ICN) T2', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 45 分鐘' },
+            'CI162': { depTime: '16:10', arrTime: '19:40', depLoc: '台北桃園 (TPE) T2', arrLoc: '首爾仁川 (ICN) T2', duration: '2 小時 30 分鐘' },
+            'CI163': { depTime: '20:50', arrTime: '22:40', depLoc: '首爾仁川 (ICN) T2', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 50 分鐘' },
+            'CI260': { depTime: '09:25', arrTime: '12:55', depLoc: '台北松山 (TSA) T1', arrLoc: '首爾金浦 (GMP) 國際航廈', duration: '2 小時 30 分鐘' },
+            'CI261': { depTime: '13:55', arrTime: '15:35', depLoc: '首爾金浦 (GMP) 國際航廈', arrLoc: '台北松山 (TSA) T1', duration: '2 小時 40 分鐘' },
+            'CI601': { depTime: '07:25', arrTime: '09:10', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '1 小時 45 分鐘' },
+            'CI602': { depTime: '10:15', arrTime: '12:05', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 50 分鐘' },
+            'CI903': { depTime: '08:05', arrTime: '10:05', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '2 小時 00 分鐘' },
+            'CI904': { depTime: '11:05', arrTime: '13:00', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 55 分鐘' },
+            'CI919': { depTime: '16:50', arrTime: '18:50', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '2 小時 00 分鐘' },
+            'CI920': { depTime: '20:05', arrTime: '21:55', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 50 分鐘' },
+            'CI511': { depTime: '07:55', arrTime: '11:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '北京首都 (PEK) T3', duration: '3 小時 20 分鐘' },
+            'CI512': { depTime: '12:25', arrTime: '15:45', depLoc: '北京首都 (PEK) T3', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 20 分鐘' },
+            'CI517': { depTime: '15:35', arrTime: '18:55', depLoc: '台北桃園 (TPE) T2', arrLoc: '北京首都 (PEK) T3', duration: '3 小時 20 分鐘' },
+            'CI518': { depTime: '20:05', arrTime: '23:20', depLoc: '北京首都 (PEK) T3', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 15 分鐘' },
+            'CI501': { depTime: '09:05', arrTime: '11:05', depLoc: '台北桃園 (TPE) T2', arrLoc: '上海浦東 (PVG) T1', duration: '2 小時 00 分鐘' },
+            'CI502': { depTime: '12:15', arrTime: '14:15', depLoc: '上海浦東 (PVG) T1', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 00 分鐘' },
+            'CI833': { depTime: '07:15', arrTime: '10:05', depLoc: '台北桃園 (TPE) T1', arrLoc: '曼谷蘇凡納布 (BKK) 主航廈', duration: '3 小時 50 分鐘' },
+            'CI834': { depTime: '11:15', arrTime: '15:55', depLoc: '曼谷蘇凡納布 (BKK) 主航廈', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 40 分鐘' },
+            'CI753': { depTime: '08:20', arrTime: '13:05', depLoc: '台北桃園 (TPE) T1', arrLoc: '新加坡樟宜 (SIN) T3', duration: '4 小時 45 分鐘' },
+            'CI754': { depTime: '14:15', arrTime: '19:00', depLoc: '新加坡樟宜 (SIN) T3', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 45 分鐘' },
+
+            // ===== 長榮航空 BR (桃園全線 T2) =====
+            'BR198': { depTime: '08:50', arrTime: '13:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T1', duration: '3 小時 25 分鐘' },
+            'BR197': { depTime: '14:15', arrTime: '17:05', depLoc: '東京成田 (NRT) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 50 分鐘' },
+            'BR196': { depTime: '15:20', arrTime: '19:40', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T1', duration: '3 小時 20 分鐘' },
+            'BR195': { depTime: '20:40', arrTime: '23:25', depLoc: '東京成田 (NRT) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 45 分鐘' },
+            'BR184': { depTime: '07:55', arrTime: '12:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T1', duration: '3 小時 20 分鐘' },
+            'BR183': { depTime: '13:25', arrTime: '16:15', depLoc: '東京成田 (NRT) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 50 分鐘' },
+            'BR192': { depTime: '07:20', arrTime: '11:15', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '2 小時 55 分鐘' },
+            'BR191': { depTime: '12:40', arrTime: '15:20', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '3 小時 40 分鐘' },
+            'BR190': { depTime: '16:20', arrTime: '20:15', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '2 小時 55 分鐘' },
+            'BR189': { depTime: '10:50', arrTime: '13:30', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '3 小時 40 分鐘' },
+            'BR178': { depTime: '06:30', arrTime: '10:10', depLoc: '台北桃園 (TPE) T2', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 40 分鐘' },
+            'BR177': { depTime: '11:10', arrTime: '13:15', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 05 分鐘' },
+            'BR132': { depTime: '08:30', arrTime: '12:10', depLoc: '台北桃園 (TPE) T2', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 40 分鐘' },
+            'BR131': { depTime: '13:10', arrTime: '15:15', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 05 分鐘' },
+            'BR130': { depTime: '13:35', arrTime: '17:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 40 分鐘' },
+            'BR129': { depTime: '18:30', arrTime: '20:30', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 00 分鐘' },
+            'BR106': { depTime: '08:10', arrTime: '11:20', depLoc: '台北桃園 (TPE) T2', arrLoc: '福岡機場 (FUK) 國際航廈', duration: '2 小時 10 分鐘' },
+            'BR105': { depTime: '12:20', arrTime: '13:50', depLoc: '福岡機場 (FUK) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 30 分鐘' },
+            'BR112': { depTime: '06:45', arrTime: '09:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '沖繩那霸 (OKA) 國際航廈', duration: '1 小時 30 分鐘' },
+            'BR113': { depTime: '10:15', arrTime: '10:55', depLoc: '沖繩那霸 (OKA) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '1 小時 40 分鐘' },
+            'BR116': { depTime: '09:30', arrTime: '14:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '札幌新千歲 (CTS) 國際航廈', duration: '3 小時 45 分鐘' },
+            'BR115': { depTime: '15:20', arrTime: '19:00', depLoc: '札幌新千歲 (CTS) 國際航廈', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 40 分鐘' },
+            'BR160': { depTime: '15:15', arrTime: '18:45', depLoc: '台北桃園 (TPE) T2', arrLoc: '首爾仁川 (ICN) T1', duration: '2 小時 30 分鐘' },
+            'BR159': { depTime: '19:45', arrTime: '21:35', depLoc: '首爾仁川 (ICN) T1', arrLoc: '台北桃園 (TPE) T2', duration: '2 小時 50 分鐘' },
+            'BR851': { depTime: '08:15', arrTime: '10:10', depLoc: '台北桃園 (TPE) T2', arrLoc: '香港國際機場 (HKG) T1', duration: '1 小時 55 分鐘' },
+            'BR852': { depTime: '11:15', arrTime: '13:05', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T2', duration: '1 小時 50 分鐘' },
+            'BR867': { depTime: '10:15', arrTime: '12:10', depLoc: '台北桃園 (TPE) T2', arrLoc: '香港國際機場 (HKG) T1', duration: '1 小時 55 分鐘' },
+            'BR868': { depTime: '13:35', arrTime: '15:25', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T2', duration: '1 小時 50 分鐘' },
+            'BR211': { depTime: '08:25', arrTime: '11:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '曼谷蘇凡納布 (BKK) 主航廈', duration: '3 小時 50 分鐘' },
+            'BR212': { depTime: '12:25', arrTime: '17:05', depLoc: '曼谷蘇凡納布 (BKK) 主航廈', arrLoc: '台北桃園 (TPE) T2', duration: '3 小時 40 分鐘' },
+            'BR225': { depTime: '07:40', arrTime: '12:15', depLoc: '台北桃園 (TPE) T2', arrLoc: '新加坡樟宜 (SIN) T3', duration: '4 小時 35 分鐘' },
+            'BR226': { depTime: '13:15', arrTime: '18:05', depLoc: '新加坡樟宜 (SIN) T3', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 50 分鐘' },
+
+            // ===== 國泰航空 CX (TPE T1 <-> HKG T1 及轉機日本/大陸/歐美) =====
+            'CX407': { depTime: '08:00', arrTime: '10:05', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '2 小時 05 分鐘' },
+            'CX489': { depTime: '10:45', arrTime: '12:50', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '2 小時 05 分鐘' },
+            'CX495': { depTime: '13:20', arrTime: '15:25', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '2 小時 05 分鐘' },
+            'CX473': { depTime: '16:45', arrTime: '18:50', depLoc: '台北桃園 (TPE) T1', arrLoc: '香港國際機場 (HKG) T1', duration: '2 小時 05 分鐘' },
+            'CX408': { depTime: '22:50', arrTime: '00:35', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 45 分鐘' },
+            'CX464': { depTime: '19:30', arrTime: '21:20', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 50 分鐘' },
+            'CX472': { depTime: '15:50', arrTime: '17:40', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 50 分鐘' },
+            'CX494': { depTime: '10:25', arrTime: '12:20', depLoc: '香港國際機場 (HKG) T1', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 55 分鐘' },
+            'CX450': { depTime: '13:00', arrTime: '17:20', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 20 分鐘' },
+            'CX451': { depTime: '15:40', arrTime: '18:35', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 55 分鐘' },
+            'CX564': { depTime: '11:15', arrTime: '14:55', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 40 分鐘' },
+            'CX565': { depTime: '16:15', arrTime: '18:30', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 15 分鐘' },
+            'CX928': { depTime: '13:35', arrTime: '16:10', depLoc: '香港國際機場 (HKG) T1', arrLoc: '重慶江北 (CKG) T3', duration: '2 小時 35 分鐘' },
+            'CX945': { depTime: '10:50', arrTime: '14:25', depLoc: '重慶江北 (CKG) T3', arrLoc: '香港國際機場 (HKG) T1', duration: '3 小時 35 分鐘' },
+
+            // ===== 台灣虎航 IT (TPE T1) =====
+            'IT200': { depTime: '06:35', arrTime: '10:40', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 05 分鐘' },
+            'IT201': { depTime: '11:50', arrTime: '14:45', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 55 分鐘' },
+            'IT202': { depTime: '13:30', arrTime: '17:35', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 05 分鐘' },
+            'IT203': { depTime: '18:25', arrTime: '21:30', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 05 分鐘' },
+            'IT216': { depTime: '00:10', arrTime: '04:00', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京羽田 (HND) T3', duration: '2 小時 50 分鐘' },
+            'IT217': { depTime: '05:00', arrTime: '07:55', depLoc: '東京羽田 (HND) T3', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 55 分鐘' },
+            'IT210': { depTime: '06:40', arrTime: '10:25', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 45 分鐘' },
+            'IT211': { depTime: '11:15', arrTime: '13:10', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T1', duration: '2 小時 55 分鐘' },
+            'IT212': { depTime: '14:40', arrTime: '18:25', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 45 分鐘' },
+            'IT213': { depTime: '19:15', arrTime: '21:15', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 00 分鐘' },
+            'IT240': { depTime: '06:15', arrTime: '09:35', depLoc: '台北桃園 (TPE) T1', arrLoc: '福岡機場 (FUK) 國際航廈', duration: '2 小時 20 分鐘' },
+            'IT241': { depTime: '10:25', arrTime: '12:10', depLoc: '福岡機場 (FUK) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '2 小時 45 分鐘' },
+            'IT230': { depTime: '06:50', arrTime: '09:20', depLoc: '台北桃園 (TPE) T1', arrLoc: '沖繩那霸 (OKA) 國際航廈', duration: '1 小時 30 分鐘' },
+            'IT231': { depTime: '10:10', arrTime: '10:45', depLoc: '沖繩那霸 (OKA) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 35 分鐘' },
+            'IT234': { depTime: '06:20', arrTime: '11:00', depLoc: '台北桃園 (TPE) T1', arrLoc: '札幌新千歲 (CTS) 國際航廈', duration: '3 小時 40 分鐘' },
+            'IT235': { depTime: '11:55', arrTime: '15:35', depLoc: '札幌新千歲 (CTS) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 40 分鐘' },
+            'IT206': { depTime: '09:00', arrTime: '12:55', depLoc: '台北桃園 (TPE) T1', arrLoc: '名古屋中部 (NGO) T1', duration: '2 小時 55 分鐘' },
+            'IT207': { depTime: '13:45', arrTime: '15:55', depLoc: '名古屋中部 (NGO) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 10 分鐘' },
+            'IT600': { depTime: '19:55', arrTime: '23:30', depLoc: '台北桃園 (TPE) T1', arrLoc: '首爾仁川 (ICN) T1', duration: '2 小時 35 分鐘' },
+            'IT601': { depTime: '00:30', arrTime: '02:15', depLoc: '首爾仁川 (ICN) T1', arrLoc: '台北桃園 (TPE) T1', duration: '2 小時 45 分鐘' },
+
+            // ===== 樂桃航空 MM (TPE T1 / NRT T1 / KIX T2) =====
+            'MM620': { depTime: '02:25', arrTime: '06:40', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T1', duration: '3 小時 15 分鐘' },
+            'MM622': { depTime: '09:30', arrTime: '13:50', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T1', duration: '3 小時 20 分鐘' },
+            'MM625': { depTime: '16:45', arrTime: '20:00', depLoc: '東京成田 (NRT) T1', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 15 分鐘' },
+            'MM627': { depTime: '22:15', arrTime: '01:25', depLoc: '東京成田 (NRT) T1', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 10 分鐘' },
+            'MM860': { depTime: '20:55', arrTime: '00:50', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京羽田 (HND) T3', duration: '2 小時 55 分鐘' },
+            'MM859': { depTime: '05:55', arrTime: '08:55', depLoc: '東京羽田 (HND) T3', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 00 分鐘' },
+            'MM22': { depTime: '09:35', arrTime: '13:15', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T2', duration: '2 小時 40 分鐘' },
+            'MM23': { depTime: '07:50', arrTime: '10:00', depLoc: '大阪關西 (KIX) T2', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 10 分鐘' },
+            'MM28': { depTime: '18:35', arrTime: '22:15', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T2', duration: '2 小時 40 分鐘' },
+            'MM27': { depTime: '15:40', arrTime: '17:55', depLoc: '大阪關西 (KIX) T2', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 15 分鐘' },
+            'MM922': { depTime: '09:35', arrTime: '12:20', depLoc: '台北桃園 (TPE) T1', arrLoc: '沖繩那霸 (OKA) 國際航廈', duration: '1 小時 45 分鐘' },
+            'MM921': { depTime: '08:15', arrTime: '08:50', depLoc: '沖繩那霸 (OKA) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 35 分鐘' },
+            'MM926': { depTime: '14:35', arrTime: '17:20', depLoc: '台北桃園 (TPE) T1', arrLoc: '沖繩那霸 (OKA) 國際航廈', duration: '1 小時 45 分鐘' },
+            'MM925': { depTime: '13:15', arrTime: '13:50', depLoc: '沖繩那霸 (OKA) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '1 小時 35 分鐘' },
+            'MM722': { depTime: '02:25', arrTime: '06:30', depLoc: '台北桃園 (TPE) T1', arrLoc: '名古屋中部 (NGO) T1', duration: '3 小時 05 分鐘' },
+            'MM723': { depTime: '23:15', arrTime: '01:25', depLoc: '名古屋中部 (NGO) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 10 分鐘' },
+
+            // ===== 星宇航空 JX & 日航 JL & 全日空 NH & 酷航 TR =====
+            'JX800': { depTime: '08:30', arrTime: '12:55', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 25 分鐘' },
+            'JX801': { depTime: '14:10', arrTime: '16:55', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 45 分鐘' },
+            'JX802': { depTime: '10:40', arrTime: '15:05', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 25 分鐘' },
+            'JX803': { depTime: '16:20', arrTime: '19:10', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 50 分鐘' },
+            'JX820': { depTime: '07:40', arrTime: '11:20', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 40 分鐘' },
+            'JX821': { depTime: '12:30', arrTime: '14:35', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 05 分鐘' },
+            'JX822': { depTime: '09:20', arrTime: '13:05', depLoc: '台北桃園 (TPE) T1', arrLoc: '大阪關西 (KIX) T1', duration: '2 小時 45 分鐘' },
+            'JX823': { depTime: '14:15', arrTime: '16:15', depLoc: '大阪關西 (KIX) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 00 分鐘' },
+            'JX840': { depTime: '10:30', arrTime: '13:45', depLoc: '台北桃園 (TPE) T1', arrLoc: '福岡機場 (FUK) 國際航廈', duration: '2 小時 15 分鐘' },
+            'JX841': { depTime: '14:45', arrTime: '16:25', depLoc: '福岡機場 (FUK) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '2 小時 40 分鐘' },
+            'JX850': { depTime: '09:25', arrTime: '14:10', depLoc: '台北桃園 (TPE) T1', arrLoc: '札幌新千歲 (CTS) 國際航廈', duration: '3 小時 45 分鐘' },
+            'JX851': { depTime: '15:25', arrTime: '19:05', depLoc: '札幌新千歲 (CTS) 國際航廈', arrLoc: '台北桃園 (TPE) T1', duration: '4 小時 40 分鐘' },
+            'JL802': { depTime: '10:00', arrTime: '14:20', depLoc: '台北桃園 (TPE) T2', arrLoc: '東京成田 (NRT) T2', duration: '3 小時 20 分鐘' },
+            'JL809': { depTime: '18:00', arrTime: '21:10', depLoc: '東京成田 (NRT) T2', arrLoc: '台北桃園 (TPE) T2', duration: '4 小時 10 分鐘' },
+            'JL96': { depTime: '09:10', arrTime: '13:10', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '3 小時 00 分鐘' },
+            'JL99': { depTime: '18:10', arrTime: '21:00', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '3 小時 50 分鐘' },
+            'NH852': { depTime: '13:30', arrTime: '17:45', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '3 小時 15 分鐘' },
+            'NH851': { depTime: '09:40', arrTime: '12:30', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '3 小時 50 分鐘' },
+            'NH854': { depTime: '16:50', arrTime: '20:55', depLoc: '台北松山 (TSA) T1', arrLoc: '東京羽田 (HND) T3', duration: '3 小時 05 分鐘' },
+            'NH853': { depTime: '12:40', arrTime: '15:50', depLoc: '東京羽田 (HND) T3', arrLoc: '台北松山 (TSA) T1', duration: '4 小時 10 分鐘' },
+            'TR898': { depTime: '06:45', arrTime: '11:10', depLoc: '台北桃園 (TPE) T1', arrLoc: '東京成田 (NRT) T1', duration: '3 小時 25 分鐘' },
+            'TR899': { depTime: '12:20', arrTime: '15:10', depLoc: '東京成田 (NRT) T1', arrLoc: '台北桃園 (TPE) T1', duration: '3 小時 50 分鐘' }
+        };
+
+        const FLIGHT_SEG_KEYS = ['Out1', 'Out2', 'In1', 'In2'];
+        const flightLookupTimers = {};
+
+        function getAllKnownAirlines() {
+            const seen = new Set();
+            const merged = [];
+            [...FAVORITE_AIRLINES, ...REGIONAL_AND_GLOBAL_AIRLINES, ...onlineExtraAirlines].forEach(a => {
+                if (a && a.code && !seen.has(a.code)) {
+                    seen.add(a.code);
+                    merged.push(a);
+                }
+            });
+            return merged;
+        }
+
+        function findAirlineMeta(codeOrName) {
+            if (!codeOrName) return null;
+            const q = String(codeOrName).trim();
+            const qUpper = q.toUpperCase();
+            const list = getAllKnownAirlines();
+            let hit = list.find(a => a.code === qUpper);
+            if (hit) return hit;
+            hit = list.find(a => q.includes(a.name) || a.name.includes(q) || (a.en && a.en.toUpperCase() === qUpper));
+            return hit || null;
+        }
+
+        // 建立 4 個航段的航空公司下拉選單選項（常用置頂 + 亞太主流 + 網路全球撈取 + 自訂）
+        function populateAirlineDropdowns(preserveSelection = true) {
+            const favHtml = FAVORITE_AIRLINES.map(a =>
+                `<option value="${a.code}">${a.name} (${a.code})</option>`
+            ).join('');
+            const regHtml = REGIONAL_AND_GLOBAL_AIRLINES.map(a =>
+                `<option value="${a.code}">${a.name} (${a.code})</option>`
+            ).join('');
+            const netHtml = onlineExtraAirlines.length > 0
+                ? `<optgroup label="🌐 全球航空公司 (網路同步 ${onlineExtraAirlines.length} 家)">` +
+                  onlineExtraAirlines.map(a => `<option value="${a.code}">${escapeHtml(a.name)} (${escapeHtml(a.code)})</option>`).join('') +
+                  `</optgroup>`
+                : '';
+
+            const fullOptionsHtml = `
+                <option value="">-- 請選擇航空公司 --</option>
+                <optgroup label="⭐ 常用航空公司">
+                    ${favHtml}
+                </optgroup>
+                <optgroup label="🌏 亞太與國際主流航空">
+                    ${regHtml}
+                </optgroup>
+                ${netHtml}
+                <optgroup label="✍️ 其他">
+                    <option value="CUSTOM">手動輸入其他航空...</option>
+                </optgroup>
+            `;
+
+            FLIGHT_SEG_KEYS.forEach(seg => {
+                const sel = document.getElementById(`fAirlineSelect_${seg}`);
+                if (!sel) return;
+                const prev = preserveSelection ? sel.value : '';
+                sel.innerHTML = fullOptionsHtml;
+                if (prev && Array.from(sel.options).some(o => o.value === prev)) {
+                    sel.value = prev;
+                }
+            });
+        }
+
+        // 從網路公開全球航空公司資料庫撈取並擴充下拉選單
+        async function fetchOnlineAirlinesCatalog(showManualToast = false) {
+            if (onlineAirlinesLoading) return;
+            onlineAirlinesLoading = true;
+            const badgeEl = document.getElementById('airlineOnlineSyncBadge');
+            if (badgeEl) badgeEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 正在從網路同步全球航空公司清單...`;
+
+            const urls = [
+                'https://cdn.jsdelivr.net/gh/besrourms/airlines@master/airlines.json',
+                'https://raw.githubusercontent.com/npow/airline-codes/master/airlines.json'
+            ];
+
+            let fetchedList = [];
+            for (const url of urls) {
+                try {
+                    const ctrl = new AbortController();
+                    const timer = setTimeout(() => ctrl.abort(), 5000);
+                    const resp = await fetch(url, { signal: ctrl.signal });
+                    clearTimeout(timer);
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const existingCodes = new Set([...FAVORITE_AIRLINES, ...REGIONAL_AND_GLOBAL_AIRLINES].map(x => x.code));
+                        const temp = [];
+                        for (const item of data) {
+                            const iata = String(item.iata || item.code || '').trim().toUpperCase();
+                            const icao = String(item.icao || '').trim().toUpperCase();
+                            const name = String(item.name || '').trim();
+                            const active = (item.active === undefined || item.active === 'Y' || item.active === true);
+                            if (active && /^[A-Z0-9]{2}$/.test(iata) && iata !== '--' && name && !existingCodes.has(iata)) {
+                                existingCodes.add(iata);
+                                temp.push({ code: iata, icao: /^[A-Z]{3}$/.test(icao) ? icao : '', name: name, en: name });
+                                if (temp.length >= 220) break;
+                            }
+                        }
+                        if (temp.length > 0) {
+                            temp.sort((a, b) => a.name.localeCompare(b.name));
+                            fetchedList = temp;
+                            break;
+                        }
+                    }
+                } catch (err) {
+                    // 嘗試下一個公開端點
+                }
+            }
+
+            onlineAirlinesLoading = false;
+            if (fetchedList.length > 0) {
+                onlineExtraAirlines = fetchedList;
+                onlineAirlinesLoaded = true;
+                populateAirlineDropdowns(true);
+                if (badgeEl) {
+                    badgeEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#059669;"></i> 已連線同步全球航空資料庫（常用 5 家置頂 ＋ 共 ${getAllKnownAirlines().length} 家航空）`;
+                }
+                if (showManualToast) showToast('success', `已從網路撈取並擴充 ${fetchedList.length} 家國際航空公司！`);
+            } else {
+                populateAirlineDropdowns(true);
+                if (badgeEl) {
+                    badgeEl.innerHTML = `<i class="fa-solid fa-plane-circle-check" style="color:#0284c7;"></i> 已載入常用航空與 ${getAllKnownAirlines().length} 家主流國際航空清單`;
+                }
+                if (showManualToast) showToast('info', '目前已使用內建完整國際航空清單');
+            }
+        }
+
+        function formatAirportWithTerminal(airportCode, iataAirline) {
+            if (!airportCode) return '';
+            const code = airportCode.toUpperCase();
+            const info = AIRPORT_INFO_MAP[code];
+            if (!info) return code;
+            const term = (iataAirline && info.terms && info.terms[iataAirline]) ? info.terms[iataAirline] : info.defTerm;
+            return term ? `${info.name} ${term}` : info.name;
+        }
+
+        function inferPlanDestAirportCode() {
+            const plan = getCurrentPlan();
+            const txt = `${plan?.title || ''} ${plan?.subtitle || ''}`;
+            if (/東京|成田|淺草|上野|新宿|銀座|富士山/.test(txt)) return 'NRT';
+            if (/羽田/.test(txt)) return 'HND';
+            if (/大阪|京都|神戶|奈良|關西|環球影城/.test(txt)) return 'KIX';
+            if (/福岡|九州|博多|由布院/.test(txt)) return 'FUK';
+            if (/沖繩|那霸/.test(txt)) return 'OKA';
+            if (/北海道|札幌|小樽|函館/.test(txt)) return 'CTS';
+            if (/名古屋|合掌村|北陸/.test(txt)) return 'NGO';
+            if (/首爾|仁川|弘大|明洞/.test(txt)) return 'ICN';
+            if (/釜山/.test(txt)) return 'PUS';
+            if (/濟州/.test(txt)) return 'CJU';
+            if (/香港/.test(txt)) return 'HKG';
+            if (/澳門/.test(txt)) return 'MFM';
+            if (/重慶/.test(txt)) return 'CKG';
+            if (/北京/.test(txt)) return 'PEK';
+            if (/上海/.test(txt)) return 'PVG';
+            if (/曼谷|泰國/.test(txt)) return 'BKK';
+            if (/清邁/.test(txt)) return 'CNX';
+            if (/新加坡/.test(txt)) return 'SIN';
+            if (/吉隆坡|馬來西亞/.test(txt)) return 'KUL';
+            if (/胡志明/.test(txt)) return 'SGN';
+            if (/河內/.test(txt)) return 'HAN';
+            if (/峴港|富國島/.test(txt)) return 'DAD';
+            if (/峇里島/.test(txt)) return 'DPS';
+            return '';
+        }
+
+        // 同步組裝單一航段的隱藏完整欄位 (airline & flightNo)
+        function syncSegmentCombinedFields(seg) {
+            const tType = document.getElementById('fTransportType')?.value || 'flight';
+            const selEl = document.getElementById(`fAirlineSelect_${seg}`);
+            const textAirEl = document.getElementById(`fAirlineCustom_${seg}`);
+            const prefixEl = document.getElementById(`fCodePrefix_${seg}`);
+            const numEl = document.getElementById(`fCodeNum_${seg}`);
+            const legacyNoEl = document.getElementById(`fLegacyNo_${seg}`);
+
+            const hiddenMap = {
+                Out1: { air: 'fOutAirline', no: 'fOutNo' },
+                Out2: { air: 'fOutAirline2', no: 'fOutNo2' },
+                In1:  { air: 'fInAirline',  no: 'fInNo' },
+                In2:  { air: 'fInAirline2', no: 'fInNo2' }
+            };
+            const targetIds = hiddenMap[seg];
+            if (!targetIds) return;
+            const hidAir = document.getElementById(targetIds.air);
+            const hidNo = document.getElementById(targetIds.no);
+
+            if (tType === 'flight') {
+                let airName = '';
+                let codePrefix = (prefixEl?.value || '').trim().toUpperCase();
+                if (selEl && selEl.value && selEl.value !== 'CUSTOM') {
+                    const meta = findAirlineMeta(selEl.value);
+                    airName = meta ? meta.name : selEl.value;
+                    if (!codePrefix) codePrefix = selEl.value;
+                } else if (selEl && selEl.value === 'CUSTOM') {
+                    airName = (textAirEl?.value || '').trim();
+                }
+                const numPart = (numEl?.value || '').trim();
+                const fullFlightNo = (codePrefix && numPart) ? `${codePrefix} ${numPart}` : (codePrefix ? codePrefix : numPart);
+                if (hidAir) hidAir.value = airName;
+                if (hidNo) hidNo.value = fullFlightNo;
+            } else {
+                if (hidAir && textAirEl) hidAir.value = textAirEl.value.trim();
+                if (hidNo && legacyNoEl) hidNo.value = legacyNoEl.value.trim();
+            }
+        }
+
+        // 當使用者從下拉選單選擇航空公司時：自動帶入前 2 碼英文，並預設起飛機場航廈
+        function onSegmentAirlineChange(seg, triggerLookup = true) {
+            const selEl = document.getElementById(`fAirlineSelect_${seg}`);
+            const customEl = document.getElementById(`fAirlineCustom_${seg}`);
+            const prefixEl = document.getElementById(`fCodePrefix_${seg}`);
+            const numEl = document.getElementById(`fCodeNum_${seg}`);
+            if (!selEl) return;
+
+            const val = selEl.value;
+            if (val === 'CUSTOM') {
+                if (customEl) {
+                    customEl.style.display = 'block';
+                    customEl.placeholder = '輸入航空公司名稱';
+                }
+                if (prefixEl) {
+                    prefixEl.readOnly = false;
+                    prefixEl.placeholder = '代碼';
+                }
+            } else {
+                if (customEl) customEl.style.display = 'none';
+                if (prefixEl) {
+                    prefixEl.value = val || '';
+                    prefixEl.readOnly = !!val;
+                }
+                // 若出發機場尚未填寫或仍為預設泛稱，先依航空公司自動帶入標準航廈
+                if (val) {
+                    const depInput = document.getElementById(getSegFieldId(seg, 'depLoc'));
+                    if (depInput && (!depInput.value.trim() || depInput.value.trim() === '桃園國際機場' || depInput.value.trim() === '出發地')) {
+                        if (seg === 'Out1') {
+                            depInput.value = formatAirportWithTerminal('TPE', val);
+                        } else if (seg === 'Out2') {
+                            const prevArr = document.getElementById('fOutArrLoc1')?.value.trim();
+                            if (prevArr) depInput.value = prevArr;
+                        } else if (seg === 'In2') {
+                            const prevArr = document.getElementById('fInArrLoc1')?.value.trim();
+                            if (prevArr) depInput.value = prevArr;
+                        }
+                    }
+                }
+            }
+
+            syncSegmentCombinedFields(seg);
+            if (triggerLookup && numEl && numEl.value.trim()) {
+                triggerFlightScheduleLookup(seg, true);
+            }
+        }
+
+        // 當使用者在「班機數字格」輸入時（支援直接貼上如 CI100 或純數字 100）
+        function onSegmentFlightNumInput(seg) {
+            const numEl = document.getElementById(`fCodeNum_${seg}`);
+            const selEl = document.getElementById(`fAirlineSelect_${seg}`);
+            const prefixEl = document.getElementById(`fCodePrefix_${seg}`);
+            if (!numEl) return;
+
+            let raw = numEl.value.toUpperCase().trim();
+            // 若使用者整串貼上如 "BR 198" 或 "CI0100"，智慧拆分英文前綴與數字！
+            const pastedMatch = raw.match(/^([A-Z0-9]{2})\s*[- ]?\s*(\d{1,4}[A-Z]?)$/);
+            if (pastedMatch && /[A-Z]/.test(pastedMatch[1])) {
+                const pCode = pastedMatch[1];
+                const pNum = pastedMatch[2];
+                const meta = findAirlineMeta(pCode);
+                if (meta && selEl) {
+                    selEl.value = meta.code;
+                    if (prefixEl) {
+                        prefixEl.value = meta.code;
+                        prefixEl.readOnly = true;
+                    }
+                } else if (prefixEl) {
+                    prefixEl.value = pCode;
+                }
+                numEl.value = pNum;
+            } else {
+                // 僅保留數字與尾碼字母(如 A/B 加班機)
+                numEl.value = raw.replace(/[^0-9A-Z]/g, '').slice(0, 5);
+            }
+
+            syncSegmentCombinedFields(seg);
+
+            if (flightLookupTimers[seg]) clearTimeout(flightLookupTimers[seg]);
+            flightLookupTimers[seg] = setTimeout(() => {
+                triggerFlightScheduleLookup(seg, false);
+            }, 320);
+        }
+
+        function getSegFieldId(seg, field) {
+            const map = {
+                Out1: { depTime: 'fOutDepTime',  arrTime: 'fOutArrTime1', depLoc: 'fOutDepLoc',  arrLoc: 'fOutArrLoc1' },
+                Out2: { depTime: 'fOutDepTime2', arrTime: 'fOutArrTime2', depLoc: 'fOutDepLoc2', arrLoc: 'fOutArrLoc2' },
+                In1:  { depTime: 'fInDepTime',   arrTime: 'fInArrTime1',  depLoc: 'fInDepLoc',   arrLoc: 'fInArrLoc1'  },
+                In2:  { depTime: 'fInDepTime2',  arrTime: 'fInArrTime2',  depLoc: 'fInDepLoc2',  arrLoc: 'fInArrLoc2'  }
+            };
+            return map[seg] ? map[seg][field] : '';
+        }
+
+        function openExternalFlightCheck(seg) {
+            const prefix = (document.getElementById(`fCodePrefix_${seg}`)?.value || '').trim().toUpperCase();
+            const num = (document.getElementById(`fCodeNum_${seg}`)?.value || '').trim();
+            const q = (prefix + num) ? `${prefix}${num} flight status schedule` : 'flight status';
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank', 'noopener,noreferrer');
+        }
+
+        // 雙引擎查詢最新航班起降時間與機場航廈（本地最新航季庫 + 網路公開即時航線 API）
+        async function triggerFlightScheduleLookup(seg, forceOverwrite = false) {
+            const tType = document.getElementById('fTransportType')?.value || 'flight';
+            if (tType !== 'flight') return;
+
+            const prefix = (document.getElementById(`fCodePrefix_${seg}`)?.value || '').trim().toUpperCase();
+            const rawNum = (document.getElementById(`fCodeNum_${seg}`)?.value || '').trim();
+            const statusEl = document.getElementById(`fAutoHint_${seg}`);
+            if (!prefix || !rawNum) {
+                if (statusEl) statusEl.style.display = 'none';
+                return;
+            }
+
+            const cleanNum = rawNum.replace(/^0+/, '') || '0';
+            const lookupKey = `${prefix}${cleanNum}`;
+            const displayFlightCode = `${prefix} ${rawNum}`;
+
+            const depTimeEl = document.getElementById(getSegFieldId(seg, 'depTime'));
+            const arrTimeEl = document.getElementById(getSegFieldId(seg, 'arrTime'));
+            const depLocEl  = document.getElementById(getSegFieldId(seg, 'depLoc'));
+            const arrLocEl  = document.getElementById(getSegFieldId(seg, 'arrLoc'));
+
+            if (statusEl) {
+                statusEl.style.display = 'flex';
+                statusEl.innerHTML = `<span><i class="fa-solid fa-spinner fa-spin" style="color:#0284c7;"></i> 正在檢索 <strong>${escapeHtml(displayFlightCode)}</strong> 最新航線時刻與航廈...</span>`;
+            }
+
+            // 1. 優先檢索高精準度航季班表庫
+            const localHit = FLIGHT_SCHEDULE_DB[lookupKey];
+            if (localHit) {
+                if (depTimeEl) depTimeEl.value = localHit.depTime;
+                if (arrTimeEl) arrTimeEl.value = localHit.arrTime;
+                if (depLocEl)  depLocEl.value  = localHit.depLoc;
+                if (arrLocEl)  arrLocEl.value  = localHit.arrLoc;
+
+                recalcAllFlightTimings();
+
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <span><i class="fa-solid fa-circle-check" style="color:#059669;"></i> 已自動帶入 <strong>${escapeHtml(displayFlightCode)}</strong> 最新班表與航廈（若遇航空公司換季或微調航班時間，可直接於上方欄位修改）</span>
+                        <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.69rem; color:#1d4ed8; border-color:#bfdbfe; background:#eff6ff; flex-shrink:0;" onclick="openExternalFlightCheck('${seg}')">
+                            <i class="fa-solid fa-globe"></i> 核對即時班表
+                        </button>
+                    `;
+                }
+                return;
+            }
+
+            // 2. 連線公開免金鑰航空路由 API (adsbdb.com) 查詢全球即時航班起降機場
+            let onlineRouteFound = false;
+            const airlineMeta = findAirlineMeta(prefix);
+            const icaoPrefix = airlineMeta?.icao || '';
+            if (icaoPrefix) {
+                try {
+                    const ctrl = new AbortController();
+                    const tid = setTimeout(() => ctrl.abort(), 4000);
+                    const resp = await fetch(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(icaoPrefix + cleanNum)}`, { signal: ctrl.signal });
+                    clearTimeout(tid);
+                    if (resp.ok) {
+                        const json = await resp.json();
+                        const route = json?.response?.flightroute;
+                        if (route && (route.origin || route.destination)) {
+                            const origIata = route.origin?.iata_code || '';
+                            const destIata = route.destination?.iata_code || '';
+                            const origStr = origIata
+                                ? formatAirportWithTerminal(origIata, prefix)
+                                : (route.origin?.municipality ? `${route.origin.municipality} (${route.origin.icao_code || ''})` : '');
+                            const destStr = destIata
+                                ? formatAirportWithTerminal(destIata, prefix)
+                                : (route.destination?.municipality ? `${route.destination.municipality} (${route.destination.icao_code || ''})` : '');
+
+                            if (origStr && depLocEl) depLocEl.value = origStr;
+                            if (destStr && arrLocEl) arrLocEl.value = destStr;
+                            onlineRouteFound = !!(origStr || destStr);
+                        }
+                    }
+                } catch (netErr) {
+                    // 網路離線或查無該呼號時使用智慧推斷
+                }
+            }
+
+            // 3. 若線上也無該特殊班號，依航空公司航廈規則與行程目的地智慧帶入機場航廈
+            if (!onlineRouteFound) {
+                const destCode = inferPlanDestAirportCode();
+                if (seg === 'Out1') {
+                    if (depLocEl && (!depLocEl.value.trim() || depLocEl.value.includes('桃園國際機場'))) {
+                        depLocEl.value = formatAirportWithTerminal('TPE', prefix);
+                    }
+                    if (arrLocEl && destCode && (!arrLocEl.value.trim() || arrLocEl.value.includes('目的地機場'))) {
+                        arrLocEl.value = formatAirportWithTerminal(destCode, prefix);
+                    }
+                } else if (seg === 'Out2') {
+                    const transPort = document.getElementById('fOutArrLoc1')?.value.trim();
+                    if (depLocEl && transPort && !depLocEl.value.trim()) depLocEl.value = transPort;
+                    if (arrLocEl && destCode && !arrLocEl.value.trim()) arrLocEl.value = formatAirportWithTerminal(destCode, prefix);
+                } else if (seg === 'In1') {
+                    const outFinalArr = (document.getElementById('fOutIsTransfer')?.checked ? document.getElementById('fOutArrLoc2')?.value : document.getElementById('fOutArrLoc1')?.value) || '';
+                    if (depLocEl && !depLocEl.value.trim()) {
+                        depLocEl.value = outFinalArr.trim() || (destCode ? formatAirportWithTerminal(destCode, prefix) : '');
+                    }
+                    if (arrLocEl && !arrLocEl.value.trim() && !document.getElementById('fInIsTransfer')?.checked) {
+                        arrLocEl.value = formatAirportWithTerminal('TPE', prefix);
+                    }
+                } else if (seg === 'In2') {
+                    const transPort = document.getElementById('fInArrLoc1')?.value.trim();
+                    if (depLocEl && transPort && !depLocEl.value.trim()) depLocEl.value = transPort;
+                    if (arrLocEl && !arrLocEl.value.trim()) arrLocEl.value = formatAirportWithTerminal('TPE', prefix);
+                }
+            }
+
+            recalcAllFlightTimings();
+
+            if (statusEl) {
+                statusEl.innerHTML = onlineRouteFound
+                    ? `<span><i class="fa-solid fa-satellite-dish" style="color:#0284c7;"></i> 已由網路航線庫帶入 <strong>${escapeHtml(displayFlightCode)}</strong> 起降機場與航廈！因航空公司可能依航季調整時刻，請確認或點擊右側帶入最新起降時間：</span>
+                       <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.69rem; color:#1d4ed8; border-color:#bfdbfe; background:#eff6ff; flex-shrink:0;" onclick="openExternalFlightCheck('${seg}')">
+                           <i class="fa-solid fa-globe"></i> 查最新時刻
+                       </button>`
+                    : `<span><i class="fa-solid fa-circle-info" style="color:#d97706;"></i> 已依航空公司自動帶入對應航廈；因各季班表可能異動，請確認起降時間或點擊右側即時查詢 <strong>${escapeHtml(displayFlightCode)}</strong>：</span>
+                       <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.69rem; color:#1d4ed8; border-color:#bfdbfe; background:#eff6ff; flex-shrink:0;" onclick="openExternalFlightCheck('${seg}')">
+                           <i class="fa-solid fa-globe"></i> 查官方班表
+                       </button>`;
+            }
+        }
+
+        // 當使用者手動修改起飛或抵達時間時：標示為手動確認時刻，並即時重算中轉時間與總時長
+        function onSegmentTimeManualChange(seg) {
+            const statusEl = document.getElementById(`fAutoHint_${seg}`);
+            if (statusEl && statusEl.style.display !== 'none') {
+                const prefix = (document.getElementById(`fCodePrefix_${seg}`)?.value || '').trim().toUpperCase();
+                const rawNum = (document.getElementById(`fCodeNum_${seg}`)?.value || '').trim();
+                const codeLabel = (prefix && rawNum) ? `${prefix} ${rawNum}` : '此航段';
+                statusEl.innerHTML = `
+                    <span><i class="fa-solid fa-pen-check" style="color:#0f766e;"></i> 已套用手動確認時刻（因應航空公司航班時間調整，系統將以此時間計算行程與轉機）</span>
+                    <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.69rem; color:#1d4ed8; border-color:#bfdbfe; background:#eff6ff; flex-shrink:0;" onclick="openExternalFlightCheck('${seg}')">
+                        <i class="fa-solid fa-globe"></i> 核對 ${escapeHtml(codeLabel)}
+                    </button>
+                `;
+            }
+            recalcAllFlightTimings();
+        }
+
+        function parseHHMMToMinutes(str) {
+            if (!str || typeof str !== 'string') return null;
+            const m = str.trim().match(/^(\d{1,2})\s*[:：]\s*(\d{2})/);
+            if (!m) return null;
+            const hh = parseInt(m[1], 10);
+            const mm = parseInt(m[2], 10);
+            if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+            return hh * 60 + mm;
+        }
+
+        function formatMinutesDiff(mins) {
+            if (mins === null || mins <= 0) return '';
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            if (h > 0 && m > 0) return `${h} 小時 ${m} 分鐘`;
+            if (h > 0) return `${h} 小時`;
+            return `${m} 分鐘`;
+        }
+
+        // 依據兩段航班起降時間，自動計算「中轉停留時間」與「總時長」
+        function recalcDirectionTransferAndDuration(dir) {
+            const isOut = (dir === 'Out');
+            const isTrans = !!document.getElementById(isOut ? 'fOutIsTransfer' : 'fInIsTransfer')?.checked;
+
+            const dep1 = parseHHMMToMinutes(document.getElementById(isOut ? 'fOutDepTime' : 'fInDepTime')?.value);
+            const arr1 = parseHHMMToMinutes(document.getElementById(isOut ? 'fOutArrTime1' : 'fInArrTime1')?.value);
+            const dep2 = parseHHMMToMinutes(document.getElementById(isOut ? 'fOutDepTime2' : 'fInDepTime2')?.value);
+            const arr2 = parseHHMMToMinutes(document.getElementById(isOut ? 'fOutArrTime2' : 'fInArrTime2')?.value);
+
+            const arrLoc1Val = (document.getElementById(isOut ? 'fOutArrLoc1' : 'fInArrLoc1')?.value || '').trim();
+            const depLoc2El  = document.getElementById(isOut ? 'fOutDepLoc2' : 'fInDepLoc2');
+            if (isTrans && arrLoc1Val && depLoc2El && !depLoc2El.value.trim()) {
+                depLoc2El.value = arrLoc1Val;
+            }
+
+            const badgeEl = document.getElementById(isOut ? 'fLayoverCalcBadgeOut' : 'fLayoverCalcBadgeIn');
+            const transInput = document.getElementById(isOut ? 'fTransferInfoOut' : 'fTransferInfoIn');
+            const durInput = document.getElementById(isOut ? 'fOutDuration' : 'fInDuration');
+
+            if (!isTrans) {
+                // 直飛模式：若尚未有手動時區精準值或剛改時間，可計算基礎時間差
+                if (dep1 !== null && arr1 !== null && durInput && (!durInput.value.trim() || durInput.dataset.autoCalc === '1')) {
+                    let diff1 = arr1 - dep1;
+                    if (diff1 <= 0) diff1 += 1440;
+                    durInput.value = `${formatMinutesDiff(diff1)} (直達)`;
+                    durInput.dataset.autoCalc = '1';
+                }
+                return;
+            }
+
+            // 轉機模式：計算第 1 段抵達 (arr1) -> 第 2 段起飛 (dep2) 的中轉時間（同一中轉機場當地時間，無時差問題，100% 精準！）
+            if (arr1 !== null && dep2 !== null) {
+                let layoverMins = dep2 - arr1;
+                let overnight = false;
+                if (layoverMins < 0) {
+                    layoverMins += 1440;
+                    overnight = true;
+                }
+                const layoverText = formatMinutesDiff(layoverMins);
+                const portShort = arrLoc1Val || '中轉機場';
+                const autoSummary = `${portShort} 中轉停留 ${layoverText}${overnight ? ' (跨日)' : ''}`;
+
+                if (badgeEl) {
+                    const tightWarn = layoverMins < 60
+                        ? ` <span style="color:#dc2626; font-weight:800;">⚠️ 轉機時間少於 1 小時較緊湊！</span>`
+                        : (overnight ? ` <span style="color:#7c3aed;">🌙 跨夜轉機</span>` : '');
+                    badgeEl.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> 系統自動計算中轉時間：<strong>${layoverText}</strong>${tightWarn}`;
+                }
+                if (transInput) {
+                    transInput.value = autoSummary;
+                }
+
+                // 計算含中轉之總行程參考時長
+                if (dep1 !== null && arr2 !== null && durInput) {
+                    let leg1Mins = arr1 - dep1;
+                    if (leg1Mins <= 0) leg1Mins += 1440;
+                    let leg2Mins = arr2 - dep2;
+                    if (leg2Mins <= 0) leg2Mins += 1440;
+                    const totalMins = leg1Mins + layoverMins + leg2Mins;
+                    const cityShort = portShort.split(' ')[0].replace(/\(.*?\)/g, '') || '中轉';
+                    durInput.value = `約 ${formatMinutesDiff(totalMins)} (經${cityShort}轉機停留 ${layoverText})`;
+                    durInput.dataset.autoCalc = '1';
+                }
+            } else {
+                if (badgeEl) {
+                    badgeEl.innerHTML = `<i class="fa-regular fa-clock"></i> 填寫第 1 段抵達時間與第 2 段起飛時間後，自動計算中轉停留時間`;
+                }
+            }
+        }
+
+        function recalcAllFlightTimings() {
+            recalcDirectionTransferAndDuration('Out');
+            recalcDirectionTransferAndDuration('In');
+        }
+
+        // 將儲存的字串拆回「航空公司下拉選單 + 2碼前綴 + 數字」
+        function applySavedSegmentToUI(seg, savedAirline, savedFlightNo, savedDepTime, savedArrTime, savedDepLoc, savedArrLoc) {
+            const tType = document.getElementById('fTransportType')?.value || 'flight';
+            const selEl = document.getElementById(`fAirlineSelect_${seg}`);
+            const customAirEl = document.getElementById(`fAirlineCustom_${seg}`);
+            const prefixEl = document.getElementById(`fCodePrefix_${seg}`);
+            const numEl = document.getElementById(`fCodeNum_${seg}`);
+            const legacyNoEl = document.getElementById(`fLegacyNo_${seg}`);
+            const statusEl = document.getElementById(`fAutoHint_${seg}`);
+
+            if (statusEl) statusEl.style.display = 'none';
+
+            const setField = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.value = (v !== undefined && v !== null) ? v : '';
+            };
+
+            setField(getSegFieldId(seg, 'depTime'), savedDepTime || '');
+            setField(getSegFieldId(seg, 'arrTime'), savedArrTime || '');
+            setField(getSegFieldId(seg, 'depLoc'), savedDepLoc || '');
+            setField(getSegFieldId(seg, 'arrLoc'), savedArrLoc || '');
+
+            const cleanNo = String(savedFlightNo || '').trim();
+            const cleanAir = String(savedAirline || '').trim();
+
+            if (legacyNoEl) legacyNoEl.value = cleanNo;
+            if (customAirEl) customAirEl.value = cleanAir;
+
+            if (tType === 'flight') {
+                let parsedPrefix = '';
+                let parsedNum = '';
+                const m = cleanNo.match(/^([A-Za-z0-9]{2})\s*[- ]?\s*([0-9A-Za-z-]*)$/);
+                if (m && /[A-Za-z]/.test(m[1])) {
+                    parsedPrefix = m[1].toUpperCase();
+                    parsedNum = m[2].replace(/^-+$/, '').trim();
+                } else {
+                    parsedNum = cleanNo.replace(/^-+$/, '').trim();
+                }
+
+                let meta = parsedPrefix ? findAirlineMeta(parsedPrefix) : null;
+                if (!meta && cleanAir) meta = findAirlineMeta(cleanAir);
+
+                if (meta && selEl) {
+                    // 確保選項已存在
+                    if (!Array.from(selEl.options).some(o => o.value === meta.code)) {
+                        populateAirlineDropdowns(true);
+                    }
+                    selEl.value = meta.code;
+                    if (customAirEl) customAirEl.style.display = 'none';
+                    if (prefixEl) {
+                        prefixEl.value = meta.code;
+                        prefixEl.readOnly = true;
+                    }
+                } else if (cleanAir || parsedPrefix) {
+                    if (selEl) selEl.value = 'CUSTOM';
+                    if (customAirEl) {
+                        customAirEl.style.display = 'block';
+                        customAirEl.value = cleanAir;
+                    }
+                    if (prefixEl) {
+                        prefixEl.value = parsedPrefix;
+                        prefixEl.readOnly = false;
+                    }
+                } else {
+                    if (selEl) selEl.value = '';
+                    if (customAirEl) customAirEl.style.display = 'none';
+                    if (prefixEl) {
+                        prefixEl.value = '';
+                        prefixEl.readOnly = true;
+                    }
+                }
+                if (numEl) numEl.value = parsedNum;
+            }
+            syncSegmentCombinedFields(seg);
+        }
+
+        // 在第二張截圖（往返機票 / 主交通區塊）直接點選切換搭乘方式與載具類型
+        function selectPlanTransportType(type) {
+            const plan = getCurrentPlan();
+            if (plan) {
+                if (!plan.flights) plan.flights = { legs: [] };
+                plan.flights.transportType = type;
+                if (Array.isArray(plan.flights.legs)) {
+                    plan.flights.legs.forEach(leg => { leg.transportType = type; });
+                }
+                saveState();
+            }
+            setTransportType(type);
+            if (typeof renderSidebarFlights === 'function') renderSidebarFlights();
+            const cfg = TRANSPORT_CONFIG[type] || TRANSPORT_CONFIG.flight;
+            showToast('info', `已將搭乘方式切換為「${cfg.name}」`);
+        }
 
         function setTransportType(type) {
             const cfg = TRANSPORT_CONFIG[type] || TRANSPORT_CONFIG.flight;
             const input = document.getElementById('fTransportType');
             if (input) input.value = type;
 
-            // 切換按鈕 active 樣式
-            const btns = document.querySelectorAll('#transportTypeButtonGroup .transport-btn');
+            // 更新第二張截圖位置的載具類型膠囊按鈕 active 狀態
+            const btns = document.querySelectorAll('#transportTypeButtonGroup .ltm-pill');
             btns.forEach(b => {
                 b.classList.remove('active');
-                b.style.background = '';
-                b.style.color = '';
-                b.style.fontWeight = 'normal';
             });
             const activeBtn = document.getElementById(`btnTransport${type.charAt(0).toUpperCase() + type.slice(1)}`);
             if (activeBtn) {
                 activeBtn.classList.add('active');
-                activeBtn.style.background = '#0284c7';
-                activeBtn.style.color = '#fff';
-                activeBtn.style.fontWeight = '700';
             }
 
-            // 更新 UI 標籤文字與 placeholder
-            const setText = (id, txt) => {
-                const el = document.getElementById(id);
-                if (el) el.innerText = txt;
-            };
-            const setHtml = (id, html) => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = html;
-            };
-            const setPlh = (id, plh) => {
-                const el = document.getElementById(id);
-                if (el) el.placeholder = plh;
-            };
+            // 同步更新第二張截圖區塊標題與按鈕文字
+            const secTitleEl = document.getElementById('sideTransportSectionTitle');
+            if (secTitleEl) {
+                secTitleEl.innerHTML = `<i class="fa-solid ${cfg.icon}" style="color:#286678; font-size:0.9rem;"></i> ${cfg.sectionTitle}`;
+            }
+            const secBtnEl = document.getElementById('sideTransportEditBtn');
+            if (secBtnEl) {
+                secBtnEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> ${cfg.actionBtnText}`;
+            }
+
+            // 切換飛機專用下拉選單/拆碼欄位 vs 其他載具通用輸入框
+            const isFlight = (type === 'flight');
+            const syncBar = document.getElementById('airlineOnlineSyncBar');
+            if (syncBar) syncBar.style.display = isFlight ? 'flex' : 'none';
+
+            FLIGHT_SEG_KEYS.forEach(seg => {
+                const selBox = document.getElementById(`fAirlineSelect_${seg}`);
+                const cusBox = document.getElementById(`fAirlineCustom_${seg}`);
+                const comboBox = document.getElementById(`fFlightCodeCombo_${seg}`);
+                const legNoBox = document.getElementById(`fLegacyNo_${seg}`);
+
+                if (isFlight) {
+                    if (selBox) selBox.style.display = 'block';
+                    if (cusBox) cusBox.style.display = (selBox && selBox.value === 'CUSTOM') ? 'block' : 'none';
+                    if (comboBox) comboBox.style.display = 'flex';
+                    if (legNoBox) legNoBox.style.display = 'none';
+                } else {
+                    if (selBox) selBox.style.display = 'none';
+                    if (cusBox) {
+                        cusBox.style.display = 'block';
+                        cusBox.placeholder = cfg.airlinePlaceholder;
+                    }
+                    if (comboBox) comboBox.style.display = 'none';
+                    if (legNoBox) {
+                        legNoBox.style.display = 'block';
+                        legNoBox.placeholder = cfg.noPlaceholder;
+                    }
+                }
+                syncSegmentCombinedFields(seg);
+            });
+
+            const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+            const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+            const setPlh = (id, plh) => { const el = document.getElementById(id); if (el) el.placeholder = plh; };
 
             setHtml('flightModalHeaderTitle', cfg.headerTitle);
             setText('labelOutSectionTitle', cfg.outTitle);
             setText('labelInSectionTitle', cfg.inTitle);
 
-            setText('labelOutAirline', cfg.airlineLabel);
-            setPlh('fOutAirline', cfg.airlinePlaceholder);
-            setText('labelOutNo', cfg.noLabel);
-            setPlh('fOutNo', cfg.noPlaceholder);
-            setText('labelOutDepLoc', cfg.depLocLabel);
-            setPlh('fOutDepLoc', cfg.depLocPlaceholder);
-            setText('fOutArrLabel1', cfg.arrLocLabel);
-            setPlh('fOutArrLoc1', cfg.arrLocPlaceholder);
+            ['labelOutAirline', 'labelOutAirline2', 'labelInAirline', 'labelInAirline2'].forEach(id => setText(id, cfg.airlineLabel));
+            ['labelOutNo', 'labelOutNo2', 'labelInNo', 'labelInNo2'].forEach(id => setText(id, cfg.noLabel));
+            ['labelOutDepLoc', 'labelOutDepLoc2', 'labelInDepLoc', 'labelInDepLoc2'].forEach(id => setText(id, cfg.depLocLabel));
+            ['fOutArrLabel1', 'labelOutArrLoc2', 'fInArrLabel1', 'labelInArrLoc2'].forEach(id => setText(id, cfg.arrLocLabel));
+
+            ['fOutDepLoc', 'fOutDepLoc2', 'fInDepLoc', 'fInDepLoc2'].forEach(id => setPlh(id, cfg.depLocPlaceholder));
+            ['fOutArrLoc1', 'fOutArrLoc2', 'fInArrLoc1', 'fInArrLoc2'].forEach(id => setPlh(id, cfg.arrLocPlaceholder));
 
             setText('fIsTransferCheckboxSpan', cfg.transferSpan);
-            setText('labelOutTransferInfo', cfg.transferInfoLabel);
-            setPlh('fTransferInfoOut', cfg.transferInfoPlaceholder);
-            setText('labelOutNo2Title', cfg.no2Title);
-            setText('labelOutNo2', cfg.no2Label);
-            setPlh('fOutNo2', cfg.no2Placeholder);
-            setText('labelOutArrLoc2', cfg.arrLoc2Label);
-            setPlh('fOutArrLoc2', cfg.arrLoc2Placeholder);
-
-            setText('labelInAirline', cfg.inAirlineLabel);
-            setPlh('fInAirline', cfg.inAirlinePlaceholder);
-            setText('labelInNo', cfg.inNoLabel);
-            setPlh('fInNo', cfg.inNoPlaceholder);
-            setText('labelInDepLoc', cfg.inDepLocLabel);
-            setPlh('fInDepLoc', cfg.inDepLocPlaceholder);
-            setText('fInArrLabel1', cfg.inArrLocLabel);
-            setPlh('fInArrLoc1', cfg.inArrLocPlaceholder);
-
-            setText('labelInTransferInfo', cfg.inTransferInfoLabel);
-            setPlh('fTransferInfoIn', cfg.inTransferInfoPlaceholder);
-            setText('labelInNo2Title', cfg.inNo2Title);
-            setText('labelInNo2', cfg.inNo2Label);
-            setPlh('fInNo2', cfg.inNo2Placeholder);
-            setText('labelInArrLoc2', cfg.inArrLoc2Label);
-            setPlh('fInArrLoc2', cfg.inArrLoc2Placeholder);
-
+            setText('labelOutNo2Title', cfg.out2Title);
+            setText('labelInNo2Title', cfg.in2Title);
             setText('labelCostSectionTitle', cfg.costSectionTitle);
 
+            toggleFlightTransferFields();
             calcFlightModalCost();
         }
 
@@ -15817,9 +16899,7 @@ const firebaseConfig = {
             const outInput = document.getElementById('fOutCost');
             const inInput = document.getElementById('fInCost');
 
-            if (sepBox) {
-                sepBox.style.display = isRoundtrip ? 'none' : 'grid';
-            }
+            if (sepBox) sepBox.style.display = isRoundtrip ? 'none' : 'grid';
             if (totLabel) {
                 totLabel.innerText = isRoundtrip ? '🎫 來回總票價 (往返總額一筆)' : '🎫 來回總計金額 (由去程+回程自動加總)';
             }
@@ -15827,7 +16907,6 @@ const firebaseConfig = {
                 totInput.readOnly = !isRoundtrip;
                 if (!isRoundtrip) {
                     totInput.style.backgroundColor = '#f1f5f9';
-                    // 若切換至分開計價，且去回皆未填但總額有值，自動均分填入去回
                     const curTot = parseFloat(totInput.value) || 0;
                     const curOut = parseFloat(outInput?.value) || 0;
                     const curIn = parseFloat(inInput?.value) || 0;
@@ -15838,7 +16917,6 @@ const firebaseConfig = {
                     }
                 } else {
                     totInput.style.backgroundColor = '';
-                    // 若切換至來回合併，僅在「來回總票價尚未填寫或為 0」時才從去回加總帶入，絕不覆蓋使用者已設定的來回總票價！
                     const curTot = parseFloat(totInput.value) || 0;
                     const curOut = parseFloat(outInput?.value) || 0;
                     const curIn = parseFloat(inInput?.value) || 0;
@@ -15850,110 +16928,110 @@ const firebaseConfig = {
             calcFlightModalCost();
         }
 
-        function toggleFlightTransferFields() {
-            const cb = document.getElementById('fIsTransferCheckbox');
+        // 支援總開關與「去程轉機 / 回程轉機」個別開關連動
+        function toggleFlightTransferFields(source = 'master') {
+            const masterCb = document.getElementById('fIsTransferCheckbox');
+            const outCb = document.getElementById('fOutIsTransfer');
+            const inCb = document.getElementById('fInIsTransfer');
+
+            if (source === 'master' && masterCb) {
+                if (outCb) outCb.checked = masterCb.checked;
+                if (inCb) inCb.checked = masterCb.checked;
+            } else {
+                if (masterCb && outCb && inCb) {
+                    masterCb.checked = !!(outCb.checked || inCb.checked);
+                }
+            }
+
             const outTrans = document.getElementById('transferOutboundFields');
             const inTrans = document.getElementById('transferInboundFields');
             const outArrLabel = document.getElementById('fOutArrLabel1');
             const inArrLabel = document.getElementById('fInArrLabel1');
             const transportType = document.getElementById('fTransportType')?.value || 'flight';
             const cfg = TRANSPORT_CONFIG[transportType] || TRANSPORT_CONFIG.flight;
-            
-            const isTrans = cb ? cb.checked : false;
-            if (outTrans) outTrans.style.display = isTrans ? 'block' : 'none';
-            if (inTrans) inTrans.style.display = isTrans ? 'block' : 'none';
-            if (outArrLabel) outArrLabel.innerText = isTrans ? (transportType === 'flight' ? '中轉機場 (轉機地)' : '中轉站點 (轉乘地)') : cfg.arrLocLabel;
-            if (inArrLabel) inArrLabel.innerText = isTrans ? (transportType === 'flight' ? '中轉機場 (轉機地)' : '中轉站點 (轉乘地)') : cfg.inArrLocLabel;
+
+            const isOutTrans = !!(outCb ? outCb.checked : masterCb?.checked);
+            const isInTrans  = !!(inCb  ? inCb.checked  : masterCb?.checked);
+
+            if (outTrans) outTrans.style.display = isOutTrans ? 'block' : 'none';
+            if (inTrans)  inTrans.style.display  = isInTrans  ? 'block' : 'none';
+
+            if (outArrLabel) outArrLabel.innerText = isOutTrans ? (transportType === 'flight' ? '中轉機場 / 航廈' : '中轉站點') : cfg.arrLocLabel;
+            if (inArrLabel)  inArrLabel.innerText  = isInTrans  ? (transportType === 'flight' ? '中轉機場 / 航廈' : '中轉站點') : cfg.arrLocLabel;
+
+            recalcAllFlightTimings();
         }
 
-                function fillTransferExample() {
-            setTransportType('flight');
-            const cb = document.getElementById('fIsTransferCheckbox');
-            if (cb) cb.checked = true;
-            toggleFlightTransferFields();
+        function fillTransferExampleChongqing() {
+            try {
+                populateAirlineDropdowns(true);
+                setTransportType('flight');
+                const masterCb = document.getElementById('fIsTransferCheckbox');
+                if (masterCb) masterCb.checked = true;
+                toggleFlightTransferFields('master');
 
-            document.getElementById('fOutAirline').value = '國際航空';
-            document.getElementById('fOutNo').value = 'TR 101';
-            document.getElementById('fOutDepTime').value = '08:00';
-            document.getElementById('fOutArrTime1').value = '10:30';
-            document.getElementById('fOutDepLoc').value = '台北桃園 (TPE) T1';
-            document.getElementById('fOutArrLoc1').value = '轉機樞紐 (HKG) T1';
-            document.getElementById('fTransferInfoOut').value = '轉機停留 2 小時 30 分鐘';
-            document.getElementById('fOutNo2').value = 'TR 202';
-            document.getElementById('fOutDepTime2').value = '13:00';
-            document.getElementById('fOutArrTime2').value = '16:00';
-            document.getElementById('fOutArrLoc2').value = '目的地機場 (NRT) T1';
-            document.getElementById('fOutDuration').value = '8 hrs (經轉機)';
+                applySavedSegmentToUI('Out1', '國泰航空', 'CX 407', '08:00', '10:05', '台北桃園 (TPE) T1', '香港國際機場 (HKG) T1');
+                applySavedSegmentToUI('Out2', '國泰航空', 'CX 928', '13:35', '16:10', '香港國際機場 (HKG) T1', '重慶江北 (CKG) T3');
+                applySavedSegmentToUI('In1',  '國泰航空', 'CX 945', '10:50', '14:25', '重慶江北 (CKG) T3', '香港國際機場 (HKG) T1');
+                applySavedSegmentToUI('In2',  '國泰航空', 'CX 464', '19:30', '21:20', '香港國際機場 (HKG) T1', '台北桃園 (TPE) T1');
 
-            document.getElementById('fInAirline').value = '國際航空';
-            document.getElementById('fInNo').value = 'TR 303';
-            document.getElementById('fInDepTime').value = '11:00';
-            document.getElementById('fInArrTime1').value = '14:00';
-            document.getElementById('fInDepLoc').value = '目的地機場 (NRT) T1';
-            document.getElementById('fInArrLoc1').value = '轉機樞紐 (HKG) T1';
-            document.getElementById('fTransferInfoIn').value = '轉機停留 3 小時';
-            document.getElementById('fInNo2').value = 'TR 404';
-            document.getElementById('fInDepTime2').value = '17:00';
-            document.getElementById('fInArrTime2').value = '19:30';
-            document.getElementById('fInArrLoc2').value = '台北桃園 (TPE) T1';
-            document.getElementById('fInDuration').value = '8 hrs 30 mins (經轉機)';
+                recalcAllFlightTimings();
 
-            document.getElementById('fCategoryTag').value = 'International';
-            document.getElementById('fPnr').value = 'TR-EXAMPLE';
+                const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+                setVal('fCategoryTag', 'International');
+                setVal('fPnr', 'EJ3HIM / CX8888');
+                setVal('fOutCost', '6250');
+                setVal('fInCost', '6250');
+                setVal('fCostMode', 'single');
+                setVal('fCostCurr', 'TWD');
+                setVal('fActualCost', '12500');
+                const rSep = document.getElementById('fPricingSeparate');
+                if (rSep) rSep.checked = true;
+                toggleFlightPricingMode();
+                calcFlightModalCost();
 
-            document.getElementById('fOutCost').value = '6000';
-            document.getElementById('fInCost').value = '6000';
-            const rSep = document.getElementById('fPricingSeparate');
-            if (rSep) rSep.checked = true;
-            toggleFlightPricingMode();
-            calcFlightModalCost();
-            showToast('info', '已帶入轉機範例資料！');
+                showToast('info', '已帶入轉機示範航班，並自動計算兩段中轉停留時間！');
+            } catch (e) {
+                console.warn('帶入轉機範例時發生警告:', e);
+            }
         }
+        function fillTransferExample() { fillTransferExampleChongqing(); }
 
-        function fillDirectExample() {
-            setTransportType('flight');
-            const cb = document.getElementById('fIsTransferCheckbox');
-            if (cb) cb.checked = false;
-            toggleFlightTransferFields();
+        function fillDirectExampleBeijing() {
+            try {
+                populateAirlineDropdowns(true);
+                setTransportType('flight');
+                const masterCb = document.getElementById('fIsTransferCheckbox');
+                if (masterCb) masterCb.checked = false;
+                toggleFlightTransferFields('master');
 
-            document.getElementById('fOutAirline').value = '直飛航空';
-            document.getElementById('fOutNo').value = 'DR 501';
-            document.getElementById('fOutDepTime').value = '09:00';
-            document.getElementById('fOutArrTime1').value = '12:30';
-            document.getElementById('fOutDepLoc').value = '台北桃園 (TPE) T2';
-            document.getElementById('fOutArrLoc1').value = '目的地機場 (KIX) T1';
-            document.getElementById('fTransferInfoOut').value = '';
-            document.getElementById('fOutNo2').value = '';
-            document.getElementById('fOutDepTime2').value = '';
-            document.getElementById('fOutArrTime2').value = '';
-            document.getElementById('fOutArrLoc2').value = '';
-            document.getElementById('fOutDuration').value = '3 hrs 30 mins (直飛)';
+                applySavedSegmentToUI('Out1', '中華航空', 'CI 100', '08:55', '13:15', '台北桃園 (TPE) T2', '東京成田 (NRT) T2');
+                applySavedSegmentToUI('Out2', '', '', '', '', '', '');
+                applySavedSegmentToUI('In1',  '中華航空', 'CI 101', '14:35', '17:40', '東京成田 (NRT) T2', '台北桃園 (TPE) T2');
+                applySavedSegmentToUI('In2',  '', '', '', '', '', '');
 
-            document.getElementById('fInAirline').value = '直飛航空';
-            document.getElementById('fInNo').value = 'DR 502';
-            document.getElementById('fInDepTime').value = '14:00';
-            document.getElementById('fInArrTime1').value = '16:30';
-            document.getElementById('fInDepLoc').value = '目的地機場 (KIX) T1';
-            document.getElementById('fInArrLoc1').value = '台北桃園 (TPE) T2';
-            document.getElementById('fTransferInfoIn').value = '';
-            document.getElementById('fInNo2').value = '';
-            document.getElementById('fInDepTime2').value = '';
-            document.getElementById('fInArrTime2').value = '';
-            document.getElementById('fInArrLoc2').value = '';
-            document.getElementById('fInDuration').value = '3 hrs 30 mins (直飛)';
+                const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+                setVal('fOutDuration', '3 小時 20 分鐘 (直飛)');
+                setVal('fInDuration', '4 小時 05 分鐘 (直飛)');
+                setVal('fCategoryTag', 'International');
+                setVal('fPnr', 'CI-NRT2026');
+                setVal('fTotalCost', '15000');
+                setVal('fCostMode', 'single');
+                setVal('fCostCurr', 'TWD');
+                setVal('fActualCost', '14800');
+                const rRound = document.getElementById('fPricingRoundtrip');
+                if (rRound) rRound.checked = true;
+                toggleFlightPricingMode();
+                calcFlightModalCost(true);
 
-            document.getElementById('fCategoryTag').value = 'International';
-            document.getElementById('fPnr').value = 'DR-EXAMPLE';
-
-            document.getElementById('fTotalCost').value = '12000';
-            const rRound = document.getElementById('fPricingRoundtrip');
-            if (rRound) rRound.checked = true;
-            toggleFlightPricingMode();
-            calcFlightModalCost();
-            showToast('info', '已帶入直飛範例資料！');
+                showToast('info', '已帶入直飛示範航班與來回合併票價！');
+            } catch (e) {
+                console.warn('帶入直飛範例時發生警告:', e);
+            }
         }
+        function fillDirectExample() { fillDirectExampleBeijing(); }
 
-        // 打開交通編輯彈窗 (強固防呆，全面防止拋錯閃退)
+        // 打開交通編輯彈窗
         function openEditFlightModal() {
             try {
                 const plan = getCurrentPlan();
@@ -15961,6 +17039,11 @@ const firebaseConfig = {
                     showToast('warning', '請先選擇行程計劃');
                     return;
                 }
+                populateAirlineDropdowns(false);
+                if (!onlineAirlinesLoaded) {
+                    fetchOnlineAirlinesCatalog(false);
+                }
+
                 const fl = plan.flights || {};
                 const legs = fl.legs || [];
                 const l1 = legs[0] || {};
@@ -15969,54 +17052,35 @@ const firebaseConfig = {
                 const transportType = fl.transportType || 'flight';
                 setTransportType(transportType);
 
-                // 安全給值小幫手：元素不存在時安全忽略，絕不拋出 TypeError
                 const setVal = (id, val) => {
                     const el = document.getElementById(id);
                     if (el) el.value = (val !== undefined && val !== null) ? val : '';
                 };
 
-                // 去程填入
-                setVal('fOutAirline', l1.airline || '');
-                setVal('fOutNo', l1.flightNo || '');
-                setVal('fOutDepTime', l1.depTime || '');
-                setVal('fOutArrTime1', l1.arrTime || '');
-                setVal('fOutDepLoc', l1.depLoc || '');
-                setVal('fOutArrLoc1', l1.arrLoc || '');
+                // 去程第 1 段與轉機第 2 段填入
+                applySavedSegmentToUI('Out1', l1.airline || '', l1.flightNo || '', l1.depTime || '', l1.arrTime || '', l1.depLoc || '', l1.arrLoc || '');
+                applySavedSegmentToUI('Out2', l1.airline2 || l1.airline || '', l1.flightNo2 || '', l1.depTime2 || '', l1.arrTime2 || '', l1.depLoc2 || l1.arrLoc || '', l1.arrLoc2 || '');
                 setVal('fTransferInfoOut', l1.transferInfo || '');
-                setVal('fOutNo2', l1.flightNo2 || '');
-                setVal('fOutDepTime2', l1.depTime2 || '');
-                setVal('fOutArrTime2', l1.arrTime2 || '');
-                setVal('fOutArrLoc2', l1.arrLoc2 || '');
                 setVal('fOutDuration', l1.duration || '');
+                const outDurEl = document.getElementById('fOutDuration');
+                if (outDurEl) outDurEl.dataset.autoCalc = '';
 
-                // 回程填入
-                setVal('fInAirline', l2.airline || '');
-                setVal('fInNo', l2.flightNo || '');
-                setVal('fInDepTime', l2.depTime || '');
-                setVal('fInArrTime1', l2.arrTime || '');
-                setVal('fInDepLoc', l2.depLoc || '');
-                setVal('fInArrLoc1', l2.arrLoc || '');
+                // 回程第 1 段與轉機第 2 段填入
+                applySavedSegmentToUI('In1', l2.airline || '', l2.flightNo || '', l2.depTime || '', l2.arrTime || '', l2.depLoc || '', l2.arrLoc || '');
+                applySavedSegmentToUI('In2', l2.airline2 || l2.airline || '', l2.flightNo2 || '', l2.depTime2 || '', l2.arrTime2 || '', l2.depLoc2 || l2.arrLoc || '', l2.arrLoc2 || '');
                 setVal('fTransferInfoIn', l2.transferInfo || '');
-                setVal('fInNo2', l2.flightNo2 || '');
-                setVal('fInDepTime2', l2.depTime2 || '');
-                setVal('fInArrTime2', l2.arrTime2 || '');
-                setVal('fInArrLoc2', l2.arrLoc2 || '');
                 setVal('fInDuration', l2.duration || '');
+                const inDurEl = document.getElementById('fInDuration');
+                if (inDurEl) inDurEl.dataset.autoCalc = '';
 
                 setVal('fCategoryTag', fl.categoryTag || 'International');
                 setVal('fPnr', fl.pnr || (l1.pnr || ''));
 
-                // 決定計價模式：若有指定則遵循指定；若無，若去回皆填寫則為 separate，否則預設為 roundtrip
                 let pricingType = fl.pricingType;
                 if (!pricingType) {
-                    if (Number(fl.outboundCost) > 0 || Number(fl.inboundCost) > 0) {
-                        pricingType = 'separate';
-                    } else {
-                        pricingType = 'roundtrip';
-                    }
+                    pricingType = (Number(fl.outboundCost) > 0 || Number(fl.inboundCost) > 0) ? 'separate' : 'roundtrip';
                 }
 
-                // 填入交通/機票費用設定 (支援 legs 自身票價 fallback 與智慧回填，來回合併模式下以 fl.cost 為主絕不跳回舊 12500)
                 let initialOutCost = (fl.outboundCost !== undefined && fl.outboundCost !== null && fl.outboundCost !== '') ? fl.outboundCost : ((l1.cost !== undefined && l1.cost !== null) ? l1.cost : '');
                 let initialInCost = (fl.inboundCost !== undefined && fl.inboundCost !== null && fl.inboundCost !== '') ? fl.inboundCost : ((l2.cost !== undefined && l2.cost !== null) ? l2.cost : '');
                 let initialTotCost = (fl.cost !== undefined && fl.cost !== null && fl.cost !== '') ? fl.cost : '';
@@ -16024,7 +17088,6 @@ const firebaseConfig = {
                     initialTotCost = (Number(initialOutCost) || 0) + (Number(initialInCost) || 0);
                 }
                 if (pricingType === 'roundtrip' && Number(initialTotCost) > 0) {
-                    // 來回合併模式下，去回程欄位必須同步對齊當前來回總票價，防止舊預設值 (6250+6250=12500) 干擾
                     initialOutCost = Math.round(Number(initialTotCost) / 2);
                     initialInCost = Number(initialTotCost) - initialOutCost;
                 } else if (Number(initialTotCost) > 0 && (initialOutCost === '' || Number(initialOutCost) === 0) && (initialInCost === '' || Number(initialInCost) === 0)) {
@@ -16048,23 +17111,26 @@ const firebaseConfig = {
                 }
                 toggleFlightPricingMode();
 
-                // 轉乘設定
-                const isTrans = fl.isTransfer === true || l1.isTransfer === true || !!l1.transferInfo || (l1.flightNo2 && l1.flightNo2.trim().length > 0);
-                const cb = document.getElementById('fIsTransferCheckbox');
-                if (cb) cb.checked = isTrans;
-                toggleFlightTransferFields();
+                // 轉乘狀態判斷（支援去程與回程各自設定轉機）
+                const isOutTrans = l1.isTransfer === true || !!l1.transferInfo || (l1.flightNo2 && l1.flightNo2.trim().length > 0) || (fl.isTransfer === true && !l2.isTransfer);
+                const isInTrans  = l2.isTransfer === true || !!l2.transferInfo || (l2.flightNo2 && l2.flightNo2.trim().length > 0) || (fl.isTransfer === true && !l1.isTransfer);
+                const outCb = document.getElementById('fOutIsTransfer');
+                const inCb  = document.getElementById('fInIsTransfer');
+                const masterCb = document.getElementById('fIsTransferCheckbox');
+                if (outCb) outCb.checked = isOutTrans;
+                if (inCb)  inCb.checked  = isInTrans;
+                if (masterCb) masterCb.checked = !!(isOutTrans || isInTrans);
+                toggleFlightTransferFields('sub');
 
                 calcFlightModalCost();
                 openModal('editFlightModal');
             } catch (err) {
                 console.error('開啟交通編輯彈窗時發生非致命問題:', err);
-                try {
-                    openModal('editFlightModal');
-                } catch (e) {}
+                try { openModal('editFlightModal'); } catch (e) {}
             }
         }
 
-        // 儲存交通表單設定 (強固防呆，最優先立即關閉彈窗，徹底防止點選儲存無反應或小視窗不關閉)
+        // 儲存交通表單設定
         function handleSaveFlightSubmit(e) {
             if (e && e.preventDefault) e.preventDefault();
             try {
@@ -16077,21 +17143,25 @@ const firebaseConfig = {
                     return false;
                 }
 
+                FLIGHT_SEG_KEYS.forEach(seg => syncSegmentCombinedFields(seg));
+                recalcAllFlightTimings();
+
                 const transportType = document.getElementById('fTransportType')?.value || 'flight';
                 const isPricingRoundtrip = document.getElementById('fPricingRoundtrip')?.checked ?? true;
                 const pricingType = isPricingRoundtrip ? 'roundtrip' : 'separate';
 
-                const isTrans = !!document.getElementById('fIsTransferCheckbox')?.checked;
+                const isOutTrans = !!document.getElementById('fOutIsTransfer')?.checked;
+                const isInTrans  = !!document.getElementById('fInIsTransfer')?.checked;
+                const anyTrans   = isOutTrans || isInTrans;
+
                 const cat = (document.getElementById('fCategoryTag')?.value || 'International').trim();
                 const pnrVal = (document.getElementById('fPnr')?.value || '').trim();
-
                 const getVal = (id, def = '') => (document.getElementById(id)?.value ?? def).trim();
 
-                // 構建去程 leg (帶有預設值與容錯)
                 const outLeg = {
                     type: 'outbound',
                     transportType: transportType,
-                    isTransfer: isTrans,
+                    isTransfer: isOutTrans,
                     airline: getVal('fOutAirline'),
                     flightNo: getVal('fOutNo'),
                     depTime: getVal('fOutDepTime'),
@@ -16103,11 +17173,10 @@ const firebaseConfig = {
                     pnr: pnrVal
                 };
 
-                // 構建回程 leg (帶有預設值與容錯)
                 const inLeg = {
                     type: 'inbound',
                     transportType: transportType,
-                    isTransfer: isTrans,
+                    isTransfer: isInTrans,
                     airline: getVal('fInAirline'),
                     flightNo: getVal('fInNo'),
                     depTime: getVal('fInDepTime'),
@@ -16119,21 +17188,26 @@ const firebaseConfig = {
                     pnr: pnrVal
                 };
 
-                if (isTrans) {
+                if (isOutTrans) {
                     outLeg.transferInfo = getVal('fTransferInfoOut');
+                    outLeg.airline2 = getVal('fOutAirline2') || outLeg.airline;
                     outLeg.flightNo2 = getVal('fOutNo2');
                     outLeg.depTime2 = getVal('fOutDepTime2');
                     outLeg.arrTime2 = getVal('fOutArrTime2');
+                    outLeg.depLoc2 = getVal('fOutDepLoc2') || outLeg.arrLoc;
                     outLeg.arrLoc2 = getVal('fOutArrLoc2');
+                }
 
+                if (isInTrans) {
                     inLeg.transferInfo = getVal('fTransferInfoIn');
+                    inLeg.airline2 = getVal('fInAirline2') || inLeg.airline;
                     inLeg.flightNo2 = getVal('fInNo2');
                     inLeg.depTime2 = getVal('fInDepTime2');
                     inLeg.arrTime2 = getVal('fInArrTime2');
+                    inLeg.depLoc2 = getVal('fInDepLoc2') || inLeg.arrLoc;
                     inLeg.arrLoc2 = getVal('fInArrLoc2');
                 }
 
-                // 安全數值解析器：支援千分位逗號、貨幣符號、空白等各種使用者複製貼上格式
                 const parseSafeNum = (val) => {
                     if (val === undefined || val === null) return 0;
                     const s = String(val).replace(/,/g, '').replace(/[^\d.-]/g, '').trim();
@@ -16145,22 +17219,18 @@ const firebaseConfig = {
                 let inCostVal = parseSafeNum(document.getElementById('fInCost')?.value);
                 let totCostVal = parseSafeNum(document.getElementById('fTotalCost')?.value);
 
-                // 智慧雙向容錯防呆：絕不讓使用者輸入的費用被 0 覆蓋洗掉
                 if (pricingType === 'separate') {
                     if (outCostVal > 0 || inCostVal > 0) {
                         totCostVal = outCostVal + inCostVal;
                     } else if (totCostVal > 0) {
-                        // 使用者選了分開計價但只填了總額：自動均分，絕不清零！
                         outCostVal = Math.round(totCostVal / 2);
                         inCostVal = totCostVal - outCostVal;
                     }
                 } else {
-                    // 來回合併計價模式：直接以使用者輸入的「來回總票價 (totCostVal)」為唯一基準，並同步更新去回程均分值，絕不殘留舊的 6250+6250=12500！
                     outCostVal = Math.round(totCostVal / 2);
                     inCostVal = totCostVal - outCostVal;
                 }
 
-                // Leg 物件必須完整保存自身費用
                 outLeg.cost = (pricingType === 'separate') ? outCostVal : Math.round(totCostVal / 2);
                 inLeg.cost = (pricingType === 'separate') ? inCostVal : (totCostVal - Math.round(totCostVal / 2));
 
@@ -16168,27 +17238,32 @@ const firebaseConfig = {
                 const actParsed = parseSafeNum(rawActCost);
                 const parsedActCost = (rawActCost !== '' && rawActCost !== undefined && actParsed > 0) ? actParsed : null;
 
+                const legsToSave = [outLeg];
+                if (inLeg.airline || inLeg.flightNo || inLeg.depLoc || inLeg.arrLoc || inLeg.depTime || inLeg.isTransfer) {
+                    legsToSave.push(inLeg);
+                } else {
+                    legsToSave.push(inLeg);
+                }
+
                 plan.flights = {
                     transportType: transportType,
                     pricingType: pricingType,
                     pnr: pnrVal,
                     categoryTag: cat,
-                    isTransfer: isTrans,
+                    isTransfer: anyTrans,
                     outboundCost: outCostVal,
                     inboundCost: inCostVal,
                     cost: totCostVal,
                     costMode: document.getElementById('fCostMode')?.value || 'single',
                     costCurr: document.getElementById('fCostCurr')?.value || 'LOCAL',
                     actualCost: parsedActCost,
-                    legs: [outLeg, inLeg]
+                    legs: legsToSave
                 };
 
-                // 【最優先保證】立即關閉彈窗，絕不拖延！
                 closeModal('editFlightModal');
                 const modalEl = document.getElementById('editFlightModal');
                 if (modalEl) modalEl.classList.remove('active');
 
-                // 雙向同步：檢查是否勾選同步更新行程活動
                 const syncToSchedule = document.getElementById('fSyncToScheduleCheckbox')?.checked ?? true;
                 if (syncToSchedule && Array.isArray(plan.days)) {
                     try {
@@ -16206,9 +17281,7 @@ const firebaseConfig = {
                                 ev1.notes = outInfo.notes || ev1.notes;
                                 ev1.type = 'flight';
                                 ev1.flightLegIndex = 0;
-                                if (outLeg.cost > 0) {
-                                    ev1.cost = outLeg.cost;
-                                }
+                                if (outLeg.cost > 0) ev1.cost = outLeg.cost;
                             } else {
                                 day1.events.push({
                                     time: outInfo.timeStr,
@@ -16225,7 +17298,7 @@ const firebaseConfig = {
 
                         const inInfo = getFlightLegDetails(inLeg);
                         const lastDay = plan.days[plan.days.length - 1];
-                        if (lastDay && Array.isArray(lastDay.events) && lastDay.dayNum > 1 && inInfo) {
+                        if (lastDay && Array.isArray(lastDay.events) && lastDay.dayNum > 1 && inInfo && (inLeg.flightNo || inLeg.depTime)) {
                             let evLast = lastDay.events.find(e => e.flightLegIndex === 1);
                             if (!evLast) {
                                 evLast = lastDay.events.find(e => e.type === 'flight' && e !== (day1 ? day1.events.find(x => x.type === 'flight') : null));
@@ -16237,9 +17310,7 @@ const firebaseConfig = {
                                 evLast.notes = inInfo.notes || evLast.notes;
                                 evLast.type = 'flight';
                                 evLast.flightLegIndex = 1;
-                                if (inLeg.cost > 0) {
-                                    evLast.cost = inLeg.cost;
-                                }
+                                if (inLeg.cost > 0) evLast.cost = inLeg.cost;
                             } else {
                                 lastDay.events.push({
                                     time: inInfo.timeStr,
@@ -16254,38 +17325,26 @@ const firebaseConfig = {
                             lastDay.events = sortDayEventsByTime(lastDay.events);
                         }
 
-                        if (typeof renderTimelineView === 'function') {
-                            renderTimelineView();
-                        }
+                        if (typeof renderTimelineView === 'function') renderTimelineView();
                     } catch (syncErr) {
                         console.warn('同步更新每日行程活動時發生非致命問題:', syncErr);
                     }
                 }
 
-                // 資料持久化
-                try {
-                    saveState();
-                } catch (saveErr) {
-                    console.warn('儲存旅行狀態時發生非致命警告:', saveErr);
-                }
-
-                // 刷新相依 UI 視圖
+                try { saveState(); } catch (saveErr) {}
                 try {
                     if (typeof renderSidebarFlights === 'function') renderSidebarFlights();
                     if (typeof renderTripSummary === 'function') renderTripSummary();
                     if (typeof renderBudgetWidget === 'function') renderBudgetWidget();
                     if (typeof renderBudgetView === 'function') renderBudgetView();
                     if (typeof renderActualExpensesView === 'function') renderActualExpensesView();
-                } catch (uiErr) {
-                    console.warn('刷新側邊欄或預算視圖時發生警告:', uiErr);
-                }
+                } catch (uiErr) {}
 
                 const cfg = TRANSPORT_CONFIG[transportType] || TRANSPORT_CONFIG.flight;
                 showToast('success', syncToSchedule ? `${cfg.name}資訊與費用已成功儲存，並同步更新行程！` : `${cfg.name}資訊與費用已成功儲存！`);
                 return false;
             } catch (err) {
-                console.error('儲存大交通時發生例外錯誤:', err);
-                // 即使發生未預期例外，也強制關閉彈窗以維持使用者體驗
+                console.error('儲存交通時發生例外錯誤:', err);
                 closeModal('editFlightModal');
                 const modalEl = document.getElementById('editFlightModal');
                 if (modalEl) modalEl.classList.remove('active');
