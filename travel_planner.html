@@ -3122,10 +3122,12 @@
                             <optgroup label="🚀 快捷跳轉">
                                 <option value="transport">✈️ 航班大交通設定</option>
                                 <option value="hotel">🏨 住宿飯店資訊</option>
+                                <option value="page-expenses">💰 極簡支出計算中心 (專屬試算頁面)</option>
                             </optgroup>
                         </select>
                     </div>
 
+                    <a href="expenses.html" class="n-btn" style="font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: #0f172a; color: #fff;" title="開啟極簡旅遊支出計算中心"><i class="fa-solid fa-calculator"></i> 支出計算機</a>
                     <button class="n-btn" style="font-size: 0.8rem;" onclick="openAddEventModal()">
                         <i class="fa-solid fa-plus"></i> 新增行程項目
                     </button>
@@ -10769,7 +10771,10 @@ const firebaseConfig = {
         // ==========================
         function handleUnifiedNavSelect(val) {
             if (!val) return;
-            if (val === 'transport' || val === 'hotel') {
+            if (val === 'page-expenses') {
+                window.location.href = 'expenses.html';
+                return;
+            } else if (val === 'transport' || val === 'hotel') {
                 quickNavTo(val);
             } else if (val === 'budget') {
                 switchView('expenses');
