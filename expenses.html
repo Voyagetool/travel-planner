@@ -10,8 +10,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   
-  <!-- 引入 SheetJS 函式庫以支援原生產生並匯出 .xlsx Excel 試算表 -->
+  <!-- SheetJS 函式庫以支援原生產生並匯出 .xlsx Excel 試算表 -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Firebase SDK (跨裝置即時雙向同步核心) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
     /* CSS 重設與基礎變數（極簡低飽和度 Slate 配色與現代質感） */
@@ -46,6 +50,11 @@
       --badge-warm-bg: #fbf3db;
       --badge-warm-text: #785121;
       --badge-warm-border: rgba(120, 81, 33, 0.18);
+
+      /* 雲端狀態微標籤 */
+      --badge-cloud-bg: #ecfdf5;
+      --badge-cloud-text: #065f46;
+      --badge-cloud-border: #a7f3d0;
 
       --radius-sm: 6px;
       --radius-md: 10px;
@@ -109,6 +118,7 @@
       border-radius: var(--radius-sm);
       text-decoration: none;
       transition: all 0.15s ease;
+      cursor: pointer;
     }
     .back-btn:hover {
       background: var(--bg-hover);
@@ -159,6 +169,17 @@
       border-color: var(--badge-warm-border);
     }
 
+    .trip-badge.badge-cloud {
+      background: var(--badge-cloud-bg);
+      color: var(--badge-cloud-text);
+      border-color: var(--badge-cloud-border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .trip-badge.badge-cloud:hover {
+      filter: brightness(0.96);
+    }
+
     .header-actions {
       display: flex;
       align-items: center;
@@ -207,6 +228,18 @@
       background: #065f46;
       border-color: #065f46;
       color: #ffffff;
+    }
+
+    /* 連動同步按鈕 */
+    .btn-sync {
+      background: var(--bg-subtle);
+      color: #0284c7;
+      border-color: #bae6fd;
+      font-weight: 600;
+    }
+    .btn-sync:hover {
+      background: #e0f2fe;
+      color: #0369a1;
     }
 
     .currency-toggle-btn {
@@ -1111,18 +1144,21 @@
   <!-- 頂部導覽列 -->
   <header class="app-header">
     <div class="brand-section">
-      <a href="index.html" class="back-btn" title="返回主行程規劃">
+      <a href="javascript:void(0)" onclick="navigateToMainPlanner()" class="back-btn" title="返回主行程規劃">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         <span>返回行程</span>
       </a>
       <div class="trip-title-wrapper">
         <div class="trip-title" id="tripTitleDisplay" onclick="openTripSettingsModal()" title="點擊設定旅程基本資訊">
-          <span id="tripTitleText">重慶 7 天 6 夜之旅</span>
+          <span id="tripTitleText">重慶 7 天 6 夜魔幻之旅</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
         <span class="trip-badge" id="tripDaysBadge">7 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
-        <span class="trip-badge badge-warm" id="statusBadge">支出計算中心 ‧ 已即時試算</span>
+        <!-- 雲端跨裝置即時狀態膠囊 (點擊可切換房間或複製手機存取網址) -->
+        <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
+          <span id="cloudStatusDot">🟢</span> <span id="cloudStatusText">雲端已連線 (chongqing-2026)</span>
+        </span>
       </div>
     </div>
 
@@ -1130,6 +1166,12 @@
       <!-- 幣別快速切換按鈕 -->
       <button class="btn currency-toggle-btn" id="currencyToggleBtn" onclick="toggleDisplayCurrency()" title="切換顯示貨幣">
         <span id="currencyToggleText">幣別: TWD (台幣)</span>
+      </button>
+
+      <!-- 從主行程一鍵同步按鈕 -->
+      <button class="btn btn-sync" onclick="syncFromMainPlan()" title="從主行程自動讀取機票、住宿與各天活動費用">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>同步主行程</span>
       </button>
 
       <!-- 頂部快捷匯出 Excel 按鈕 -->
@@ -1221,6 +1263,18 @@
           <span style="font-weight: 700;">匯出 Excel 試算表 (.xlsx)</span>
         </button>
 
+        <!-- 一鍵同步主行程與雲端房間設定 -->
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-sync" style="flex: 1; font-size: 12px;" onclick="syncFromMainPlan()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>同步主行程</span>
+          </button>
+          <button class="btn" style="flex: 1; font-size: 12px;" onclick="openCloudRoomModal()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            <span>雲端存取</span>
+          </button>
+        </div>
+
         <div style="display: flex; gap: 8px;">
           <button class="btn" style="flex: 1;" onclick="window.print()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -1263,6 +1317,9 @@
       <span class="mobile-total-val" id="mobileTotalPreview">0 TWD</span>
     </div>
     <div style="display: flex; gap: 8px;">
+      <button class="btn btn-sync" onclick="syncFromMainPlan()" style="padding: 10px 12px; border-radius: var(--radius-full);" title="同步主行程">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+      </button>
       <button class="btn btn-excel" onclick="exportToExcel()" style="padding: 10px 14px; border-radius: var(--radius-full);" title="匯出 Excel">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
       </button>
@@ -1490,6 +1547,56 @@
     </div>
   </div>
 
+  <!-- 雲端房間與跨裝置存取彈窗 (Cloud Room Modal) -->
+  <div class="modal-backdrop" id="cloudRoomModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ 雲端跨裝置即時同步設定</h3>
+        <button class="icon-btn" onclick="closeCloudRoomModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div style="background: var(--badge-cloud-bg); border: 1px solid var(--badge-cloud-border); border-radius: var(--radius-sm); padding: 12px; font-size: 13px; color: var(--badge-cloud-text); line-height: 1.6;">
+          <strong>💡 跨裝置存取說明：</strong><br>
+          本支出計算中心已串接 Google Firebase Firestore 雲端即時資料庫！只要在手機、平板或其他電腦開啟同一個房間網址，所有人即可同步存取、即時編輯與記帳，免手動更新。
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cloudRoomInput">當前同步房間代碼 (Room ID)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="cloudRoomInput" class="input-field" placeholder="例如 chongqing-2026" required>
+            <button class="btn btn-primary" onclick="changeCloudRoom()">切換房間</button>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);">
+            與主行程共用同一個房間碼（預設為 <code>chongqing-2026</code>），亦可輸入自訂代碼開新房間。
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📱 手機與外部裝置存取專屬網址</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="cloudShareUrlInput" class="input-field" readonly style="background: var(--bg-subtle); font-size: 12px;">
+            <button class="btn btn-sync" onclick="copyShareRoomUrl()">📋 複製連結</button>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);">
+            將此連結貼到手機瀏覽器或傳給旅伴，點開即可遠端存取與共同記帳！
+          </span>
+        </div>
+
+        <div style="border-top: 1px dashed var(--border-color); padding-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted);">
+          <span id="cloudLastSyncTime">最後連線：檢查中...</span>
+          <button class="btn" onclick="forcePushToCloud()" style="font-size: 11px;">手動強制推送至雲端</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeCloudRoomModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /**
      * 旅遊支出計算中心 (Travel Expense Calculator)
@@ -1497,8 +1604,29 @@
      * - 響應式、全視窗自適應加寬 (左右留白最小化)
      * - 每日餐食、每日景點、每日交通、大項交通、彈性住宿多模式
      * - 雙幣別即時換算與人數均攤
-     * - 支援完整 Excel (.xlsx) 與 CSV 匯出功能
+     * - 完整 Excel (.xlsx) 試算表匯出功能
+     * - Google Firebase Firestore 雲端跨裝置即時雙向同步
+     * - 與主規劃手帳 (index.html) 一鍵連動同步資料
      */
+
+    // 專屬 Firebase 雲端配置 (與 index.html 相同專案)
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBqKgK7zKjy4-t7dPeOFYp8jwmMMRXO95g",
+      authDomain: "travel-plan-7f507.firebaseapp.com",
+      projectId: "travel-plan-7f507",
+      storageBucket: "travel-plan-7f507.firebasestorage.app",
+      messagingSenderId: "940410528659",
+      appId: "1:940410528659:web:d210557f29b0f180fb3e66",
+      measurementId: "G-BM3RSRQ1PD"
+    };
+
+    const CLOUD_ROOM_KEY = "travel_planner_cloud_room";
+    const DEFAULT_ROOM_ID = "chongqing-2026";
+
+    let firestoreDb = null;
+    let cloudUnsubscribe = null;
+    let isReceivingCloud = false;
+    let cloudDebounceTimer = null;
 
     // 預設重慶 7 天 6 夜範本資料
     const DEFAULT_EXPENSE_DATA = {
@@ -1641,6 +1769,140 @@
     function initApp() {
       loadState();
       renderAll();
+      initFirebaseSync();
+    }
+
+    // 取得當前房間碼
+    function getCloudRoomId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryRoom = urlParams.get('room');
+      if (queryRoom && queryRoom.trim()) {
+        return queryRoom.trim();
+      }
+      const saved = localStorage.getItem(CLOUD_ROOM_KEY);
+      return (saved && saved.trim()) ? saved.trim() : DEFAULT_ROOM_ID;
+    }
+
+    function setCloudRoomId(r) {
+      if (r && r.trim()) {
+        localStorage.setItem(CLOUD_ROOM_KEY, r.trim());
+      }
+    }
+
+    // 返回主行程跳轉帶房間碼
+    function navigateToMainPlanner() {
+      const roomId = getCloudRoomId();
+      window.location.href = `index.html?room=${encodeURIComponent(roomId)}`;
+    }
+
+    // 初始化 Firebase 即時同步
+    function initFirebaseSync() {
+      const roomId = getCloudRoomId();
+      updateCloudBadgeUI("syncing", `連線雲端中 (${roomId})...`);
+
+      try {
+        if (typeof firebase !== 'undefined') {
+          if (!firebase.apps || firebase.apps.length === 0) {
+            firebase.initializeApp(DEFAULT_FIREBASE_CONFIG);
+          }
+          firestoreDb = firebase.firestore();
+          listenCloudRoom(roomId);
+        } else {
+          updateCloudBadgeUI("local", `本機離線 (${roomId})`);
+        }
+      } catch (err) {
+        console.error("Firebase 初始化失敗", err);
+        updateCloudBadgeUI("error", `雲端離線 (${roomId})`);
+      }
+    }
+
+    // 監聽雲端房間變更
+    function listenCloudRoom(roomId) {
+      if (!firestoreDb) return;
+      if (cloudUnsubscribe) {
+        cloudUnsubscribe();
+        cloudUnsubscribe = null;
+      }
+
+      const docRef = firestoreDb.collection('travel_planners').doc(roomId);
+
+      cloudUnsubscribe = docRef.onSnapshot(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data && data.expenseState) {
+            isReceivingCloud = true;
+            appState = data.expenseState;
+            saveState(true); // 本地存檔但不往雲端推送，避免回音迴圈
+            renderAll();
+            isReceivingCloud = false;
+
+            const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            updateCloudBadgeUI("online", `雲端已同步 (${roomId})`);
+            document.getElementById("cloudLastSyncTime").textContent = `最後同步：${timeStr} (來自雲端)`;
+          } else {
+            // 雲端尚無支出帳本，自動將本機狀態同步推上去
+            updateCloudBadgeUI("online", `雲端已連線 (${roomId})`);
+            pushStateToCloud();
+          }
+        } else {
+          // Document 尚未建立，建立新房間
+          updateCloudBadgeUI("online", `雲端全新房間 (${roomId})`);
+          pushStateToCloud();
+        }
+      }, err => {
+        console.warn("雲端即時同步中斷，切換為本地模式", err);
+        updateCloudBadgeUI("local", `本機模式 (${roomId})`);
+      });
+    }
+
+    // 推送狀態至 Firebase Firestore
+    function pushStateToCloud() {
+      if (!firestoreDb || isReceivingCloud) return;
+      
+      const roomId = getCloudRoomId();
+      clearTimeout(cloudDebounceTimer);
+
+      cloudDebounceTimer = setTimeout(() => {
+        const docRef = firestoreDb.collection('travel_planners').doc(roomId);
+        const cleanState = JSON.parse(JSON.stringify(appState));
+
+        docRef.set({
+          expenseState: cleanState,
+          expenseLastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).then(() => {
+          const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+          updateCloudBadgeUI("online", `雲端已同步 (${roomId})`);
+          document.getElementById("cloudLastSyncTime").textContent = `最後同步：${timeStr} (已儲存至雲端)`;
+        }).catch(err => {
+          console.error("推送到雲端失敗", err);
+        });
+      }, 500);
+    }
+
+    // 更新頂部雲端標籤狀態
+    function updateCloudBadgeUI(status, text) {
+      const badge = document.getElementById("cloudStatusBadge");
+      const dot = document.getElementById("cloudStatusDot");
+      const label = document.getElementById("cloudStatusText");
+      if (!badge || !dot || !label) return;
+
+      label.textContent = text;
+      if (status === "online") {
+        dot.textContent = "🟢";
+        badge.style.background = "#ecfdf5";
+        badge.style.color = "#065f46";
+        badge.style.borderColor = "#a7f3d0";
+      } else if (status === "syncing") {
+        dot.textContent = "🔄";
+        badge.style.background = "#eff6ff";
+        badge.style.color = "#1d4ed8";
+        badge.style.borderColor = "#bfdbfe";
+      } else {
+        dot.textContent = "⚪";
+        badge.style.background = "#f1f5f9";
+        badge.style.color = "#475569";
+        badge.style.borderColor = "#cbd5e1";
+      }
     }
 
     // 從 LocalStorage 載入或載入預設資料
@@ -1659,13 +1921,241 @@
       }
     }
 
-    // 儲存狀態至 LocalStorage
-    function saveState() {
+    // 儲存狀態至 LocalStorage 並同步推送到雲端
+    function saveState(skipCloud = false) {
       try {
         localStorage.setItem("travel_planner_expense_data", JSON.stringify(appState));
+        if (!skipCloud) {
+          pushStateToCloud();
+        }
       } catch (e) {
         console.error("儲存失敗", e);
       }
+    }
+
+    // ==========================================
+    // 🔄 一鍵從主規劃手帳 (index.html) 同步資料
+    // ==========================================
+    function syncFromMainPlan() {
+      const roomId = getCloudRoomId();
+      
+      // 輔助剖析器：由主行程 Plan 轉換為 ExpenseState
+      function processPlanSync(plan) {
+        if (!plan) return false;
+
+        const memberCount = Number(plan.memberCount) || 2;
+        const exchangeRate = Number(plan.exchangeRate) || 4.65;
+        const daysCount = (plan.days && plan.days.length) ? plan.days.length : 7;
+        const tripTitle = plan.title || "重慶自由行";
+
+        // 更新基本設定
+        appState.tripInfo.title = tripTitle;
+        appState.tripInfo.memberCount = memberCount;
+        appState.tripInfo.exchangeRate = exchangeRate;
+        appState.tripInfo.daysCount = daysCount;
+
+        // 1. 同步大項交通 (機票)
+        if (plan.flights && plan.flights.items && plan.flights.items.length > 0) {
+          plan.flights.items.forEach(fl => {
+            const cost = Number(fl.cost) || 0;
+            if (cost > 0) {
+              const existingIdx = appState.majorExpenses.findIndex(m => m.name.includes(fl.flightNo || fl.depAir || "機票"));
+              const itemData = {
+                id: "m_sync_" + (fl.flightNo || Date.now()),
+                category: "flight",
+                name: `${fl.depAir || "出發地"} ⇋ ${fl.arrAir || "目的地"} 航班 (${fl.flightNo || "機票"})`,
+                amount: cost,
+                currency: fl.currency || "TWD",
+                pricingType: fl.costType === "group" ? "total" : "per_person",
+                note: fl.airline ? `${fl.airline} ${fl.seatClass || ''}` : "主行程同步之航班"
+              };
+              if (existingIdx >= 0) appState.majorExpenses[existingIdx] = itemData;
+              else appState.majorExpenses.push(itemData);
+            }
+          });
+        }
+
+        // 2. 同步住宿 (飯店)
+        if (plan.hotels && plan.hotels.length > 0) {
+          plan.hotels.forEach((h, idx) => {
+            const nights = Number(h.nights) || 1;
+            const cost = Number(h.costTotal || h.costPerNight) || 0;
+            const pricingType = h.costTotal ? "total_stay" : "per_night";
+
+            if (cost > 0 || h.name) {
+              const existingIdx = appState.accommodations.findIndex(a => a.name.includes(h.name));
+              const accData = {
+                id: "acc_sync_" + idx,
+                name: h.name || "預定飯店",
+                mode: nights > 1 ? "range" : "daily",
+                startDay: idx === 0 ? 1 : 4,
+                endDay: idx === 0 ? nights : (4 + nights - 1),
+                day: idx === 0 ? 1 : 4,
+                nights: nights,
+                pricingType: pricingType,
+                amount: cost > 0 ? cost : (pricingType === "per_night" ? 500 : 1500),
+                currency: h.currency || "CNY",
+                roomCount: Number(h.roomCount) || 1,
+                note: h.stayLabel || h.city || "主行程同步飯店"
+              };
+              if (existingIdx >= 0) appState.accommodations[existingIdx] = accData;
+              else appState.accommodations.push(accData);
+            }
+          });
+        }
+
+        // 3. 同步每日時間軸活動 (餐食、景點、每日交通)
+        if (plan.days && plan.days.length > 0) {
+          plan.days.forEach((dayObj, dayIdx) => {
+            const dayNum = dayIdx + 1;
+            if (dayObj.events && dayObj.events.length > 0) {
+              dayObj.events.forEach(ev => {
+                const cost = Number(ev.actualCost || ev.cost) || 0;
+                if (cost > 0) {
+                  // 依名稱關鍵字歸類
+                  let cat = "spot";
+                  let sub = "ticket";
+                  const n = (ev.name + " " + (ev.note || "")).toLowerCase();
+
+                  if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓/.test(n)) {
+                    cat = "dining";
+                    sub = /午/.test(n) ? "lunch" : (/晚|夜市/.test(n) ? "dinner" : (/早/.test(n) ? "breakfast" : "snack"));
+                  } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車/.test(n)) {
+                    cat = "transit";
+                    sub = /滴滴|計程車/.test(n) ? "taxi" : (/地鐵|捷運/.test(n) ? "metro" : "bus");
+                  } else if (/伴手禮|特產|底料|買|購物/.test(n)) {
+                    cat = "other";
+                    sub = "gift";
+                  }
+
+                  const existingIdx = appState.dailyExpenses.findIndex(d => d.day === dayNum && d.name === ev.name);
+                  const dailyItem = {
+                    id: "d_sync_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
+                    day: dayNum,
+                    category: cat,
+                    subType: sub,
+                    name: ev.name,
+                    amount: cost,
+                    currency: plan.currencyCode || "CNY",
+                    pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
+                    note: ev.note || ""
+                  };
+
+                  if (existingIdx >= 0) appState.dailyExpenses[existingIdx] = dailyItem;
+                  else appState.dailyExpenses.push(dailyItem);
+                }
+              });
+            }
+          });
+        }
+
+        saveState();
+        renderAll();
+        return true;
+      }
+
+      // 先嘗試從 Firestore 雲端讀取同房間的主行程資料
+      if (firestoreDb) {
+        updateCloudBadgeUI("syncing", "正在讀取主行程資料...");
+        firestoreDb.collection('travel_planners').doc(roomId).get().then(doc => {
+          let synced = false;
+          if (doc.exists) {
+            const data = doc.data();
+            if (data && data.appState && data.appState.plans) {
+              const activePlanId = data.appState.activePlanId || 'plan-chongqing';
+              const targetPlan = data.appState.plans[activePlanId] || Object.values(data.appState.plans)[0];
+              synced = processPlanSync(targetPlan);
+            }
+          }
+
+          // 若雲端無資料，嘗試從瀏覽器本地快取讀取
+          if (!synced) {
+            synced = trySyncFromLocalStorage();
+          }
+
+          if (synced) {
+            alert(`🎉 成功由主規劃手帳同步行程資料！\n已更新：旅程名稱、人數、匯率、機票大項、住宿與各天消費活動。`);
+          } else {
+            alert("未在雲端或本地找到主行程資料，已保留現有帳本。您可直接手動記帳或載入範例。");
+          }
+        }).catch(err => {
+          console.error("同步失敗，嘗試讀取本機", err);
+          if (trySyncFromLocalStorage()) {
+            alert("成功由本機主規劃快取同步行程資料！");
+          }
+        });
+      } else {
+        if (trySyncFromLocalStorage()) {
+          alert("成功由本機主規劃快取同步行程資料！");
+        } else {
+          alert("請確認主行程頁面 (index.html) 是否已儲存過行程。");
+        }
+      }
+
+      function trySyncFromLocalStorage() {
+        try {
+          const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+          if (raw) {
+            const mainAppState = JSON.parse(raw);
+            if (mainAppState.plans) {
+              const activePlanId = mainAppState.activePlanId || 'plan-chongqing';
+              const targetPlan = mainAppState.plans[activePlanId] || Object.values(mainAppState.plans)[0];
+              return processPlanSync(targetPlan);
+            }
+          }
+        } catch(e) {}
+        return false;
+      }
+    }
+
+    // 開啟雲端房間設定彈窗
+    function openCloudRoomModal() {
+      const roomId = getCloudRoomId();
+      document.getElementById("cloudRoomInput").value = roomId;
+
+      // 生成包含完整房間碼的外部存取網址
+      const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
+      document.getElementById("cloudShareUrlInput").value = shareUrl;
+      document.getElementById("cloudRoomModal").classList.add("active");
+    }
+
+    function closeCloudRoomModal() {
+      document.getElementById("cloudRoomModal").classList.remove("active");
+    }
+
+    // 切換或開新房間
+    function changeCloudRoom() {
+      const newRoom = document.getElementById("cloudRoomInput").value.trim();
+      if (!newRoom) {
+        alert("請輸入房間代碼！");
+        return;
+      }
+      setCloudRoomId(newRoom);
+      
+      // 更新網址 Query 參數並重新連線
+      const newUrl = `${window.location.pathname}?room=${encodeURIComponent(newRoom)}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      listenCloudRoom(newRoom);
+      closeCloudRoomModal();
+      alert(`已成功切換至房間【${newRoom}】！正在連線雲端資料庫...`);
+    }
+
+    // 複製存取網址
+    function copyShareRoomUrl() {
+      const input = document.getElementById("cloudShareUrlInput");
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        alert("已複製專屬跨裝置存取連結！\n可直接傳到手機、平板或其他電腦開啟，跨裝置即時共同作業。");
+      }).catch(() => {
+        alert("複製失敗，請手動複製文字方塊中的網址。");
+      });
+    }
+
+    // 手動強制推送
+    function forcePushToCloud() {
+      pushStateToCloud();
+      alert("已立即推送最新帳本至 Firebase 雲端！");
     }
 
     // 匯率換算核心輔助函式
@@ -1677,11 +2167,9 @@
       const baseCur = appState.tripInfo.baseCurrency; // 例如 TWD
       const foreignCur = appState.tripInfo.foreignCurrency; // 例如 CNY
 
-      // 若由外幣換為本幣 (CNY -> TWD)：乘以匯率
       if (fromCurrency === foreignCur && toCurrency === baseCur) {
         return amount * rate;
       }
-      // 若由本幣換為外幣 (TWD -> CNY)：除以匯率
       if (fromCurrency === baseCur && toCurrency === foreignCur) {
         return rate > 0 ? (amount / rate) : amount;
       }
@@ -1694,12 +2182,10 @@
       const memberCount = Number(appState.tripInfo.memberCount) || 1;
       let rawAmount = Number(item.amount) || 0;
 
-      // 如果是住宿項目
       if (item.nights && item.pricingType === "per_night") {
         rawAmount = rawAmount * Number(item.nights);
       }
 
-      // 若計費方式為 per_person，全團需乘以人數
       if (item.pricingType === "per_person") {
         return rawAmount * memberCount;
       }
@@ -1715,18 +2201,16 @@
         rawAmount = rawAmount * Number(item.nights);
       }
 
-      // 若計費方式為 per_person，每人負擔即為 rawAmount
       if (item.pricingType === "per_person") {
         return rawAmount;
       }
-      // 全團總額則除以人數
       return rawAmount / memberCount;
     }
 
-    // 計算住宿在第 N 天的每日攤提費用 (Daily Amortized Lodging Cost)
+    // 計算住宿在第 N 天的每日攤提費用
     function getLodgingCostForDay(dayIndex) {
       const targetDay = Number(dayIndex);
-      let dayLodgingTotal = 0; // 統一以基準幣別計算回傳
+      let dayLodgingTotal = 0;
 
       appState.accommodations.forEach(acc => {
         let applies = false;
@@ -1762,7 +2246,7 @@
       return dayLodgingTotal;
     }
 
-    // 計算全域匯總統計數據 (Comprehensive Totals)
+    // 計算全域匯總統計數據
     function calculateStatistics() {
       const baseCur = appState.tripInfo.baseCurrency;
       const foreignCur = appState.tripInfo.foreignCurrency;
@@ -1775,11 +2259,10 @@
       let transitTotal = 0;
       let otherTotal = 0;
 
-      // 每日統計矩陣 (1 ~ daysCount)
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
       const dailyTotals = Array(daysCount + 1).fill(0);
 
-      // 1. 大項支出 (全在 majorTotal)
+      // 1. 大項支出
       appState.majorExpenses.forEach(m => {
         const totalRaw = calcItemTotalCost(m);
         const inBase = convertAmount(totalRaw, m.currency, baseCur);
@@ -1813,7 +2296,7 @@
         }
       });
 
-      // 每日圖表需加上該日住宿攤提
+      // 加上當日住宿攤提
       for (let i = 1; i <= daysCount; i++) {
         dailyTotals[i] += getLodgingCostForDay(i);
       }
@@ -1849,7 +2332,7 @@
       });
     }
 
-    // 切換顯示幣別 (TWD ⇋ 外幣)
+    // 切換顯示幣別
     function toggleDisplayCurrency() {
       appState.tripInfo.displayCurrency = appState.tripInfo.displayCurrency === "base" ? "foreign" : "base";
       saveState();
@@ -1879,7 +2362,7 @@
       document.getElementById("memberCountLabel").textContent = trip.memberCount;
     }
 
-    // 渲染左側統計看板 (Dashboard)
+    // 渲染左側統計看板
     function renderSidebarDashboard() {
       const stats = calculateStatistics();
       const trip = appState.tripInfo;
@@ -1899,10 +2382,7 @@
       // 手機底部預覽
       document.getElementById("mobileTotalPreview").textContent = `${formatCurrency(displayTotal)} ${curCode}`;
 
-      // 渲染分類佔比堆疊長條圖與清單
       renderCategoryBreakdown(stats);
-
-      // 渲染每日趨勢直條圖
       renderDailyTrend(stats);
     }
 
@@ -1920,16 +2400,13 @@
       const grandTotal = stats.grandTotalBase > 0 ? stats.grandTotalBase : 1;
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
-      const curCode = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
-      // 更新堆疊條
       const barContainer = document.getElementById("stackedBarContainer");
       barContainer.innerHTML = cats.map(c => {
         const pct = ((c.total / grandTotal) * 100).toFixed(1);
         return `<div class="stacked-bar-seg" style="background: ${c.color}; width: ${pct}%;" title="${c.name}: ${pct}%"></div>`;
       }).join("");
 
-      // 更新清單
       const listEl = document.getElementById("categoryBreakdownList");
       listEl.innerHTML = cats.map(c => {
         const pct = ((c.total / grandTotal) * 100).toFixed(1);
@@ -1961,7 +2438,6 @@
         if (stats.dailyTotals[i] > maxDaily) maxDaily = stats.dailyTotals[i];
       }
 
-      // 計算日均
       const sumDaily = stats.dailyTotals.slice(1).reduce((a, b) => a + b, 0);
       const avg = sumDaily / Math.max(1, daysCount);
       const avgDisplay = isBase ? avg : convertAmount(avg, trip.baseCurrency, trip.foreignCurrency);
@@ -1986,7 +2462,7 @@
       chartEl.innerHTML = html;
     }
 
-    // 渲染天數切換標籤列 (Days Navigation Bar)
+    // 渲染天數切換標籤列
     function renderDaysNav() {
       const navEl = document.getElementById("daysNavBar");
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
@@ -2018,7 +2494,6 @@
       navEl.innerHTML = html;
     }
 
-    // 切換選取天數
     function selectDayTab(day) {
       currentSelectedDay = day;
       renderDaysNav();
@@ -2026,7 +2501,6 @@
       renderMainView();
     }
 
-    // 點擊分類進行聚焦或快速跳轉
     function filterByCategory(catKey) {
       if (catKey === "major" || catKey === "lodging") {
         selectDayTab("major_lodging");
@@ -2035,29 +2509,26 @@
       }
     }
 
-    // 渲染右側主視圖 (加寬版面)
+    // 渲染主內容區 (自適應加寬)
     function renderMainView() {
       const container = document.getElementById("viewContainer");
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
-      // 模式 1：選定特定單日 (Day 1 ~ Day N)
+      // 模式 1：選定特定單日
       if (typeof currentSelectedDay === "number") {
         const day = currentSelectedDay;
         const dayItems = appState.dailyExpenses.filter(e => Number(e.day) === day);
         
-        // 取得該日住宿
         const dayLodgingBase = getLodgingCostForDay(day);
         const dayLodgingDisplay = isBase ? dayLodgingBase : convertAmount(dayLodgingBase, trip.baseCurrency, trip.foreignCurrency);
 
-        // 分類
         const diningItems = dayItems.filter(e => e.category === "dining");
         const spotItems = dayItems.filter(e => e.category === "spot");
         const transitItems = dayItems.filter(e => e.category === "transit");
         const otherItems = dayItems.filter(e => e.category === "other" || e.category === "shopping");
 
-        // 計算該日總合
         let dayItemsBase = 0;
         dayItems.forEach(item => {
           const raw = calcItemTotalCost(item);
@@ -2068,7 +2539,6 @@
         const dayPerPerson = dayTotalDisplay / trip.memberCount;
 
         container.innerHTML = `
-          <!-- 該日匯總條 -->
           <div class="day-summary-bar">
             <div class="day-summary-title">
               <h2>第 ${day} 天支出總計</h2>
@@ -2086,19 +2556,10 @@
             </div>
           </div>
 
-          <!-- 該日住宿提示卡塊 -->
           ${renderDayLodgingBanner(day, dayLodgingDisplay, targetCur)}
-
-          <!-- 🍜 每日餐食 -->
           ${renderCategoryCard("🍜 每日餐食", "dining", diningItems, day, "dining")}
-
-          <!-- 🎫 每日景點 -->
           ${renderCategoryCard("🎫 每日景點門票與活動", "spot", spotItems, day, "spot")}
-
-          <!-- 🚇 每日交通 (地鐵、叫車、公車) -->
           ${renderCategoryCard("🚇 每日交通 (地鐵/計程車/公車)", "transit", transitItems, day, "transit")}
-
-          <!-- 🛍️ 其他與購物 -->
           ${otherItems.length > 0 ? renderCategoryCard("🛍️ 當日其他與購物", "other", otherItems, day, "other") : ""}
         `;
         return;
@@ -2114,7 +2575,6 @@
             </div>
           </div>
 
-          <!-- 大項交通清單 -->
           <div class="expense-group-card">
             <div class="group-header">
               <div class="group-title">
@@ -2133,7 +2593,6 @@
             </div>
           </div>
 
-          <!-- 住宿管理卡片 -->
           <div class="expense-group-card">
             <div class="group-header">
               <div class="group-title">
@@ -2155,7 +2614,7 @@
         return;
       }
 
-      // 模式 3：全部行程總覽 (All Overview)
+      // 模式 3：全部行程總覽
       const stats = calculateStatistics();
       container.innerHTML = `
         <div class="day-summary-bar">
@@ -2175,7 +2634,6 @@
           </div>
         </div>
 
-        <!-- 大項交通快覽 -->
         <div class="expense-group-card">
           <div class="group-header">
             <div class="group-title">
@@ -2194,7 +2652,6 @@
           </div>
         </div>
 
-        <!-- 住宿快覽 -->
         <div class="expense-group-card">
           <div class="group-header">
             <div class="group-title">
@@ -2213,12 +2670,10 @@
           </div>
         </div>
 
-        <!-- 各天行程小卡 -->
         ${renderAllDaysSections()}
       `;
     }
 
-    // 渲染特定單日的住宿橫幅
     function renderDayLodgingBanner(day, dayLodgingDisplay, targetCur) {
       const hit = appState.accommodations.find(acc => {
         if (acc.mode === "daily" && Number(acc.day) === day) return true;
@@ -2254,7 +2709,6 @@
       `;
     }
 
-    // 渲染分類卡片與細項
     function renderCategoryCard(title, catKey, items, day, badgeClass) {
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
@@ -2294,7 +2748,6 @@
       `;
     }
 
-    // 渲染單筆項目橫列
     function renderExpenseRow(item) {
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
@@ -2340,7 +2793,6 @@
       `;
     }
 
-    // 渲染大項支出清單 (Major Items List)
     function renderMajorItemsList() {
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
@@ -2383,7 +2835,6 @@
       }).join("");
     }
 
-    // 渲染住宿列表 (Accommodations List)
     function renderAccommodationsList() {
       const trip = appState.tripInfo;
       const isBase = trip.displayCurrency === "base";
@@ -2443,7 +2894,6 @@
       }).join("");
     }
 
-    // 在「全部總覽」模式下渲染每日概要區塊
     function renderAllDaysSections() {
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
       let html = "";
@@ -2490,7 +2940,6 @@
       document.getElementById("expenseModalTitle").textContent = "新增支出項目";
       document.getElementById("expenseForm").reset();
 
-      // 設定天數選項
       setupDaySelectOptions();
       if (targetDay) {
         document.getElementById("itemDaySelect").value = targetDay;
@@ -2498,7 +2947,6 @@
         document.getElementById("itemDaySelect").value = currentSelectedDay;
       }
 
-      // 勾選類別
       const catRadios = document.getElementsByName("modalCategory");
       for (const r of catRadios) {
         if (r.value === defaultCat) {
@@ -2508,7 +2956,6 @@
       }
       onCategoryChanged(defaultCat);
 
-      // 預設幣別設定為當地外幣
       document.getElementById("itemCurrencySelect").value = appState.tripInfo.foreignCurrency;
       document.getElementById("expenseModal").classList.add("active");
     }
@@ -2549,7 +2996,6 @@
         dayRow.style.display = "grid";
         lodgingFields.style.display = "none";
 
-        // 更新子項目選單
         if (cat === "dining") {
           subtypeSelect.innerHTML = `
             <option value="lunch">午餐</option>
@@ -2601,7 +3047,7 @@
       updateLodgingNights();
     }
 
-    // 儲存支出項目 (新增或編輯)
+    // 儲存支出項目
     function handleSaveExpense(e) {
       e.preventDefault();
       const editId = document.getElementById("editItemId").value;
@@ -2689,7 +3135,6 @@
       renderAll();
     }
 
-    // 刪除項目
     function deleteDailyExpense(id) {
       if (!confirm("確定要刪除這筆每日支出項目嗎？")) return;
       appState.dailyExpenses = appState.dailyExpenses.filter(e => e.id !== id);
@@ -2711,7 +3156,6 @@
       renderAll();
     }
 
-    // 編輯每日項目
     function openEditDailyExpenseModal(id) {
       const item = appState.dailyExpenses.find(e => e.id === id);
       if (!item) return;
@@ -2727,7 +3171,6 @@
       document.getElementById("itemSubtypeSelect").value = item.subType || "";
     }
 
-    // 編輯住宿項目
     function openEditAccommodationModal(id) {
       const acc = appState.accommodations.find(a => a.id === id);
       if (!acc) return;
@@ -2752,7 +3195,6 @@
       updateLodgingNights();
     }
 
-    // 旅程設定 Modal
     function openTripSettingsModal() {
       const trip = appState.tripInfo;
       document.getElementById("settingsTripTitle").value = trip.title;
@@ -2783,7 +3225,6 @@
       renderAll();
     }
 
-    // 載入重慶範例資料
     function loadChongqingSampleData() {
       if (confirm("載入範例將會重設目前的計算數據，確定要載入重慶自由行範例嗎？")) {
         appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
@@ -2793,7 +3234,6 @@
       }
     }
 
-    // 匯出 JSON
     function exportDataJson() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
       const downloadAnchor = document.createElement('a');
@@ -2804,7 +3244,6 @@
       downloadAnchor.remove();
     }
 
-    // 匯入 JSON
     function importDataJson(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -2838,7 +3277,6 @@
       const foreignCur = trip.foreignCurrency;
       const fileName = `${trip.title}_支出試算表_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-      // 檢查 SheetJS (XLSX) 是否可用
       if (typeof XLSX === "undefined") {
         console.warn("SheetJS 未連線，改以相容 Excel CSV 格式匯出");
         exportFallbackCsv();
@@ -2847,9 +3285,7 @@
 
       const wb = XLSX.utils.book_new();
 
-      // ------------------------------------------
       // 1. 工作表一：【支出統計總覽】
-      // ------------------------------------------
       const summaryData = [
         ["✈️ 旅遊支出統計與預算總表", ""],
         ["旅程名稱", trip.title],
@@ -2886,9 +3322,7 @@
       wsSummary['!cols'] = [{ wch: 25 }, { wch: 22 }, { wch: 20 }, { wch: 15 }];
       XLSX.utils.book_append_sheet(wb, wsSummary, "支出總覽");
 
-      // ------------------------------------------
       // 2. 工作表二：【每日消費明細】
-      // ------------------------------------------
       const dailyHeaders = [
         "天數", "類別", "子分類", "項目名稱", "計費模式",
         "原幣金額", "原幣幣別", `全團折合 (${baseCur})`, `每人負擔 (${baseCur})`, "備註說明"
@@ -2904,7 +3338,6 @@
         metro: "地鐵/捷運", taxi: "計程車/叫車", bus: "公車", bike: "單車", gift: "伴手禮"
       };
 
-      // 依天數排序
       const sortedDaily = [...appState.dailyExpenses].sort((a, b) => Number(a.day) - Number(b.day));
 
       sortedDaily.forEach(item => {
@@ -2933,16 +3366,13 @@
       ];
       XLSX.utils.book_append_sheet(wb, wsDaily, "每日支出明細");
 
-      // ------------------------------------------
       // 3. 工作表三：【大項交通與住宿】
-      // ------------------------------------------
       const majorHeaders = [
         "分類", "項目名稱", "配置/天數說明", "晚數/數量", "計費模式",
         "原幣金額", "幣別", `全團折合 (${baseCur})`, `每人負擔 (${baseCur})`, "備註說明"
       ];
       const majorRows = [majorHeaders];
 
-      // 大項交通
       appState.majorExpenses.forEach(m => {
         const totalRaw = calcItemTotalCost(m);
         const totalInBase = convertAmount(totalRaw, m.currency, baseCur);
@@ -2962,7 +3392,6 @@
         ]);
       });
 
-      // 住宿配置
       appState.accommodations.forEach(acc => {
         let nights = 1;
         let modeLabel = "單日入住";
@@ -3004,15 +3433,13 @@
       ];
       XLSX.utils.book_append_sheet(wb, wsMajor, "大項交通與住宿");
 
-      // 寫入並觸發瀏覽器下載 Excel
       XLSX.writeFile(wb, fileName);
     }
 
-    // 離線 Fallback：匯出標準相容 Excel CSV (含 UTF-8 BOM)
     function exportFallbackCsv() {
       const stats = calculateStatistics();
       const trip = appState.tripInfo;
-      let csv = "\uFEFF"; // UTF-8 BOM 防止 Excel 開啟中文亂碼
+      let csv = "\uFEFF";
       csv += `【${trip.title}】旅遊支出試算表\n`;
       csv += `總天數,${trip.daysCount} 天,同行人數,${trip.memberCount} 人,基準幣別,${trip.baseCurrency},當地外幣,${trip.foreignCurrency},匯率,${trip.exchangeRate}\n`;
       csv += `全團總支出 (${trip.baseCurrency}),${stats.grandTotalBase},每人平均負擔 (${trip.baseCurrency}),${stats.perPersonBase}\n\n`;
@@ -3050,7 +3477,6 @@
       document.body.removeChild(link);
     }
 
-    // 複製明細文字 (貼至 LINE / Notion)
     function copyExpenseSummaryText() {
       const stats = calculateStatistics();
       const trip = appState.tripInfo;
@@ -3079,7 +3505,6 @@
       });
     }
 
-    // 啟動應用程式
     window.addEventListener("DOMContentLoaded", initApp);
   </script>
 </body>

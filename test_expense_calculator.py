@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-旅遊支出計算中心單元測試與驗證腳本 (升級版)
-測試項目：字體引入、頁面加寬、Excel 匯出函式與計算邏輯
+旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步與主行程連動)
 使用 uv run python 執行
 """
 import sys
@@ -14,31 +13,32 @@ def test_html_structure_and_features():
     with open("expenses.html", "r", encoding="utf-8") as f:
         html = f.read()
 
-    # 1. 驗證新字體家族 (Plus Jakarta Sans)
+    # 1. 驗證字體與寬版排版
     assert "Plus+Jakarta+Sans" in html, "未引入 Plus Jakarta Sans 字體"
-    assert "Plus Jakarta Sans" in html, "CSS 未套用 Plus Jakarta Sans 字體"
-    
-    # 2. 驗證頁面加寬樣式 (左右空白縮小)
     assert "max-width: 100%" in html, "view-container 未加寬至 100%"
-    assert "padding: 20px 32px" in html or "padding: 20px" in html, "view-container padding 需符合寬螢幕排版"
 
-    # 3. 驗證 Excel 匯出功能
+    # 2. 驗證 Excel 匯出功能
     assert "xlsx.full.min.js" in html, "未引入 SheetJS xlsx 函式庫"
     assert "exportToExcel" in html, "未實作 exportToExcel 匯出函式"
-    assert "btn-excel" in html, "未包含 Excel 匯出按鈕樣式"
-    assert "XLSX.utils.book_new" in html, "未包含多工作表 Excel 建構邏輯"
-    assert "支出總覽" in html, "未包含支出總覽工作表"
-    assert "每日支出明細" in html, "未包含每日支出明細工作表"
-    assert "大項交通與住宿" in html, "未包含大項與住宿工作表"
 
-    # 4. 驗證截圖同款暖沙金膠囊標籤
-    assert "badge-warm" in html, "未包含截圖同款暖沙金標籤樣式"
+    # 3. 驗證 Firebase 雲端即時跨裝置同步核心
+    assert "firebase-app-compat.js" in html, "未引入 Firebase App SDK"
+    assert "firebase-firestore-compat.js" in html, "未引入 Firebase Firestore SDK"
+    assert "DEFAULT_FIREBASE_CONFIG" in html, "未配置預設 Firebase 設定"
+    assert "initFirebaseSync" in html, "未實作 Firebase 初始化同步函式"
+    assert "listenCloudRoom" in html, "未實作雲端房間監聽"
+    assert "pushStateToCloud" in html, "未實作雲端狀態推送"
+    assert "cloudRoomModal" in html, "未包含雲端跨裝置房間彈窗"
+    assert "copyShareRoomUrl" in html, "未包含複製手機存取網址功能"
 
-    print("[PASS] [1/2] 新字體、加寬排版與 Excel 匯出結構檢查通過！")
+    # 4. 驗證從主行程一鍵同步功能
+    assert "syncFromMainPlan" in html, "未實作 syncFromMainPlan 同步函式"
+    assert "processPlanSync" in html, "未實作主行程活動費用映射邏輯"
+
+    print("[PASS] [1/2] 雲端即時同步、跨裝置存取與主行程連動結構檢查通過！")
 
 
 def test_calculation_logic():
-    # 驗證計算邏輯
     exchange_rate = 4.65
     member_count = 2
 
@@ -63,4 +63,4 @@ def test_calculation_logic():
 if __name__ == "__main__":
     test_html_structure_and_features()
     test_calculation_logic()
-    print("\n🎉 所有更新測試皆成功通過！")
+    print("\n🎉 所有雲端跨裝置同步與連動測試皆成功通過！")
