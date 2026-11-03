@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步、主行程連動、住宿串接與彈窗 UI)
+旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步、多行程切換常駐、範本假資料掃除與住宿串接)
 使用 uv run python 執行
 """
 import sys
@@ -48,9 +48,12 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 與版本號 V3.2.1
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.2.2
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
-    assert "V3.2.1" in html, "未同步升級版本號至 V3.2.1"
+    assert 'id="expensePlanSelect" class="plan-switcher-select" onchange="switchPlanFromSelect(this.value)" title="切換不同的旅行行程計畫"' in html, "expensePlanSelect 仍帶有 display:none"
+    assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
+    assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
+    assert "V3.2.2" in html, "未同步升級版本號至 V3.2.2"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -71,7 +74,7 @@ def test_html_structure_and_features():
     assert "lodging-loc-tag" in html, "缺少住宿地點標籤 CSS"
     assert "lodging-desc-pill" in html, "缺少住宿日期與攤提標籤 CSS"
 
-    print("[PASS] [1/2] 雲端同步、多行程隔離、彈窗尺寸/幣別選單、住宿地點/日期串接與 6 大分類模式檢查通過！")
+    print("[PASS] [1/2] 雲端同步、計畫切換常駐、範本假資料清理、彈窗尺寸/幣別選單、住宿地點/日期串接與 6 大分類模式檢查通過！")
 
 
 def test_calculation_logic():

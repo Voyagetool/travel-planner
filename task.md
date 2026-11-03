@@ -102,3 +102,16 @@
     - 升級大項專案列表（`renderLodgingSection`）住宿卡片同步展示地點與日期
   - [x] 依 GEMINI.md 進版規範同步更新版本號至 `V3.2.1`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）
   - [x] 擴充單元測試腳本 `test_expense_calculator.py` 並 100% 驗證通過
+
+- [x] **階段十二：修復頂部旅行切換器重新整理消失與範本假資料混雜問題 (升級 V3.2.2)**
+  - [x] 頂部旅行計畫選擇選單 (`expensePlanSelect`) 常駐修復：
+    - 徹底移除 HTML 上的 `style="display: none;"`
+    - 刪除「planKeys <= 1 則隱藏」的錯誤邏輯，確保無論有幾個計畫永遠常駐顯示在頂部
+    - 導入 `DEFAULT_PRESET_PLANS`（重慶自由行、東京自由行、北京探索之旅），在頁面一啟動（`initApp()`）首個毫秒立即完成初始化渲染，徹底杜絕重新整理頁面時選單消失、閃爍或時有時無的 bug
+    - 支援切換任何旅行時立即載入獨立帳本並自動觸發乾淨鏡像同步
+  - [x] 徹底清除範本假資料，杜絕與主行程內容混雜共存：
+    - 升級 `processPlanSync(plan)` 中的項目過濾邏輯（`isPresetOrOldSyncItem`）
+    - 在鏡像同步時，徹底掃除所有內建範本假資料（威斯汀酒店、武隆依雲、九街民宿、出發前往桃園機場 1200 CNY、花市豌雜麵等歷史假資料）
+    - 確保同步後，帳本 100% 乾淨對齊主行程真實內容（重慶解放碑 Moxy 酒店、重慶來福士洲際酒店、陶婆婆火鍋、台北/重慶機場接送），不再出現任何莫名其妙的舊範本項目
+  - [x] 依 GEMINI.md 進版規範同步更新版本號至 `V3.2.2`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）
+  - [x] 單元測試 `test_expense_calculator.py` 100% 驗證通過

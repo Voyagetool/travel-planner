@@ -1371,16 +1371,18 @@
         <span>返回行程</span>
       </a>
       <div class="trip-title-wrapper">
-        <!-- 旅行計畫一鍵切換選單 (東京、重慶等多行程切換) -->
-        <select id="expensePlanSelect" class="plan-switcher-select" onchange="switchPlanFromSelect(this.value)" title="切換不同的旅行行程計畫" style="display: none;">
-          <option value="">載入旅行計畫中...</option>
+        <!-- 旅行計畫一鍵切換選單 (東京、重慶等多行程切換，常駐顯示) -->
+        <select id="expensePlanSelect" class="plan-switcher-select" onchange="switchPlanFromSelect(this.value)" title="切換不同的旅行行程計畫">
+          <option value="plan-chongqing">🇨🇳 重慶自由行</option>
+          <option value="tokyo-2026">🇯🇵 東京自由行</option>
+          <option value="plan-beijing">🇨🇳 北京探索之旅</option>
         </select>
 
         <div class="trip-title" id="tripTitleDisplay" onclick="openTripSettingsModal()" title="點擊設定旅程基本資訊">
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.2.1</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.2.2</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -2050,21 +2052,73 @@
     let currentPlanId = "";
     let availablePlans = {};
 
+    // 內建標準備援計畫列表 (確保任何情況下頂部切換選單永不消失)
+    const DEFAULT_PRESET_PLANS = {
+      "plan-chongqing": {
+        id: "plan-chongqing",
+        title: "重慶自由行",
+        currencyCode: "CNY",
+        exchangeRate: 4.65,
+        days: new Array(7).fill({}),
+        memberCount: 2
+      },
+      "tokyo-2026": {
+        id: "tokyo-2026",
+        title: "東京自由行",
+        currencyCode: "JPY",
+        exchangeRate: 0.2071,
+        days: new Array(6).fill({}),
+        memberCount: 2
+      },
+      "plan-beijing": {
+        id: "plan-beijing",
+        title: "北京探索之旅",
+        currencyCode: "CNY",
+        exchangeRate: 4.65,
+        days: new Array(7).fill({}),
+        memberCount: 2
+      }
+    };
+
     function getTargetPlanId() {
       const urlParams = new URLSearchParams(window.location.search);
       const qPlan = urlParams.get('plan');
       if (qPlan && qPlan.trim()) return qPlan.trim();
       if (currentPlanId && currentPlanId.trim()) return currentPlanId.trim();
-      return "";
+      return "plan-chongqing";
+    }
+
+    function initPlanSwitcherFromLocal() {
+      try {
+        const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+        if (raw) {
+          const mainAppState = JSON.parse(raw);
+          if (mainAppState && mainAppState.plans) {
+            availablePlans = Object.assign({}, DEFAULT_PRESET_PLANS, mainAppState.plans);
+            const targetId = getTargetPlanId() || mainAppState.activePlanId || "plan-chongqing";
+            currentPlanId = targetId;
+            updatePlanSwitcherUI(availablePlans, targetId);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("讀取本地行程計畫失敗", e);
+      }
+      availablePlans = Object.assign({}, DEFAULT_PRESET_PLANS);
+      currentPlanId = getTargetPlanId() || "plan-chongqing";
+      updatePlanSwitcherUI(availablePlans, currentPlanId);
     }
 
     function initApp() {
+      // 0. 第一時間常駐初始化旅行計畫選單，確保重新整理頁面絕對不消失！
+      initPlanSwitcherFromLocal();
+
       currentPlanId = getTargetPlanId();
       loadState();
       renderAll();
       initFirebaseSync();
 
-      // 本機優先：先嘗試從 LocalStorage 主行程快取中偵測計畫並立即自動同步
+      // 本機優先：嘗試從主行程中取得最新行程並自動鏡像同步
       tryAutoSyncFromLocalMainPlan();
     }
 
@@ -2093,23 +2147,29 @@
       window.location.href = url;
     }
 
+    // 更新旅行計畫選單 UI (永遠常駐顯示，絕不因為數量小於等於1而隱藏)
     function updatePlanSwitcherUI(plans, activeId) {
       const selectEl = document.getElementById("expensePlanSelect");
       if (!selectEl) return;
-      availablePlans = plans || {};
+      
+      // 合併所有可用計畫，並確保備援計畫存在
+      availablePlans = Object.assign({}, DEFAULT_PRESET_PLANS, plans || {});
       const planKeys = Object.keys(availablePlans);
-      if (planKeys.length <= 1) {
-        selectEl.style.display = "none";
-        return;
-      }
-      selectEl.style.display = "inline-block";
+      
+      selectEl.style.display = "inline-block"; // 永遠常駐保持可見！
       selectEl.innerHTML = planKeys.map(pk => {
         const p = availablePlans[pk];
-        const flag = (p.currencyCode === 'JPY' || (p.title && p.title.includes('東京'))) ? '🇯🇵 ' : ((p.currencyCode === 'CNY' || (p.title && p.title.includes('重慶'))) ? '🇨🇳 ' : '✈️ ');
+        const flag = (p.currencyCode === 'JPY' || (p.title && /東京|日本|京都|大阪/i.test(p.title))) ? '🇯🇵 ' : 
+                     ((p.currencyCode === 'CNY' || (p.title && /重慶|北京|上海|成都|中國/i.test(p.title))) ? '🇨🇳 ' : 
+                     ((p.currencyCode === 'TWD' || (p.title && /台灣|台北/i.test(p.title))) ? '🇹🇼 ' : '✈️ '));
         const label = p.title || pk;
-        const sel = pk === activeId ? 'selected' : '';
-        return `<option value="${pk}" ${sel}>${flag}${label}</option>`;
+        const isSelected = pk === activeId || (activeId && pk.toLowerCase().includes(activeId.toLowerCase()));
+        return `<option value="${pk}" ${isSelected ? 'selected' : ''}>${flag}${label}</option>`;
       }).join("");
+
+      if (activeId && selectEl.querySelector(`option[value="${activeId}"]`)) {
+        selectEl.value = activeId;
+      }
     }
 
     function switchPlanFromSelect(newPlanId) {
@@ -2133,8 +2193,8 @@
         if (raw) {
           const mainAppState = JSON.parse(raw);
           if (mainAppState && mainAppState.plans) {
-            availablePlans = mainAppState.plans;
-            const targetId = getTargetPlanId() || mainAppState.activePlanId || Object.keys(availablePlans)[0];
+            availablePlans = Object.assign({}, DEFAULT_PRESET_PLANS, mainAppState.plans);
+            const targetId = getTargetPlanId() || mainAppState.activePlanId || currentPlanId || "plan-chongqing";
             if (targetId && availablePlans[targetId]) {
               currentPlanId = targetId;
               updatePlanSwitcherUI(availablePlans, targetId);
@@ -3838,10 +3898,26 @@
       appState.tripInfo.daysCount = daysCount;
       appState.tripInfo.foreignCurrency = tripCurrency;
 
-      // 關鍵！清理所有由主行程同步產生的舊連動項目，確保與主行程 100% 一致！
-      appState.majorExpenses = appState.majorExpenses.filter(m => !m.isSynced && !m.id.startsWith("m_flight_sync") && !m.id.startsWith("m_sync_"));
-      appState.accommodations = appState.accommodations.filter(a => !a.isSynced && !a.id.startsWith("acc_sync_"));
-      appState.dailyExpenses = appState.dailyExpenses.filter(d => !d.isSynced && !d.id.startsWith("d_sync_"));
+      // 關鍵！全方位掃除範本幽靈假資料與舊同步項目，確保與主行程 100% 精準對齊純淨！
+      function isPresetOrOldSyncItem(item) {
+        if (!item) return false;
+        if (item.isSynced || item.isDemoPreset) return true;
+        const id = String(item.id || '');
+        // 清理所有舊的同步前綴
+        if (id.startsWith('acc_sync_') || id.startsWith('d_sync_') || id.startsWith('m_flight_sync') || id.startsWith('m_sync_')) return true;
+        // 清理所有內建 Demo 範本假資料 ID (acc_1, acc_2, acc_3, m_flight, m_insurance, m_sim, e1_1 ~ e7_2)
+        if (/^acc_[123]$/.test(id) || /^m_(flight|insurance|sim)$/.test(id)) return true;
+        if (/^e[1-7]_\d+$/.test(id)) return true;
+        // 清理殘留的歷史假範本飯店與交通 (威斯汀、武隆依雲、九街民宿、出發前往桃園機場 1200 等)
+        const name = String(item.name || '');
+        if (/威斯汀|依雲度假|九街設計師江景民宿/.test(name)) return true;
+        if (/出發前往桃園機場/.test(name) && Number(item.amount) === 1200) return true;
+        return false;
+      }
+
+      appState.majorExpenses = (appState.majorExpenses || []).filter(m => !isPresetOrOldSyncItem(m));
+      appState.accommodations = (appState.accommodations || []).filter(a => !isPresetOrOldSyncItem(a));
+      appState.dailyExpenses = (appState.dailyExpenses || []).filter(d => !isPresetOrOldSyncItem(d));
 
       // 1. 同步大項機票 (長榮 BR192/181 或 國泰等航班)
       if (plan.flights) {
