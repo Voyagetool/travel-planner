@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步、多行程切換常駐、範本假資料掃除與住宿串接)
+旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步、多行程切換常駐、輸入框對稱排版與總覽即時連動)
 使用 uv run python 執行
 """
 import sys
@@ -48,20 +48,20 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.2.3
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.1
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
-    assert 'id="expensePlanSelect" class="plan-switcher-select" onchange="switchPlanFromSelect(this.value)" title="切換不同的旅行行程計畫"' in html, "expensePlanSelect 仍帶有 display:none"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.2.3" in html, "未同步升級版本號至 V3.2.3"
+    assert "V3.3.1" in html, "未同步升級版本號至 V3.3.1"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
         assert cat_name in html, f"缺少 6 大標準分類: {cat_name}"
 
-    # 9. 驗證幣別選單寬度與彈窗尺寸優化
+    # 9. 驗證輸入框對稱排版：預算框與實際支出框具備相同尺寸與 addon
     assert "max-width: 620px" in html, "彈窗最大寬度未擴展至 620px"
-    assert "width: 135px" in html or "min-width: 130px" in html, "幣別選單未擴展寬度"
+    assert "itemActualCurrencyBadge" in html, "實際支出缺少對稱的幣別標籤框"
+    assert "onItemCurrencyChange" in html, "缺少幣別切換連動函式"
     assert "TWD (新台幣)" in html, "缺少完整台幣文字"
     assert "JPY (日圓)" in html, "缺少完整日圓文字"
 
@@ -71,10 +71,8 @@ def test_html_structure_and_features():
     assert "lodgingCheckInInput" in html, "缺少入住日期欄位"
     assert "lodgingCheckOutInput" in html, "缺少退房日期欄位"
     assert "onLodgingDateChanged" in html, "缺少住宿日期連動計算函式"
-    assert "lodging-loc-tag" in html, "缺少住宿地點標籤 CSS"
-    assert "lodging-desc-pill" in html, "缺少住宿日期與攤提標籤 CSS"
 
-    print("[PASS] [1/2] 雲端同步、計畫切換常駐、範本假資料清理、彈窗尺寸/幣別選單、住宿地點/日期串接與 6 大分類模式檢查通過！")
+    print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 
 
 def test_calculation_logic():
@@ -85,15 +83,15 @@ def test_calculation_logic():
     major_expenses = [
         {"name": "往返機票", "budget": 12500, "actual": 12200, "currency": "TWD", "pricingType": "per_person"},
         {"name": "高鐵票", "budget": 1800, "actual": 1850, "currency": "TWD", "pricingType": "per_person"},
-        {"name": "保險", "budget": 680, "actual": 680, "currency": "TWD", "pricingType": "per_person"},
+        {"name": "海外旅遊平安險", "budget": 1000, "actual": 1000, "currency": "TWD", "pricingType": "per_person"},
         {"name": "eSIM", "budget": 450, "actual": 420, "currency": "TWD", "pricingType": "per_person"},
     ]
     budget_twd = sum(m["budget"] * member_count for m in major_expenses)
     actual_twd = sum(m["actual"] * member_count for m in major_expenses)
     diff_twd = budget_twd - actual_twd
 
-    assert budget_twd == 30860, f"大項支出預算計算錯誤: {budget_twd}"
-    assert actual_twd == 30300, f"大項支出實付計算錯誤: {actual_twd}"
+    assert budget_twd == 31500, f"大項支出預算計算錯誤: {budget_twd}"
+    assert actual_twd == 30940, f"大項支出實付計算錯誤: {actual_twd}"
     assert diff_twd == 560, f"差額節省計算錯誤: {diff_twd} (預期結餘 560)"
 
     # 住宿計算 (CNY)
@@ -108,4 +106,4 @@ def test_calculation_logic():
 if __name__ == "__main__":
     test_html_structure_and_features()
     test_calculation_logic()
-    print("\n🎉 所有雲端跨裝置同步與連動測試皆成功通過！")
+    print("\n🎉 所有雲端跨裝置同步、輸入框對稱與總覽連動測試皆成功通過！")

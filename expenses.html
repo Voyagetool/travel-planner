@@ -1193,24 +1193,43 @@
 
     .input-addon-group {
       display: flex;
-      align-items: center;
+      align-items: stretch;
+      width: 100%;
     }
     .input-addon-group .input-field {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
       flex: 1;
+      min-width: 0;
+      height: 40px;
+      box-sizing: border-box;
     }
-    .input-addon-group .select-field {
+    .input-addon-group .select-field,
+    .input-addon-group .addon-badge {
       width: 135px;
       min-width: 130px;
+      max-width: 135px;
       border-left: none;
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
       background: var(--bg-subtle);
       font-size: 13px;
       font-weight: 600;
+      padding: 0 10px;
+      height: 40px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .input-addon-group .select-field {
       padding: 0 24px 0 10px;
       cursor: pointer;
+    }
+    .budget-actual-input-card .select-field,
+    .budget-actual-input-card .input-field {
+      height: 40px;
+      box-sizing: border-box;
     }
 
     .pill-selector {
@@ -1382,7 +1401,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.0</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.1</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -1709,7 +1728,7 @@
                 <label class="form-label" for="itemBudgetAmountInput">預估預算 (Budget)</label>
                 <div class="input-addon-group">
                   <input type="number" id="itemBudgetAmountInput" class="input-field" placeholder="0" min="0" step="any" required oninput="autoFillActualIfEmpty()">
-                  <select id="itemCurrencySelect" class="select-field">
+                  <select id="itemCurrencySelect" class="select-field" onchange="onItemCurrencyChange(this.value)">
                     <option value="CNY">CNY (人民幣)</option>
                     <option value="TWD">TWD (新台幣)</option>
                     <option value="JPY">JPY (日圓)</option>
@@ -1720,7 +1739,12 @@
 
               <div class="form-group">
                 <label class="form-label" for="itemActualAmountInput">實際支出 (Actual Cost)</label>
-                <input type="number" id="itemActualAmountInput" class="input-field" placeholder="尚未實付可留空" min="0" step="any">
+                <div class="input-addon-group">
+                  <input type="number" id="itemActualAmountInput" class="input-field" placeholder="尚未實付可留空" min="0" step="any" oninput="updateModalCostDiff()">
+                  <div id="itemActualCurrencyBadge" class="addon-badge select-field" style="color: var(--text-muted); cursor: default; user-select: none;">
+                    TWD (新台幣)
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2487,18 +2511,14 @@
         const aBase = convertAmount(aRaw, m.currency, baseCur);
 
         const isFlight = m.category === "flight" || (m.transitType && m.transitType.startsWith("flight")) || /機票|航班|飛機|機位/i.test(m.name || "");
-        const isTransit = m.category === "transit" || (m.transitType && ["highspeed_rail", "charter", "rental_car", "bus_ferry"].includes(m.transitType)) || /高鐵|火車|包車|租車|客運|輪渡|接送/i.test(m.name || "");
 
         if (isFlight) {
           budgetFlight += bBase;
           actualFlight += aBase;
-        } else if (isTransit) {
+        } else {
+          // 大項交通專案中的高鐵、包車、租車，以及旅遊平安險、簽證、eSIM 等，全部統籌計入「🚇 交通」分類！確保總覽立即同步更新！
           budgetTransit += bBase;
           actualTransit += aBase;
-        } else {
-          // 保險、簽證、eSIM 等雜項歸於購物與其他
-          budgetShopping += bBase;
-          actualShopping += aBase;
         }
       });
 
@@ -2930,7 +2950,7 @@
             <div class="metric-pill">
               <span class="metric-pill-label">總差額</span>
               <span class="diff-badge ${stats.diffBase >= 0 ? 'saving' : 'over'}">
-                ${stats.diffBase >= 0 ? '結餘 +' : '超支 -'}${formatCurrency(Math.abs(stats.diffBase))} ${targetCur}
+                ${stats.diffBase >= 0 ? '結餘 +' : '超支 -'}${formatCurrency(Math.abs(isBase ? stats.diffBase : convertAmount(stats.diffBase, trip.baseCurrency, trip.foreignCurrency)))} ${targetCur}
               </span>
             </div>
           </div>
@@ -3169,8 +3189,13 @@
 
             <div class="item-right">
               <div class="item-pricing-calc">
-                <div class="item-cost-primary">${formatCurrency(actualInTarget)} ${targetCur}</div>
-                <div class="item-cost-budget">預算 ${formatCurrency(budgetInTarget)} ‧ 人均 ${formatCurrency(perPersonActual)}</div>
+                <div class="item-cost-primary">
+                  ${formatCurrency(actualInTarget)} ${targetCur}
+                  ${item.currency !== targetCur ? `<span style="font-size: 11px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">(實付 ${formatCurrency(totalActualRaw)} ${item.currency})</span>` : ''}
+                </div>
+                <div class="item-cost-budget">
+                  預算 ${formatCurrency(budgetInTarget)} ${targetCur} ${item.currency !== targetCur ? `(${formatCurrency(totalBudgetRaw)} ${item.currency})` : ''} ‧ 人均 ${item.pricingType === 'per_person' ? `${formatCurrency(item.amount)} ${item.currency}` : `${formatCurrency(perPersonActual)} ${targetCur}`}
+                </div>
               </div>
 
               <div class="item-actions">
@@ -3241,8 +3266,13 @@
 
             <div class="item-right">
               <div class="item-pricing-calc">
-                <div class="item-cost-primary">${formatCurrency(actualInTarget)} ${targetCur}</div>
-                <div class="item-cost-budget">預算 ${formatCurrency(budgetInTarget)} ‧ 人均 ${formatCurrency(perPersonActual)}</div>
+                <div class="item-cost-primary">
+                  ${formatCurrency(actualInTarget)} ${targetCur}
+                  ${item.currency !== targetCur ? `<span style="font-size: 11px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">(實付 ${formatCurrency(totalActualRaw)} ${item.currency})</span>` : ''}
+                </div>
+                <div class="item-cost-budget">
+                  預算 ${formatCurrency(budgetInTarget)} ${targetCur} ${item.currency !== targetCur ? `(${formatCurrency(totalBudgetRaw)} ${item.currency})` : ''} ‧ 人均 ${item.pricingType === 'per_person' ? `${formatCurrency(item.amount)} ${item.currency}` : `${formatCurrency(perPersonActual)} ${targetCur}`}
+                </div>
               </div>
 
               <div class="item-actions">
@@ -3328,6 +3358,7 @@
       onCategoryChanged(defaultCat);
 
       document.getElementById("itemCurrencySelect").value = appState.tripInfo.foreignCurrency;
+      onItemCurrencyChange(appState.tripInfo.foreignCurrency);
       document.getElementById("itemIsPaidCheckbox").checked = true;
       document.getElementById("expenseModal").classList.add("active");
     }
@@ -3483,6 +3514,20 @@
       const isPaid = document.getElementById("itemIsPaidCheckbox").checked;
       if (isPaid && (!actualInput.value || actualInput.value.trim() === "")) {
         actualInput.value = budgetVal;
+      }
+      updateModalCostDiff();
+    }
+
+    function onItemCurrencyChange(curVal) {
+      const badge = document.getElementById("itemActualCurrencyBadge");
+      if (badge) {
+        const curMap = {
+          TWD: "TWD (新台幣)",
+          JPY: "JPY (日圓)",
+          CNY: "CNY (人民幣)",
+          USD: "USD (美元)"
+        };
+        badge.textContent = curMap[curVal] || `${curVal} (貨幣)`;
       }
       updateModalCostDiff();
     }
@@ -3664,7 +3709,9 @@
       document.getElementById("itemActualAmountInput").value = item.actualAmount !== undefined ? item.actualAmount : item.amount;
       document.getElementById("itemIsPaidCheckbox").checked = item.isPaid !== false;
 
-      document.getElementById("itemCurrencySelect").value = item.currency || appState.tripInfo.baseCurrency;
+      const curToSet = item.currency || appState.tripInfo.baseCurrency;
+      document.getElementById("itemCurrencySelect").value = curToSet;
+      onItemCurrencyChange(curToSet);
       document.getElementById("itemPricingTypeSelect").value = item.pricingType || "per_person";
       document.getElementById("itemNoteInput").value = item.note || "";
 
@@ -3693,6 +3740,7 @@
       document.getElementById("itemIsPaidCheckbox").checked = item.isPaid !== false;
 
       document.getElementById("itemCurrencySelect").value = item.currency;
+      onItemCurrencyChange(item.currency);
       document.getElementById("itemPricingTypeSelect").value = item.pricingType;
       document.getElementById("itemNoteInput").value = item.note || "";
       document.getElementById("itemSubtypeSelect").value = item.subType || "";
@@ -3723,6 +3771,7 @@
       document.getElementById("itemIsPaidCheckbox").checked = acc.isPaid !== false;
 
       document.getElementById("itemCurrencySelect").value = acc.currency;
+      onItemCurrencyChange(acc.currency);
       document.getElementById("itemNoteInput").value = acc.note || "";
       
       const modeRadios = document.getElementsByName("lodgingMode");

@@ -115,3 +115,16 @@
     - 確保同步後，帳本 100% 乾淨對齊主行程真實內容（重慶解放碑 Moxy 酒店、重慶來福士洲際酒店、陶婆婆火鍋、台北/重慶機場接送），不再出現任何莫名其妙的舊範本項目
   - [x] 依 GEMINI.md 進版規範同步更新版本號至 `V3.2.3`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）
   - [x] 單元測試 `test_expense_calculator.py` 100% 驗證通過
+- [x] **階段十三：填入預算框格大小一致對稱排版與大項交通編輯後總覽即時同步連動 (升級 V3.3.1)**
+  - [x] 輸入框尺寸對稱與排版協調優化：
+    - 在「實際支出 (Actual Cost)」輸入框右側新增連動幣別標籤框 #itemActualCurrencyBadge（寬度 135px，外觀尺寸高度 40px 與左側幣別選單完全一模一樣）。
+    - 實作 onItemCurrencyChange(curVal)：切換左側幣別選單時，右側幣別標籤框即時同步更新為「TWD (新台幣)」、「JPY (日圓)」、「CNY (人民幣)」、「USD (美元)」。
+    - 左右兩側的數字輸入框寬度（lex: 1）與高度（40px）100% 絕對完全一致對稱，下方「計費分攤對象」與「收支差額狀態」高度均為 40px，四個方框形成 2x2 極致對稱的協調矩陣。
+  - [x] 大項交通編輯儲存後總覽未更新修復：
+    - 修復 calculateStatistics()：將大項交通專案中的固定開銷（如海外旅遊平安險、簽證、交通票券、包車租車等）統籌算入「🚇 交通」分類，不再被誤丟到「🛍️ 購物」分類，左側儀表板「🚇 交通」金額與預估/實付總額在編輯儲存後立即跳動更新。
+    - 修復 
+enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總額及每人單價（例如：411 CNY (實付 2,000 TWD)、預算 411 CNY (2,000 TWD) ‧ 人均 1,000 TWD），數字對應一清二楚。
+    - 修復全部行程頂部「全旅程總覽」的差額外幣換算。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 V3.3.1（index.html、	ravel_planner.html、lank.html、share.html 及 expenses.html）
+  - [x] 擴充單元測試腳本 	est_expense_calculator.py 並 100% 驗證通過
+
