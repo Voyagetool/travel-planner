@@ -48,7 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
+    # 7. 驗證多計畫切換 (Plan Switcher) 與版本號 V3.2.0
+    assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
+    assert "V3.2.0" in html, "未同步升級版本號至 V3.2.0"
+
+    # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
         assert cat_name in html, f"缺少 6 大標準分類: {cat_name}"
 

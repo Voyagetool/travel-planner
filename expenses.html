@@ -147,6 +147,34 @@
       flex-wrap: wrap;
     }
 
+    .plan-switcher-select {
+      background: var(--bg-surface);
+      border: 1.5px solid #0284c7;
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #0284c7;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+      box-shadow: 0 1px 3px rgba(2, 132, 199, 0.1);
+      transition: all 0.15s ease;
+      max-width: 220px;
+    }
+    .plan-switcher-select:hover {
+      background: var(--bg-subtle);
+    }
+    .okr-version-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: #e0e7ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+
     .trip-title {
       font-size: 17px;
       font-weight: 800;
@@ -1303,11 +1331,17 @@
         <span>返回行程</span>
       </a>
       <div class="trip-title-wrapper">
+        <!-- 旅行計畫一鍵切換選單 (東京、重慶等多行程切換) -->
+        <select id="expensePlanSelect" class="plan-switcher-select" onchange="switchPlanFromSelect(this.value)" title="切換不同的旅行行程計畫" style="display: none;">
+          <option value="">載入旅行計畫中...</option>
+        </select>
+
         <div class="trip-title" id="tripTitleDisplay" onclick="openTripSettingsModal()" title="點擊設定旅程基本資訊">
-          <span id="tripTitleText">重慶 7 天 6 夜魔幻之旅</span>
+          <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="trip-badge" id="tripDaysBadge">7 天</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.2.0</span>
+        <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
           <span id="cloudStatusDot">🟢</span> <span id="cloudStatusText">雲端已連線 (chongqing-2026)</span>
@@ -1972,10 +2006,25 @@
     let appState = null;
     let currentSelectedDay = "all";
 
+    let currentPlanId = "";
+    let availablePlans = {};
+
+    function getTargetPlanId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const qPlan = urlParams.get('plan');
+      if (qPlan && qPlan.trim()) return qPlan.trim();
+      if (currentPlanId && currentPlanId.trim()) return currentPlanId.trim();
+      return "";
+    }
+
     function initApp() {
+      currentPlanId = getTargetPlanId();
       loadState();
       renderAll();
       initFirebaseSync();
+
+      // 本機優先：先嘗試從 LocalStorage 主行程快取中偵測計畫並立即自動同步
+      tryAutoSyncFromLocalMainPlan();
     }
 
     function getCloudRoomId() {
@@ -1996,7 +2045,65 @@
 
     function navigateToMainPlanner() {
       const roomId = getCloudRoomId();
-      window.location.href = `index.html?room=${encodeURIComponent(roomId)}`;
+      let url = `index.html?room=${encodeURIComponent(roomId)}`;
+      if (currentPlanId) {
+        url += `&plan=${encodeURIComponent(currentPlanId)}`;
+      }
+      window.location.href = url;
+    }
+
+    function updatePlanSwitcherUI(plans, activeId) {
+      const selectEl = document.getElementById("expensePlanSelect");
+      if (!selectEl) return;
+      availablePlans = plans || {};
+      const planKeys = Object.keys(availablePlans);
+      if (planKeys.length <= 1) {
+        selectEl.style.display = "none";
+        return;
+      }
+      selectEl.style.display = "inline-block";
+      selectEl.innerHTML = planKeys.map(pk => {
+        const p = availablePlans[pk];
+        const flag = (p.currencyCode === 'JPY' || (p.title && p.title.includes('東京'))) ? '🇯🇵 ' : ((p.currencyCode === 'CNY' || (p.title && p.title.includes('重慶'))) ? '🇨🇳 ' : '✈️ ');
+        const label = p.title || pk;
+        const sel = pk === activeId ? 'selected' : '';
+        return `<option value="${pk}" ${sel}>${flag}${label}</option>`;
+      }).join("");
+    }
+
+    function switchPlanFromSelect(newPlanId) {
+      if (!newPlanId) return;
+      currentPlanId = newPlanId;
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('plan', newPlanId);
+      window.history.pushState({}, '', newUrl.toString());
+
+      loadState();
+      if (availablePlans[newPlanId]) {
+        processPlanSync(availablePlans[newPlanId], true);
+      } else {
+        renderAll();
+      }
+    }
+
+    function tryAutoSyncFromLocalMainPlan() {
+      try {
+        const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+        if (raw) {
+          const mainAppState = JSON.parse(raw);
+          if (mainAppState && mainAppState.plans) {
+            availablePlans = mainAppState.plans;
+            const targetId = getTargetPlanId() || mainAppState.activePlanId || Object.keys(availablePlans)[0];
+            if (targetId && availablePlans[targetId]) {
+              currentPlanId = targetId;
+              updatePlanSwitcherUI(availablePlans, targetId);
+              processPlanSync(availablePlans[targetId], true);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("本機主行程自動讀取失敗", e);
+      }
     }
 
     function initFirebaseSync() {
@@ -2031,20 +2138,49 @@
       cloudUnsubscribe = docRef.onSnapshot(doc => {
         if (doc.exists) {
           const data = doc.data();
-          if (data && data.expenseState) {
+
+          // 1. 若雲端有主行程 (appState.plans)，自動擷取計畫列表並智慧決定當前計畫
+          if (data && data.appState && data.appState.plans) {
+            availablePlans = data.appState.plans;
+            const urlPlan = getTargetPlanId();
+            let matchedPlanId = "";
+            if (urlPlan && availablePlans[urlPlan]) {
+              matchedPlanId = urlPlan;
+            } else if (data.appState.activePlanId && availablePlans[data.appState.activePlanId]) {
+              matchedPlanId = data.appState.activePlanId;
+            } else {
+              matchedPlanId = Object.keys(availablePlans)[0];
+            }
+
+            if (matchedPlanId) {
+              currentPlanId = matchedPlanId;
+              updatePlanSwitcherUI(availablePlans, matchedPlanId);
+
+              // 智慧自動同步：若目前在看東京或重慶，立即精準鏡像主行程最新設定！
+              if (availablePlans[matchedPlanId]) {
+                processPlanSync(availablePlans[matchedPlanId], true);
+              }
+            }
+          }
+
+          // 2. 載入雲端獨立計畫帳本或通用帳本
+          if (data && data.expensePlans && currentPlanId && data.expensePlans[currentPlanId]) {
+            isReceivingCloud = true;
+            appState = data.expensePlans[currentPlanId];
+            saveState(true);
+            renderAll();
+            isReceivingCloud = false;
+          } else if (data && data.expenseState && !currentPlanId) {
             isReceivingCloud = true;
             appState = data.expenseState;
             saveState(true);
             renderAll();
             isReceivingCloud = false;
-
-            const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-            updateCloudBadgeUI("online", `雲端已同步 (${roomId})`);
-            document.getElementById("cloudLastSyncTime").textContent = `最後同步：${timeStr} (來自雲端)`;
-          } else {
-            updateCloudBadgeUI("online", `雲端已連線 (${roomId})`);
-            pushStateToCloud();
           }
+
+          const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+          updateCloudBadgeUI("online", `雲端已同步 (${roomId})`);
+          document.getElementById("cloudLastSyncTime").textContent = `最後同步：${timeStr} (來自雲端)`;
         } else {
           updateCloudBadgeUI("online", `雲端全新房間 (${roomId})`);
           pushStateToCloud();
@@ -2065,10 +2201,16 @@
         const docRef = firestoreDb.collection('travel_planners').doc(roomId);
         const cleanState = JSON.parse(JSON.stringify(appState));
 
-        docRef.set({
-          expenseState: cleanState,
+        const updatePayload = {
+          expenseState: cleanState, // 保持相容舊版
           expenseLastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).then(() => {
+        };
+
+        if (currentPlanId) {
+          updatePayload[`expensePlans.${currentPlanId}`] = cleanState;
+        }
+
+        docRef.set(updatePayload, { merge: true }).then(() => {
           const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
           updateCloudBadgeUI("online", `雲端已同步 (${roomId})`);
           document.getElementById("cloudLastSyncTime").textContent = `最後同步：${timeStr} (已儲存至雲端)`;
@@ -2078,34 +2220,11 @@
       }, 500);
     }
 
-    function updateCloudBadgeUI(status, text) {
-      const badge = document.getElementById("cloudStatusBadge");
-      const dot = document.getElementById("cloudStatusDot");
-      const label = document.getElementById("cloudStatusText");
-      if (!badge || !dot || !label) return;
-
-      label.textContent = text;
-      if (status === "online") {
-        dot.textContent = "🟢";
-        badge.style.background = "#ecfdf5";
-        badge.style.color = "#065f46";
-        badge.style.borderColor = "#a7f3d0";
-      } else if (status === "syncing") {
-        dot.textContent = "🔄";
-        badge.style.background = "#eff6ff";
-        badge.style.color = "#1d4ed8";
-        badge.style.borderColor = "#bfdbfe";
-      } else {
-        dot.textContent = "⚪";
-        badge.style.background = "#f1f5f9";
-        badge.style.color = "#475569";
-        badge.style.borderColor = "#cbd5e1";
-      }
-    }
-
     function loadState() {
       try {
-        const saved = localStorage.getItem("travel_planner_expense_data");
+        const targetId = currentPlanId || getTargetPlanId();
+        const planKey = targetId ? `travel_planner_expense_data_${targetId}` : "travel_planner_expense_data";
+        const saved = localStorage.getItem(planKey);
         if (saved) {
           appState = JSON.parse(saved);
         } else {
@@ -2120,7 +2239,9 @@
 
     function saveState(skipCloud = false) {
       try {
-        localStorage.setItem("travel_planner_expense_data", JSON.stringify(appState));
+        const targetId = currentPlanId || getTargetPlanId();
+        const planKey = targetId ? `travel_planner_expense_data_${targetId}` : "travel_planner_expense_data";
+        localStorage.setItem(planKey, JSON.stringify(appState));
         if (!skipCloud) {
           pushStateToCloud();
         }
@@ -2128,7 +2249,6 @@
         console.error("儲存失敗", e);
       }
     }
-
     // 匯率換算核心
     // 多幣別換算樞紐 (支援 JPY, CNY, USD, EUR, KRW 等，杜絕匯率跑掉直接 1:1 的錯誤)
     const GLOBAL_CURRENCY_RATES = {
@@ -3564,206 +3684,11 @@
     // ==========================================
     function syncFromMainPlan() {
       const roomId = getCloudRoomId();
-      
-      function processPlanSync(plan) {
-        if (!plan) return false;
+      const targetId = currentPlanId || getTargetPlanId();
 
-        // 智慧清理先前因 bug 產生的 undefined 髒資料項目
-        appState.dailyExpenses = appState.dailyExpenses.filter(d => d.name && d.name !== "undefined" && d.name.trim() !== "");
-
-        const memberCount = Number(plan.memberCount) || 2;
-        const daysCount = (plan.days && plan.days.length) ? plan.days.length : 7;
-        const tripTitle = plan.title || (roomId === DEFAULT_ROOM_ID ? "重慶自由行" : `旅行支出 (${roomId})`);
-
-        // 判斷行程外幣代碼與基準匯率
-        let tripCurrency = plan.currencyCode || plan.currency;
-        if (!tripCurrency) {
-          tripCurrency = /重慶|北京|上海|成都|西安|廣州|深圳/.test(tripTitle) ? "CNY" : (/東京|大阪|京都|北海道|沖繩|日本/.test(tripTitle) ? "JPY" : "USD");
-        }
-        
-        let exchangeRate = Number(plan.exchangeRate);
-        if (!exchangeRate || isNaN(exchangeRate)) {
-          exchangeRate = GLOBAL_CURRENCY_RATES[tripCurrency] || 1;
-        }
-
-        appState.tripInfo.title = tripTitle;
-        appState.tripInfo.memberCount = memberCount;
-        appState.tripInfo.exchangeRate = exchangeRate;
-        appState.tripInfo.daysCount = daysCount;
-        appState.tripInfo.foreignCurrency = tripCurrency;
-
-        // 1. 同步大項機票 (完整支援主行程 plan.flights 結構)
-        if (plan.flights) {
-          const fl = plan.flights;
-          const cost = Number(fl.cost || fl.actualCost || 0);
-          const pricingType = (fl.costMode === "group" || fl.pricingType === "group") ? "total" : "per_person";
-          const costCurr = fl.costCurr || fl.currency || "TWD";
-          
-          let route = "往返直飛航班";
-          let flNo = fl.pnr || "機票";
-          let airlineName = "";
-
-          if (Array.isArray(fl.legs) && fl.legs.length > 0) {
-            const leg1 = fl.legs[0];
-            airlineName = leg1.airline || "";
-            flNo = leg1.flightNo || fl.pnr || "航班";
-            const dep = leg1.depLoc || leg1.depAir || "台北";
-            const arr = leg1.arrLoc || leg1.arrAir || "目的地";
-            route = `${dep} ⇋ ${arr}`;
-          }
-
-          if (cost > 0) {
-            const existingIdx = appState.majorExpenses.findIndex(m => m.category === "flight" || /機票|航班/i.test(m.name));
-            const flightItem = {
-              id: "m_flight_sync",
-              category: "flight",
-              transitType: "flight_round",
-              route: route,
-              name: `往返機票航班 (${flNo})`,
-              amount: cost,
-              actualAmount: fl.actualCost ? Number(fl.actualCost) : cost,
-              isPaid: true,
-              currency: costCurr,
-              pricingType: pricingType,
-              note: airlineName ? `${airlineName} (主行程設定航班)` : "主行程設定航班"
-            };
-            if (existingIdx >= 0) appState.majorExpenses[existingIdx] = flightItem;
-            else appState.majorExpenses.unshift(flightItem);
-          }
-        }
-
-        // 2. 同步住宿 (支援多間飯店與天數)
-        if (plan.hotels && plan.hotels.length > 0) {
-          plan.hotels.forEach((h, idx) => {
-            const nights = Number(h.nights) || 1;
-            const cost = Number(h.costTotal || h.costPerNight || h.cost || 0);
-            const pricingType = h.costTotal ? "total_stay" : "per_night";
-
-            if (cost > 0 || h.name) {
-              const existingIdx = appState.accommodations.findIndex(a => a.name.includes(h.name));
-              const accData = {
-                id: "acc_sync_" + idx,
-                name: h.name || "預定住宿飯店",
-                mode: nights > 1 ? "range" : "daily",
-                startDay: idx === 0 ? 1 : 4,
-                endDay: idx === 0 ? nights : Math.min(daysCount, 4 + nights - 1),
-                day: idx === 0 ? 1 : 4,
-                nights: nights,
-                pricingType: pricingType,
-                amount: cost > 0 ? cost : (tripCurrency === 'JPY' ? 12000 : 800),
-                actualAmount: cost > 0 ? cost : (tripCurrency === 'JPY' ? 12000 : 800),
-                isPaid: true,
-                currency: h.currency || tripCurrency,
-                roomCount: Number(h.roomCount) || 1,
-                note: h.stayLabel || h.city || "主行程同步飯店"
-              };
-              if (existingIdx >= 0) appState.accommodations[existingIdx] = accData;
-              else appState.accommodations.push(accData);
-            }
-          });
-        }
-
-        // 3. 同步每日時間軸活動與五項開銷 (杜絕 undefined，支援 title / notes)
-        if (plan.days && plan.days.length > 0) {
-          plan.days.forEach((dayObj, dayIdx) => {
-            const dayNum = dayIdx + 1;
-
-            // (A) 同步主行程中各天的三餐、交通與景點欄位
-            if (dayObj.breakfastCost && Number(dayObj.breakfastCost) > 0) {
-              syncDailyField(dayNum, "dining", "breakfast", dayObj.breakfast || "早餐", Number(dayObj.breakfastCost), "早餐美食");
-            }
-            if (dayObj.lunchCost && Number(dayObj.lunchCost) > 0) {
-              syncDailyField(dayNum, "dining", "lunch", dayObj.lunch || "午餐", Number(dayObj.lunchCost), "午餐美食");
-            }
-            if (dayObj.dinnerCost && Number(dayObj.dinnerCost) > 0) {
-              syncDailyField(dayNum, "dining", "dinner", dayObj.dinner || "晚餐", Number(dayObj.dinnerCost), "晚餐美饌");
-            }
-            if (dayObj.transportCost && Number(dayObj.transportCost) > 0) {
-              syncDailyField(dayNum, "transit", "taxi", dayObj.transportNote || "市區交通移動", Number(dayObj.transportCost), "每日交通費用");
-            }
-            if (dayObj.spotCost && Number(dayObj.spotCost) > 0) {
-              syncDailyField(dayNum, "spot", "ticket", dayObj.spotNote || "景點體驗與門票", Number(dayObj.spotCost), "景點開支");
-            }
-
-            // (B) 同步時間軸 events
-            if (dayObj.events && dayObj.events.length > 0) {
-              dayObj.events.forEach(ev => {
-                // 嚴格支援 title / name / target，徹底防止 undefined！
-                const evTitle = ev.title || ev.name || ev.target || "";
-                if (!evTitle || evTitle === "undefined" || evTitle.trim() === "") return;
-
-                // 若該 event 屬於機票航程且已在大項機票統計，跳過避免重複計入每日門票
-                if (ev.type === "flight" && (!ev.cost || ev.cost === 0 || /搭乘班機|飛往|航班/i.test(evTitle))) {
-                  return;
-                }
-
-                const bCost = Number(ev.cost) || 0;
-                const aCost = Number(ev.actualCost) || bCost;
-
-                if (bCost > 0 || aCost > 0) {
-                  let cat = "spot";
-                  let sub = "ticket";
-                  const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
-
-                  if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n) || ev.type === "food") {
-                    cat = "dining";
-                    sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
-                  } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(n) || ev.type === "trans") {
-                    cat = "transit";
-                    sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : (/地鐵|捷運|jr|新幹線|metro|train/.test(n) ? "metro" : "bus");
-                  } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
-                    cat = "other";
-                    sub = "gift";
-                  }
-
-                  const existingIdx = appState.dailyExpenses.findIndex(d => d.day === dayNum && (d.name === evTitle || (d.id && d.id.includes(ev.id || '___'))));
-                  const dailyItem = {
-                    id: "d_sync_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
-                    day: dayNum,
-                    category: cat,
-                    subType: sub,
-                    transitType: cat === "transit" ? sub : undefined,
-                    route: cat === "transit" ? evTitle : undefined,
-                    name: evTitle,
-                    amount: bCost > 0 ? bCost : aCost,
-                    actualAmount: aCost,
-                    isPaid: true,
-                    currency: ev.costCurr || tripCurrency,
-                    pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
-                    note: ev.notes || ev.note || ""
-                  };
-
-                  if (existingIdx >= 0) appState.dailyExpenses[existingIdx] = dailyItem;
-                  else appState.dailyExpenses.push(dailyItem);
-                }
-              });
-            }
-          });
-        }
-
-        saveState();
-        renderAll();
-        return true;
-      }
-
-      function syncDailyField(dayNum, category, subType, name, amount, defaultNote) {
-        if (!name || name === "undefined") return;
-        const existingIdx = appState.dailyExpenses.findIndex(d => d.day === dayNum && d.category === category && d.subType === subType);
-        const item = {
-          id: `d_sync_field_${dayNum}_${category}_${subType}`,
-          day: dayNum,
-          category: category,
-          subType: subType,
-          name: name,
-          amount: amount,
-          actualAmount: amount,
-          isPaid: true,
-          currency: appState.tripInfo.foreignCurrency,
-          pricingType: "total",
-          note: defaultNote
-        };
-        if (existingIdx >= 0) appState.dailyExpenses[existingIdx] = item;
-        else appState.dailyExpenses.push(item);
+      if (availablePlans && targetId && availablePlans[targetId]) {
+        processPlanSync(availablePlans[targetId], false);
+        return;
       }
 
       if (firestoreDb) {
@@ -3773,48 +3698,24 @@
           if (doc.exists) {
             const data = doc.data();
             if (data && data.appState && data.appState.plans) {
-              const plans = data.appState.plans;
-              let targetPlan = null;
-              if (data.appState.activePlanId && plans[data.appState.activePlanId]) {
-                targetPlan = plans[data.appState.activePlanId];
-              } else {
-                const planKeys = Object.keys(plans);
-                if (planKeys.length > 0) targetPlan = plans[planKeys[0]];
-              }
-
-              if (targetPlan) {
-                synced = processPlanSync(targetPlan);
+              availablePlans = data.appState.plans;
+              const pId = targetId || data.appState.activePlanId || Object.keys(availablePlans)[0];
+              if (pId && availablePlans[pId]) {
+                currentPlanId = pId;
+                updatePlanSwitcherUI(availablePlans, pId);
+                synced = processPlanSync(availablePlans[pId], false);
               }
             }
           }
-
-          if (!synced && roomId === DEFAULT_ROOM_ID) {
-            synced = trySyncFromLocalStorage();
-          }
-
-          if (synced) {
-            alert(`🎉 成功同步【${appState.tripInfo.title}】行程資料！\n已自動對齊幣別與匯率，同步機票、住宿與各天花費活動，已清理異常項目。`);
-          } else {
-            if (roomId === DEFAULT_ROOM_ID) {
-              alert("未在雲端或本地找到重慶主行程資料，已保留現有帳本。您可手動記帳或載入精選範本。");
-            } else {
-              alert(`未在雲端房間【${roomId}】中找到主行程資料。\n\n提示：請先在主行程手帳 (index.html?room=${roomId}) 建立並儲存行程，或直接在此頁面手動記帳。`);
-            }
+          if (!synced) {
+            trySyncFromLocalStorage();
           }
         }).catch(err => {
-          console.error("同步失敗，嘗試檢查本機", err);
-          if (roomId === DEFAULT_ROOM_ID && trySyncFromLocalStorage()) {
-            alert("成功由本機主規劃快取同步行程資料！");
-          } else {
-            alert(`連線雲端房間【${roomId}】發生錯誤，請檢查網路連線。`);
-          }
+          console.error("讀取雲端主行程失敗", err);
+          trySyncFromLocalStorage();
         });
       } else {
-        if (roomId === DEFAULT_ROOM_ID && trySyncFromLocalStorage()) {
-          alert("成功由本機主規劃快取同步行程資料！");
-        } else {
-          alert(`請確認主行程頁面 (index.html?room=${roomId}) 是否已儲存過行程。`);
-        }
+        trySyncFromLocalStorage();
       }
 
       function trySyncFromLocalStorage() {
@@ -3822,23 +3723,273 @@
           const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
           if (raw) {
             const mainAppState = JSON.parse(raw);
-            if (mainAppState.plans) {
-              const plans = mainAppState.plans;
-              let targetPlan = null;
-              if (mainAppState.activePlanId && plans[mainAppState.activePlanId]) {
-                targetPlan = plans[mainAppState.activePlanId];
-              } else {
-                const planKeys = Object.keys(plans);
-                if (planKeys.length > 0) targetPlan = plans[planKeys[0]];
-              }
-              if (targetPlan) {
-                return processPlanSync(targetPlan);
+            if (mainAppState && mainAppState.plans) {
+              availablePlans = mainAppState.plans;
+              const pId = targetId || mainAppState.activePlanId || Object.keys(availablePlans)[0];
+              if (pId && availablePlans[pId]) {
+                currentPlanId = pId;
+                updatePlanSwitcherUI(availablePlans, pId);
+                processPlanSync(availablePlans[pId], false);
+                return;
               }
             }
           }
-        } catch(e) {}
-        return false;
+        } catch (e) {}
+        alert("未在雲端或本地找到對應的主行程資料。");
       }
+    }
+
+    // 核心乾淨鏡像同步函式 (100% 精準對齊主手帳，不再產生舊項目堆疊與不一致)
+    function processPlanSync(plan, isSilent = false) {
+      if (!plan) return false;
+
+      const memberCount = Number(plan.memberCount) || 2;
+      const daysCount = (plan.days && plan.days.length) ? plan.days.length : 6;
+      const tripTitle = plan.title || "旅遊行程";
+
+      // 精準判定幣別代碼與基準匯率 (東京對齊 JPY 0.2071，重慶對齊 CNY 4.65)
+      let tripCurrency = plan.currencyCode || plan.currency;
+      if (!tripCurrency) {
+        tripCurrency = /東京|大阪|京都|北海道|沖繩|日本/i.test(tripTitle) ? "JPY" : (/重慶|北京|上海|成都/i.test(tripTitle) ? "CNY" : "USD");
+      }
+
+      let exchangeRate = Number(plan.exchangeRate);
+      if (!exchangeRate || isNaN(exchangeRate)) {
+        exchangeRate = (tripCurrency === "JPY") ? 0.2071 : (tripCurrency === "CNY" ? 4.65 : (GLOBAL_CURRENCY_RATES[tripCurrency] || 1));
+      }
+
+      appState.tripInfo.title = tripTitle;
+      appState.tripInfo.memberCount = memberCount;
+      appState.tripInfo.exchangeRate = exchangeRate;
+      appState.tripInfo.daysCount = daysCount;
+      appState.tripInfo.foreignCurrency = tripCurrency;
+
+      // 關鍵！清理所有由主行程同步產生的舊連動項目，確保與主行程 100% 一致！
+      appState.majorExpenses = appState.majorExpenses.filter(m => !m.isSynced && !m.id.startsWith("m_flight_sync") && !m.id.startsWith("m_sync_"));
+      appState.accommodations = appState.accommodations.filter(a => !a.isSynced && !a.id.startsWith("acc_sync_"));
+      appState.dailyExpenses = appState.dailyExpenses.filter(d => !d.isSynced && !d.id.startsWith("d_sync_"));
+
+      // 1. 同步大項機票 (長榮 BR192/181 或 國泰等航班)
+      if (plan.flights) {
+        const fl = plan.flights;
+        const cost = Number(fl.cost || fl.actualCost || 0);
+        const pricingType = (fl.costMode === "group" || fl.pricingType === "group") ? "total" : "per_person";
+        const costCurr = fl.costCurr || fl.currency || (tripCurrency === "JPY" ? "TWD" : "TWD");
+
+        let route = "往返直飛航班";
+        let flNo = fl.pnr || "航班";
+        let airlineName = "";
+
+        if (Array.isArray(fl.legs) && fl.legs.length > 0) {
+          const leg1 = fl.legs[0];
+          airlineName = leg1.airline || "";
+          flNo = leg1.flightNo || fl.pnr || "航班";
+          const dep = leg1.depLoc || leg1.depAir || "台北松山";
+          const arr = leg1.arrLoc || leg1.arrAir || "目的地";
+          route = `${dep} ⇋ ${arr}`;
+        }
+
+        if (cost > 0 || airlineName || flNo !== "航班") {
+          const finalCost = cost > 0 ? cost : (tripCurrency === 'JPY' ? 10500 : 12500);
+          appState.majorExpenses.unshift({
+            id: "m_flight_sync",
+            category: "flight",
+            transitType: "flight_round",
+            route: route,
+            name: `${airlineName || '直飛'}往返機票 (${flNo})`,
+            amount: finalCost,
+            actualAmount: fl.actualCost ? Number(fl.actualCost) : finalCost,
+            isPaid: true,
+            currency: costCurr,
+            pricingType: pricingType,
+            note: "主行程同步之機票設定",
+            isSynced: true
+          });
+        }
+      }
+
+      // 2. 同步住宿 (市區精選酒店 / 解放碑 Moxy 等)
+      if (plan.hotels && plan.hotels.length > 0) {
+        plan.hotels.forEach((h, idx) => {
+          const nights = Number(h.nights) || Math.max(1, daysCount - 1);
+          const cost = Number(h.costTotal || h.costPerNight || h.cost || 0);
+          const pricingType = h.costTotal ? "total_stay" : "per_night";
+          const defAmount = tripCurrency === 'JPY' ? 12000 : 800;
+
+          appState.accommodations.push({
+            id: "acc_sync_" + idx,
+            name: h.name || "精選住宿飯店",
+            mode: nights > 1 ? "range" : "daily",
+            startDay: idx === 0 ? 1 : 4,
+            endDay: idx === 0 ? nights : Math.min(daysCount, 4 + nights - 1),
+            day: idx === 0 ? 1 : 4,
+            nights: nights,
+            pricingType: pricingType,
+            amount: cost > 0 ? cost : defAmount,
+            actualAmount: cost > 0 ? cost : defAmount,
+            isPaid: true,
+            currency: h.currency || tripCurrency,
+            roomCount: Number(h.roomCount) || 1,
+            note: h.stayLabel || h.city || "主行程設定飯店",
+            isSynced: true
+          });
+        });
+      }
+
+      // 3. 逐天精確同步三餐、交通與景點 (東京 Day 1 早餐500、午餐1200、晚餐2500、交通600)
+      if (plan.days && plan.days.length > 0) {
+        plan.days.forEach((dayObj, dayIdx) => {
+          const dayNum = dayIdx + 1;
+
+          // 早餐
+          if (dayObj.breakfastCost && Number(dayObj.breakfastCost) > 0) {
+            appState.dailyExpenses.push({
+              id: `d_sync_field_${dayNum}_dining_breakfast`,
+              day: dayNum,
+              category: "dining",
+              subType: "breakfast",
+              name: dayObj.breakfast || "早餐安排",
+              amount: Number(dayObj.breakfastCost),
+              actualAmount: Number(dayObj.breakfastCost),
+              isPaid: true,
+              currency: tripCurrency,
+              pricingType: "total",
+              note: "主行程早餐預算",
+              isSynced: true
+            });
+          }
+
+          // 午餐
+          if (dayObj.lunchCost && Number(dayObj.lunchCost) > 0) {
+            appState.dailyExpenses.push({
+              id: `d_sync_field_${dayNum}_dining_lunch`,
+              day: dayNum,
+              category: "dining",
+              subType: "lunch",
+              name: dayObj.lunch || "午餐安排",
+              amount: Number(dayObj.lunchCost),
+              actualAmount: Number(dayObj.lunchCost),
+              isPaid: true,
+              currency: tripCurrency,
+              pricingType: "total",
+              note: "主行程午餐預算",
+              isSynced: true
+            });
+          }
+
+          // 晚餐
+          if (dayObj.dinnerCost && Number(dayObj.dinnerCost) > 0) {
+            appState.dailyExpenses.push({
+              id: `d_sync_field_${dayNum}_dining_dinner`,
+              day: dayNum,
+              category: "dining",
+              subType: "dinner",
+              name: dayObj.dinner || "晚餐安排",
+              amount: Number(dayObj.dinnerCost),
+              actualAmount: Number(dayObj.dinnerCost),
+              isPaid: true,
+              currency: tripCurrency,
+              pricingType: "total",
+              note: "主行程晚餐預算",
+              isSynced: true
+            });
+          }
+
+          // 市區交通
+          if (dayObj.transportCost && Number(dayObj.transportCost) > 0) {
+            appState.dailyExpenses.push({
+              id: `d_sync_field_${dayNum}_transit_metro`,
+              day: dayNum,
+              category: "transit",
+              subType: "metro",
+              transitType: "metro",
+              route: dayObj.transportNote || "市區地鐵/專車",
+              name: dayObj.transportNote || "市區交通安排",
+              amount: Number(dayObj.transportCost),
+              actualAmount: Number(dayObj.transportCost),
+              isPaid: true,
+              currency: tripCurrency,
+              pricingType: "total",
+              note: "主行程交通預算",
+              isSynced: true
+            });
+          }
+
+          // 景點門票
+          if (dayObj.spotCost && Number(dayObj.spotCost) > 0) {
+            appState.dailyExpenses.push({
+              id: `d_sync_field_${dayNum}_spot_ticket`,
+              day: dayNum,
+              category: "spot",
+              subType: "ticket",
+              name: dayObj.spotNote || "景點體驗與門票",
+              amount: Number(dayObj.spotCost),
+              actualAmount: Number(dayObj.spotCost),
+              isPaid: true,
+              currency: tripCurrency,
+              pricingType: "total",
+              note: "主行程景點預算",
+              isSynced: true
+            });
+          }
+
+          // 時間軸 events
+          if (dayObj.events && dayObj.events.length > 0) {
+            dayObj.events.forEach(ev => {
+              const evTitle = ev.title || ev.name || ev.target || "";
+              if (!evTitle || evTitle === "undefined" || evTitle.trim() === "") return;
+
+              // 排除機票活動以防重複
+              if (ev.type === "flight" || /搭乘班機|直達抵達|飛往|航班/i.test(evTitle)) return;
+
+              const bCost = Number(ev.cost) || 0;
+              const aCost = Number(ev.actualCost) || bCost;
+
+              if (bCost > 0 || aCost > 0) {
+                let cat = "spot";
+                let sub = "ticket";
+                const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
+
+                if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n) || ev.type === "food") {
+                  cat = "dining";
+                  sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
+                } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(n) || ev.type === "trans") {
+                  cat = "transit";
+                  sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : (/地鐵|捷運|jr|新幹線|metro|train/.test(n) ? "metro" : "bus");
+                } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
+                  cat = "other";
+                  sub = "gift";
+                }
+
+                appState.dailyExpenses.push({
+                  id: "d_sync_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
+                  day: dayNum,
+                  category: cat,
+                  subType: sub,
+                  transitType: cat === "transit" ? sub : undefined,
+                  route: cat === "transit" ? evTitle : undefined,
+                  name: evTitle,
+                  amount: bCost > 0 ? bCost : aCost,
+                  actualAmount: aCost,
+                  isPaid: true,
+                  currency: ev.costCurr || tripCurrency,
+                  pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
+                  note: ev.notes || ev.note || "",
+                  isSynced: true
+                });
+              }
+            });
+          }
+        });
+      }
+
+      saveState();
+      renderAll();
+
+      if (!isSilent) {
+        alert(`🎉 成功同步【${tripTitle}】最新行程設定！\n已自動對齊幣別 (${tripCurrency})、匯率 (${exchangeRate})、天數 (${daysCount}天)、機票與各天花費。`);
+      }
+      return true;
     }
     function openCloudRoomModal() {
       const roomId = getCloudRoomId();
