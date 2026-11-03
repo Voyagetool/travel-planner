@@ -5264,7 +5264,7 @@
         }
         .mt-date-time-row {
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
+            grid-template-columns: minmax(210px, 0.92fr) minmax(280px, 1.18fr);
             gap: 10px;
             align-items: start;
         }
@@ -5305,37 +5305,45 @@
         }
 
 
-        /* 景點攻略整合視圖與 24h 時分分離選單樣式 */
+        /* 景點攻略整合視圖與 24h 時分分離選單樣式（單行緊湊不換行） */
         .sg-24h-row {
             display: flex;
             align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 4px;
+            flex-wrap: nowrap;
         }
         .sg-24h-unit {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             background: #ffffff;
             border: 1px solid var(--notion-border, #cbd5e1);
             border-radius: 6px;
-            padding: 3px 6px;
+            padding: 2px 5px;
             min-height: 38px;
+            flex: 0 1 auto;
+            white-space: nowrap;
         }
         .sg-24h-unit select {
             border: none;
             background: transparent;
-            font-size: 0.86rem;
+            font-size: 0.79rem;
             font-weight: 700;
             color: #0f172a;
-            padding: 2px 4px;
+            padding: 2px 1px;
             cursor: pointer;
             outline: none;
+            width: auto;
+            min-width: 0;
         }
         .sg-24h-sep {
             font-weight: 800;
             color: #64748b;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            padding: 0 1px;
+        }
+        .swal2-container {
+            z-index: 20000 !important;
         }
         .sg-section-box {
             background: #f8fafc;
@@ -5409,7 +5417,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.2.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.3.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7456,7 +7464,7 @@
 
     <!-- 7. 新增/編輯 景點攻略（整合造訪日期時間行程串聯 ＋ 預約搶票時程設定） -->
     <div class="modal-backdrop" id="editSpotGuideModal" onclick="handleBackdropClick(event, 'editSpotGuideModal')">
-        <div class="modal-dialog" style="max-width: 650px;" onclick="event.stopPropagation();">
+        <div class="modal-dialog" style="max-width: 680px;" onclick="event.stopPropagation();">
             <div class="modal-header">
                 <div class="modal-title" id="spotGuideModalTitle"><i class="fa-solid fa-landmark-dome" style="color:#0284c7;"></i> 新增景點攻略</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editSpotGuideModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -7477,7 +7485,7 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom: 12px;">
-                        <label class="form-label">速通攻略與防雷指南 <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">速通攻略與防雷指南 (選填)</label>
                         <textarea id="sgTipInput" class="form-input" style="min-height: 76px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
                     </div>
 
@@ -7606,11 +7614,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <span style="font-size:0.75rem; color:#64748b;"><i class="fa-solid fa-rotate" style="color:#0284c7;"></i> 設定造訪日期與時間並勾選「已安排至行程中」，將自動同步並排序至對應天數行程</span>
-                    <div style="display:flex; gap:8px;">
+                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                    <span style="font-size:0.74rem; color:#64748b; flex:1; min-width:0;"><i class="fa-solid fa-rotate" style="color:#0284c7;"></i> 勾選「已安排至行程中」將依日期與時間自動同步至對應天數行程</span>
+                    <div style="display:flex; gap:8px; flex-shrink:0;">
                         <button type="button" class="n-btn" onclick="closeModal('editSpotGuideModal')">取消</button>
-                        <button type="submit" class="n-btn n-btn-primary" id="sgSubmitBtn"><i class="fa-solid fa-check"></i> 儲存景點攻略</button>
+                        <button type="button" class="n-btn n-btn-primary" id="sgSubmitBtn" onclick="handleSaveSpotGuideSubmit(event)"><i class="fa-solid fa-check"></i> 儲存景點攻略</button>
                     </div>
                 </div>
             </form>
@@ -10871,9 +10879,10 @@ const firebaseConfig = {
                         </div>
 
                         <!-- 攻略說明 -->
+                        ${item.tip ? `
                         <div style="font-size: 0.85rem; color: var(--notion-text-sub); line-height: 1.5; margin-top: 4px; background:#f8fafc; padding:7px 10px; border-radius:6px; border-left:3px solid #0284c7;">
-                            ${escapeHtml(item.tip || '')}
-                        </div>
+                            ${escapeHtml(item.tip)}
+                        </div>` : ''}
 
                         ${bookingStripHtml}
                     </div>
@@ -21641,80 +21650,86 @@ const firebaseConfig = {
                 if (typeof e.stopPropagation === 'function') e.stopPropagation();
             }
 
-            const plan = getCurrentPlan();
-            if (!plan) return false;
-            ensureUnifiedSpotGuides(plan);
+            try {
+                const plan = getCurrentPlan();
+                if (!plan) return false;
+                ensureUnifiedSpotGuides(plan);
 
-            const nameInput = document.getElementById('sgNameInput');
-            const tipInput = document.getElementById('sgTipInput');
-            const name = nameInput ? nameInput.value.trim() : '';
-            const tip = tipInput ? tipInput.value.trim() : '';
+                const nameInput = document.getElementById('sgNameInput');
+                const tipInput = document.getElementById('sgTipInput');
+                const name = nameInput ? nameInput.value.trim() : '';
+                const tip = tipInput ? tipInput.value.trim() : '';
 
-            if (!name) {
-                showToast('danger', '請填寫「景點名稱」！');
-                if (nameInput) nameInput.focus();
-                return false;
-            }
-            if (!tip) {
-                showToast('danger', '請填寫「速通攻略與防雷指南」！');
-                if (tipInput) tipInput.focus();
-                return false;
-            }
+                if (!name) {
+                    showToast('error', '請填寫「景點名稱」！');
+                    if (nameInput) nameInput.focus();
+                    return false;
+                }
 
-            const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
-            const prevItem = (editIdx >= 0 && plan.spotTips[editIdx]) ? plan.spotTips[editIdx] : null;
-            const itemId = prevItem?.id || ('sg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+                const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
+                const prevItem = (editIdx >= 0 && plan.spotTips[editIdx]) ? plan.spotTips[editIdx] : null;
+                const itemId = prevItem?.id || ('sg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
 
-            const visitDate = (document.getElementById('sgVisitDate')?.value || sgCalStates.visit.selectedDate || '').trim();
-            const visitStartTime = getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin');
-            const visitEndTime = getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin');
-            const scheduled = !!document.getElementById('sgScheduledCheck')?.checked;
-            const scheduleNote = (document.getElementById('sgScheduleNoteInput')?.value || '').trim();
+                const visitDate = (document.getElementById('sgVisitDate')?.value || sgCalStates.visit.selectedDate || '').trim();
+                const visitStartTime = getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin');
+                const visitEndTime = getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin');
+                const scheduled = !!document.getElementById('sgScheduledCheck')?.checked;
+                const scheduleNote = (document.getElementById('sgScheduleNoteInput')?.value || '').trim();
 
-            const hasBooking = !!document.getElementById('sgHasBookingCheck')?.checked;
-            const bookingDate = hasBooking ? ((document.getElementById('sgBookingDate')?.value || sgCalStates.booking.selectedDate || '即刻').trim()) : '';
-            const bookingTime = hasBooking ? getSg24hPairTimeString('sgBookingHour', 'sgBookingMin') : '';
-            const bookingPlatform = hasBooking ? (document.getElementById('sgBookingPlatform')?.value.trim() || '官方管道') : '';
-            const bookingDifficulty = hasBooking ? (document.getElementById('sgBookingDifficulty')?.value || '一般預約') : '一般預約';
-            const bookingStatus = hasBooking ? (document.getElementById('sgBookingStatus')?.value || '待開放') : '待開放';
+                const hasBooking = !!document.getElementById('sgHasBookingCheck')?.checked;
+                const bookingDate = hasBooking ? ((document.getElementById('sgBookingDate')?.value || sgCalStates.booking.selectedDate || '即刻').trim()) : '';
+                const bookingTime = hasBooking ? getSg24hPairTimeString('sgBookingHour', 'sgBookingMin') : '';
+                const bookingPlatform = hasBooking ? (document.getElementById('sgBookingPlatform')?.value.trim() || '官方管道') : '';
+                const bookingDifficulty = hasBooking ? (document.getElementById('sgBookingDifficulty')?.value || '一般預約') : '一般預約';
+                const bookingStatus = hasBooking ? (document.getElementById('sgBookingStatus')?.value || '待開放') : '待開放';
 
-            const matchedDay = (visitDate && typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, visitDate) : null;
+                const matchedDay = (visitDate && typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, visitDate) : null;
 
-            const spotObj = {
-                id: itemId,
-                name,
-                address: (document.getElementById('sgAddressInput')?.value || '').trim(),
-                tip,
-                visitDate,
-                visitStartTime,
-                visitEndTime,
-                scheduled,
-                scheduledDayNum: matchedDay ? matchedDay.dayNum : (prevItem?.scheduledDayNum || null),
-                scheduleNote,
-                hasBooking,
-                bookingDate,
-                bookingTime,
-                bookingPlatform,
-                bookingDifficulty,
-                bookingStatus
-            };
+                const spotObj = {
+                    id: itemId,
+                    name,
+                    address: (document.getElementById('sgAddressInput')?.value || '').trim(),
+                    tip,
+                    visitDate,
+                    visitStartTime,
+                    visitEndTime,
+                    scheduled,
+                    scheduledDayNum: matchedDay ? matchedDay.dayNum : (prevItem?.scheduledDayNum || null),
+                    scheduleNote,
+                    hasBooking,
+                    bookingDate,
+                    bookingTime,
+                    bookingPlatform,
+                    bookingDifficulty,
+                    bookingStatus
+                };
 
-            if (editIdx >= 0 && editIdx < plan.spotTips.length) {
-                plan.spotTips[editIdx] = spotObj;
-            } else {
-                plan.spotTips.push(spotObj);
-            }
+                if (editIdx >= 0 && editIdx < plan.spotTips.length) {
+                    plan.spotTips[editIdx] = spotObj;
+                } else {
+                    plan.spotTips.push(spotObj);
+                }
 
-            const syncRes = syncSpotGuideToDailySchedule(plan, spotObj);
+                let syncRes = { synced: false, dayNum: null };
+                try {
+                    syncRes = syncSpotGuideToDailySchedule(plan, spotObj);
+                } catch (syncErr) {
+                    console.warn('同步景點至每日行程時略過:', syncErr);
+                }
 
-            saveState();
-            closeModal('editSpotGuideModal');
-            renderAll();
+                saveState();
+                closeModal('editSpotGuideModal');
+                renderAll();
 
-            if (syncRes.synced) {
-                showToast('success', `${editIdx >= 0 ? '已更新景點攻略' : '已新增景點攻略'}，並同步排入第 ${syncRes.dayNum} 天行程！`);
-            } else {
-                showToast('success', editIdx >= 0 ? `已更新「${name}」景點攻略！` : `已新增「${name}」景點攻略！`);
+                if (syncRes.synced) {
+                    showToast('success', `${editIdx >= 0 ? '已更新景點攻略' : '已新增景點攻略'}，並同步排入第 ${syncRes.dayNum} 天行程！`);
+                } else {
+                    showToast('success', editIdx >= 0 ? `已更新「${name}」景點攻略！` : `已新增「${name}」景點攻略！`);
+                }
+            } catch (err) {
+                console.error('儲存景點攻略發生錯誤:', err);
+                closeModal('editSpotGuideModal');
+                showToast('error', '儲存時發生異常：' + (err.message || '請重試'));
             }
             return false;
         }
@@ -22634,9 +22649,10 @@ const firebaseConfig = {
 
         // Toast Helper
         function showToast(icon, title, text = '', timer = 1500) {
+            const normalizedIcon = (icon === 'danger') ? 'error' : icon;
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    icon: icon,
+                    icon: normalizedIcon,
                     title: title,
                     text: text,
                     timer: timer,
