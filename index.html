@@ -5392,6 +5392,105 @@
             background: #f0fdf4;
             border-color: #bbf7d0;
         }
+
+        /* ===== V3.3.4 頂部主功能分頁導覽列固定 (Sticky) 與緊湊縮小版型 ===== */
+        html, body {
+            overflow-x: clip !important;
+        }
+        .okr-top-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+        }
+        .okr-pill-navbar {
+            position: sticky !important;
+            top: var(--okr-header-sticky-offset, 58px) !important;
+            z-index: 995 !important;
+            background: rgba(255, 255, 255, 0.97) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 4px 20px !important;
+            min-height: 36px !important;
+            gap: 8px !important;
+            flex-wrap: nowrap !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            transition: box-shadow 0.18s ease, background-color 0.18s ease;
+        }
+        .okr-pill-navbar.is-scrolled {
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06) !important;
+        }
+        .okr-pill-navbar .okr-pill-tabs {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+        }
+        .okr-pill-navbar .view-tab-btn {
+            padding: 4px 10px !important;
+            font-size: 0.76rem !important;
+            gap: 5px !important;
+            line-height: 1.25 !important;
+            border-radius: 6px !important;
+            height: 28px !important;
+            flex-shrink: 0 !important;
+        }
+        .okr-pill-navbar .view-tab-btn i {
+            font-size: 0.72rem !important;
+        }
+        .okr-navbar-right-actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            flex-wrap: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        .okr-pill-navbar .unified-nav-selector-box {
+            padding: 1px 6px !important;
+            height: 26px !important;
+            gap: 4px !important;
+            border-radius: 6px !important;
+        }
+        .okr-pill-navbar .unified-nav-selector-box i {
+            font-size: 0.72rem !important;
+        }
+        .okr-pill-navbar .unified-nav-select {
+            font-size: 0.73rem !important;
+            max-width: 132px !important;
+            padding: 0 !important;
+            text-overflow: ellipsis;
+        }
+        .okr-pill-navbar .okr-nav-add-btn {
+            padding: 3px 9px !important;
+            font-size: 0.74rem !important;
+            height: 26px !important;
+            gap: 4px !important;
+            border-radius: 6px !important;
+        }
+        .okr-pill-navbar .okr-nav-add-btn i {
+            font-size: 0.7rem !important;
+        }
+        #side-transport-section,
+        #side-hotel-section,
+        #tripSummaryBox,
+        #tripSummaryContainer,
+        .view-content-pane {
+            scroll-margin-top: calc(var(--okr-header-sticky-offset, 60px) + 46px);
+        }
+        @media (max-width: 768px) {
+            .okr-pill-navbar {
+                padding: 4px 12px !important;
+            }
+            .okr-pill-navbar .unified-nav-selector-box {
+                display: none !important;
+            }
+            .okr-pill-navbar .view-tab-btn {
+                padding: 4px 8px !important;
+                font-size: 0.74rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -5418,7 +5517,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.3.3</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.3.4</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -5467,42 +5566,42 @@
     <!-- ====================================================
          SECOND BAR: 水平膠囊導覽分頁列 (對齊第三張截圖 Pill Navigation Bar)
          ==================================================== -->
-    <nav class="okr-pill-navbar">
+    <nav class="okr-pill-navbar" id="okrMainPillNavbar">
         <div class="okr-pill-tabs view-tabs-list">
             <button class="view-tab-btn active" id="tabBtn-timeline" onclick="switchView('timeline')">
-                <i class="fa-solid fa-border-all"></i> 總覽與行程 (Overview)
+                <i class="fa-solid fa-border-all"></i> 總覽與行程
             </button>
             <button class="view-tab-btn" id="tabBtn-logistics" onclick="switchView('logistics')">
-                <i class="fa-solid fa-plane-up"></i> 交通與住宿 (Transit & Stay)
+                <i class="fa-solid fa-plane-up"></i> 交通與住宿
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
-                <i class="fa-solid fa-landmark-dome"></i> 景點攻略 (Spot Guides)
+                <i class="fa-solid fa-landmark-dome"></i> 景點攻略
             </button>
             <button class="view-tab-btn" id="tabBtn-expenses" onclick="switchView('expenses')">
-                <i class="fa-solid fa-chart-pie"></i> 費用與記帳 (Budget & Expenses)
+                <i class="fa-solid fa-chart-pie"></i> 費用與記帳
             </button>
         </div>
 
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <div class="okr-navbar-right-actions">
             <div class="unified-nav-selector-box" title="統一導覽：點擊直接選取切換所有主要功能與視圖">
-                <i class="fa-solid fa-compass" style="color: #64748b; font-size: 0.82rem;"></i>
+                <i class="fa-solid fa-compass" style="color: #64748b;"></i>
                 <select id="unifiedNavSelect" class="unified-nav-select" onchange="handleUnifiedNavSelect(this.value)">
                     <optgroup label="📋 主要功能分頁">
-                        <option value="timeline">⊞ 總覽與每日行程 (Overview)</option>
-                        <option value="logistics">✈️ 交通與住宿大項目 (Transit & Stay)</option>
-                        <option value="spots">🏛️ 景點攻略 (Spot Guides)</option>
-                        <option value="budget">📊 費用規劃：預算統計分析 (Budget)</option>
-                        <option value="actual-expenses">🧾 費用核銷：實際花費記帳 (Actual Expenses)</option>
+                        <option value="timeline">⊞ 總覽與行程</option>
+                        <option value="logistics">✈️ 交通與住宿</option>
+                        <option value="spots">🏛️ 景點攻略</option>
+                        <option value="budget">📊 預算統計分析</option>
+                        <option value="actual-expenses">🧾 實際花費記帳</option>
                     </optgroup>
                     <optgroup label="🚀 快速定位大項目">
-                        <option value="transport">✈️ 往返機票與包車接送</option>
+                        <option value="transport">✈️ 往返機票與其他交通</option>
                         <option value="hotel">🏨 住宿飯店安排</option>
-                        <option value="page-expenses">🧮 極簡支出計算中心 (專屬試算頁面)</option>
+                        <option value="page-expenses">🧮 支出計算中心</option>
                     </optgroup>
                 </select>
             </div>
 
-            <button class="okr-action-pill primary-solid" style="padding: 6px 13px; font-size: 0.8rem;" onclick="openAddEventModal()">
+            <button class="okr-action-pill primary-solid okr-nav-add-btn" onclick="openAddEventModal()">
                 <i class="fa-solid fa-plus"></i> 新增行程項目
             </button>
         </div>
@@ -23494,6 +23593,43 @@ const firebaseConfig = {
                 alert(`${title}\n${text}`);
             }
         }
+
+
+        // 動態同步頂部 Header 高度至導覽列 Sticky Offset，確保固定導覽列緊貼不重疊、不留縫隙
+        function syncStickyNavbarOffset() {
+            const headerEl = document.querySelector('.okr-top-header');
+            const navEl = document.getElementById('okrMainPillNavbar') || document.querySelector('.okr-pill-navbar');
+            if (headerEl) {
+                const h = Math.round(headerEl.getBoundingClientRect().height);
+                document.documentElement.style.setProperty('--okr-header-sticky-offset', h + 'px');
+            } else {
+                document.documentElement.style.setProperty('--okr-header-sticky-offset', '0px');
+            }
+            if (navEl) {
+                navEl.classList.toggle('is-scrolled', window.scrollY > 8);
+            }
+        }
+        (function initStickyNavbarObserver() {
+            syncStickyNavbarOffset();
+            window.addEventListener('resize', syncStickyNavbarOffset, { passive: true });
+            window.addEventListener('scroll', () => {
+                const navEl = document.getElementById('okrMainPillNavbar') || document.querySelector('.okr-pill-navbar');
+                if (navEl) navEl.classList.toggle('is-scrolled', window.scrollY > 8);
+            }, { passive: true });
+            const attachObserver = () => {
+                syncStickyNavbarOffset();
+                const headerEl = document.querySelector('.okr-top-header');
+                if (headerEl && typeof ResizeObserver !== 'undefined') {
+                    const ro = new ResizeObserver(() => syncStickyNavbarOffset());
+                    ro.observe(headerEl);
+                }
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', attachObserver);
+            } else {
+                attachObserver();
+            }
+        })();
 
         // Global Esc to close modal
         document.addEventListener('keydown', (e) => {
