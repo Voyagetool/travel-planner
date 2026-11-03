@@ -5418,7 +5418,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.3.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.3.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7418,9 +7418,48 @@
                         </div>
                     </div>
 
+                    <!-- 景點門票 ＋ 營業時間（24 小時制時分分離） -->
+                    <div class="mt-date-time-row" style="margin-bottom: 12px;">
+                        <!-- 左欄：景點門票 -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                                <span><i class="fa-solid fa-ticket-simple" style="color:#9333ea;"></i> 景點門票 (選填)</span>
+                                <span id="sgTicketConvertHint" style="font-size:0.72rem; color:#7e22ce; font-weight:700;"></span>
+                            </label>
+                            <div style="display:grid; grid-template-columns: 118px 1fr; gap:6px; margin-bottom:6px;">
+                                <select id="sgTicketCurr" class="form-input" style="padding:6px 6px; min-height:38px; font-size:0.8rem; font-weight:700;" onchange="onSgTicketFieldsChange()">
+                                    <option value="LOCAL">💴 當地幣</option>
+                                    <option value="TWD">💵 新台幣 NT$</option>
+                                    <option value="FREE">🆓 免費參觀</option>
+                                </select>
+                                <input type="number" id="sgTicketCost" class="form-input" min="0" step="any" placeholder="單人票價金額" style="min-height:38px; padding:6px 9px; font-weight:700;" oninput="onSgTicketFieldsChange()">
+                            </div>
+                            <input type="text" id="sgTicketNote" class="form-input" style="font-size:0.78rem; padding:5px 9px;" placeholder="門票備註 (選填，如：成人票 / 含導覽 / 現場購票)">
+                        </div>
+
+                        <!-- 右欄：營業時間（24 小時制，時與分分開設定） -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label"><i class="fa-regular fa-clock" style="color:#0284c7;"></i> 營業時間 (選填，24 小時制)</label>
+                            <div class="sg-24h-row" style="margin-bottom:6px;">
+                                <div class="sg-24h-unit" title="開始營業時間（24小時制）">
+                                    <select id="sgOpenStartHour" onchange="onSgOpenHoursChange()"></select>
+                                    <span class="sg-24h-sep" id="sgOpenStartSep">:</span>
+                                    <select id="sgOpenStartMin" onchange="onSgOpenHoursChange()"></select>
+                                </div>
+                                <span id="sgOpenRangeTilde" style="color:#94a3b8; font-size:0.78rem; font-weight:700;">~</span>
+                                <div class="sg-24h-unit" id="sgOpenEndUnit" title="結束營業時間（24小時制）">
+                                    <select id="sgOpenEndHour" onchange="onSgOpenHoursChange()"></select>
+                                    <span class="sg-24h-sep">:</span>
+                                    <select id="sgOpenEndMin" onchange="onSgOpenHoursChange()"></select>
+                                </div>
+                            </div>
+                            <input type="text" id="sgOpenNote" class="form-input" style="font-size:0.78rem; padding:5px 9px;" placeholder="營業備註 (選填，如：週一公休 / 最後入場 17:00)">
+                        </div>
+                    </div>
+
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label class="form-label">速通攻略與防雷指南 (選填)</label>
-                        <textarea id="sgTipInput" class="form-input" style="min-height: 76px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
+                        <textarea id="sgTipInput" class="form-input" style="min-height: 66px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
                     </div>
 
                     <!-- 2. 造訪日期與時間（串聯回每日行程 ＋ 顯示第幾天） -->
@@ -11332,6 +11371,69 @@ const firebaseConfig = {
             openAddSpotGuideModal(idx);
         }
 
+        function formatSpotOpeningText(item) {
+            if (!item) return '';
+            let timePart = '';
+            if (item.openStartTime === '24H') {
+                timePart = '全天開放 (24H)';
+            } else if (item.openStartTime && item.openEndTime) {
+                timePart = `${item.openStartTime} - ${item.openEndTime}`;
+            } else if (item.openStartTime) {
+                timePart = `${item.openStartTime} 起`;
+            } else if (item.openEndTime) {
+                timePart = `至 ${item.openEndTime}`;
+            }
+            const notePart = (item.openNote || '').trim();
+            if (timePart && notePart) return `${timePart}（${notePart}）`;
+            return timePart || notePart;
+        }
+
+        function formatSpotTicketText(plan, item) {
+            if (!item) return '';
+            const curr = (typeof getPlanCurrency === 'function') ? getPlanCurrency(plan) : { symbol: '¥', rate: 1 };
+            const tCurr = item.ticketCurr || 'LOCAL';
+            const rawCost = item.ticketCost;
+            const hasNum = (rawCost !== undefined && rawCost !== null && String(rawCost).trim() !== '' && !isNaN(Number(rawCost)));
+            const notePart = (item.ticketNote || '').trim();
+
+            let pricePart = '';
+            if (tCurr === 'FREE' || (hasNum && Number(rawCost) === 0 && (notePart.includes('免費') || item.ticketCurr === 'FREE'))) {
+                pricePart = '免費參觀';
+            } else if (hasNum) {
+                const num = Number(rawCost);
+                if (num === 0) {
+                    pricePart = '免費參觀';
+                } else if (tCurr === 'TWD') {
+                    pricePart = `NT$ ${Math.round(num).toLocaleString()} / 人`;
+                } else {
+                    const twdApprox = Math.round(num * (Number(curr.rate) || 1));
+                    pricePart = `${curr.symbol} ${num.toLocaleString()}${curr.code !== 'TWD' ? ` (≈ NT$ ${twdApprox.toLocaleString()})` : ''} / 人`;
+                }
+            }
+
+            if (pricePart && notePart) return `${pricePart} ‧ ${notePart}`;
+            return pricePart || notePart;
+        }
+
+        function formatSpotMetaPillsHtml(plan, item) {
+            const openTxt = formatSpotOpeningText(item);
+            const ticketTxt = formatSpotTicketText(plan, item);
+            if (!openTxt && !ticketTxt) return '';
+
+            const pills = [];
+            if (openTxt) {
+                pills.push(`<span style="background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; font-size:0.73rem; font-weight:700; padding:1px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;"><i class="fa-regular fa-clock"></i> 營業時間：${escapeHtml(openTxt)}</span>`);
+            }
+            if (ticketTxt) {
+                const isFree = ticketTxt.startsWith('免費');
+                const bg = isFree ? '#ecfdf5' : '#faf5ff';
+                const fg = isFree ? '#047857' : '#7e22ce';
+                const bd = isFree ? '#a7f3d0' : '#e9d5ff';
+                pills.push(`<span style="background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.73rem; font-weight:700; padding:1px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-ticket-simple"></i> 門票：${escapeHtml(ticketTxt)}</span>`);
+            }
+            return `<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:5px;">${pills.join('')}</div>`;
+        }
+
         function renderSpotGuidesView() {
             const plan = getCurrentPlan();
             const container = document.getElementById('spotGuidesContainer');
@@ -11474,6 +11576,7 @@ const firebaseConfig = {
                                             </span>
                                         ` : ''}
                                     </div>
+                                    ${formatSpotMetaPillsHtml(plan, item)}
                                 </div>
                             </div>
                             <div style="display: flex; gap: 5px; flex-shrink: 0;">
@@ -14531,7 +14634,10 @@ const firebaseConfig = {
 
             let hh = defaultHour;
             let mm = defaultMin;
-            if (timeStr && timeStr !== '-') {
+            if (timeStr === '24H') {
+                hh = '24H';
+                mm = '00';
+            } else if (timeStr && timeStr !== '-') {
                 const m = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})/);
                 if (m) {
                     const hNum = Math.min(23, Math.max(0, parseInt(m[1], 10)));
@@ -21668,6 +21774,20 @@ const firebaseConfig = {
             populateMin('sgVisitEndMin');
             populateHour('sgBookingHour', true, '-- 時');
             populateMin('sgBookingMin');
+
+            const openStartSel = document.getElementById('sgOpenStartHour');
+            if (openStartSel && openStartSel.dataset.populated !== '1') {
+                let html = '<option value="">-- 時</option><option value="24H">全天</option>';
+                for (let h = 0; h < 24; h++) {
+                    const hh = String(h).padStart(2, '0');
+                    html += `<option value="${hh}">${hh} 時</option>`;
+                }
+                openStartSel.innerHTML = html;
+                openStartSel.dataset.populated = '1';
+            }
+            populateMin('sgOpenStartMin');
+            populateHour('sgOpenEndHour', true, '-- 時');
+            populateMin('sgOpenEndMin');
         }
 
         function setSg24hPairValues(hourId, minId, timeStr, defaultHour, defaultMin) {
@@ -21699,8 +21819,70 @@ const firebaseConfig = {
             const hSel = document.getElementById(hourId);
             const mSel = document.getElementById(minId);
             if (!hSel || !hSel.value) return '';
+            if (hSel.value === '24H') return '24H';
             const mm = (mSel && mSel.value) ? mSel.value : '00';
             return `${hSel.value}:${mm}`;
+        }
+
+        function onSgOpenHoursChange() {
+            const sh = document.getElementById('sgOpenStartHour');
+            const sm = document.getElementById('sgOpenStartMin');
+            const sep = document.getElementById('sgOpenStartSep');
+            const tilde = document.getElementById('sgOpenRangeTilde');
+            const endUnit = document.getElementById('sgOpenEndUnit');
+            const eh = document.getElementById('sgOpenEndHour');
+            const em = document.getElementById('sgOpenEndMin');
+
+            const is24h = !!(sh && sh.value === '24H');
+            if (sm && sh) {
+                sm.style.display = is24h ? 'none' : '';
+                if (sep) sep.style.display = is24h ? 'none' : '';
+                sm.disabled = (!sh.value || is24h);
+                sm.style.opacity = (!sh.value || is24h) ? '0.45' : '1';
+            }
+            if (tilde) tilde.style.display = is24h ? 'none' : '';
+            if (endUnit) endUnit.style.display = is24h ? 'none' : 'inline-flex';
+            if (em && eh) {
+                em.disabled = !eh.value;
+                em.style.opacity = eh.value ? '1' : '0.45';
+            }
+        }
+
+        function onSgTicketFieldsChange() {
+            const currSel = document.getElementById('sgTicketCurr');
+            const costInp = document.getElementById('sgTicketCost');
+            const hintEl = document.getElementById('sgTicketConvertHint');
+            if (!currSel || !costInp) return;
+
+            const plan = getCurrentPlan();
+            const curr = (typeof getPlanCurrency === 'function') ? getPlanCurrency(plan) : { symbol: '¥', code: 'JPY', rate: 1 };
+
+            if (currSel.value === 'FREE') {
+                costInp.value = '';
+                costInp.disabled = true;
+                costInp.placeholder = '免費免門票';
+                if (hintEl) hintEl.textContent = '免費入場';
+                return;
+            }
+
+            costInp.disabled = false;
+            costInp.placeholder = '單人票價金額';
+            const raw = costInp.value.trim();
+            if (!hintEl) return;
+            if (raw === '' || isNaN(Number(raw))) {
+                hintEl.textContent = '';
+                return;
+            }
+            const val = Number(raw);
+            if (val === 0) {
+                hintEl.textContent = '免費參觀';
+            } else if (currSel.value === 'LOCAL' && curr.code !== 'TWD') {
+                hintEl.textContent = `≈ NT$ ${Math.round(val * (Number(curr.rate) || 1)).toLocaleString()} / 人`;
+            } else if (currSel.value === 'TWD' && curr.code !== 'TWD' && Number(curr.rate) > 0) {
+                hintEl.textContent = `≈ ${curr.symbol} ${Math.round(val / Number(curr.rate)).toLocaleString()} / 人`;
+            } else {
+                hintEl.textContent = `NT$ ${Math.round(val).toLocaleString()} / 人`;
+            }
         }
 
         function onSgVisitTimeChange() {
@@ -22075,7 +22257,31 @@ const firebaseConfig = {
             const endT = (spotObj.visitEndTime || '').trim();
             const timeStr = (startT && endT) ? `${startT} - ${endT}` : (startT || '10:00');
 
+            // 計算單人當地幣門票費用以同步至每日行程預算
+            const curr = (typeof getPlanCurrency === 'function') ? getPlanCurrency(plan) : { rate: 1 };
+            let hasTicketSetting = false;
+            let syncedLocalCost = 0;
+            if (spotObj.ticketCurr === 'FREE') {
+                hasTicketSetting = true;
+                syncedLocalCost = 0;
+            } else if (spotObj.ticketCost !== undefined && spotObj.ticketCost !== null && String(spotObj.ticketCost).trim() !== '' && !isNaN(Number(spotObj.ticketCost))) {
+                hasTicketSetting = true;
+                const rawNum = Number(spotObj.ticketCost);
+                if (spotObj.ticketCurr === 'TWD' && Number(curr.rate) > 0) {
+                    syncedLocalCost = Math.round((rawNum / Number(curr.rate)) * 100) / 100;
+                } else {
+                    syncedLocalCost = rawNum;
+                }
+            }
+
             const noteParts = [];
+            const openSummary = formatSpotOpeningText(spotObj);
+            if (openSummary) noteParts.push(`🕒 營業：${openSummary}`);
+            if (spotObj.ticketCurr === 'FREE') {
+                noteParts.push(`🎟️ 免費參觀${spotObj.ticketNote ? ` (${spotObj.ticketNote})` : ''}`);
+            } else if (spotObj.ticketNote) {
+                noteParts.push(`🎟️ ${spotObj.ticketNote}`);
+            }
             if (spotObj.scheduleNote) noteParts.push(spotObj.scheduleNote);
             if (spotObj.hasBooking) {
                 const bTimeTxt = spotObj.bookingTime ? ` ${spotObj.bookingTime}` : '';
@@ -22095,6 +22301,7 @@ const firebaseConfig = {
                 if (startT) existEv.time = timeStr;
                 existEv.title = spotObj.name;
                 if (spotObj.address) existEv.loc = spotObj.address;
+                if (hasTicketSetting) existEv.cost = syncedLocalCost;
                 existEv.notes = noteParts.join(' ‧ ');
                 existEv.spotGuideId = spotObj.id;
                 if (typeof sortDayEventsByTime === 'function') {
@@ -22108,7 +22315,7 @@ const firebaseConfig = {
                 title: spotObj.name,
                 type: 'spot',
                 loc: spotObj.address || '',
-                cost: 0,
+                cost: syncedLocalCost,
                 notes: noteParts.join(' ‧ '),
                 spotGuideId: spotObj.id
             };
@@ -22199,12 +22406,31 @@ const firebaseConfig = {
                 btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${isEdit ? '儲存變更' : '新增景點攻略'}`;
             }
 
+            const currInfo = (typeof getPlanCurrency === 'function') ? getPlanCurrency(plan) : { name: '當地幣', symbol: '¥' };
+            const tCurrSel = document.getElementById('sgTicketCurr');
+            if (tCurrSel && tCurrSel.options.length >= 1) {
+                tCurrSel.options[0].text = `💴 ${currInfo.name} (${currInfo.symbol})`;
+            }
+
             document.getElementById('sgEditIndex').value = isEdit ? editIdx : '-1';
             document.getElementById('sgNameInput').value = curItem.name || '';
             document.getElementById('sgAddressInput').value = curItem.address || '';
             document.getElementById('sgTipInput').value = curItem.tip || '';
             document.getElementById('sgScheduledCheck').checked = initScheduled;
             document.getElementById('sgScheduleNoteInput').value = curItem.scheduleNote || '';
+
+            if (tCurrSel) tCurrSel.value = curItem.ticketCurr || 'LOCAL';
+            const tCostInp = document.getElementById('sgTicketCost');
+            if (tCostInp) tCostInp.value = (curItem.ticketCost !== undefined && curItem.ticketCost !== null) ? curItem.ticketCost : '';
+            const tNoteInp = document.getElementById('sgTicketNote');
+            if (tNoteInp) tNoteInp.value = curItem.ticketNote || '';
+            onSgTicketFieldsChange();
+
+            setSg24hPairValues('sgOpenStartHour', 'sgOpenStartMin', curItem.openStartTime || '', '', '00');
+            setSg24hPairValues('sgOpenEndHour', 'sgOpenEndMin', curItem.openEndTime || '', '', '00');
+            const oNoteInp = document.getElementById('sgOpenNote');
+            if (oNoteInp) oNoteInp.value = curItem.openNote || '';
+            onSgOpenHoursChange();
 
             setSg24hPairValues('sgVisitStartHour', 'sgVisitStartMin', initStartT, isEdit ? '' : '09', '30');
             setSg24hPairValues('sgVisitEndHour', 'sgVisitEndMin', initEndT, isEdit ? '' : '11', '30');
@@ -22273,10 +22499,25 @@ const firebaseConfig = {
 
                 const matchedDay = (visitDate && typeof resolvePlanDayByDate === 'function') ? resolvePlanDayByDate(plan, visitDate) : null;
 
+                const ticketCurr = document.getElementById('sgTicketCurr')?.value || 'LOCAL';
+                const rawTicketCost = (document.getElementById('sgTicketCost')?.value || '').trim();
+                const ticketCost = (ticketCurr === 'FREE') ? 0 : (rawTicketCost !== '' && !isNaN(Number(rawTicketCost)) ? Number(rawTicketCost) : '');
+                const ticketNote = (document.getElementById('sgTicketNote')?.value || '').trim();
+
+                const openStartTime = getSg24hPairTimeString('sgOpenStartHour', 'sgOpenStartMin');
+                const openEndTime = (openStartTime === '24H') ? '' : getSg24hPairTimeString('sgOpenEndHour', 'sgOpenEndMin');
+                const openNote = (document.getElementById('sgOpenNote')?.value || '').trim();
+
                 const spotObj = {
                     id: itemId,
                     name,
                     address: (document.getElementById('sgAddressInput')?.value || '').trim(),
+                    openStartTime,
+                    openEndTime,
+                    openNote,
+                    ticketCurr,
+                    ticketCost,
+                    ticketNote,
                     tip,
                     visitDate,
                     visitStartTime,
