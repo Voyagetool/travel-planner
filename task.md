@@ -135,3 +135,15 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
     - `renderAccommodationsList`：嚴格綁定 `acc` 物件及 `aRaw`/`bRaw`，正確呈現住宿專案原幣實付與人均。
   - [x] 單元測試強化防護：在 `test_expense_calculator.py` 新增第 11 項「大項交通與住宿渲染函式變數獨立性」自動化斷言，徹底杜絕此類未宣告變數導致畫面空白的缺陷。
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.2`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）。
+
+- [x] **階段十五：修復彈跳小視窗內容超出視窗問題 (升級 V3.3.3)**
+  - [x] 問題根因診斷：
+    - `.modal-window` 未設定 `overflow: hidden`，且直接子元素 `<form>` 為普通區塊元素（非 flex），未受高度約束，高度被內部表單撐大至 750px+，破壞了 flex 限制鏈條。
+    - 導致 `.modal-body` 的 `overflow-y: auto` 永遠無法觸發內部滾動，使得彈窗底部的「備註說明」與「取消 / 儲存項目」按鈕被推擠至瀏覽器視窗之外，使用者看不見也點不到。
+  - [x] 彈跳小視窗完整自適應優化：
+    - `.modal-window` 設定 `max-height: calc(100vh - 32px)`，並加上 `overflow: hidden`，確保整顆彈窗所有邊界與圓角 100% 容納於可視區域中。
+    - 替 `.modal-window form` 配置 `display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;`，打通 flex 限制鏈條。
+    - `.modal-header` 與 `.modal-footer` 配置 `flex-shrink: 0`，頂部標題、關閉叉叉與底部「取消」、「儲存項目」操作按鈕永遠常駐固定在彈窗頂端與底端，絕對不被擠出視窗外。
+    - `.modal-body` 啟用 `flex: 1; min-height: 0; overflow-y: auto;`，表單內容過多時自動觸發平滑內部滾動條，且優化各區塊 padding 與 gap。
+  - [x] 單元測試增加第 12 項彈窗自適應限制斷言防護。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.3`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）。

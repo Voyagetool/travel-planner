@@ -241,3 +241,30 @@ enderMajorItemsList 卡片呈現：卡片右側同時呈現換算後的記帳幣
    - 在 `test_expense_calculator.py` 加入函式變數作用域檢查，自動掃描並禁止渲染函式間 cross-variable 引用，杜絕未來再次發生類似中斷畫面空白問題。
 3. **版本號全站升級至 V3.3.2**：
    - 依據進版規範，同步升級 `index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html` 為 `V3.3.2`。
+
+
+---
+
+## 🪟 彈跳小視窗 (Modal) 自適應排版與防超出限制修復 (升級 V3.3.3)
+
+### 1. 彈窗內容超出視窗之問題分析
+- **現象**：在編輯大項交通或各項支出時，當表單展開多個欄位（如起訖路線、費用核銷卡塊、差額狀態），整顆彈窗高度超過瀏覽器視窗，彈窗底部直接被切斷，底部的「備註說明 (選填)」以及「取消」、「儲存項目」按鈕完全掉出螢幕外面，無法滾動也無法點擊。
+- **根本原因**：
+  1. `.modal-window` 未設定 `overflow: hidden`。
+  2. `<form id="expenseForm">` 為普通 block 元素，未具備 flex 伸展屬性，其高度由子元素天然撐大，破壞了彈窗高度限制鏈條。
+  3. `.modal-body` 雖然寫了 `overflow-y: auto`，但由於父層 `<form>` 高度沒有被限制，所以瀏覽器認為內容並未溢出，**永遠不會產生內部滾動條**。
+  4. 底部的 `.modal-footer` 因而被硬生生推擠到視窗可視範圍底線之外。
+
+### 2. 自適應排版修復架構
+1. **建立完整 Flexbox 滾動約束鏈**：
+   - `.modal-window`：設定 `max-height: calc(100vh - 32px)`，並強制啟用 `overflow: hidden;`，彈窗所有外緣圓角與邊界 100% 被限制在螢幕可見區域內。
+   - `.modal-window form`：設定 `display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;`。
+2. **頂置與置底核心操作按鈕永遠常駐**：
+   - `.modal-header`：配置 `flex-shrink: 0`，頂部項目名稱與右上角關閉 `✕` 永遠鎖定可見。
+   - `.modal-footer`：配置 `flex-shrink: 0`，底部的「取消」與「儲存項目」按鈕**永遠牢固置底在彈窗底端**，絕不掉出螢幕！
+3. **內部內容智能平滑滾動**：
+   - `.modal-body`：配置 `flex: 1; min-height: 0; overflow-y: auto;`，並配置精緻的客製化滾動條樣式。
+   - 微調各表單群組的內部間距（padding 與 gap），使各常用欄位在常見筆電螢幕下更緊湊、更好一覽。
+4. **單元測試與版本號同步**：
+   - 在 `test_expense_calculator.py` 新增彈窗容器邊界防護測試。
+   - 全站 5 核心檔案（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）同步升級版本號至 **`V3.3.3`**。

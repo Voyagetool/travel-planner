@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.2
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.3
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.2" in html, "未同步升級版本號至 V3.3.2"
+    assert "V3.3.3" in html, "未同步升級版本號至 V3.3.3"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -84,6 +84,13 @@ def test_html_structure_and_features():
     assert "item." not in acc_func, "renderAccommodationsList 不得含有 item.* 變數"
     assert "totalActualRaw" not in acc_func, "renderAccommodationsList 不得含有 totalActualRaw"
     assert "totalBudgetRaw" not in acc_func, "renderAccommodationsList 不得含有 totalBudgetRaw"
+
+    
+    # 12. 驗證彈跳小視窗 (Modal) 自適應排版，保證內容絕不超出視窗
+    assert "calc(100vh - 32px)" in html, "modal-window 最大高度未限制在視窗內"
+    assert "overflow: hidden" in html, "modal-window 未啟用 overflow: hidden 防護"
+    assert ".modal-window form" in html, "缺少 modal-window form flex 排版限制"
+    assert "flex-shrink: 0" in html, "modal-footer 缺少 flex-shrink: 0 置底固定"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 
