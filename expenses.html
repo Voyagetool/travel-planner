@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.5</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.4</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -3989,9 +3989,9 @@
         // 清理所有內建 Demo 範本假資料 ID (acc_1, acc_2, acc_3, m_flight, m_insurance, m_sim, e1_1 ~ e7_2)
         if (/^acc_[123]$/.test(id) || /^m_(flight|insurance|sim)$/.test(id)) return true;
         if (/^e[1-7]_\d+$/.test(id)) return true;
-        // 清理殘留的歷史假範本飯店與交通 (威斯汀、武隆依雲、九街民宿、出發前往桃園機場 1200 等)
+        // 清理殘留的所有歷史假範本飯店、交通、景點與餐廳 (避免非主行程幽靈假資訊混入)
         const name = String(item.name || '');
-        if (/威斯汀|依雲度假|九街設計師江景民宿/.test(name)) return true;
+        if (/威斯汀|依雲度假|九街設計師江景民宿|花市豌雜麵|長江索道往返門票|珮姐老火鍋|三峽博物館|李子壩梁山雞 \(總店\)|南山枇杷園|下浩里|湖廣會館|來福士烤匠|九街烤腦花|仙女山鎮碗碗羊肉|磁器口陳麻花|楊記隆府|黃桷坪|梯坎豆花|山城小湯圓/.test(name)) return true;
         if (/出發前往桃園機場/.test(name) && Number(item.amount) === 1200) return true;
         return false;
       }
@@ -4198,7 +4198,22 @@
             });
           }
 
-          // 時間軸 events
+          // 智慧去重時間軸 events (杜絕與當日預算欄位重複)
+          const hasFieldBreakfast = Boolean(dayObj.breakfastCost && Number(dayObj.breakfastCost) > 0);
+          const hasFieldLunch = Boolean(dayObj.lunchCost && Number(dayObj.lunchCost) > 0);
+          const hasFieldDinner = Boolean(dayObj.dinnerCost && Number(dayObj.dinnerCost) > 0);
+          const hasFieldTransport = Boolean(dayObj.transportCost && Number(dayObj.transportCost) > 0);
+          const hasFieldSpot = Boolean(dayObj.spotCost && Number(dayObj.spotCost) > 0);
+
+          function cleanKey(str) {
+            return String(str || '').replace(/[\s\W_]+/g, '').toLowerCase();
+          }
+          const normLunch = cleanKey(dayObj.lunch);
+          const normDinner = cleanKey(dayObj.dinner);
+          const normBreakfast = cleanKey(dayObj.breakfast);
+          const normSpot = cleanKey(dayObj.spotNote);
+          const normTransit = cleanKey(dayObj.transportNote);
+
           if (dayObj.events && dayObj.events.length > 0) {
             dayObj.events.forEach(ev => {
               const evTitle = ev.title || ev.name || ev.target || "";
@@ -4214,6 +4229,7 @@
                 let cat = "spot";
                 let sub = "ticket";
                 const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
+                const normTitle = cleanKey(evTitle);
 
                 if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n) || ev.type === "food") {
                   cat = "dining";
@@ -4224,6 +4240,31 @@
                 } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
                   cat = "other";
                   sub = "gift";
+                }
+
+                // 核心去重校驗：凡當日已有總額/專屬欄位設定者，活動卡片中重複項目自動排除
+                let isDuplicate = false;
+                if (cat === "dining") {
+                  if (hasFieldLunch && (sub === "lunch" || /午餐|午飯|中餐|lunch/.test(evTitle) || (normLunch && (normTitle.includes(normLunch) || normLunch.includes(normTitle) || /李子壩|梁山雞/.test(normTitle))))) {
+                    isDuplicate = true;
+                  } else if (hasFieldDinner && (sub === "dinner" || /晚餐|晚飯|夜市|dinner/.test(evTitle) || (normDinner && (normTitle.includes(normDinner) || normDinner.includes(normTitle) || /野果|yeego|yeguo|火鍋|烤魚/.test(normTitle))))) {
+                    isDuplicate = true;
+                  } else if (hasFieldBreakfast && (sub === "breakfast" || /早餐|早點|早飯|breakfast/.test(evTitle) || (normBreakfast && (normTitle.includes(normBreakfast) || normBreakfast.includes(normTitle))))) {
+                    isDuplicate = true;
+                  }
+                } else if (cat === "spot") {
+                  if (hasFieldSpot && (normSpot && (normTitle.includes(normSpot) || normSpot.includes(normTitle) || /羅漢寺|香花券|門票|天生三橋|博物館/.test(normTitle)))) {
+                    isDuplicate = true;
+                  }
+                } else if (cat === "transit") {
+                  if (hasFieldTransport && (normTransit && (normTitle.includes(normTransit) || normTransit.includes(normTitle) || /萬象城|李子壩|輕軌|地鐵|打車|包車/.test(normTitle)))) {
+                    isDuplicate = true;
+                  }
+                }
+
+                if (isDuplicate) {
+                  // 重複項目自動跳過，不重複計入
+                  return;
                 }
 
                 appState.dailyExpenses.push({

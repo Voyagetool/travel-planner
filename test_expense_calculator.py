@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.3
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.4
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.3" in html, "未同步升級版本號至 V3.3.3"
+    assert "V3.3.4" in html, "未同步升級版本號至 V3.3.4"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -91,6 +91,14 @@ def test_html_structure_and_features():
     assert "overflow: hidden" in html, "modal-window 未啟用 overflow: hidden 防護"
     assert ".modal-window form" in html, "缺少 modal-window form flex 排版限制"
     assert "flex-shrink: 0" in html, "modal-footer 缺少 flex-shrink: 0 置底固定"
+
+    
+    # 13. 驗證智慧去重邏輯與非主行程假資料徹底掃除
+    assert "hasFieldLunch" in html, "缺少午餐去重校驗"
+    assert "hasFieldDinner" in html, "缺少晚餐去重校驗"
+    assert "hasFieldBreakfast" in html, "缺少早餐去重校驗"
+    assert "cleanKey" in html, "缺少去重字串標準化函式"
+    assert "花市豌雜麵" in html and "isPresetOrOldSyncItem" in html, "缺少歷史假範本徹底掃除機制"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 
