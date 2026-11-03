@@ -5409,7 +5409,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.2.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.2.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7786,7 +7786,7 @@ const firebaseConfig = {
 
     <!-- MODAL: 新增 / 編輯 交通 -->
     <div class="modal-backdrop" id="editMajorTransportModal" onclick="handleBackdropClick(event, 'editMajorTransportModal')">
-        <div class="modal-dialog" style="max-width: 640px;" onclick="event.stopPropagation();">
+        <div class="modal-dialog" style="max-width: 680px;" onclick="event.stopPropagation();">
             <div class="modal-header">
                 <div class="modal-title" id="majorTransportModalTitle">🚐 新增交通</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editMajorTransportModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -7829,11 +7829,21 @@ const firebaseConfig = {
                         </div>
 
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label"><i class="fa-regular fa-clock" style="color:#1f5f78;"></i> 使用時間（出發時間 / 預計抵達）</label>
-                            <div class="mt-time-combo">
-                                <input type="time" id="majorTransTimeStart" class="form-input" value="08:30" title="出發 / 接送開始時間">
+                            <label class="form-label"><i class="fa-regular fa-clock" style="color:#1f5f78;"></i> 使用時間（24 小時制：出發 / 預計抵達）</label>
+                            <input type="hidden" id="majorTransTimeStart" value="08:30">
+                            <input type="hidden" id="majorTransTimeEnd" value="">
+                            <div class="sg-24h-row">
+                                <div class="sg-24h-unit" title="出發 / 接送開始時間（24小時制）">
+                                    <select id="mtStartHour" onchange="onMajorTrans24hTimeChange()"></select>
+                                    <span class="sg-24h-sep">:</span>
+                                    <select id="mtStartMin" onchange="onMajorTrans24hTimeChange()"></select>
+                                </div>
                                 <span style="color:#94a3b8; font-size:0.78rem; font-weight:700;">~</span>
-                                <input type="time" id="majorTransTimeEnd" class="form-input" title="預計抵達 / 結束時間（選填）">
+                                <div class="sg-24h-unit" title="預計抵達 / 結束時間（選填，24小時制）">
+                                    <select id="mtEndHour" onchange="onMajorTrans24hTimeChange()"></select>
+                                    <span class="sg-24h-sep">:</span>
+                                    <select id="mtEndMin" onchange="onMajorTrans24hTimeChange()"></select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -13882,10 +13892,87 @@ const firebaseConfig = {
             syncCurrencyBoxWithPlan();
         }
 
+        function ensureMajorTrans24hSelects() {
+            const fillHour = (id) => {
+                const sel = document.getElementById(id);
+                if (!sel || sel.dataset.populated === '1') return;
+                let html = '<option value="">-- 時</option>';
+                for (let h = 0; h < 24; h++) {
+                    const hh = String(h).padStart(2, '0');
+                    html += `<option value="${hh}">${hh} 時</option>`;
+                }
+                sel.innerHTML = html;
+                sel.dataset.populated = '1';
+            };
+            const fillMin = (id) => {
+                const sel = document.getElementById(id);
+                if (!sel || sel.dataset.populated === '1') return;
+                let html = '';
+                for (let m = 0; m < 60; m++) {
+                    const mm = String(m).padStart(2, '0');
+                    html += `<option value="${mm}">${mm} 分</option>`;
+                }
+                sel.innerHTML = html;
+                sel.dataset.populated = '1';
+            };
+            fillHour('mtStartHour');
+            fillMin('mtStartMin');
+            fillHour('mtEndHour');
+            fillMin('mtEndMin');
+        }
+
+        function setMajorTrans24hTime(prefix, timeStr, defaultHour = '', defaultMin = '00') {
+            ensureMajorTrans24hSelects();
+            const hSel = document.getElementById(prefix + 'Hour');
+            const mSel = document.getElementById(prefix + 'Min');
+            if (!hSel || !mSel) return;
+
+            let hh = defaultHour;
+            let mm = defaultMin;
+            if (timeStr && timeStr !== '-') {
+                const m = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})/);
+                if (m) {
+                    const hNum = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+                    const mNum = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+                    hh = String(hNum).padStart(2, '0');
+                    mm = String(mNum).padStart(2, '0');
+                }
+            }
+            hSel.value = hh;
+            mSel.value = mm;
+            mSel.disabled = (hh === '');
+            mSel.style.opacity = (hh === '') ? '0.45' : '1';
+            onMajorTrans24hTimeChange();
+        }
+
+        function getMajorTrans24hTime(prefix) {
+            const hSel = document.getElementById(prefix + 'Hour');
+            const mSel = document.getElementById(prefix + 'Min');
+            if (!hSel || !hSel.value) return '';
+            const mm = (mSel && mSel.value) ? mSel.value : '00';
+            return `${hSel.value}:${mm}`;
+        }
+
+        function onMajorTrans24hTimeChange() {
+            ['mtStart', 'mtEnd'].forEach(prefix => {
+                const hSel = document.getElementById(prefix + 'Hour');
+                const mSel = document.getElementById(prefix + 'Min');
+                if (hSel && mSel) {
+                    mSel.disabled = !hSel.value;
+                    mSel.style.opacity = hSel.value ? '1' : '0.45';
+                }
+            });
+            const sHid = document.getElementById('majorTransTimeStart');
+            const eHid = document.getElementById('majorTransTimeEnd');
+            if (sHid) sHid.value = getMajorTrans24hTime('mtStart');
+            if (eHid) eHid.value = getMajorTrans24hTime('mtEnd');
+        }
+
         function openEditMajorTransportModal(idx = -1) {
             const plan = getCurrentPlan();
             if (!plan) return;
             if (!Array.isArray(plan.majorTransports)) plan.majorTransports = [];
+            ensureMajorTrans24hSelects();
             const curr = getPlanCurrency(plan);
 
             const currSelect = document.getElementById('majorTransCurr');
@@ -13918,8 +14005,8 @@ const firebaseConfig = {
                     }
                 }
                 initMajorTransCalendar(it.useDate || it.date || '');
-                document.getElementById('majorTransTimeStart').value = initStartT;
-                document.getElementById('majorTransTimeEnd').value = initEndT;
+                setMajorTrans24hTime('mtStart', initStartT, '', '00');
+                setMajorTrans24hTime('mtEnd', initEndT, '', '00');
 
                 document.getElementById('majorTransTitle').value = it.title || '';
                 document.getElementById('majorTransDep').value = it.dep || '';
@@ -13940,8 +14027,8 @@ const firebaseConfig = {
                 document.getElementById('majorTransCategory').value = defaultCat;
                 onMajorTransCategoryChange();
                 initMajorTransCalendar('');
-                document.getElementById('majorTransTimeStart').value = '08:30';
-                document.getElementById('majorTransTimeEnd').value = '';
+                setMajorTrans24hTime('mtStart', '08:30', '08', '30');
+                setMajorTrans24hTime('mtEnd', '', '', '00');
                 document.getElementById('majorTransTitle').value = '';
                 document.getElementById('majorTransDep').value = '';
                 document.getElementById('majorTransArr').value = '';
@@ -13971,8 +14058,8 @@ const firebaseConfig = {
             const catMeta = MAJOR_TRANS_CATEGORIES[categoryVal] || MAJOR_TRANS_CATEGORIES.other;
 
             const useDateVal = (document.getElementById('majorTransDate').value || mtCalState.selectedDate || '').trim();
-            const useTimeVal = (document.getElementById('majorTransTimeStart')?.value || '').trim();
-            const useEndTimeVal = (document.getElementById('majorTransTimeEnd')?.value || '').trim();
+            const useTimeVal = (getMajorTrans24hTime('mtStart') || document.getElementById('majorTransTimeStart')?.value || '').trim();
+            const useEndTimeVal = (getMajorTrans24hTime('mtEnd') || document.getElementById('majorTransTimeEnd')?.value || '').trim();
             const rawTitleVal = document.getElementById('majorTransTitle').value.trim();
             const finalTitle = rawTitleVal || catMeta.label;
             const syncToSchedule = document.getElementById('majorTransSyncSchedule')?.checked ?? true;
