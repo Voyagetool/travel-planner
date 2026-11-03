@@ -128,3 +128,10 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 V3.3.1（index.html、	ravel_planner.html、lank.html、share.html 及 expenses.html）
   - [x] 擴充單元測試腳本 	est_expense_calculator.py 並 100% 驗證通過
 
+- [x] **階段十四：修復重新整理後右側行程列表空白崩潰問題 (升級 V3.3.2)**
+  - [x] 問題根因診斷：在先前針對大項交通與住宿原幣呈現強化時，字串替換範圍導致 `renderAccommodationsList()` 中誤用了未宣告變數（`item.currency`、`totalActualRaw`、`totalBudgetRaw`），執行期拋出 `ReferenceError: item is not defined`，導致整個右側主視圖容器（`renderMainView`）中斷渲染而全白。
+  - [x] 函式嚴密隔離修復：
+    - `renderMajorItemsList`：嚴格綁定 `item` 物件及 `totalActualRaw`/`totalBudgetRaw`，正確呈現大項交通各項原幣實付與人均。
+    - `renderAccommodationsList`：嚴格綁定 `acc` 物件及 `aRaw`/`bRaw`，正確呈現住宿專案原幣實付與人均。
+  - [x] 單元測試強化防護：在 `test_expense_calculator.py` 新增第 11 項「大項交通與住宿渲染函式變數獨立性」自動化斷言，徹底杜絕此類未宣告變數導致畫面空白的缺陷。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.2`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）。

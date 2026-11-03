@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.1
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.2
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.1" in html, "未同步升級版本號至 V3.3.1"
+    assert "V3.3.2" in html, "未同步升級版本號至 V3.3.2"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -71,6 +71,19 @@ def test_html_structure_and_features():
     assert "lodgingCheckInInput" in html, "缺少入住日期欄位"
     assert "lodgingCheckOutInput" in html, "缺少退房日期欄位"
     assert "onLodgingDateChanged" in html, "缺少住宿日期連動計算函式"
+
+    
+    # 11. 驗證大項交通與住宿渲染函式變數獨立性，杜絕 ReferenceError 與畫面空白
+    idx_m_start = html.find("function renderMajorItemsList()")
+    idx_m_end = html.find("function renderAccommodationsList()", idx_m_start)
+    idx_a_end = html.find("function renderAllDaysSections()", idx_m_end)
+    major_func = html[idx_m_start:idx_m_end]
+    acc_func = html[idx_m_end:idx_a_end]
+
+    assert "acc." not in major_func, "renderMajorItemsList 不得含有 acc.* 變數"
+    assert "item." not in acc_func, "renderAccommodationsList 不得含有 item.* 變數"
+    assert "totalActualRaw" not in acc_func, "renderAccommodationsList 不得含有 totalActualRaw"
+    assert "totalBudgetRaw" not in acc_func, "renderAccommodationsList 不得含有 totalBudgetRaw"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

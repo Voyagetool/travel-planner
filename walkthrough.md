@@ -222,3 +222,22 @@ enderMajorItemsList 卡片呈現：卡片右側同時呈現換算後的記帳幣
 ### 3. 版本號全站升級至 V3.3.1
 - 依據專案規範，本次涉及 expenses.html 的局部功能與排版更新，全站版本號同步升級為 **V3.3.1**（index.html、	ravel_planner.html、lank.html、share.html 及 expenses.html）。
 
+
+---
+
+## 🛠️ 修復重新整理後右側行程列表空白崩潰問題 (升級 V3.3.2)
+
+### 1. 重新整理後右側內容空白之根本原因分析
+- **錯誤現象**：重新整理頁面後，頂部導航列與左側總覽儀表板正常顯示，但右側「全部行程」的主內容視圖（含全旅程總覽、大項交通、住宿專案與各天清單）完全呈現空白。
+- **排查結果**：
+  在 `renderMainView()` 渲染全部行程視圖時，依序呼叫了 `${renderMajorItemsList()}` 與 `${renderAccommodationsList()}`。
+  在先前的修改中，因為替換區塊重疊，導致 `renderAccommodationsList()` 內部誤引用了屬於大項交通的變數 `item`、`totalActualRaw` 與 `totalBudgetRaw`。在執行到住宿專案渲染時，瀏覽器拋出 `Uncaught ReferenceError: item is not defined`，造成 JavaScript 執行序中斷，使得主視圖容器未能順利寫入 HTML。
+
+### 2. 修復與防護機制
+1. **變數作用域嚴密隔離**：
+   - `renderMajorItemsList`：嚴格綁定 `item`、`totalActualRaw` 與 `totalBudgetRaw`。
+   - `renderAccommodationsList`：嚴格綁定 `acc`、`aRaw` 與 `bRaw`，換算標註正確顯示 `acc.currency !== targetCur ? (實付 ${formatCurrency(aRaw)} ${acc.currency}) : ''`。
+2. **自動化回歸測試防護**：
+   - 在 `test_expense_calculator.py` 加入函式變數作用域檢查，自動掃描並禁止渲染函式間 cross-variable 引用，杜絕未來再次發生類似中斷畫面空白問題。
+3. **版本號全站升級至 V3.3.2**：
+   - 依據進版規範，同步升級 `index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html` 為 `V3.3.2`。
