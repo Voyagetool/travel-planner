@@ -129,3 +129,45 @@
 ## 🔗 頁面連結
 - 極簡支出計算中心：[expenses.html](expenses.html)
 - 主行程規劃中心：[index.html](index.html)
+
+
+---
+
+## 💱 幣別選單完整顯示與彈窗自適應排版優化 (升級 V3.2.1)
+
+針對使用者回饋之彈窗排版問題（截圖一）：
+1. **幣別選單文字完整展現**：
+   - 修正前：`.input-addon-group .select-field` 寬度僅 90px，下拉選項「TWD (新台幣)」被裁切為「TWD (新」。
+   - 修正後：將選單寬度擴展至 `135px`（`min-width: 130px`），內距優化為 `padding: 0 24px 0 10px`，字體 `13px; font-weight: 600;`，無論是「TWD (新台幣)」、「JPY (日圓)」、「CNY (人民幣)」、「USD (美元)」字樣皆 100% 完整無裁切露出。
+2. **彈窗方框自適應舒適排版**：
+   - 將 `.modal-window` 最大寬度由 `540px` 擴展至 `620px`，雙欄表單在寬度 620px 下每個欄位約 280px，各輸入框與下拉選單具有充裕排版空間。
+   - 優化費用卡塊（`.budget-actual-input-card`）排版，新增標準「收支差額狀態」卡片，與「計費分攤對象」高度和水平完全對齊，提升整體視覺質感。
+
+---
+
+## 🏨 住宿地點與日期範圍全方位完整串接 (截圖二)
+
+針對使用者回饋在主手帳中有記錄住宿地點與日期，但在支出計算機中未顯示之問題（截圖二）：
+1. **主手帳飯店資料完整擷取與鏡像**：
+   - 升級 `processPlanSync(plan)` 同步邏輯，全面擷取主手帳中記錄之：
+     - `h.city`：城市與商圈（如 `重慶 ‧ 解放碑商圈`、`東京 ‧ 新宿`）
+     - `h.addr`：詳細地址（如 `重慶市渝中區青年路77號`）
+     - `h.checkIn` / `h.checkOut`：入住與退房具體日期
+     - `h.nights`：入住晚數
+     - `h.stayLabel`：住宿標籤（如 `前 4 晚 (10/23 - 10/27)`）
+     - `h.notes`：房型與早餐說明
+   - 依據主手帳之 `startDate` 與 `checkIn` 自動精準計算 `startDay` 與 `endDay`。
+2. **每日紫色住宿橫幅 (`renderDayLodgingBanner`) 結構化呈現**：
+   - **第一行**：🏨 飯店名稱（加粗）＋ 📍 地點商圈與地址標籤（如 `📍 重慶 ‧ 解放碑商圈 ‧ 青年路77號`）
+   - **第二行**：
+     - 📅 入住日期區間：如 `📅 2026-10-23 ~ 2026-10-27 (Day 1 ~ Day 4，共 4 晚)`
+     - 💰 該日攤提：如 `💰 該日攤提：約 1,650 CNY`
+     - 📝 房型與備註：如 `高樓層江景房，含雙人自助早餐`
+   - 右側保留「編輯住宿」按鈕，方便即時微調。
+3. **大項專案列表 (`renderLodgingSection`) 同步呈現**：
+   - 卡片標題行加入地點膠囊標籤，說明行顯示入住退房日期區間與房型備註。
+4. **彈窗支援住宿地點與日期編輯**：
+   - 支出彈窗的住宿配置區塊（`#lodgingSpecificFields`）新增「住宿城市/商圈 (`lodgingCityInput`)」、「詳細地址/位置說明 (`lodgingAddrInput`)」、「入住日期 (`lodgingCheckInInput`)」與「退房日期 (`lodgingCheckOutInput`)」互動欄位。
+   - 選擇日期時自動連動計算晚數（`onLodgingDateChanged`），支援儲存與回填。
+5. **版本號全站升級至 V3.2.1**：
+   - 依據專案進版規範，同步更新 `index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html` 的 `.okr-version-tag` 為 `V3.2.1`。

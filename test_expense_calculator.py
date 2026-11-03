@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步與主行程連動)
+旅遊支出計算中心單元測試與驗證腳本 (包含 Firebase 雲端同步、主行程連動、住宿串接與彈窗 UI)
 使用 uv run python 執行
 """
 import sys
@@ -48,15 +48,30 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 與版本號 V3.2.0
+    # 7. 驗證多計畫切換 (Plan Switcher) 與版本號 V3.2.1
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
-    assert "V3.2.0" in html, "未同步升級版本號至 V3.2.0"
+    assert "V3.2.1" in html, "未同步升級版本號至 V3.2.1"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
         assert cat_name in html, f"缺少 6 大標準分類: {cat_name}"
 
-    print("[PASS] [1/2] 雲端即時同步、主行程連動、預算實付對比、交通編輯與 6 大分類模式檢查通過！")
+    # 9. 驗證幣別選單寬度與彈窗尺寸優化
+    assert "max-width: 620px" in html, "彈窗最大寬度未擴展至 620px"
+    assert "width: 135px" in html or "min-width: 130px" in html, "幣別選單未擴展寬度"
+    assert "TWD (新台幣)" in html, "缺少完整台幣文字"
+    assert "JPY (日圓)" in html, "缺少完整日圓文字"
+
+    # 10. 驗證住宿地點與日期完整串接欄位與渲染
+    assert "lodgingCityInput" in html, "缺少住宿城市商圈輸入欄位"
+    assert "lodgingAddrInput" in html, "缺少住宿詳細地址輸入欄位"
+    assert "lodgingCheckInInput" in html, "缺少入住日期欄位"
+    assert "lodgingCheckOutInput" in html, "缺少退房日期欄位"
+    assert "onLodgingDateChanged" in html, "缺少住宿日期連動計算函式"
+    assert "lodging-loc-tag" in html, "缺少住宿地點標籤 CSS"
+    assert "lodging-desc-pill" in html, "缺少住宿日期與攤提標籤 CSS"
+
+    print("[PASS] [1/2] 雲端同步、多行程隔離、彈窗尺寸/幣別選單、住宿地點/日期串接與 6 大分類模式檢查通過！")
 
 
 def test_calculation_logic():

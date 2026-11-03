@@ -975,9 +975,9 @@
     /* 住宿卡片 */
     .lodging-card-banner {
       background: var(--cat-lodging-bg);
-      border: 1px solid rgba(124, 58, 237, 0.15);
+      border: 1px solid rgba(124, 58, 237, 0.2);
       border-radius: var(--radius-md);
-      padding: 16px 20px;
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -986,18 +986,53 @@
     }
 
     .lodging-banner-title {
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 14.5px;
+      font-weight: 800;
       color: var(--cat-lodging);
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
+    }
+
+    .lodging-loc-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6d28d9;
+      background: rgba(124, 58, 237, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
     }
 
     .lodging-banner-desc {
       font-size: 12px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+    }
+
+    .lodging-desc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .lodging-desc-note {
+      color: var(--text-muted);
+      font-size: 11.5px;
+      background: #ffffff;
+      padding: 1px 7px;
+      border-radius: 4px;
+      border: 1px dashed rgba(124, 58, 237, 0.3);
     }
 
     /* 手機底部快捷浮動條 */
@@ -1068,7 +1103,7 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       width: 100%;
-      max-width: 540px;
+      max-width: 620px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -1166,11 +1201,16 @@
       flex: 1;
     }
     .input-addon-group .select-field {
-      width: 90px;
+      width: 135px;
+      min-width: 130px;
       border-left: none;
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
       background: var(--bg-subtle);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 24px 0 10px;
+      cursor: pointer;
     }
 
     .pill-selector {
@@ -1340,7 +1380,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.2.0</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.2.1</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -1692,7 +1732,8 @@
               </div>
 
               <div class="form-group" style="justify-content: flex-end;">
-                <div id="modalCostDiffHint" style="font-size: 11px; color: var(--text-muted); padding-bottom: 8px;">
+                <label class="form-label">收支差額狀態</label>
+                <div id="modalCostDiffHint" style="font-size: 12px; font-weight: 600; color: var(--text-muted); padding: 9px 12px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-sm); text-align: center; min-height: 38px; display: flex; align-items: center; justify-content: center;">
                   差額：符合預算 (0)
                 </div>
               </div>
@@ -3211,6 +3252,10 @@
       } else if (typeof currentSelectedDay === "number") {
         document.getElementById("itemDaySelect").value = currentSelectedDay;
       }
+      if (document.getElementById("lodgingCityInput")) document.getElementById("lodgingCityInput").value = "";
+      if (document.getElementById("lodgingAddrInput")) document.getElementById("lodgingAddrInput").value = "";
+      if (document.getElementById("lodgingCheckInInput")) document.getElementById("lodgingCheckInInput").value = "";
+      if (document.getElementById("lodgingCheckOutInput")) document.getElementById("lodgingCheckOutInput").value = "";
 
       document.getElementById("categorySelectGroup").style.display = "flex";
       const catRadios = document.getElementsByName("modalCategory");
@@ -3335,6 +3380,22 @@
       }
     }
 
+    function onLodgingDateChanged() {
+      const inVal = document.getElementById("lodgingCheckInInput")?.value;
+      const outVal = document.getElementById("lodgingCheckOutInput")?.value;
+      if (inVal && outVal) {
+        const dIn = new Date(inVal);
+        const dOut = new Date(outVal);
+        const diffDays = Math.round((dOut - dIn) / (1000 * 60 * 60 * 24));
+        if (diffDays > 0) {
+          const hint = document.getElementById("lodgingCalcHint");
+          if (hint) {
+            hint.textContent = `📅 ${inVal} 至 ${outVal}，共計 ${diffDays} 晚`;
+          }
+        }
+      }
+    }
+
     function onLodgingModeChanged(mode) {
       const rangeRow = document.getElementById("lodgingRangeRow");
       if (mode === "trip") {
@@ -3420,6 +3481,10 @@
         const startDay = Number(document.getElementById("lodgingStartDay").value) || 1;
         const endDay = Number(document.getElementById("lodgingEndDay").value) || startDay;
         const nights = mode === "range" ? Math.max(1, endDay - startDay + 1) : 1;
+        const city = (document.getElementById("lodgingCityInput")?.value || "").trim();
+        const addr = (document.getElementById("lodgingAddrInput")?.value || "").trim();
+        const checkIn = (document.getElementById("lodgingCheckInInput")?.value || "").trim();
+        const checkOut = (document.getElementById("lodgingCheckOutInput")?.value || "").trim();
 
         const newLodging = {
           id: editId || ("acc_" + Date.now()),
@@ -3435,6 +3500,11 @@
           isPaid,
           currency,
           roomCount: 1,
+          city,
+          addr,
+          checkIn,
+          checkOut,
+          notes: note,
           note
         };
 
@@ -3604,6 +3674,10 @@
       if (acc.startDay) document.getElementById("lodgingStartDay").value = acc.startDay;
       if (acc.endDay) document.getElementById("lodgingEndDay").value = acc.endDay;
       if (acc.pricingType) document.getElementById("lodgingPricingMode").value = acc.pricingType;
+      if (document.getElementById("lodgingCityInput")) document.getElementById("lodgingCityInput").value = acc.city || "";
+      if (document.getElementById("lodgingAddrInput")) document.getElementById("lodgingAddrInput").value = acc.addr || "";
+      if (document.getElementById("lodgingCheckInInput")) document.getElementById("lodgingCheckInInput").value = acc.checkIn || "";
+      if (document.getElementById("lodgingCheckOutInput")) document.getElementById("lodgingCheckOutInput").value = acc.checkOut || "";
       updateLodgingNights();
       updateModalCostDiff();
     }
@@ -3808,21 +3882,55 @@
         }
       }
 
-      // 2. 同步住宿 (市區精選酒店 / 解放碑 Moxy 等)
+      // 2. 同步住宿 (市區精選酒店 / 解放碑 Moxy 等，完整串接地點與日期)
       if (plan.hotels && plan.hotels.length > 0) {
+        let currentDayOffset = 1;
         plan.hotels.forEach((h, idx) => {
           const nights = Number(h.nights) || Math.max(1, daysCount - 1);
-          const cost = Number(h.costTotal || h.costPerNight || h.cost || 0);
+          const cost = Number(h.costTotal || h.costPerNight || h.cost || h.price || 0);
           const pricingType = h.costTotal ? "total_stay" : "per_night";
           const defAmount = tripCurrency === 'JPY' ? 12000 : 800;
+
+          // 計算入住天數區間 (startDay ~ endDay)
+          let startDay = currentDayOffset;
+          let endDay = Math.min(daysCount, currentDayOffset + nights - 1);
+
+          // 嘗試由主行程 startDate 與 checkIn 計算精準天數
+          if (plan.startDate && h.checkIn) {
+            try {
+              const pStart = new Date(plan.startDate);
+              const hIn = new Date(h.checkIn);
+              const diffDays = Math.round((hIn - pStart) / (1000 * 60 * 60 * 24));
+              if (!isNaN(diffDays) && diffDays >= 0) {
+                startDay = diffDays + 1;
+                endDay = Math.min(daysCount, startDay + nights - 1);
+              }
+            } catch (e) {
+              console.warn("計算飯店天數錯誤", e);
+            }
+          } else if (h.stayLabel) {
+            const dayMatch = h.stayLabel.match(/Day\s*(\d+)\s*[-~至]\s*Day\s*(\d+)/i);
+            if (dayMatch) {
+              startDay = Number(dayMatch[1]);
+              endDay = Number(dayMatch[2]);
+            }
+          }
+          currentDayOffset = endDay + 1;
 
           appState.accommodations.push({
             id: "acc_sync_" + idx,
             name: h.name || "精選住宿飯店",
+            city: h.city || "",
+            addr: h.addr || "",
+            checkIn: h.checkIn || "",
+            checkOut: h.checkOut || "",
+            stayLabel: h.stayLabel || "",
+            phone: h.phone || "",
+            notes: h.notes || h.note || "",
             mode: nights > 1 ? "range" : "daily",
-            startDay: idx === 0 ? 1 : 4,
-            endDay: idx === 0 ? nights : Math.min(daysCount, 4 + nights - 1),
-            day: idx === 0 ? 1 : 4,
+            startDay: startDay,
+            endDay: endDay,
+            day: startDay,
             nights: nights,
             pricingType: pricingType,
             amount: cost > 0 ? cost : defAmount,
@@ -3830,7 +3938,7 @@
             isPaid: true,
             currency: h.currency || tripCurrency,
             roomCount: Number(h.roomCount) || 1,
-            note: h.stayLabel || h.city || "主行程設定飯店",
+            note: h.notes || h.stayLabel || h.city || "主行程設定飯店",
             isSynced: true
           });
         });

@@ -87,3 +87,18 @@
   - [x] 實作開啟自動智慧連動 (Auto-Sync on Load)：打開支出中心自動同步最新行程設定（6天/2人/日圓0.2071/長榮航空BR192/市區精選酒店/各天預算）
   - [x] 實作乾淨鏡像同步機制：同步時先清除舊連動項目，徹底解決金額重疊累加與主手帳設定不一致的問題
   - [x] 通過單元測試全項驗證
+
+- [x] **階段十一：優化幣別選單完整顯示、彈窗自適應排版與住宿地點/日期完整串接 (升級 V3.2.1)**
+  - [x] 幣別選單與彈窗尺寸/字體優化：
+    - 將 `.modal-window` 最大寬度由 `540px` 擴展至 `620px`，雙欄表單在寬度 620px 下每個欄位約 280px，空間寬敞舒適
+    - 將 `.input-addon-group .select-field` 寬度由 `90px` 擴展至 `135px`（`min-width: 130px`），內距優化為 `padding: 0 24px 0 10px`
+    - 徹底解決「TWD (新台幣)」、「JPY (日圓)」、「CNY (人民幣)」、「USD (美元)」字體被截斷為「TWD (新」的問題
+    - 表單「收支差額狀態」對齊美化，形成美觀對稱卡片
+  - [x] 住宿地點與日期範圍完整串接：
+    - 在支出彈窗的住宿配置區塊（`#lodgingSpecificFields`）新增「住宿城市/商圈 (`lodgingCityInput`)」、「詳細地址/位置說明 (`lodgingAddrInput`)」、「入住日期 (`lodgingCheckInInput`)」與「退房日期 (`lodgingCheckOutInput`)」互動欄位
+    - 支援日期連動推算（`onLodgingDateChanged`），自動計算晚數並提示具體日期範圍
+    - 升級主行程同步邏輯（`processPlanSync`）：完整串接主手帳中的飯店地點商圈（`city`）、詳細地址（`addr`）、入住日期（`checkIn`）、退房日期（`checkOut`）、天數標籤（`stayLabel`）與房型備註（`notes`）
+    - 升級每日紫色住宿橫幅（`renderDayLodgingBanner`）：結構化呈現 🏨 飯店名稱、📍 地點商圈與地址標籤、📅 入住退房日期範圍與晚數、💰 該日攤提與房型備註
+    - 升級大項專案列表（`renderLodgingSection`）住宿卡片同步展示地點與日期
+  - [x] 依 GEMINI.md 進版規範同步更新版本號至 `V3.2.1`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）
+  - [x] 擴充單元測試腳本 `test_expense_calculator.py` 並 100% 驗證通過
