@@ -5491,7 +5491,72 @@
                 font-size: 0.74rem !important;
             }
         }
-    </style>
+    
+        /* V3.3.8 自訂費用分類 Popover 浮層選單 (徹底解決原生 select 閃退消失與樣式割裂問題) */
+        .actual-cat-picker-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 5px;
+            cursor: pointer;
+            height: 28px;
+            line-height: 1.2;
+            flex-shrink: 0;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+            user-select: none;
+            border: 1px solid;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+        .actual-cat-picker-btn:hover {
+            filter: brightness(0.96);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .actual-cat-picker-menu {
+            position: fixed;
+            z-index: 100000;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.16), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+            padding: 5px;
+            min-width: 240px;
+            max-width: 290px;
+            display: none;
+            animation: catMenuFadeIn 0.12s ease-out;
+            font-family: inherit;
+        }
+        @keyframes catMenuFadeIn {
+            from { opacity: 0; transform: translateY(-3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .actual-cat-picker-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            transition: background 0.12s ease;
+            user-select: none;
+        }
+        .actual-cat-picker-item:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .actual-cat-picker-item.active {
+            font-weight: 800;
+            background: #f8fafc;
+        }
+</style>
 </head>
 <body>
 
@@ -8653,7 +8718,17 @@ const firebaseConfig = {
 
                         appState = data.appState;
                         saveState(true); // 備份至本機 localStorage，但不重複推播雲端
-                        renderAll();
+
+                        // 防護：若使用者此時正打開分類選單或正在輸入中，保護當前畫面不被粗暴重刷抹除
+                        const pickerMenu = document.getElementById('expenseCategoryDropdownPopover');
+                        const isPickerOpen = pickerMenu && pickerMenu.style.display === 'block';
+                        const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA');
+
+                        if (!isPickerOpen && !isTyping) {
+                            renderAll();
+                        } else {
+                            console.log('使用者正處於操作中，已平滑保存雲端資料並保護當前互動視窗不閃退');
+                        }
                         isReceivingCloudUpdate = false;
 
                         const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -12616,6 +12691,97 @@ const firebaseConfig = {
             return 'other';
         }
 
+        
+        // ==========================================
+        // V3.3.8 全域分類選擇浮層管理 (絕不閃退、位置不跳動、流暢穩定)
+        // ==========================================
+        let _activeCatPickerContext = null;
+
+        function toggleExpenseCategoryMenu(btnEl, dayNum, catKey, idx, isMeal = false) {
+            let menuEl = document.getElementById('expenseCategoryDropdownPopover');
+            if (!menuEl) {
+                menuEl = document.createElement('div');
+                menuEl.id = 'expenseCategoryDropdownPopover';
+                menuEl.className = 'actual-cat-picker-menu';
+                document.body.appendChild(menuEl);
+
+                document.addEventListener('pointerdown', (e) => {
+                    const m = document.getElementById('expenseCategoryDropdownPopover');
+                    if (m && m.style.display === 'block') {
+                        if (!m.contains(e.target) && !e.target.closest('.actual-cat-picker-btn')) {
+                            m.style.display = 'none';
+                            _activeCatPickerContext = null;
+                        }
+                    }
+                });
+            }
+
+            if (menuEl.style.display === 'block' && _activeCatPickerContext && _activeCatPickerContext.btn === btnEl) {
+                menuEl.style.display = 'none';
+                _activeCatPickerContext = null;
+                return;
+            }
+
+            _activeCatPickerContext = { btn: btnEl, dayNum, catKey, idx, isMeal };
+
+            let currentKey = 'other';
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (day) {
+                if (isMeal) {
+                    currentKey = day[catKey + 'Category'] || 'dining';
+                } else {
+                    const list = day[catKey];
+                    const item = Array.isArray(list) ? list[idx] : null;
+                    currentKey = getActualExpenseItemCatKey(item, catKey);
+                }
+            }
+
+            const keys = ['transit', 'hotel', 'activity', 'spot', 'dining', 'shopping', 'other'];
+            menuEl.innerHTML = keys.map(k => {
+                const cfg = EXPENSE_ITEM_CATEGORIES[k];
+                const isActive = (currentKey === k);
+                return `
+                    <div class="actual-cat-picker-item ${isActive ? 'active' : ''}" style="${isActive ? `color:${cfg.color};` : ''}" onclick="selectExpenseCategoryOption('${k}')">
+                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                            <span>${cfg.icon}</span>
+                            <span>${cfg.label}</span>
+                        </span>
+                        ${isActive ? `<span style="font-size:0.75rem; color:${cfg.color}; font-weight:800;">✓</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            const rect = btnEl.getBoundingClientRect();
+            menuEl.style.display = 'block';
+            let top = rect.bottom + 4;
+            let left = rect.left;
+
+            if (top + menuEl.offsetHeight > window.innerHeight - 10) {
+                top = Math.max(10, rect.top - menuEl.offsetHeight - 4);
+            }
+            if (left + menuEl.offsetWidth > window.innerWidth - 10) {
+                left = Math.max(10, window.innerWidth - menuEl.offsetWidth - 10);
+            }
+
+            menuEl.style.top = top + 'px';
+            menuEl.style.left = left + 'px';
+        }
+
+        function selectExpenseCategoryOption(newKey) {
+            const ctx = _activeCatPickerContext;
+            const menuEl = document.getElementById('expenseCategoryDropdownPopover');
+            if (menuEl) menuEl.style.display = 'none';
+            if (!ctx) return;
+
+            if (ctx.isMeal) {
+                updateActualDayMealField(ctx.dayNum, ctx.catKey, 'category', newKey);
+            } else {
+                changeActualDayItemCategory(ctx.dayNum, ctx.catKey, ctx.idx, newKey);
+            }
+            _activeCatPickerContext = null;
+        }
+
         function renderActualExpensesView() {
             const container = document.getElementById('actualExpensesContainer');
             const plan = getCurrentPlan();
@@ -12677,18 +12843,13 @@ const firebaseConfig = {
                     <tr style="border-bottom:1px solid #f1f5f9; background:#ffffff;">
                         <td style="padding:8px 10px;">
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <select class="form-input actual-cat-select" 
-                                        style="padding:2px 6px; font-size:0.75rem; font-weight:700; color:${catCfg.color}; background:${catCfg.bg}; border:1px solid ${catCfg.border}; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0; max-width:210px;" 
-                                        onchange="changeActualDayItemCategory(${d.dayNum}, '${catKey}', ${idx}, this.value)"
+                                <button type="button" class="actual-cat-picker-btn" 
+                                        style="color:${catCfg.color}; background:${catCfg.bg}; border-color:${catCfg.border};"
+                                        onclick="toggleExpenseCategoryMenu(this, ${d.dayNum}, '${catKey}', ${idx}, false)"
                                         title="點擊切換費用分類 (7大標準分類)">
-                                    <option value="transit" ${activeCatKey === 'transit' ? 'selected' : ''}>🚕 1. 交通 (Transportation)</option>
-                                    <option value="hotel" ${activeCatKey === 'hotel' ? 'selected' : ''}>🏨 2. 住宿 (Accommodation)</option>
-                                    <option value="activity" ${activeCatKey === 'activity' ? 'selected' : ''}>🏄 3. 行程與體驗 (Activities)</option>
-                                    <option value="spot" ${activeCatKey === 'spot' ? 'selected' : ''}>🎫 4. 景點與門票 (Sightseeing)</option>
-                                    <option value="dining" ${activeCatKey === 'dining' ? 'selected' : ''}>🍽️ 5. 飲食餐飲 (Food & Dining)</option>
-                                    <option value="shopping" ${activeCatKey === 'shopping' ? 'selected' : ''}>🛍️ 6. 購物與紀念品 (Shopping)</option>
-                                    <option value="other" ${activeCatKey === 'other' ? 'selected' : ''}>💼 7. 雜支與行前準備 (Others/Prep)</option>
-                                </select>
+                                    <span>${catCfg.icon} ${catCfg.label}</span>
+                                    <i class="fa-solid fa-chevron-down" style="font-size:0.65rem; opacity:0.65;"></i>
+                                </button>
                                 <input type="text" class="form-input" style="flex:1; min-width:130px; padding:4px 8px; font-size:0.84rem; font-weight:700; color:#1e293b;" 
                                        value="${escapeHtml(item.title || '')}" 
                                        placeholder="輸入項目名稱 (如：滴滴打車/門票/茶百道)..." 
@@ -12828,18 +12989,13 @@ const firebaseConfig = {
                         <tr style="border-bottom:1px solid #fef3c7; background:#fffdf7;">
                             <td style="padding:8px 10px;">
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <select class="form-input actual-cat-select" 
-                                            style="padding:2px 6px; font-size:0.75rem; font-weight:800; color:#c2410c; background:#fff7ed; border:1px solid #fed7aa; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0; max-width:210px;" 
-                                            onchange="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'category', this.value)"
+                                    <button type="button" class="actual-cat-picker-btn" 
+                                            style="color:#c2410c; background:#fff7ed; border-color:#fed7aa;"
+                                            onclick="toggleExpenseCategoryMenu(this, ${d.dayNum}, '${slot.key}', ${sIdx}, true)"
                                             title="點擊切換餐食分類 (7大標準分類)">
-                                        <option value="dining" selected>🍽️ 5. 飲食餐飲 (${slot.label})</option>
-                                        <option value="transit">🚕 1. 交通 (Transportation)</option>
-                                        <option value="hotel">🏨 2. 住宿 (Accommodation)</option>
-                                        <option value="activity">🏄 3. 行程與體驗 (Activities)</option>
-                                        <option value="spot">🎫 4. 景點與門票 (Sightseeing)</option>
-                                        <option value="shopping">🛍️ 6. 購物與紀念品 (Shopping)</option>
-                                        <option value="other">💼 7. 雜支與行前準備 (Others/Prep)</option>
-                                    </select>
+                                        <span>🍽️ 飲食餐飲 (${slot.label})</span>
+                                        <i class="fa-solid fa-chevron-down" style="font-size:0.65rem; opacity:0.65;"></i>
+                                    </button>
                                     <input type="text" class="form-input" style="flex:1; min-width:130px; padding:4px 8px; font-size:0.84rem; color:#1e293b; background:#ffffff;" 
                                            value="${escapeHtml(d[slot.titleProp] || '')}" 
                                            placeholder="輸入${slot.label}安排 (如：重慶小麵 / 茶顏悅色 / 自理)..." 
@@ -13477,7 +13633,7 @@ const firebaseConfig = {
             showToast('success', `已在 Day ${dayNum} 新增一筆花費項目，最前面可自由下拉選取分類！`);
         }
 
-        // 即時切換並更新單日花費項目的分類 (7 大標準分類：交通/住宿/行程與體驗/景點與門票/飲食餐飲/購物與紀念品/雜支與行前準備)
+        // 即時切換並更新單日花費項目的分類 (平滑保持滾動高度，防止畫面跳動與消失)
         function changeActualDayItemCategory(dayNum, fromCatKey, idx, newCatKey) {
             const plan = getCurrentPlan();
             if (!plan) return;
@@ -13509,10 +13665,15 @@ const firebaseConfig = {
             const catCfg = (typeof EXPENSE_ITEM_CATEGORIES !== 'undefined' && EXPENSE_ITEM_CATEGORIES[newCatKey]) || { label: '新分類', icon: '' };
             syncDayBudgetFromCategories(day, plan);
             saveState();
+
+            // 鎖定滾動位置，防止重新渲染後視窗跳動
+            const currentScrollY = window.scrollY;
             renderActualExpensesView();
             renderBudgetView();
             renderBudgetWidget();
             renderTimelineView();
+            window.scrollTo({ top: currentScrollY, behavior: 'instant' });
+
             showToast('success', `已將「${item.title || '費用項目'}」分類更新為【${catCfg.icon || ''} ${catCfg.label}】！`);
         }
 
