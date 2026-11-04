@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.4</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.5</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -4101,189 +4101,274 @@
         });
       }
 
-      // 3. 逐天精確同步三餐、交通與景點 (東京 Day 1 早餐500、午餐1200、晚餐2500、交通600)
+      // 3. 關鍵升級：以主行程【預算與實際費用頁面 (Actual Expenses & Budget)】為最主要依據！
+      // 深度串接餐食 (早/午/晚/點心)、交通 (d.transports)、景點門票 (d.spots)、其他雜支 (d.extraCosts) 之預算與實付
       if (plan.days && plan.days.length > 0) {
         plan.days.forEach((dayObj, dayIdx) => {
-          const dayNum = dayIdx + 1;
+          const dayNum = Number(dayObj.dayNum) || (dayIdx + 1);
 
-          // 早餐
-          if (dayObj.breakfastCost && Number(dayObj.breakfastCost) > 0) {
-            appState.dailyExpenses.push({
-              id: `d_sync_field_${dayNum}_dining_breakfast`,
-              day: dayNum,
-              category: "dining",
-              subType: "breakfast",
-              name: dayObj.breakfast || "早餐安排",
-              amount: Number(dayObj.breakfastCost),
-              actualAmount: Number(dayObj.breakfastCost),
-              isPaid: true,
-              currency: tripCurrency,
-              pricingType: "total",
-              note: "主行程早餐預算",
-              isSynced: true
+          // 輔助函式：標準化幣別與分攤模式
+          function resolveCurr(c) {
+            if (c === "TWD") return "TWD";
+            if (c === "LOCAL" || !c) return tripCurrency;
+            return c;
+          }
+          function resolvePricing(mode, defaultSingle = false) {
+            if (mode === "single" || (defaultSingle && mode !== "group")) return "per_person";
+            return "total";
+          }
+
+          // A. 四大餐食 (早餐、午餐、晚餐、點心飲料) 預算 vs 實際支出
+          const MEAL_CONFIGS = [
+            {
+              slot: "breakfast",
+              label: "早餐",
+              title: dayObj.breakfast,
+              cost: Number(dayObj.breakfastCost || 0),
+              actCost: dayObj.actualBreakfastCost,
+              curr: dayObj.breakfastCurr,
+              mode: dayObj.breakfastMode,
+              paid: dayObj.breakfastPaid,
+              note: dayObj.breakfastReceiptNote || "主行程預算與實際費用 (早餐)"
+            },
+            {
+              slot: "lunch",
+              label: "午餐",
+              title: dayObj.lunch,
+              cost: Number(dayObj.lunchCost || 0),
+              actCost: dayObj.actualLunchCost,
+              curr: dayObj.lunchCurr,
+              mode: dayObj.lunchMode,
+              paid: dayObj.lunchPaid,
+              note: dayObj.lunchReceiptNote || "主行程預算與實際費用 (午餐)"
+            },
+            {
+              slot: "dinner",
+              label: "晚餐",
+              title: dayObj.dinner,
+              cost: Number(dayObj.dinnerCost || 0),
+              actCost: dayObj.actualDinnerCost,
+              curr: dayObj.dinnerCurr,
+              mode: dayObj.dinnerMode,
+              paid: dayObj.dinnerPaid,
+              note: dayObj.dinnerReceiptNote || "主行程預算與實際費用 (晚餐)"
+            },
+            {
+              slot: "snack",
+              label: "點心飲料",
+              title: dayObj.snack,
+              cost: Number(dayObj.snackCost || 0),
+              actCost: dayObj.actualSnackCost,
+              curr: dayObj.snackCurr,
+              mode: dayObj.snackMode,
+              paid: dayObj.snackPaid,
+              note: dayObj.snackReceiptNote || "主行程預算與實際費用 (點心飲料)"
+            }
+          ];
+
+          MEAL_CONFIGS.forEach(mc => {
+            const hasAct = mc.actCost !== undefined && mc.actCost !== null && mc.actCost !== "";
+            const actVal = hasAct ? Number(mc.actCost) : mc.cost;
+            if (mc.cost > 0 || (hasAct && actVal > 0) || (mc.title && mc.title.trim() && mc.title !== "自理" && mc.title !== "自理 / 彈性購買")) {
+              appState.dailyExpenses.push({
+                id: `d_sync_field_${dayNum}_dining_${mc.slot}`,
+                day: dayNum,
+                category: "dining",
+                subType: mc.slot,
+                name: mc.title || `${mc.label}安排`,
+                amount: mc.cost > 0 ? mc.cost : actVal,
+                actualAmount: actVal,
+                isPaid: mc.paid !== false,
+                currency: resolveCurr(mc.curr),
+                pricingType: resolvePricing(mc.mode, false),
+                note: mc.note,
+                isSynced: true
+              });
+            }
+          });
+
+          // B. 每日市區交通 (優先以主行程預算與實際費用頁面的 d.transports 陣列為主要依據)
+          let hasSyncedTrans = false;
+          if (Array.isArray(dayObj.transports) && dayObj.transports.length > 0) {
+            dayObj.transports.forEach((t, tIdx) => {
+              const est = Number(t.cost || 0);
+              const hasAct = (t.actualCost !== undefined && t.actualCost !== null && t.actualCost !== "");
+              const act = hasAct ? Number(t.actualCost) : est;
+              const title = t.title || t.name || "";
+              if (est > 0 || (hasAct && act > 0) || (title && !title.includes("新增交通支出"))) {
+                hasSyncedTrans = true;
+                const sub = (t.type || t.subType || "").includes("taxi") || title.includes("打車") || title.includes("計程車") ? "taxi" : "metro";
+                appState.dailyExpenses.push({
+                  id: `d_sync_cat_${dayNum}_transit_${tIdx}`,
+                  day: dayNum,
+                  category: "transit",
+                  subType: sub,
+                  transitType: sub,
+                  route: title,
+                  name: title || "市區交通明細",
+                  amount: est > 0 ? est : act,
+                  actualAmount: act,
+                  isPaid: t.paid !== false && t.isPaid !== false,
+                  currency: resolveCurr(t.curr),
+                  pricingType: resolvePricing(t.mode, false),
+                  note: t.notes || t.receiptNote || "主行程預算與實際費用 (交通)",
+                  isSynced: true
+                });
+              }
+            });
+          }
+          // 若無 transports 陣列，則以當日交通總欄位為備援依據
+          if (!hasSyncedTrans) {
+            const tEst = Number(dayObj.transportCost || 0);
+            const hasAct = (dayObj.actualTransportCost !== undefined && dayObj.actualTransportCost !== null && dayObj.actualTransportCost !== "");
+            const tAct = hasAct ? Number(dayObj.actualTransportCost) : tEst;
+            if (tEst > 0 || (hasAct && tAct > 0)) {
+              appState.dailyExpenses.push({
+                id: `d_sync_field_${dayNum}_transit_metro`,
+                day: dayNum,
+                category: "transit",
+                subType: "metro",
+                transitType: "metro",
+                route: dayObj.transportNote || "市區地鐵/專車",
+                name: dayObj.transportNote || "市區交通安排",
+                amount: tEst > 0 ? tEst : tAct,
+                actualAmount: tAct,
+                isPaid: dayObj.transportPaid !== false,
+                currency: tripCurrency,
+                pricingType: "total",
+                note: "主行程預算與實際費用 (交通)",
+                isSynced: true
+              });
+            }
+          }
+
+          // C. 每日景點門票 (優先以主行程預算與實際費用頁面的 d.spots 陣列為主要依據)
+          let hasSyncedSpots = false;
+          if (Array.isArray(dayObj.spots) && dayObj.spots.length > 0) {
+            dayObj.spots.forEach((s, sIdx) => {
+              const est = Number(s.cost || 0);
+              const hasAct = (s.actualCost !== undefined && s.actualCost !== null && s.actualCost !== "");
+              const act = hasAct ? Number(s.actualCost) : est;
+              const title = s.title || s.name || "";
+              if (est > 0 || (hasAct && act > 0) || (title && !title.includes("新增景點門票"))) {
+                hasSyncedSpots = true;
+                appState.dailyExpenses.push({
+                  id: `d_sync_cat_${dayNum}_spot_${sIdx}`,
+                  day: dayNum,
+                  category: "spot",
+                  subType: "ticket",
+                  name: title || "景點門票與活動",
+                  amount: est > 0 ? est : act,
+                  actualAmount: act,
+                  isPaid: s.paid !== false && s.isPaid !== false,
+                  currency: resolveCurr(s.curr),
+                  pricingType: resolvePricing(s.mode, true), // 門票預設每人均攤
+                  note: s.notes || s.receiptNote || "主行程預算與實際費用 (門票)",
+                  isSynced: true
+                });
+              }
+            });
+          }
+          // 若無 spots 陣列，則以當日景點總欄位為備援依據
+          if (!hasSyncedSpots) {
+            const sEst = Number(dayObj.spotCost || 0);
+            const hasAct = (dayObj.actualSpotCost !== undefined && dayObj.actualSpotCost !== null && dayObj.actualSpotCost !== "");
+            const sAct = hasAct ? Number(dayObj.actualSpotCost) : sEst;
+            if (sEst > 0 || (hasAct && sAct > 0)) {
+              appState.dailyExpenses.push({
+                id: `d_sync_field_${dayNum}_spot_ticket`,
+                day: dayNum,
+                category: "spot",
+                subType: "ticket",
+                name: dayObj.spotNote || "景點體驗與門票",
+                amount: sEst > 0 ? sEst : sAct,
+                actualAmount: sAct,
+                isPaid: dayObj.spotPaid !== false,
+                currency: tripCurrency,
+                pricingType: "total",
+                note: "主行程預算與實際費用 (門票)",
+                isSynced: true
+              });
+            }
+          }
+
+          // D. 其他自訂花費與購物 (優先以主行程預算與實際費用頁面的 d.extraCosts 陣列為主要依據)
+          if (Array.isArray(dayObj.extraCosts) && dayObj.extraCosts.length > 0) {
+            dayObj.extraCosts.forEach((ex, exIdx) => {
+              const est = Number(ex.cost || 0);
+              const hasAct = (ex.actualCost !== undefined && ex.actualCost !== null && ex.actualCost !== "");
+              const act = hasAct ? Number(ex.actualCost) : est;
+              const title = ex.title || ex.name || "";
+              if (est > 0 || (hasAct && act > 0) || (title && !title.includes("新增其他花費項目"))) {
+                appState.dailyExpenses.push({
+                  id: `d_sync_cat_${dayNum}_extra_${exIdx}`,
+                  day: dayNum,
+                  category: "other",
+                  subType: "gift",
+                  name: title || "其他費用/購物",
+                  amount: est > 0 ? est : act,
+                  actualAmount: act,
+                  isPaid: ex.paid !== false && ex.isPaid !== false,
+                  currency: resolveCurr(ex.curr),
+                  pricingType: resolvePricing(ex.mode, false),
+                  note: ex.notes || ex.receiptNote || "主行程預算與實際費用 (自訂雜支)",
+                  isSynced: true
+                });
+              }
             });
           }
 
-          // 午餐
-          if (dayObj.lunchCost && Number(dayObj.lunchCost) > 0) {
-            appState.dailyExpenses.push({
-              id: `d_sync_field_${dayNum}_dining_lunch`,
-              day: dayNum,
-              category: "dining",
-              subType: "lunch",
-              name: dayObj.lunch || "午餐安排",
-              amount: Number(dayObj.lunchCost),
-              actualAmount: Number(dayObj.lunchCost),
-              isPaid: true,
-              currency: tripCurrency,
-              pricingType: "total",
-              note: "主行程午餐預算",
-              isSynced: true
-            });
-          }
-
-          // 晚餐
-          if (dayObj.dinnerCost && Number(dayObj.dinnerCost) > 0) {
-            appState.dailyExpenses.push({
-              id: `d_sync_field_${dayNum}_dining_dinner`,
-              day: dayNum,
-              category: "dining",
-              subType: "dinner",
-              name: dayObj.dinner || "晚餐安排",
-              amount: Number(dayObj.dinnerCost),
-              actualAmount: Number(dayObj.dinnerCost),
-              isPaid: true,
-              currency: tripCurrency,
-              pricingType: "total",
-              note: "主行程晚餐預算",
-              isSynced: true
-            });
-          }
-
-          // 市區交通
-          if (dayObj.transportCost && Number(dayObj.transportCost) > 0) {
-            appState.dailyExpenses.push({
-              id: `d_sync_field_${dayNum}_transit_metro`,
-              day: dayNum,
-              category: "transit",
-              subType: "metro",
-              transitType: "metro",
-              route: dayObj.transportNote || "市區地鐵/專車",
-              name: dayObj.transportNote || "市區交通安排",
-              amount: Number(dayObj.transportCost),
-              actualAmount: Number(dayObj.transportCost),
-              isPaid: true,
-              currency: tripCurrency,
-              pricingType: "total",
-              note: "主行程交通預算",
-              isSynced: true
-            });
-          }
-
-          // 景點門票
-          if (dayObj.spotCost && Number(dayObj.spotCost) > 0) {
-            appState.dailyExpenses.push({
-              id: `d_sync_field_${dayNum}_spot_ticket`,
-              day: dayNum,
-              category: "spot",
-              subType: "ticket",
-              name: dayObj.spotNote || "景點體驗與門票",
-              amount: Number(dayObj.spotCost),
-              actualAmount: Number(dayObj.spotCost),
-              isPaid: true,
-              currency: tripCurrency,
-              pricingType: "total",
-              note: "主行程景點預算",
-              isSynced: true
-            });
-          }
-
-          // 智慧去重時間軸 events (杜絕與當日預算欄位重複)
-          const hasFieldBreakfast = Boolean(dayObj.breakfastCost && Number(dayObj.breakfastCost) > 0);
-          const hasFieldLunch = Boolean(dayObj.lunchCost && Number(dayObj.lunchCost) > 0);
-          const hasFieldDinner = Boolean(dayObj.dinnerCost && Number(dayObj.dinnerCost) > 0);
-          const hasFieldTransport = Boolean(dayObj.transportCost && Number(dayObj.transportCost) > 0);
-          const hasFieldSpot = Boolean(dayObj.spotCost && Number(dayObj.spotCost) > 0);
-
-          function cleanKey(str) {
-            return String(str || '').replace(/[\s\W_]+/g, '').toLowerCase();
-          }
-          const normLunch = cleanKey(dayObj.lunch);
-          const normDinner = cleanKey(dayObj.dinner);
-          const normBreakfast = cleanKey(dayObj.breakfast);
-          const normSpot = cleanKey(dayObj.spotNote);
-          const normTransit = cleanKey(dayObj.transportNote);
-
+          // E. 時間軸 events 補充檢視 (若某項自費活動未在上述預算與實際費用頁面中列出，才作為補充補入，徹底杜絕重複)
           if (dayObj.events && dayObj.events.length > 0) {
+            function cleanKey(str) {
+              return String(str || '').replace(/[\s\W_]+/g, '').toLowerCase();
+            }
+            const existingNames = appState.dailyExpenses.filter(e => Number(e.day) === dayNum).map(e => cleanKey(e.name));
+
             dayObj.events.forEach(ev => {
               const evTitle = ev.title || ev.name || ev.target || "";
               if (!evTitle || evTitle === "undefined" || evTitle.trim() === "") return;
-
-              // 排除機票活動以防重複
               if (ev.type === "flight" || /搭乘班機|直達抵達|飛往|航班/i.test(evTitle)) return;
 
               const bCost = Number(ev.cost) || 0;
               const aCost = Number(ev.actualCost) || bCost;
+              if (bCost <= 0 && aCost <= 0) return;
 
-              if (bCost > 0 || aCost > 0) {
-                let cat = "spot";
-                let sub = "ticket";
-                const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
-                const normTitle = cleanKey(evTitle);
+              const normTitle = cleanKey(evTitle);
+              // 若該名稱已在上述預算與實際費用頁面中有重疊或已有對應餐食/門票/交通，則不再重複補入
+              const isAlreadyCovered = existingNames.some(en => en && (en.includes(normTitle) || normTitle.includes(en) || (en.includes("李子壩") && normTitle.includes("李子壩")) || (en.includes("野果") && normTitle.includes("野果")) || (en.includes("羅漢寺") && normTitle.includes("羅漢寺")) || (en.includes("萬象城") && normTitle.includes("萬象城"))));
+              if (isAlreadyCovered) return;
 
-                if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n) || ev.type === "food") {
-                  cat = "dining";
-                  sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
-                } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(n) || ev.type === "trans") {
-                  cat = "transit";
-                  sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : (/地鐵|捷運|jr|新幹線|metro|train/.test(n) ? "metro" : "bus");
-                } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
-                  cat = "other";
-                  sub = "gift";
-                }
-
-                // 核心去重校驗：凡當日已有總額/專屬欄位設定者，活動卡片中重複項目自動排除
-                let isDuplicate = false;
-                if (cat === "dining") {
-                  if (hasFieldLunch && (sub === "lunch" || /午餐|午飯|中餐|lunch/.test(evTitle) || (normLunch && (normTitle.includes(normLunch) || normLunch.includes(normTitle) || /李子壩|梁山雞/.test(normTitle))))) {
-                    isDuplicate = true;
-                  } else if (hasFieldDinner && (sub === "dinner" || /晚餐|晚飯|夜市|dinner/.test(evTitle) || (normDinner && (normTitle.includes(normDinner) || normDinner.includes(normTitle) || /野果|yeego|yeguo|火鍋|烤魚/.test(normTitle))))) {
-                    isDuplicate = true;
-                  } else if (hasFieldBreakfast && (sub === "breakfast" || /早餐|早點|早飯|breakfast/.test(evTitle) || (normBreakfast && (normTitle.includes(normBreakfast) || normBreakfast.includes(normTitle))))) {
-                    isDuplicate = true;
-                  }
-                } else if (cat === "spot") {
-                  if (hasFieldSpot && (normSpot && (normTitle.includes(normSpot) || normSpot.includes(normTitle) || /羅漢寺|香花券|門票|天生三橋|博物館/.test(normTitle)))) {
-                    isDuplicate = true;
-                  }
-                } else if (cat === "transit") {
-                  if (hasFieldTransport && (normTransit && (normTitle.includes(normTransit) || normTransit.includes(normTitle) || /萬象城|李子壩|輕軌|地鐵|打車|包車/.test(normTitle)))) {
-                    isDuplicate = true;
-                  }
-                }
-
-                if (isDuplicate) {
-                  // 重複項目自動跳過，不重複計入
-                  return;
-                }
-
-                appState.dailyExpenses.push({
-                  id: "d_sync_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
-                  day: dayNum,
-                  category: cat,
-                  subType: sub,
-                  transitType: cat === "transit" ? sub : undefined,
-                  route: cat === "transit" ? evTitle : undefined,
-                  name: evTitle,
-                  amount: bCost > 0 ? bCost : aCost,
-                  actualAmount: aCost,
-                  isPaid: true,
-                  currency: ev.costCurr || tripCurrency,
-                  pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
-                  note: ev.notes || ev.note || "",
-                  isSynced: true
-                });
+              let cat = "spot";
+              let sub = "ticket";
+              const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
+              if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n) || ev.type === "food") {
+                cat = "dining";
+                sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
+              } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(n) || ev.type === "trans") {
+                cat = "transit";
+                sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : "metro";
+              } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
+                cat = "other";
+                sub = "gift";
               }
+
+              appState.dailyExpenses.push({
+                id: "d_sync_ev_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
+                day: dayNum,
+                category: cat,
+                subType: sub,
+                transitType: cat === "transit" ? sub : undefined,
+                route: cat === "transit" ? evTitle : undefined,
+                name: evTitle,
+                amount: bCost > 0 ? bCost : aCost,
+                actualAmount: aCost,
+                isPaid: true,
+                currency: ev.costCurr || tripCurrency,
+                pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
+                note: ev.notes || ev.note || "時間軸自費活動補充",
+                isSynced: true
+              });
             });
           }
         });

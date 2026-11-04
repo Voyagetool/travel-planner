@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.4
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.5
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.4" in html, "未同步升級版本號至 V3.3.4"
+    assert "V3.3.5" in html, "未同步升級版本號至 V3.3.5"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -94,11 +94,19 @@ def test_html_structure_and_features():
 
     
     # 13. 驗證智慧去重邏輯與非主行程假資料徹底掃除
-    assert "hasFieldLunch" in html, "缺少午餐去重校驗"
-    assert "hasFieldDinner" in html, "缺少晚餐去重校驗"
-    assert "hasFieldBreakfast" in html, "缺少早餐去重校驗"
+    assert "existingNames" in html, "缺少已存在項目去重比對"
     assert "cleanKey" in html, "缺少去重字串標準化函式"
     assert "花市豌雜麵" in html and "isPresetOrOldSyncItem" in html, "缺少歷史假範本徹底掃除機制"
+
+    
+    # 14. 驗證以主行程【預算與實際費用頁面】為主要同步依據之核心結構
+    assert "MEAL_CONFIGS" in html, "缺少主行程餐食預算與實付欄位鏡像"
+    assert "dayObj.actualBreakfastCost" in html, "缺少早餐實際花費欄位串接"
+    assert "dayObj.actualLunchCost" in html, "缺少午餐實際花費欄位串接"
+    assert "dayObj.actualDinnerCost" in html, "缺少晚餐實際花費欄位串接"
+    assert "dayObj.transports" in html, "缺少主行程 transports 交通明細陣列同步"
+    assert "dayObj.spots" in html, "缺少主行程 spots 景點門票明細陣列同步"
+    assert "dayObj.extraCosts" in html, "缺少主行程 extraCosts 自訂雜支明細陣列同步"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

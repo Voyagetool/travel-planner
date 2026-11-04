@@ -163,3 +163,18 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
     - 升級 `isPresetOrOldSyncItem` 清理器，同步時將所有內建 Demo 範本項目（威斯汀、武隆依雲、九街民宿、花市豌雜麵、珮姐老火鍋、下浩里、南山枇杷園、湖廣會館、來福士烤匠、九街烤腦花等）與舊同步項目 100% 徹底清除，確保帳本純淨鏡像主行程。
   - [x] 單元測試增加第 13 項智慧去重與非主行程假資料排除斷言。
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.4`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）。
+
+- [x] **階段十七：以主行程【預算與實際費用頁面】作為支出計算機同步主要依據 (升級 V3.3.5)**
+  - [x] 需求分析與架構對齊：
+    - 主行程手帳中具備獨立且權威的「預算規劃與統計分析 (`subpane-budget`)」與「實際花費與行程核銷記帳 (`subpane-actual`)」頁面。
+    - 包含：早中晚及點心四餐的預算與實付欄位（`actualBreakfastCost`, `actualLunchCost`, `actualDinnerCost`, `actualSnackCost`）、市區交通明細陣列（`d.transports`）、景點門票明細陣列（`d.spots`）、自訂雜支與購物明細陣列（`d.extraCosts`），以及機票與住宿的預算實付與核銷狀態。
+  - [x] 同步核心引擎全面升級 (`processPlanSync`)：
+    - 以主行程「預算與實際費用」頁面的數據為第一優先主要依據：
+      1. 機票與住宿：同步預估預算、實際支出、幣別、分攤模式、核銷已付狀態與地點日期。
+      2. 每日餐食：同步 `MEAL_CONFIGS`（早餐、午餐、晚餐、點心飲料）之名稱、預算與實際花費（`actual...Cost`）、幣別、分攤模式與核銷狀態。
+      3. 每日交通：優先以 `d.transports` 陣列同步各筆路線工具、預算、實際支出、幣別與分攤模式；若無陣列則以 `transportCost`/`actualTransportCost` 備援。
+      4. 每日景點：優先以 `d.spots` 陣列同步各項門票、預算、實際支出、幣別與分攤模式；若無陣列則以 `spotCost`/`actualSpotCost` 備援。
+      5. 其他/購物：以 `d.extraCosts` 陣列同步自訂雜支與購物之預算與實際花費。
+      6. 時間軸 events 僅作為未列入上述頁面之自費活動補充，並實作 `existingNames` 比對徹底杜絕重複。
+  - [x] 單元測試增加第 14 項「主行程預算與實際費用頁面同步依據」斷言防護。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.5`（`index.html`、`travel_planner.html`、`blank.html`、`share.html` 及 `expenses.html`）。
