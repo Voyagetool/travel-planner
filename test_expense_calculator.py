@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.9
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.10
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.9" in html, "未同步升級版本號至 V3.3.9"
+    assert "V3.3.10" in html, "未同步升級版本號至 V3.3.10"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -117,7 +117,7 @@ def test_html_structure_and_features():
 
     for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
         with open(page, "r", encoding="utf-8") as pf:
-            assert "V3.3.9" in pf.read(), f"{page} 未同步升級至 V3.3.9"
+            assert "V3.3.10" in pf.read(), f"{page} 未同步升級至 V3.3.10"
 
     
     # 16. 驗證顯示幣別預設基準幣 (TWD) 對齊主行程、機場專車去重與全團總計模式
@@ -137,6 +137,13 @@ def test_html_structure_and_features():
     # 18. 驗證旅行計畫切換選單智慧去重 (杜絕東京自由行重複出現)
     assert 'function filterDuplicatePlans' in html, "缺少 filterDuplicatePlans 行程去重過濾函式"
     assert 'filterDuplicatePlans(mainAppState.plans)' in html, "未直接以主行程手帳真實 plans 為準"
+
+    # 19. 驗證重慶自由行清空自動救援 (Auto Recovery) 與防空殼清除安全保護 (Safety Guard)
+    assert 'isChongqingPlan && isCurrentEmpty' in html, "缺少重慶自由行清空自動救援防呆"
+    assert 'DEFAULT_EXPENSE_DATA' in html, "缺少 DEFAULT_EXPENSE_DATA 備援資料庫"
+    assert 'hasContent' in html, "缺少 processPlanSync 防空殼清空安全防護"
+    assert 'normalizePlanTitle' in html, "缺少保留中文字元之 normalizePlanTitle 智慧去重函式"
+    assert 'cloudExp' in html and 'isCloudEmpty' in html, "缺少雲端空帳本防覆蓋安全防線"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

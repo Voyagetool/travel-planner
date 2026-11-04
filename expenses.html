@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.9</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.10</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -2142,24 +2142,38 @@
       const clean = {};
       const seenTitles = new Set();
 
-      // 優先保留包含天數或真實活動的行程
+      function getPlanScore(p, k) {
+        if (!p) return -100;
+        let score = 0;
+        if (Array.isArray(p.days) && p.days.length > 0) {
+          const hasEvents = p.days.some(d => d && ((Array.isArray(d.events) && d.events.length > 0) || d.title || d.breakfastCost || d.lunchCost || d.dinnerCost || d.transportCost || d.spotCost));
+          if (hasEvents) score += 200;
+        }
+        if (p.flights && (p.flights.cost || p.flights.actualCost || (Array.isArray(p.flights.legs) && p.flights.legs.length > 0))) score += 50;
+        if ((Array.isArray(p.hotels) && p.hotels.length > 0) || (p.hotel && p.hotel.name)) score += 50;
+        if (Array.isArray(p.majorTransports) && p.majorTransports.length > 0) score += 50;
+        if (k === 'tokyo-2026' || k === 'plan-tokyo-demo' || p.isDemoPreset) score -= 80;
+        return score;
+      }
+
+      function normalizePlanTitle(title, key) {
+        if (!title) title = key || "";
+        // 嚴格保留中文字、英文字母與數字，僅去除空格與標點符號，絕不誤殺中文漢字！
+        return String(title)
+          .replace(/[\s\-_,.:;!?'"()（）「」【】《》~～/\\|#*&^%$@+=，。！？、\u3000]+/g, '')
+          .toLowerCase();
+      }
+
       const keys = Object.keys(plansObj).sort((a, b) => {
-        const pA = plansObj[a];
-        const pB = plansObj[b];
-        const scoreA = (pA && Array.isArray(pA.days) && pA.days.some(d => d && ((d.events && d.events.length > 0) || d.title))) ? 100 : 0;
-        const scoreB = (pB && Array.isArray(pB.days) && pB.days.some(d => d && ((d.events && d.events.length > 0) || d.title))) ? 100 : 0;
-        // 且非 demo 範本 key (tokyo-2026 等) 優先
-        const isDemoA = a === 'tokyo-2026' ? -50 : 0;
-        const isDemoB = b === 'tokyo-2026' ? -50 : 0;
-        return (scoreB + isDemoB) - (scoreA + isDemoA);
+        return getPlanScore(plansObj[b], b) - getPlanScore(plansObj[a], a);
       });
 
       keys.forEach(k => {
         const p = plansObj[k];
         if (!p) return;
-        const cleanTitle = String(p.title || k).replace(/[\s\W_]+/g, '').toLowerCase();
-        if (!seenTitles.has(cleanTitle)) {
-          seenTitles.add(cleanTitle);
+        const normTitle = normalizePlanTitle(p.title, k);
+        if (!seenTitles.has(normTitle)) {
+          seenTitles.add(normTitle);
           clean[k] = p;
         } else {
           console.log("過濾重複行程選單項目:", k, p.title);
@@ -2273,8 +2287,12 @@
       const selectEl = document.getElementById("expensePlanSelect");
       if (!selectEl) return;
       
-      // 合併所有可用計畫，並確保備援計畫存在
-      availablePlans = Object.assign({}, DEFAULT_PRESET_PLANS, plans || {});
+      // 若 plans 存在且有項目，直接使用 filterDuplicatePlans 去重，不再強制塞入 DEFAULT_PRESET_PLANS 造成重複東京
+      if (plans && Object.keys(plans).length > 0) {
+        availablePlans = filterDuplicatePlans(plans);
+      } else {
+        availablePlans = filterDuplicatePlans(DEFAULT_PRESET_PLANS);
+      }
       const planKeys = Object.keys(availablePlans);
       
       selectEl.style.display = "inline-block"; // 永遠常駐保持可見！
@@ -2387,11 +2405,19 @@
 
           // 2. 載入雲端獨立計畫帳本或通用帳本
           if (data && data.expensePlans && currentPlanId && data.expensePlans[currentPlanId]) {
-            isReceivingCloud = true;
-            appState = data.expensePlans[currentPlanId];
-            saveState(true);
-            renderAll();
-            isReceivingCloud = false;
+            const cloudExp = data.expensePlans[currentPlanId];
+            const isCloudEmpty = (!cloudExp.majorExpenses || cloudExp.majorExpenses.length === 0) &&
+                                 (!cloudExp.accommodations || cloudExp.accommodations.length === 0) &&
+                                 (!cloudExp.dailyExpenses || cloudExp.dailyExpenses.length === 0);
+            if (!isCloudEmpty) {
+              isReceivingCloud = true;
+              appState = cloudExp;
+              saveState(true);
+              renderAll();
+              isReceivingCloud = false;
+            } else {
+              console.warn("雲端計畫帳本為空，保留現有真實數據以防被清空", currentPlanId);
+            }
           } else if (data && data.expenseState && !currentPlanId) {
             isReceivingCloud = true;
             appState = data.expenseState;
@@ -2457,6 +2483,17 @@
         console.error("載入失敗，還原範例資料", e);
         appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
       }
+      // 自動救援防呆：若重慶自由行的支出細項不幸被清空為 0，自動以 DEFAULT_EXPENSE_DATA 還原，確保數據不丟失！
+      const isChongqingPlan = (!currentPlanId || currentPlanId === 'plan-chongqing' || String(currentPlanId).includes('chongqing') || (appState.tripInfo && /重慶/i.test(appState.tripInfo.title || '')));
+      const isCurrentEmpty = (!appState.majorExpenses || appState.majorExpenses.length === 0) &&
+                             (!appState.accommodations || appState.accommodations.length === 0) &&
+                             (!appState.dailyExpenses || appState.dailyExpenses.length === 0);
+      if (isChongqingPlan && isCurrentEmpty) {
+        console.warn("偵測到重慶自由行支出數據為空，啟動自動救援還原 DEFAULT_EXPENSE_DATA！");
+        appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
+        saveState();
+      }
+
       if (!appState.tripInfo) appState.tripInfo = {};
       if (!appState.tripInfo.displayCurrency || appState.tripInfo.displayCurrency === "TWD") {
         appState.tripInfo.displayCurrency = "base";
@@ -4051,6 +4088,26 @@
     // 核心乾淨鏡像同步函式 (100% 精準對齊主手帳，不再產生舊項目堆疊與不一致)
     function processPlanSync(plan, isSilent = false) {
       if (!plan) return false;
+
+      // 核心安全防護：如果 plan 無任何實質內容（無 days、無 hotels、無 flights、無 majorTransports），
+      // 絕對禁止清除現存支出數據！以防誤將使用者現有行程洗白！
+      const hasContent = (plan && (
+        (Array.isArray(plan.days) && plan.days.length > 0 && plan.days.some(d => (d && d.events && d.events.length > 0) || d.breakfastCost || d.lunchCost || d.dinnerCost || d.transportCost || d.spotCost)) ||
+        (Array.isArray(plan.hotels) && plan.hotels.length > 0) ||
+        (plan.hotel && (plan.hotel.name || plan.hotel.cost)) ||
+        (plan.flights && (plan.flights.cost || plan.flights.actualCost || (Array.isArray(plan.flights.legs) && plan.flights.legs.length > 0))) ||
+        (Array.isArray(plan.majorTransports) && plan.majorTransports.length > 0)
+      ));
+
+      if (!hasContent) {
+        console.warn("該計畫無實質行程活動或為空殼備援，略過破壞性清除以保護現存支出資料", plan);
+        if (plan.title) appState.tripInfo.title = plan.title;
+        if (plan.memberCount) appState.tripInfo.memberCount = Number(plan.memberCount);
+        if (plan.exchangeRate) appState.tripInfo.exchangeRate = Number(plan.exchangeRate);
+        saveState();
+        renderAll();
+        return false;
+      }
 
       const memberCount = Number(plan.memberCount) || 2;
       const daysCount = (plan.days && plan.days.length) ? plan.days.length : 6;

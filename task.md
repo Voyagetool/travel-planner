@@ -221,3 +221,16 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
     - 修復：實作 `filterDuplicatePlans()` 函式；主手帳已有真實 plans 時直接採用手帳真實 plans，不再強行合併 `DEFAULT_PRESET_PLANS`；並加入標題智慧去重演算法，優先保留含有真實活動內容的行程，徹底過濾標題重複項目。
   - [x] 單元測試增加第 18 項「旅行計畫選單智慧去重 (杜絕東京重複)」斷言防護。
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.9`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
+
+- [x] **階段二十二：修復重慶自由行清空問題，導入自動救援 (Auto Recovery) 與防空殼清除安全防線 (升級 V3.3.10)**
+  - [x] 重慶自由行資料被清空之根因深入診斷：
+    - 根因 1：`filterDuplicatePlans` 過去採用 `replace(/[\s\W_]+/g, '')`，在 JavaScript 中 `\W` 預設為 ASCII，會將所有漢字（重慶、東京、北京、南京等）全部當成非單詞字元誤殺替換成空字串 `""`，導致後續中文行程全部判定為「重複」而被誤拋棄。
+    - 根因 2：`DEFAULT_PRESET_PLANS` 裡的重慶計畫只是空殼（無 days、無 hotels、無 flights），當選中空殼時，`processPlanSync` 在處理前無條件執行 `filter(!isPresetOrOldSyncItem)` 清除了所有現存支出項目；隨後因空殼無任何活動，一筆新資料都未加上，直接儲存空狀態洗白了帳本。
+    - 根因 3：`updatePlanSwitcherUI` 仍執行 `Object.assign` 強制塞入備援假資料，且雲端連線收到空帳本時反向覆蓋本地資料。
+  - [x] 四重防線修復：
+    - 防線 1（智慧正規化）：改用 `normalizePlanTitle` 專門移除標點與空格，100% 完整保留中文字元，各城市獨立保留，僅對真實重複項（如 demo 假東京）精準過濾。
+    - 防線 2（防空殼清除安全防護）：在 `processPlanSync` 開頭加入 `hasContent` 安全檢查，若為空殼或無實質活動，絕對禁止清空現有支出細項。
+    - 防線 3（重慶自由行自動救援）：在 `loadState` 內加入防呆，若重慶行程細項全為 0，立即調用 `DEFAULT_EXPENSE_DATA` 自動還原完整數據（國泰機票、富邦保險、eSIM、Moxy 酒店、來福士、火鍋、天生三橋等）。
+    - 防線 4（雲端空帳本防污染）：在 `listenCloudRoom` 收到雲端資料時，若雲端帳本全空，禁止覆蓋本地現存真實數據。
+  - [x] 單元測試增加第 19 項「重慶自由行自動救援與防空殼安全防護」斷言防護。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.10`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
