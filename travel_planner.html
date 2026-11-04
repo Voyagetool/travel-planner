@@ -5604,6 +5604,299 @@
             gap: 8px !important;
         }
 
+    
+
+        /* =====================================================================
+           V3.4.0 全面手機瀏覽專屬 RWD 響應式優化 (Mobile First-Class Experience)
+           解決手機點開版面右側溢出、元件擁擠、表格擠壓與導覽截斷問題
+           ===================================================================== */
+        @media screen and (max-width: 768px) {
+            /* 1. 全域溢出防護與盒模型規範 */
+            html, body {
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+                position: relative !important;
+                -webkit-text-size-adjust: 100% !important;
+            }
+            *, *::before, *::after {
+                box-sizing: border-box !important;
+            }
+
+            /* 2. 頂部儀表板 Header：直向整齊堆疊，左右全滿不外溢 */
+            .okr-top-header {
+                padding: 10px 12px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 1000 !important;
+            }
+            .okr-brand-left {
+                flex: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                gap: 10px !important;
+            }
+            .okr-brand-icon {
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+                font-size: 1.15rem !important;
+                border-radius: 10px !important;
+            }
+            .okr-title-stack {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .okr-title-line {
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                flex-wrap: wrap !important;
+                width: 100% !important;
+            }
+            .okr-main-title {
+                font-size: 1.08rem !important;
+                line-height: 1.3 !important;
+                word-break: break-word !important;
+            }
+            .okr-plan-badge-pill {
+                max-width: 100% !important;
+                padding: 2px 7px !important;
+                font-size: 0.72rem !important;
+            }
+            .okr-plan-select {
+                max-width: 130px !important;
+                font-size: 0.72rem !important;
+            }
+            .okr-subtitle-meta-row {
+                font-size: 0.73rem !important;
+                gap: 4px 6px !important;
+                margin-top: 4px !important;
+                line-height: 1.4 !important;
+            }
+
+            /* 頂部操作按鈕列：單行平滑水平滑動膠囊列 (Touch-scrollable Pills Bar) */
+            .okr-header-actions {
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                flex-wrap: nowrap !important;
+                padding: 2px 0 4px 0 !important;
+                margin: 0 !important;
+            }
+            .okr-header-actions::-webkit-scrollbar {
+                display: none !important;
+            }
+            .okr-header-actions .okr-action-pill {
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+                font-size: 0.74rem !important;
+                padding: 5px 10px !important;
+                border-radius: 8px !important;
+            }
+
+            /* 3. 第二層導覽分頁列：4 大主分頁流暢水平滑動列 ＋ 滿寬新增按鈕 */
+            .okr-pill-navbar {
+                padding: 6px 12px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 6px !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+            }
+            .okr-pill-tabs {
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                flex-wrap: nowrap !important;
+                padding-bottom: 2px !important;
+            }
+            .okr-pill-tabs::-webkit-scrollbar {
+                display: none !important;
+            }
+            .okr-pill-navbar .view-tab-btn {
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+                padding: 6px 12px !important;
+                font-size: 0.78rem !important;
+                border-radius: 8px !important;
+            }
+            .okr-navbar-right-actions {
+                width: 100% !important;
+            }
+            .okr-nav-add-btn {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 7px 12px !important;
+                font-size: 0.82rem !important;
+                border-radius: 8px !important;
+            }
+
+            /* 4. 工作區容器：縮小手機左右留白，最大化可讀內容 */
+            .okr-workspace-main {
+                padding: 8px 10px 48px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                gap: 8px !important;
+            }
+            .notion-main-col {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* 5. 總覽 KPI 指標卡：2 欄自適應 */
+            .okr-kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                margin-bottom: 8px !important;
+            }
+            .okr-kpi-card {
+                padding: 10px 12px !important;
+                border-radius: 12px !important;
+            }
+            .okr-kpi-value {
+                font-size: 1.22rem !important;
+            }
+            .okr-kpi-icon-box {
+                width: 34px !important;
+                height: 34px !important;
+                border-radius: 8px !important;
+                font-size: 0.95rem !important;
+            }
+
+            /* 6. 交通與住宿分頁：連體分隔指標列在手機上優化為 2 欄 ＋ 1 滿寬 */
+            .logistics-segmented-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                border-radius: 12px !important;
+                margin-bottom: 8px !important;
+            }
+            .logistics-seg-cell {
+                padding: 9px 12px !important;
+            }
+            .logistics-seg-cell:nth-child(2n) {
+                border-right: none !important;
+            }
+            .logistics-seg-cell:nth-child(n+3) {
+                border-top: 1px solid #edf1f6 !important;
+            }
+            .logistics-seg-cell:nth-child(5) {
+                grid-column: span 2 !important;
+                border-right: none !important;
+            }
+            .logistics-seg-val {
+                font-size: 1.25rem !important;
+            }
+
+            /* 雙欄並排自動切換為手機單欄堆疊 */
+            .logistics-split-grid {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+            #sideFlightCardsContainer,
+            #majorTransportCardsContainer,
+            #sideHotelCardsContainer {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+
+            /* 7. 表格水平滑動保護（防止文字擠壓成垂直直線） */
+            .notion-table-wrapper,
+            .notion-table-container,
+            .table-responsive,
+            .budget-table-card,
+            div:has(> table) {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                display: block !important;
+                border-radius: 8px !important;
+            }
+            table {
+                min-width: 560px !important;
+            }
+            table th, table td {
+                white-space: normal !important;
+                word-break: break-word !important;
+            }
+
+            /* 8. 次級篩選與標籤列水平滾動 */
+            .expenses-subtabs-bar,
+            .day-filter-chips {
+                display: flex !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                flex-wrap: nowrap !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .expenses-subtabs-bar::-webkit-scrollbar,
+            .day-filter-chips::-webkit-scrollbar {
+                display: none !important;
+            }
+            .expenses-subtab-btn,
+            .day-chip-btn {
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+            }
+
+            /* 9. 行前提醒卡片適配 */
+            #toolsCalloutBox.notion-callout {
+                padding: 6px 10px !important;
+            }
+            .tools-compact-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 6px !important;
+            }
+            .tools-compact-left {
+                width: 100% !important;
+                flex-wrap: wrap !important;
+            }
+            #toolsCalloutHeaderActions {
+                align-self: flex-end !important;
+            }
+
+            /* 10. 彈窗 Modal 手機滿版自適應 */
+            .modal-card,
+            .notion-modal-content,
+            .booking-modal-card {
+                width: 95% !important;
+                max-width: 95vw !important;
+                max-height: 90vh !important;
+                margin: auto !important;
+                padding: 16px 14px !important;
+                border-radius: 14px !important;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .okr-kpi-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .logistics-seg-val {
+                font-size: 1.15rem !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -5630,7 +5923,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.3.11</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.4.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
