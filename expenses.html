@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.8</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.7</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -1962,7 +1962,7 @@
         baseCurrency: "TWD",
         foreignCurrency: "CNY",
         exchangeRate: 4.65,
-        displayCurrency: "TWD"
+        displayCurrency: "base"
       },
       // 大項支出 (含交通工具類型、起訖、預算與實付)
       majorExpenses: [
@@ -2424,6 +2424,10 @@
         console.error("載入失敗，還原範例資料", e);
         appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
       }
+      if (!appState.tripInfo) appState.tripInfo = {};
+      if (!appState.tripInfo.displayCurrency || appState.tripInfo.displayCurrency === "TWD") {
+        appState.tripInfo.displayCurrency = "base";
+      }
     }
 
     function saveState(skipCloud = false) {
@@ -2452,6 +2456,11 @@
       SGD: 24.5,
       GBP: 41.2
     };
+
+    function isBaseCurrency() {
+      const d = appState.tripInfo && appState.tripInfo.displayCurrency;
+      return d === "base" || d === "TWD" || !d;
+    }
 
     function convertAmount(amount, fromCurrency, toCurrency) {
       if (!amount || isNaN(amount)) return 0;
@@ -2687,7 +2696,7 @@
     }
 
     function toggleDisplayCurrency() {
-      appState.tripInfo.displayCurrency = appState.tripInfo.displayCurrency === "base" ? "foreign" : "base";
+      appState.tripInfo.displayCurrency = isBaseCurrency() ? "foreign" : "base";
       saveState();
       renderAll();
     }
@@ -2705,7 +2714,7 @@
       document.getElementById("tripDaysBadge").textContent = `${trip.daysCount} 天`;
       document.getElementById("tripMembersBadge").textContent = `${trip.memberCount} 人同行`;
 
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const curName = isBase ? trip.baseCurrency : trip.foreignCurrency;
       document.getElementById("currencyToggleText").textContent = `顯示: ${curName}`;
       document.getElementById("rateHintBadge").textContent = `1 ${trip.foreignCurrency} ≈ ${trip.exchangeRate} ${trip.baseCurrency}`;
@@ -2716,7 +2725,7 @@
     function renderSidebarDashboard() {
       const stats = calculateStatistics();
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const curCode = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
       const displayBudget = isBase ? stats.totalBudgetBase : stats.totalBudgetForeign;
@@ -2766,7 +2775,7 @@
 
       const grandActual = stats.totalActualBase > 0 ? stats.totalActualBase : 1;
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
 
       const barContainer = document.getElementById("stackedBarContainer");
       barContainer.innerHTML = cats.map(c => {
@@ -2800,7 +2809,7 @@
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
       const chartEl = document.getElementById("dailyTrendChart");
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
 
       let maxDaily = 1;
       for (let i = 1; i <= daysCount; i++) {
@@ -2880,7 +2889,7 @@
     function renderMainView() {
       const container = document.getElementById("viewContainer");
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
       // 模式 1：選定特定單日
@@ -3097,7 +3106,7 @@
 
     function renderCategoryCard(title, catKey, items, day, badgeClass) {
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
       let subtotalActualBase = 0, subtotalBudgetBase = 0;
@@ -3139,7 +3148,7 @@
 
     function renderExpenseRow(item) {
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
       const totalActualRaw = calcItemTotalCost(item, true);
@@ -3207,7 +3216,7 @@
     // 渲染大項交通清單 (包含編輯大項交通選項按鈕)
     function renderMajorItemsList() {
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
       if (appState.majorExpenses.length === 0) {
@@ -3279,7 +3288,7 @@
 
     function renderAccommodationsList() {
       const trip = appState.tripInfo;
-      const isBase = trip.displayCurrency === "base";
+      const isBase = isBaseCurrency();
       const targetCur = isBase ? trip.baseCurrency : trip.foreignCurrency;
 
       if (appState.accommodations.length === 0) {
@@ -4024,7 +4033,7 @@
         // 清理殘留的所有歷史假範本飯店、交通、景點與餐廳 (避免非主行程幽靈假資訊混入)
         const name = String(item.name || '');
         if (/威斯汀|依雲度假|九街設計師江景民宿|花市豌雜麵|長江索道往返門票|珮姐老火鍋|三峽博物館|李子壩梁山雞 \(總店\)|南山枇杷園|下浩里|湖廣會館|來福士烤匠|九街烤腦花|仙女山鎮碗碗羊肉|磁器口陳麻花|楊記隆府|黃桷坪|梯坎豆花|山城小湯圓/.test(name)) return true;
-        if (/出發前往桃園機場/.test(name) && Number(item.amount) === 1200) return true;
+        if (/出發前往桃園機場/.test(name)) return true;
         return false;
       }
 
@@ -4146,8 +4155,9 @@
             return c;
           }
           function resolvePricing(mode, defaultSingle = false) {
-            if (mode === "single" || (defaultSingle && mode !== "group")) return "per_person";
-            return "total";
+            if (mode === "total" || mode === "group") return "total";
+            if (mode === "single") return "per_person";
+            return defaultSingle ? "per_person" : "total";
           }
 
           // A. 四大餐食 (早餐、午餐、晚餐、點心飲料) 預算 vs 實際支出
@@ -4350,12 +4360,17 @@
             });
           }
 
-          // E. 時間軸 events 補充檢視 (若某項自費活動未在上述預算與實際費用頁面中列出，才作為補充補入，徹底杜絕重複)
+          // E. 時間軸 events 補充檢視 (若某項自費活動未在主行程【預算與實際費用】頁面中列出，才作為補充補入，徹底杜絕重複)
           if (dayObj.events && dayObj.events.length > 0) {
             function cleanKey(str) {
               return String(str || '').replace(/[\s\W_]+/g, '').toLowerCase();
             }
             const existingNames = appState.dailyExpenses.filter(e => Number(e.day) === dayNum).map(e => cleanKey(e.name));
+
+            // 檢查當日是否已經有任何交通安排（例如台北機場接送、市區交通等）
+            const dayHasTransit = appState.dailyExpenses.some(e => Number(e.day) === dayNum && e.category === "transit");
+            const allHasAirportTransit = appState.dailyExpenses.some(e => /機場接送|專車接送|接送|送機|接機/.test(e.name || "")) ||
+                                         appState.majorExpenses.some(m => /機場接送|專車接送|接送|送機|接機/.test(m.name || ""));
 
             dayObj.events.forEach(ev => {
               const evTitle = ev.title || ev.name || ev.target || "";
@@ -4367,28 +4382,56 @@
               if (bCost <= 0 && aCost <= 0) return;
 
               const normTitle = cleanKey(evTitle);
-              // 若該名稱已在上述預算與實際費用頁面中有重疊或已有對應餐食/門票/交通，則不再重複補入
-              const isAlreadyCovered = existingNames.some(en => en && (en.includes(normTitle) || normTitle.includes(en) || (en.includes("李子壩") && normTitle.includes("李子壩")) || (en.includes("野果") && normTitle.includes("野果")) || (en.includes("羅漢寺") && normTitle.includes("羅漢寺")) || (en.includes("萬象城") && normTitle.includes("萬象城"))));
+              const noteText = String(ev.notes || ev.note || "");
+              const fullText = (evTitle + " " + noteText).toLowerCase();
+
+              // 機場專車接送專屬去重保護：若活動為專車前往/接送機場，且主行程已有機場交通或當日已有接駁，絕對去重排除！
+              const isAirportShuttle = /機場接送|專車接送|前往桃園機場|前往機場|出發前往|抵達機場|接機|送機|專車準時出發/.test(fullText);
+              if (isAirportShuttle && (allHasAirportTransit || dayHasTransit)) {
+                return; // 已經在主行程預算與實際費用頁面涵蓋（如台北機場接送），徹底排除重複！
+              }
+
+              // 一般去重比對
+              const isAlreadyCovered = existingNames.some(en => {
+                if (!en) return false;
+                if (en.includes(normTitle) || normTitle.includes(en)) return true;
+                if ((en.includes("李子壩") && normTitle.includes("李子壩")) ||
+                    (en.includes("野果") && normTitle.includes("野果")) ||
+                    (en.includes("羅漢寺") && normTitle.includes("羅漢寺")) ||
+                    (en.includes("萬象城") && normTitle.includes("萬象城")) ||
+                    (en.includes("天生三橋") && normTitle.includes("天生三橋")) ||
+                    (en.includes("接送") && normTitle.includes("接送")) ||
+                    (en.includes("機場") && normTitle.includes("機場"))) {
+                  return true;
+                }
+                return false;
+              });
               if (isAlreadyCovered) return;
 
+              // 分類判斷：結合 ev.type 與 fullText (包含標題與備註)
               let cat = "spot";
               let sub = "ticket";
-              const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
 
-              // 關鍵防護：優先嚴格遵循主程式行程活動之原始 type 與景點關鍵字！
               if (ev.type === "spot" || /景點|參觀|門票|風景區|博物館|古剎|古鎮|索道往返門票|天福官驛/.test(evTitle)) {
                 cat = "spot";
                 sub = "ticket";
-              } else if (ev.type === "food" || /火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n)) {
+              } else if (ev.type === "food" || /火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(fullText)) {
                 cat = "dining";
-                sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
-              } else if (ev.type === "trans" || /地鐵|捷運|包車|專車|網約車|租車|接送車|計程車|滴滴|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(evTitle)) {
+                sub = /午|lunch/.test(fullText) ? "lunch" : (/晚|夜市|dinner/.test(fullText) ? "dinner" : (/早|breakfast/.test(fullText) ? "breakfast" : "snack"));
+              } else if (ev.type === "trans" || /地鐵|捷運|包車|專車|接送|網約車|租車|接送車|計程車|滴滴|打車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡|前往/.test(fullText)) {
                 cat = "transit";
-                sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : "metro";
-              } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
+                sub = /滴滴|計程車|uber|grab|taxi|打車|專車|接送/.test(fullText) ? "taxi" : "metro";
+              } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(fullText)) {
                 cat = "other";
                 sub = "gift";
               }
+
+              // 幣別與分攤模式自動校正：
+              // 若為台灣起訖（台北、桃園、松山、高雄）則為 TWD，否則為 tripCurrency
+              const evCurr = ev.costCurr || (/台北|桃園|松山|高雄|台灣/.test(fullText) ? "TWD" : tripCurrency);
+              // 交通（專車、包車、接送、計程車）預設為全團總計 (total)，景點門票預設每人 (per_person)
+              const evMode = ev.pricingType || (cat === "transit" ? "total" : (cat === "spot" ? "per_person" : "total"));
+
               appState.dailyExpenses.push({
                 id: "d_sync_ev_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
                 day: dayNum,
@@ -4400,13 +4443,12 @@
                 amount: bCost > 0 ? bCost : aCost,
                 actualAmount: aCost,
                 isPaid: true,
-                currency: ev.costCurr || tripCurrency,
-                pricingType: ev.pricingType || (cat === "spot" ? "per_person" : "total"),
-                note: ev.notes || ev.note || "時間軸自費活動補充",
+                currency: evCurr,
+                pricingType: evMode,
+                note: ev.notes || ev.note || "行程活動記錄",
                 isSynced: true
               });
-            });
-          }
+            });          }
         });
       }
 
