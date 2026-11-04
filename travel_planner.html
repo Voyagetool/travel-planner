@@ -12874,29 +12874,40 @@ const firebaseConfig = {
                                 全團 ${curr.symbol}${estBrk.groupLocal.toLocaleString()} (≈NT$${estBrk.groupTwd.toLocaleString()})
                             </div>
                         </td>
-                        <td style="padding:8px 10px; text-align:right; width:185px; white-space:nowrap;">
+                        <td style="padding:8px 10px; text-align:right; width:135px; white-space:nowrap;">
                             <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px;">
                                 <span style="font-size:0.76rem; color:#0f766e; font-weight:700;">${itemCurr === 'TWD' ? 'NT$' : curr.symbol}</span>
                                 <input type="number" min="0" step="any" class="form-input" 
-                                       style="width:82px; padding:3px 6px; font-size:0.84rem; text-align:right; font-weight:800; color:#0f766e; border-color:${hasAct ? '#0f766e' : '#cbd5e1'}; background:${hasAct ? '#f0fdf4' : '#ffffff'};" 
+                                       style="width:88px; padding:3px 6px; font-size:0.84rem; text-align:right; font-weight:800; color:#0f766e; border-color:${hasAct ? '#0f766e' : '#cbd5e1'}; background:${hasAct ? '#f0fdf4' : '#ffffff'};" 
                                        value="${hasAct ? item.actualCost : ''}" 
                                        placeholder="${estVal}" 
                                        onchange="updateActualDayCategoryItem(${d.dayNum}, '${catKey}', ${idx}, 'actualCost', this.value)"
                                        title="輸入實際支付金額 (${itemMode === 'total' ? '全團總額' : '單人金額'})">
-                                <button type="button" class="n-btn" style="padding:2px 6px; font-size:0.68rem;" onclick="updateActualDayCategoryItem(${d.dayNum}, '${catKey}', ${idx}, 'actualCost', ${estVal})" title="一鍵將預估金額帶入實付">
-                                    ⚡同預估
-                                </button>
                             </div>
                             <div style="font-size:0.68rem; color:#0f766e; margin-top:2px;">
                                 全團實付 ${curr.symbol}${actBrk.groupLocal.toLocaleString()} (≈NT$${actBrk.groupTwd.toLocaleString()})
                             </div>
                         </td>
-                        <td style="padding:8px 8px; text-align:center; width:90px; white-space:nowrap;">
-                            ${hasAct ? `
-                                <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:${isItemSaved ? '#dcfce7' : '#fee2e2'}; color:${isItemSaved ? '#15803d' : '#b91c1c'};">
-                                    ${isItemSaved ? `🎉 省 ${curr.symbol}${diffGroupLocal.toLocaleString()}` : `⚠️ 超支 ${curr.symbol}${Math.abs(diffGroupLocal).toLocaleString()}`}
-                                </span>
-                            ` : `<span style="font-size:0.72rem; color:#94a3b8;">待核銷</span>`}
+                        <td style="padding:8px 8px; text-align:center; width:95px; white-space:nowrap;">
+                            ${hasAct ? (
+                                diffGroupLocal === 0 ? `
+                                    <span style="display:inline-block; padding:2px 7px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;">
+                                        ⚡ 同預估
+                                    </span>
+                                ` : (diffGroupLocal > 0 ? `
+                                    <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#dcfce7; color:#15803d;">
+                                        🎉 省 ${curr.symbol}${diffGroupLocal.toLocaleString()}
+                                    </span>
+                                ` : `
+                                    <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#fee2e2; color:#b91c1c;">
+                                        ⚠️ 超支 ${curr.symbol}${Math.abs(diffGroupLocal).toLocaleString()}
+                                    </span>
+                                `)
+                            ) : `
+                                <button type="button" class="n-btn" style="padding:2px 7px; font-size:0.7rem; color:#0284c7; background:#f0f9ff; border:1px solid #bae6fd; font-weight:700; border-radius:4px;" onclick="updateActualDayCategoryItem(${d.dayNum}, '${catKey}', ${idx}, 'actualCost', ${estVal})" title="點擊一鍵以預估金額核銷">
+                                    ⚡ 同預估
+                                </button>
+                            `}
                         </td>
                         <td style="padding:8px 8px; text-align:center; width:130px; white-space:nowrap;">
                             <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
@@ -13015,29 +13026,40 @@ const firebaseConfig = {
                                     全團 ${curr.symbol}${estBrk.groupLocal.toLocaleString()} (≈NT$${estBrk.groupTwd.toLocaleString()})
                                 </div>
                             </td>
-                            <td style="padding:8px 10px; text-align:right; width:185px; white-space:nowrap;">
+                            <td style="padding:8px 10px; text-align:right; width:135px; white-space:nowrap;">
                                 <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px;">
                                     <span style="font-size:0.76rem; color:#0f766e; font-weight:700;">${mCurr === 'TWD' ? 'NT$' : curr.symbol}</span>
                                     <input type="number" min="0" step="any" class="form-input" 
-                                           style="width:82px; padding:3px 6px; font-size:0.84rem; text-align:right; font-weight:800; color:#0f766e; border-color:${hasAct ? '#0f766e' : '#cbd5e1'}; background:${hasAct ? '#f0fdf4' : '#ffffff'};" 
+                                           style="width:88px; padding:3px 6px; font-size:0.84rem; text-align:right; font-weight:800; color:#0f766e; border-color:${hasAct ? '#0f766e' : '#cbd5e1'}; background:${hasAct ? '#f0fdf4' : '#ffffff'};" 
                                            value="${hasAct ? d[slot.actProp] : ''}" 
                                            placeholder="${estVal}" 
                                            onchange="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'actualCost', this.value)"
                                            title="輸入${slot.label}實際單人花費">
-                                    <button type="button" class="n-btn" style="padding:2px 6px; font-size:0.68rem; background:#ffffff;" onclick="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'actualCost', ${estVal})" title="一鍵將預估金額帶入實付">
-                                        ⚡同預估
-                                    </button>
                                 </div>
                                 <div style="font-size:0.68rem; color:#0f766e; margin-top:2px;">
                                     全團實付 ${curr.symbol}${actBrk.groupLocal.toLocaleString()} (≈NT$${actBrk.groupTwd.toLocaleString()})
                                 </div>
                             </td>
-                            <td style="padding:8px 8px; text-align:center; width:90px; white-space:nowrap;">
-                                ${hasAct ? `
-                                    <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:${isSavedItem ? '#dcfce7' : '#fee2e2'}; color:${isSavedItem ? '#15803d' : '#b91c1c'};">
-                                        ${isSavedItem ? `🎉 省 ${curr.symbol}${diffGroupLocal.toLocaleString()}` : `⚠️ 超支 ${curr.symbol}${Math.abs(diffGroupLocal).toLocaleString()}`}
-                                    </span>
-                                ` : `<span style="font-size:0.72rem; color:#94a3b8;">待核銷</span>`}
+                            <td style="padding:8px 8px; text-align:center; width:95px; white-space:nowrap;">
+                                ${hasAct ? (
+                                    diffGroupLocal === 0 ? `
+                                        <span style="display:inline-block; padding:2px 7px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;">
+                                            ⚡ 同預估
+                                        </span>
+                                    ` : (diffGroupLocal > 0 ? `
+                                        <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#dcfce7; color:#15803d;">
+                                            🎉 省 ${curr.symbol}${diffGroupLocal.toLocaleString()}
+                                        </span>
+                                    ` : `
+                                        <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#fee2e2; color:#b91c1c;">
+                                            ⚠️ 超支 ${curr.symbol}${Math.abs(diffGroupLocal).toLocaleString()}
+                                        </span>
+                                    `)
+                                ) : `
+                                    <button type="button" class="n-btn" style="padding:2px 7px; font-size:0.7rem; color:#0284c7; background:#f0f9ff; border:1px solid #bae6fd; font-weight:700; border-radius:4px;" onclick="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'actualCost', ${estVal})" title="點擊一鍵以預估金額核銷">
+                                        ⚡ 同預估
+                                    </button>
+                                `}
                             </td>
                             <td style="padding:8px 8px; text-align:center; width:130px; white-space:nowrap;">
                                 <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
@@ -13201,8 +13223,8 @@ const firebaseConfig = {
                                         <th style="padding:7px 10px;">分類 / 項目名稱 (可直接點擊修改)</th>
                                         <th style="padding:7px 8px; width:175px;">計費模式 / 幣別</th>
                                         <th style="padding:7px 10px; text-align:right; width:145px;">預估費用</th>
-                                        <th style="padding:7px 10px; text-align:right; width:185px;">實際花費 (實付)</th>
-                                        <th style="padding:7px 8px; text-align:center; width:90px;">差額對比</th>
+                                        <th style="padding:7px 10px; text-align:right; width:135px;">實際花費 (實付)</th>
+                                        <th style="padding:7px 8px; text-align:center; width:95px;">差額對比</th>
                                         <th style="padding:7px 8px; text-align:center; width:130px;">🧾 發票紀錄</th>
                                         <th style="padding:7px 8px; text-align:right; width:44px;">操作</th>
                                     </tr>
