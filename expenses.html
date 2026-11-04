@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.10</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.11</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -4376,10 +4376,12 @@
             }
           ];
 
+          const coveredMealSlots = new Set();
           MEAL_CONFIGS.forEach(mc => {
             const hasAct = mc.actCost !== undefined && mc.actCost !== null && mc.actCost !== "";
             const actVal = hasAct ? Number(mc.actCost) : mc.cost;
             if (mc.cost > 0 || (hasAct && actVal > 0) || (mc.title && mc.title.trim() && mc.title !== "自理" && mc.title !== "自理 / 彈性購買")) {
+              coveredMealSlots.add(mc.slot);
               appState.dailyExpenses.push({
                 id: `d_sync_field_${dayNum}_dining_${mc.slot}`,
                 day: dayNum,
@@ -4592,6 +4594,29 @@
               } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(fullText)) {
                 cat = "other";
                 sub = "gift";
+              }
+
+              // 關鍵防重複攔截！以主行程「預算與實際費用」分頁為最高權威！
+              // 1. 餐飲嚴格槽位唯一性防護：若該天的該槽位（早/中/晚/點心）已在主手帳預算分頁明確記錄，絕對禁止時間軸 events 重複加入！
+              if (cat === "dining") {
+                if (coveredMealSlots.has(sub)) {
+                  return; // 徹底排除「野果 Yeego 晚餐」、「萬象城商圈點心」等重複幽靈項目！
+                }
+                coveredMealSlots.add(sub);
+              }
+
+              // 2. 交通防重複保護：若主行程「預算與實際費用」已有交通安排（d.transports 或 transportCost），時間軸上的打車/交通事件不重複補入！
+              if (cat === "transit") {
+                if (hasSyncedTrans || dayHasTransit) {
+                  return; // 徹底排除時間軸上的重複打車！
+                }
+              }
+
+              // 3. 景點門票防重複保護：若主行程「預算與實際費用」已有門票安排（d.spots 或 spotCost），時間軸上的景點事件不重複補入！
+              if (cat === "spot") {
+                if (hasSyncedSpots) {
+                  return; // 徹底排除時間軸上的重複景點！
+                }
               }
 
               // 幣別與分攤模式自動校正：
