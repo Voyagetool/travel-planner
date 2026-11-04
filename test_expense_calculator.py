@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.5
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.6
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.5" in html, "未同步升級版本號至 V3.3.5"
+    assert "V3.3.6" in html, "未同步升級版本號至 V3.3.6"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -107,6 +107,17 @@ def test_html_structure_and_features():
     assert "dayObj.transports" in html, "缺少主行程 transports 交通明細陣列同步"
     assert "dayObj.spots" in html, "缺少主行程 spots 景點門票明細陣列同步"
     assert "dayObj.extraCosts" in html, "缺少主行程 extraCosts 自訂雜支明細陣列同步"
+
+    
+    # 15. 驗證第四天景點不誤入交通與主行程活躍計畫自動偵測跳轉
+    assert "notion_travel_planner_v9_sidebar_state" in html, "缺少主行程 sidebar 狀態快取讀取"
+    assert "mainState.activePlanId" in html, "缺少主行程 activePlanId 自動跳轉讀取"
+    assert "window.addEventListener('focus'" in html, "缺少視窗獲得焦點自動切換計畫監聽"
+    assert 'ev.type === "spot"' in html, "缺少景點類型優先遵循原則"
+
+    for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
+        with open(page, "r", encoding="utf-8") as pf:
+            assert "V3.3.6" in pf.read(), f"{page} 未同步升級至 V3.3.6"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

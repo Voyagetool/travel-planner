@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.5</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.6</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -2137,11 +2137,29 @@
     };
 
     function getTargetPlanId() {
+      // 1. 優先檢查 URL 參數中的 plan
       const urlParams = new URLSearchParams(window.location.search);
       const qPlan = urlParams.get('plan');
       if (qPlan && qPlan.trim()) return qPlan.trim();
+
+      // 2. 核心升級：若 URL 未指定 plan，自動讀取主行程手帳當前最新活躍的計畫 (activePlanId)！
+      try {
+        const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+        if (raw) {
+          const mainState = JSON.parse(raw);
+          if (mainState && mainState.activePlanId) {
+            return mainState.activePlanId;
+          }
+        }
+      } catch (e) {
+        console.warn('讀取主手帳 activePlanId 失敗', e);
+      }
+
+      // 3. 沿用現存 currentPlanId
       if (currentPlanId && currentPlanId.trim()) return currentPlanId.trim();
-      return "plan-chongqing";
+
+      // 4. 預設返回重慶
+      return 'plan-chongqing';
     }
 
     function initPlanSwitcherFromLocal() {
@@ -2166,7 +2184,7 @@
     }
 
     function initApp() {
-      // 0. 第一時間常駐初始化旅行計畫選單，確保重新整理頁面絕對不消失！
+      // 0. 第一時間優先初始化旅行計畫選單，確保重新整理頁面絕對不消失！
       initPlanSwitcherFromLocal();
 
       currentPlanId = getTargetPlanId();
@@ -2174,8 +2192,22 @@
       renderAll();
       initFirebaseSync();
 
-      // 本機優先：嘗試從主行程中取得最新行程並自動鏡像同步
+      // 核心：嘗試從主行程獲取最新設定並自動鏡像同步
       tryAutoSyncFromLocalMainPlan();
+
+      // 視窗獲得焦點時自動偵測主行程最新活躍計畫並平滑切換
+      window.addEventListener('focus', () => {
+        try {
+          const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+          if (raw) {
+            const mainState = JSON.parse(raw);
+            if (mainState && mainState.activePlanId && mainState.activePlanId !== currentPlanId) {
+              console.log('偵測到主行程切換至:', mainState.activePlanId);
+              switchPlanFromSelect(mainState.activePlanId);
+            }
+          }
+        } catch (e) {}
+      });
     }
 
     function getCloudRoomId() {
@@ -4342,17 +4374,21 @@
               let cat = "spot";
               let sub = "ticket";
               const n = (evTitle + " " + (ev.notes || ev.note || "")).toLowerCase();
-              if (/火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n) || ev.type === "food") {
+
+              // 關鍵防護：優先嚴格遵循主程式行程活動之原始 type 與景點關鍵字！
+              if (ev.type === "spot" || /景點|參觀|門票|風景區|博物館|古剎|古鎮|索道往返門票|天福官驛/.test(evTitle)) {
+                cat = "spot";
+                sub = "ticket";
+              } else if (ev.type === "food" || /火鍋|麵|食|餐|烤|小吃|酒|雞|飯|茶|豆花|羊肉|湯圓|拉麵|壽司|生魚片|燒肉|居酒屋|定食|披薩|漢堡|牛排|咖啡|甜點|下午茶|早餐|午餐|晚餐|宵夜|cafe|bistro|bar/.test(n)) {
                 cat = "dining";
                 sub = /午|lunch/.test(n) ? "lunch" : (/晚|夜市|dinner/.test(n) ? "dinner" : (/早|breakfast/.test(n) ? "breakfast" : "snack"));
-              } else if (/地鐵|捷運|車|滴滴|計程車|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(n) || ev.type === "trans") {
+              } else if (ev.type === "trans" || /地鐵|捷運|包車|專車|網約車|租車|接送車|計程車|滴滴|公車|客運|單車|jr|新幹線|uber|grab|taxi|metro|bus|train|輪渡/.test(evTitle)) {
                 cat = "transit";
                 sub = /滴滴|計程車|uber|grab|taxi/.test(n) ? "taxi" : "metro";
               } else if (/伴手禮|特產|底料|買|購物|藥妝|outlet|免稅|gift|shop/.test(n)) {
                 cat = "other";
                 sub = "gift";
               }
-
               appState.dailyExpenses.push({
                 id: "d_sync_ev_" + dayNum + "_" + (ev.id || Math.random().toString(36).slice(2, 7)),
                 day: dayNum,
