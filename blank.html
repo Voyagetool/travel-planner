@@ -5516,7 +5516,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.3.7</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.3.8</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -11965,38 +11965,45 @@ const firebaseConfig = {
         }
 
         // ==========================================
-        // V3.3.7 費用核銷日常項目完整分類體系 (支援最前面分類即時下拉切換與更新)
+        // V3.3.8 費用核銷日常項目完整 7 大標準分類體系 (對齊第二張截圖標準)
+        // 1. 交通 (Transportation)
+        // 2. 住宿 (Accommodation)
+        // 3. 行程與體驗 (Activities)
+        // 4. 景點與門票 (Sightseeing)
+        // 5. 飲食餐飲 (Food & Dining)
+        // 6. 購物與紀念品 (Shopping)
+        // 7. 雜支與行前準備 (Others/Prep)
         // ==========================================
         const EXPENSE_ITEM_CATEGORIES = {
-            transit: { key: 'transit', label: '交通', icon: '🚕', color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' },
-            spot: { key: 'spot', label: '門票', icon: '🎫', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-            snack: { key: 'snack', label: '點心飲料', icon: '🧋', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-            dining: { key: 'dining', label: '餐飲美食', icon: '🍽️', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
-            shopping: { key: 'shopping', label: '購物', icon: '🛍️', color: '#db2777', bg: '#fdf2f8', border: '#fbcfe8' },
-            massage: { key: 'massage', label: '按摩', icon: '💆', color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' },
-            activity: { key: 'activity', label: '娛樂', icon: '🎭', color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
-            hotel: { key: 'hotel', label: '住宿', icon: '🏨', color: '#7c3aed', bg: '#faf5ff', border: '#e9d5ff' },
-            breakfast: { key: 'breakfast', label: '早餐', icon: '🍳', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-            lunch: { key: 'lunch', label: '午餐', icon: '🍱', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-            dinner: { key: 'dinner', label: '晚餐', icon: '🍲', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-            other: { key: 'other', label: '其他', icon: '💼', color: '#d97706', bg: '#fffbeb', border: '#fde68a' }
+            transit: { key: 'transit', label: '交通 (Transportation)', shortLabel: '交通', icon: '🚕', color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' },
+            hotel: { key: 'hotel', label: '住宿 (Accommodation)', shortLabel: '住宿', icon: '🏨', color: '#7c3aed', bg: '#faf5ff', border: '#e9d5ff' },
+            activity: { key: 'activity', label: '行程與體驗 (Activities)', shortLabel: '行程與體驗', icon: '🏄', color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' },
+            spot: { key: 'spot', label: '景點與門票 (Sightseeing)', shortLabel: '景點與門票', icon: '🎫', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+            dining: { key: 'dining', label: '飲食餐飲 (Food & Dining)', shortLabel: '飲食餐飲', icon: '🍽️', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+            shopping: { key: 'shopping', label: '購物與紀念品 (Shopping)', shortLabel: '購物與紀念品', icon: '🛍️', color: '#db2777', bg: '#fdf2f8', border: '#fbcfe8' },
+            other: { key: 'other', label: '雜支與行前準備 (Others/Prep)', shortLabel: '雜支與行前準備', icon: '💼', color: '#d97706', bg: '#fffbeb', border: '#fde68a' }
         };
 
         function getActualExpenseItemCatKey(item, catKey) {
-            if (item && item.category && EXPENSE_ITEM_CATEGORIES[item.category]) {
-                return item.category;
+            if (item && item.category) {
+                const c = item.category;
+                if (EXPENSE_ITEM_CATEGORIES[c]) return c;
+                // 向下相容歷史次分類對應至 7 大標準類別
+                if (c === 'snack' || c === 'breakfast' || c === 'lunch' || c === 'dinner') return 'dining';
+                if (c === 'massage') return 'activity';
+                if (c === 'entertainment') return 'activity';
             }
             if (catKey === 'transports') return 'transit';
             if (catKey === 'spots') return 'spot';
             if (item && item.title) {
                 const t = String(item.title);
-                if (t.includes('茶') || t.includes('飲') || t.includes('奶茶') || t.includes('咖啡') || t.includes('點心') || t.includes('蛋糕') || t.includes('冰')) return 'snack';
-                if (t.includes('飯') || t.includes('麵') || t.includes('餐') || t.includes('火鍋') || t.includes('燒烤') || t.includes('料理')) return 'dining';
-                if (t.includes('車') || t.includes('地鐵') || t.includes('打車') || t.includes('高鐵') || t.includes('機票') || t.includes('接送')) return 'transit';
-                if (t.includes('門票') || t.includes('博物館') || t.includes('景點') || t.includes('影城') || t.includes('園')) return 'spot';
-                if (t.includes('按摩') || t.includes('spa') || t.includes('SPA') || t.includes('足浴') || t.includes('放鬆')) return 'massage';
-                if (t.includes('買') || t.includes('購') || t.includes('伴手禮') || t.includes('特產') || t.includes('紀念品')) return 'shopping';
-                if (t.includes('劇') || t.includes('秀') || t.includes('表演') || t.includes('展覽') || t.includes('活動')) return 'activity';
+                if (t.includes('車') || t.includes('地鐵') || t.includes('打車') || t.includes('高鐵') || t.includes('機票') || t.includes('接送') || t.includes('Suica') || t.includes('ICOCA') || t.includes('過路費') || t.includes('租車') || t.includes('Uber')) return 'transit';
+                if (t.includes('飯店') || t.includes('旅館') || t.includes('民宿') || t.includes('住宿') || t.includes('青旅') || t.includes('溫泉')) return 'hotel';
+                if (t.includes('一日遊') || t.includes('體驗') || t.includes('滑雪') || t.includes('按摩') || t.includes('SPA') || t.includes('spa') || t.includes('遊船') || t.includes('Klook') || t.includes('KKday') || t.includes('手作')) return 'activity';
+                if (t.includes('門票') || t.includes('博物館') || t.includes('景點') || t.includes('影城') || t.includes('樂園') || t.includes('迪士尼') || t.includes('展望台') || t.includes('展覽')) return 'spot';
+                if (t.includes('茶') || t.includes('飲') || t.includes('奶茶') || t.includes('咖啡') || t.includes('點心') || t.includes('蛋糕') || t.includes('飯') || t.includes('麵') || t.includes('餐') || t.includes('火鍋') || t.includes('小吃') || t.includes('補給')) return 'dining';
+                if (t.includes('買') || t.includes('購') || t.includes('伴手禮') || t.includes('特產') || t.includes('紀念品') || t.includes('藥妝') || t.includes('免稅')) return 'shopping';
+                if (t.includes('網卡') || t.includes('eSIM') || t.includes('保險') || t.includes('行李') || t.includes('寄物') || t.includes('小費') || t.includes('簽證')) return 'other';
             }
             return 'other';
         }
@@ -12063,18 +12070,16 @@ const firebaseConfig = {
                         <td style="padding:8px 10px;">
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <select class="form-input actual-cat-select" 
-                                        style="padding:2px 6px; font-size:0.75rem; font-weight:700; color:${catCfg.color}; background:${catCfg.bg}; border:1px solid ${catCfg.border}; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0;" 
+                                        style="padding:2px 6px; font-size:0.75rem; font-weight:700; color:${catCfg.color}; background:${catCfg.bg}; border:1px solid ${catCfg.border}; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0; max-width:210px;" 
                                         onchange="changeActualDayItemCategory(${d.dayNum}, '${catKey}', ${idx}, this.value)"
-                                        title="點擊切換或更新費用分類">
-                                    <option value="transit" ${activeCatKey === 'transit' ? 'selected' : ''}>🚕 交通</option>
-                                    <option value="spot" ${activeCatKey === 'spot' ? 'selected' : ''}>🎫 門票</option>
-                                    <option value="snack" ${activeCatKey === 'snack' ? 'selected' : ''}>🧋 點心飲料</option>
-                                    <option value="dining" ${activeCatKey === 'dining' ? 'selected' : ''}>🍽️ 餐飲美食</option>
-                                    <option value="shopping" ${activeCatKey === 'shopping' ? 'selected' : ''}>🛍️ 購物</option>
-                                    <option value="massage" ${activeCatKey === 'massage' ? 'selected' : ''}>💆 按摩</option>
-                                    <option value="activity" ${activeCatKey === 'activity' ? 'selected' : ''}>🎭 娛樂</option>
-                                    <option value="hotel" ${activeCatKey === 'hotel' ? 'selected' : ''}>🏨 住宿</option>
-                                    <option value="other" ${activeCatKey === 'other' ? 'selected' : ''}>💼 其他</option>
+                                        title="點擊切換費用分類 (7大標準分類)">
+                                    <option value="transit" ${activeCatKey === 'transit' ? 'selected' : ''}>🚕 1. 交通 (Transportation)</option>
+                                    <option value="hotel" ${activeCatKey === 'hotel' ? 'selected' : ''}>🏨 2. 住宿 (Accommodation)</option>
+                                    <option value="activity" ${activeCatKey === 'activity' ? 'selected' : ''}>🏄 3. 行程與體驗 (Activities)</option>
+                                    <option value="spot" ${activeCatKey === 'spot' ? 'selected' : ''}>🎫 4. 景點與門票 (Sightseeing)</option>
+                                    <option value="dining" ${activeCatKey === 'dining' ? 'selected' : ''}>🍽️ 5. 飲食餐飲 (Food & Dining)</option>
+                                    <option value="shopping" ${activeCatKey === 'shopping' ? 'selected' : ''}>🛍️ 6. 購物與紀念品 (Shopping)</option>
+                                    <option value="other" ${activeCatKey === 'other' ? 'selected' : ''}>💼 7. 雜支與行前準備 (Others/Prep)</option>
                                 </select>
                                 <input type="text" class="form-input" style="flex:1; min-width:130px; padding:4px 8px; font-size:0.84rem; font-weight:700; color:#1e293b;" 
                                        value="${escapeHtml(item.title || '')}" 
@@ -12216,15 +12221,16 @@ const firebaseConfig = {
                             <td style="padding:8px 10px;">
                                 <div style="display:flex; align-items:center; gap:6px;">
                                     <select class="form-input actual-cat-select" 
-                                            style="padding:2px 6px; font-size:0.75rem; font-weight:800; color:#b45309; background:#fef3c7; border:1px solid #fde68a; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0;" 
+                                            style="padding:2px 6px; font-size:0.75rem; font-weight:800; color:#c2410c; background:#fff7ed; border:1px solid #fed7aa; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0; max-width:210px;" 
                                             onchange="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'category', this.value)"
-                                            title="點擊切換或更新餐食分類">
-                                        <option value="breakfast" ${slot.key === 'breakfast' ? 'selected' : ''}>🍳 早餐</option>
-                                        <option value="lunch" ${slot.key === 'lunch' ? 'selected' : ''}>🍱 午餐</option>
-                                        <option value="dinner" ${slot.key === 'dinner' ? 'selected' : ''}>🍲 晚餐</option>
-                                        <option value="snack" ${slot.key === 'snack' ? 'selected' : ''}>🧋 點心飲料</option>
-                                        <option value="dining" ${(d[slot.key + 'Category'] === 'dining') ? 'selected' : ''}>🍽️ 餐飲美食</option>
-                                        <option value="other" ${(d[slot.key + 'Category'] === 'other') ? 'selected' : ''}>💼 其他餐飲</option>
+                                            title="點擊切換餐食分類 (7大標準分類)">
+                                        <option value="dining" selected>🍽️ 5. 飲食餐飲 (${slot.label})</option>
+                                        <option value="transit">🚕 1. 交通 (Transportation)</option>
+                                        <option value="hotel">🏨 2. 住宿 (Accommodation)</option>
+                                        <option value="activity">🏄 3. 行程與體驗 (Activities)</option>
+                                        <option value="spot">🎫 4. 景點與門票 (Sightseeing)</option>
+                                        <option value="shopping">🛍️ 6. 購物與紀念品 (Shopping)</option>
+                                        <option value="other">💼 7. 雜支與行前準備 (Others/Prep)</option>
                                     </select>
                                     <input type="text" class="form-input" style="flex:1; min-width:130px; padding:4px 8px; font-size:0.84rem; color:#1e293b; background:#ffffff;" 
                                            value="${escapeHtml(d[slot.titleProp] || '')}" 
@@ -12863,7 +12869,7 @@ const firebaseConfig = {
             showToast('success', `已在 Day ${dayNum} 新增一筆花費項目，最前面可自由下拉選取分類！`);
         }
 
-        // 即時切換並更新單日花費項目的分類 (交通 / 門票 / 點心飲料 / 餐飲 / 購物 / 按摩 / 娛樂 / 住宿 / 其他)
+        // 即時切換並更新單日花費項目的分類 (7 大標準分類：交通/住宿/行程與體驗/景點與門票/飲食餐飲/購物與紀念品/雜支與行前準備)
         function changeActualDayItemCategory(dayNum, fromCatKey, idx, newCatKey) {
             const plan = getCurrentPlan();
             if (!plan) return;
