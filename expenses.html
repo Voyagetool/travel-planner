@@ -1425,48 +1425,296 @@
       }
     }
 
-    /* 響應式：手機與小平板視圖 (< 860px) */
-    @media (max-width: 860px) {
+    /* 桌面端預設隱藏手機專屬視圖切換列 */
+    .mobile-view-tabs {
+      display: none;
+    }
+
+    /* 響應式：手機與小平板視圖 (<= 768px Mobile-First 最佳化) */
+    @media (max-width: 768px) {
       body {
         height: auto;
         min-height: 100vh;
         overflow-y: auto;
+        overflow-x: hidden;
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 12px));
       }
 
+      /* 頂部 Header 在手機端精準防護：單行不換行、杜絕漂浮遮擋下方內容 */
+      .app-header {
+        min-height: 52px;
+        height: 52px;
+        padding: 0 10px;
+        flex-wrap: nowrap !important;
+        gap: 6px;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+
+      .brand-section {
+        flex-wrap: nowrap !important;
+        gap: 6px;
+        min-width: 0;
+        flex: 1;
+        align-items: center;
+      }
+
+      .back-btn {
+        padding: 5px 8px;
+        font-size: 12px;
+        white-space: nowrap !important;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: var(--radius-sm);
+      }
+
+      .trip-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        flex: 1;
+        flex-wrap: nowrap !important;
+      }
+
+      .plan-switcher-select {
+        max-width: 140px;
+        min-width: 80px;
+        padding: 4px 6px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 1;
+        border-radius: var(--radius-sm);
+      }
+
+      /* 手機端隱藏不必要的裝飾文字，防止擠壓版面 */
+      .trip-title, 
+      .okr-version-tag, 
+      #tripDaysBadge, 
+      #tripMembersBadge {
+        display: none !important;
+      }
+
+      /* 雲端連線狀態徽章：手機端縮為小徽章，絕對不懸浮覆蓋下方卡片 */
+      #cloudStatusBadge {
+        position: static !important;
+        margin: 0 !important;
+        padding: 4px 7px;
+        font-size: 11px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        border-radius: 999px;
+      }
+      #cloudStatusBadge #cloudStatusText {
+        display: none !important;
+      }
+      #cloudStatusBadge::after {
+        content: "雲端";
+        font-weight: 700;
+        font-size: 11px;
+      }
+
+      .header-actions {
+        flex-wrap: nowrap !important;
+        gap: 4px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+
+      #currencyToggleBtn {
+        padding: 5px 8px;
+        font-size: 12px;
+        white-space: nowrap;
+        font-weight: 700;
+      }
+
+      .btn-sync {
+        padding: 6px 8px;
+      }
+      .btn-sync span {
+        display: none;
+      }
+
+      .header-actions .btn-excel,
+      .header-actions .btn-primary {
+        display: none !important; /* 底部已有常駐的大按鈕與工具 */
+      }
+
+      /* 手機專屬頂部視圖切換列 (每日明細 vs 統計總覽) */
+      .mobile-view-tabs {
+        display: flex !important;
+        align-items: center;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+        padding: 6px 12px;
+        gap: 8px;
+        position: sticky;
+        top: 52px;
+        z-index: 40;
+        box-sizing: border-box;
+      }
+
+      .mobile-tab-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        background: var(--bg-subtle);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: inherit;
+      }
+
+      .mobile-tab-btn.active {
+        background: var(--text-main);
+        color: #ffffff;
+        border-color: var(--text-main);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* 工作區結構 */
       .app-workspace {
         flex-direction: column;
         height: auto;
         overflow: visible;
-        padding-bottom: 80px;
+        padding-bottom: 0;
       }
 
+      /* 手機預設：顯示每日明細，隱藏龐大側邊欄 */
       .sidebar-dashboard {
+        display: none !important;
         width: 100%;
         border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        padding: 16px;
-        gap: 16px;
-      }
-
-      .main-content {
+        border-bottom: none;
+        padding: 12px;
+        gap: 12px;
+        height: auto;
         overflow: visible;
       }
 
-      .view-container {
-        padding: 16px;
-        gap: 16px;
+      .main-content {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+        min-width: 0;
+        overflow: visible;
       }
 
-      .mobile-bottom-bar {
-        display: flex;
+      /* 當切換到【統計總覽】時：顯示側邊欄，隱藏天數明細 */
+      body.mobile-stats-active .sidebar-dashboard {
+        display: flex !important;
       }
 
-      .app-header {
-        padding: 0 14px;
+      body.mobile-stats-active .main-content {
+        display: none !important;
       }
 
-      .brand-title-text {
+      /* 天數導覽條在手機端吸頂跟隨 */
+      .days-nav-bar {
+        position: sticky;
+        top: 98px; /* 52px header + 46px mobile tabs */
+        z-index: 35;
+        padding: 8px 10px;
+        gap: 6px;
+        scrollbar-width: none;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+      }
+      .days-nav-bar::-webkit-scrollbar {
         display: none;
+      }
+
+      .day-tab-btn {
+        padding: 5px 11px;
+        font-size: 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .view-container {
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .day-summary-bar {
+        padding: 12px 14px;
+        gap: 10px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .day-summary-title h2 {
+        font-size: 16px;
+      }
+      .day-summary-subtitle {
+        font-size: 11.5px;
+      }
+      .day-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        width: 100%;
+        border-top: 1px dashed var(--border-color);
+        padding-top: 8px;
+      }
+      .metric-pill {
+        align-items: flex-start;
+      }
+      .metric-pill-val {
+        font-size: 14.5px;
+      }
+
+      .group-header {
+        padding: 10px 12px;
+      }
+      .expense-item-row {
+        padding: 10px 12px;
+        gap: 8px;
+      }
+      .item-actions {
+        opacity: 0.85;
+      }
+
+      /* 底部浮動條在手機端最佳化 */
+      .mobile-bottom-bar {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 45;
+        padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 12px));
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+      }
+      .mobile-total-val {
+        font-size: 15px;
+      }
+      .mobile-add-btn {
+        padding: 8px 16px;
+        font-size: 13.5px;
       }
 
       .modal-backdrop {
@@ -1489,6 +1737,25 @@
         to {
           transform: translateY(0);
         }
+      }
+    }
+
+    /* 極小螢幕 (<= 400px，如 iPhone SE) 微調 */
+    @media (max-width: 400px) {
+      .plan-switcher-select {
+        max-width: 105px;
+      }
+      .back-btn span {
+        display: none;
+      }
+      .mobile-total-label {
+        display: none;
+      }
+      .mobile-total-val {
+        font-size: 13.5px;
+      }
+      .day-metrics {
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -1540,7 +1807,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.12</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.4.1</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -1579,6 +1846,18 @@
       </button>
     </div>
   </header>
+
+  <!-- 手機專屬視圖切換列 (每日明細 vs 統計總覽) -->
+  <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="手機端視圖切換">
+    <button class="mobile-tab-btn active" id="tabBtnDetails" onclick="switchMobileView('details')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>📅 每日明細</span>
+    </button>
+    <button class="mobile-tab-btn" id="tabBtnStats" onclick="switchMobileView('stats')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>📊 統計總覽</span>
+    </button>
+  </nav>
 
   <!-- 主工作區 -->
   <main class="app-workspace">
@@ -2211,6 +2490,25 @@
 
     let appState = null;
     let currentSelectedDay = "all";
+    let currentMobileView = "details"; // "details" | "stats"
+
+    // 手機端視圖切換 (每日明細 vs 統計總覽)
+    function switchMobileView(viewMode) {
+      currentMobileView = viewMode;
+      const tabDetails = document.getElementById("tabBtnDetails");
+      const tabStats = document.getElementById("tabBtnStats");
+      
+      if (viewMode === "stats") {
+        document.body.classList.add("mobile-stats-active");
+        if (tabDetails) tabDetails.classList.remove("active");
+        if (tabStats) tabStats.classList.add("active");
+        renderSidebarDashboard();
+      } else {
+        document.body.classList.remove("mobile-stats-active");
+        if (tabDetails) tabDetails.classList.add("active");
+        if (tabStats) tabStats.classList.remove("active");
+      }
+    }
 
     let currentPlanId = "";
     let availablePlans = {};
@@ -3050,6 +3348,9 @@
 
     function selectDayTab(day) {
       currentSelectedDay = day;
+      if (window.innerWidth <= 768 && currentMobileView === "stats") {
+        switchMobileView("details");
+      }
       renderDaysNav();
       renderSidebarDashboard();
       renderMainView();
