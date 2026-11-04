@@ -1433,7 +1433,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.3.7</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.3.8</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -3942,6 +3942,26 @@
       const roomId = getCloudRoomId();
       const targetId = currentPlanId || getTargetPlanId();
 
+      // 關鍵升級：點擊同步時，第一時間立即自 localStorage 重新撈取主手帳之最新編輯資料，杜絕使用過期快取！
+      try {
+        const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
+        if (raw) {
+          const mainAppState = JSON.parse(raw);
+          if (mainAppState && mainAppState.plans) {
+            availablePlans = Object.assign({}, DEFAULT_PRESET_PLANS, mainAppState.plans);
+            const pId = targetId || mainAppState.activePlanId || currentPlanId || "plan-chongqing";
+            if (pId && availablePlans[pId]) {
+              currentPlanId = pId;
+              updatePlanSwitcherUI(availablePlans, pId);
+              processPlanSync(availablePlans[pId], false);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("自本地即時撈取主手帳失敗", e);
+      }
+
       if (availablePlans && targetId && availablePlans[targetId]) {
         processPlanSync(availablePlans[targetId], false);
         return;
@@ -4026,7 +4046,7 @@
         if (item.isSynced || item.isDemoPreset) return true;
         const id = String(item.id || '');
         // 清理所有舊的同步前綴
-        if (id.startsWith('acc_sync_') || id.startsWith('d_sync_') || id.startsWith('m_flight_sync') || id.startsWith('m_sync_')) return true;
+        if (id.startsWith('acc_sync_') || id.startsWith('d_sync_') || id.startsWith('m_flight_sync') || id.startsWith('m_trans_sync_') || id.startsWith('m_sync_')) return true;
         // 清理所有內建 Demo 範本假資料 ID (acc_1, acc_2, acc_3, m_flight, m_insurance, m_sim, e1_1 ~ e7_2)
         if (/^acc_[123]$/.test(id) || /^m_(flight|insurance|sim)$/.test(id)) return true;
         if (/^e[1-7]_\d+$/.test(id)) return true;
@@ -4080,20 +4100,78 @@
         }
       }
 
-      // 2. 同步住宿 (市區精選酒店 / 解放碑 Moxy 等，完整串接地點與日期)
-      if (plan.hotels && plan.hotels.length > 0) {
+      // 1.5 同步大項交通專案 (高鐵/包車/租車/保險/eSIM: plan.majorTransports)
+      if (Array.isArray(plan.majorTransports) && plan.majorTransports.length > 0) {
+        plan.majorTransports.forEach((mt, mtIdx) => {
+          const est = Number(mt.cost || 0);
+          const hasAct = (mt.actualCost !== undefined && mt.actualCost !== null && mt.actualCost !== "");
+          const act = hasAct ? Number(mt.actualCost) : est;
+          const title = mt.title || mt.name || "大項交通/專案";
+          if (est > 0 || act > 0 || title) {
+            let cat = "transit";
+            let transType = mt.category || "train";
+            if (transType === "flight") cat = "flight";
+
+            const mtCurr = (mt.curr === "TWD") ? "TWD" : (mt.curr === "LOCAL" || !mt.curr ? tripCurrency : mt.curr);
+            const mtPricing = (mt.mode === "total" || mt.mode === "group") ? "total" : "per_person";
+
+            appState.majorExpenses.push({
+              id: "m_trans_sync_" + mtIdx,
+              category: cat,
+              transitType: transType,
+              route: mt.route || title,
+              name: title,
+              amount: est > 0 ? est : act,
+              actualAmount: act,
+              isPaid: mt.isPaid !== false && mt.paid !== false,
+              currency: mtCurr,
+              pricingType: mtPricing,
+              note: mt.notes || "主行程預算與實際費用 (大項交通)",
+              isSynced: true
+            });
+          }
+        });
+      }
+
+      // 2. 深度同步住宿：以主行程【預算與實際費用】頁面之飯店設定為權威依據！
+      const hotelList = (plan.hotels && plan.hotels.length > 0) ? plan.hotels : (plan.hotel ? [plan.hotel] : []);
+      if (hotelList.length > 0) {
         let currentDayOffset = 1;
-        plan.hotels.forEach((h, idx) => {
+        hotelList.forEach((h, idx) => {
           const nights = Number(h.nights) || Math.max(1, daysCount - 1);
-          const cost = Number(h.costTotal || h.costPerNight || h.cost || h.price || 0);
-          const pricingType = h.costTotal ? "total_stay" : "per_night";
-          const defAmount = tripCurrency === 'JPY' ? 12000 : 800;
+          const rooms = Number(h.rooms || h.roomCount || 1);
+
+          // 1. 幣別：精準支援 h.costCurr 與 h.currency，若選 TWD 嚴格為 TWD，LOCAL 則為當地幣
+          let hotelCurr = "TWD";
+          if (h.costCurr === "TWD" || h.currency === "TWD") {
+            hotelCurr = "TWD";
+          } else if (h.costCurr === "LOCAL" || h.currency === "LOCAL" || (!h.costCurr && !h.currency)) {
+            hotelCurr = tripCurrency;
+          } else {
+            hotelCurr = h.costCurr || h.currency || tripCurrency;
+          }
+
+          // 2. 計價模式：精準支援主手帳之 h.priceType === 'total' 或 h.pricingType === 'total_stay'
+          const isTotalStay = (h.priceType === "total" || h.pricingType === "total" || h.pricingType === "total_stay" || h.costTotal);
+          const pricingType = isTotalStay ? "total_stay" : "per_night";
+
+          // 3. 預算金額與實際花費：精準讀取 h.price 與 h.actualCost
+          const rawPrice = (h.price !== undefined && h.price !== null && h.price !== "") ? Number(h.price) : Number(h.costTotal || h.costPerNight || h.cost || 0);
+          const rawAct = (h.actualCost !== undefined && h.actualCost !== null && h.actualCost !== "") ? Number(h.actualCost) : rawPrice;
+
+          // 容錯備援：若皆為 0 且未設定，才給予合理預設值
+          const defNightCost = (hotelCurr === "JPY" || tripCurrency === "JPY") ? 6000 : (hotelCurr === "TWD" ? 2500 : 600);
+          let finalAmount = rawPrice;
+          let finalActual = rawAct;
+          if (finalAmount <= 0 && finalActual <= 0) {
+            finalAmount = isTotalStay ? (defNightCost * nights) : defNightCost;
+            finalActual = finalAmount;
+          }
 
           // 計算入住天數區間 (startDay ~ endDay)
           let startDay = currentDayOffset;
           let endDay = Math.min(daysCount, currentDayOffset + nights - 1);
 
-          // 嘗試由主行程 startDate 與 checkIn 計算精準天數
           if (plan.startDate && h.checkIn) {
             try {
               const pStart = new Date(plan.startDate);
@@ -4131,12 +4209,12 @@
             day: startDay,
             nights: nights,
             pricingType: pricingType,
-            amount: cost > 0 ? cost : defAmount,
-            actualAmount: cost > 0 ? cost : defAmount,
-            isPaid: true,
-            currency: h.currency || tripCurrency,
-            roomCount: Number(h.roomCount) || 1,
-            note: h.notes || h.stayLabel || h.city || "主行程設定飯店",
+            amount: finalAmount,
+            actualAmount: finalActual,
+            isPaid: h.isPaid !== false,
+            currency: hotelCurr,
+            roomCount: rooms,
+            note: h.notes || h.stayLabel || h.city || "主行程預算頁面設定飯店",
             isSynced: true
           });
         });

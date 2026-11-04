@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.7
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.8
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.7" in html, "未同步升級版本號至 V3.3.7"
+    assert "V3.3.8" in html, "未同步升級版本號至 V3.3.8"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -117,7 +117,7 @@ def test_html_structure_and_features():
 
     for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
         with open(page, "r", encoding="utf-8") as pf:
-            assert "V3.3.7" in pf.read(), f"{page} 未同步升級至 V3.3.7"
+            assert "V3.3.8" in pf.read(), f"{page} 未同步升級至 V3.3.8"
 
     
     # 16. 驗證顯示幣別預設基準幣 (TWD) 對齊主行程、機場專車去重與全團總計模式
@@ -125,6 +125,13 @@ def test_html_structure_and_features():
     assert 'isBaseCurrency()' in html, "缺少 isBaseCurrency 基準幣別判斷函式"
     assert 'isAirportShuttle' in html, "缺少機場接送專屬去重保護"
     assert 'mode === "total" || mode === "group"' in html, "缺少全團總計模式精準解析"
+
+    
+    # 17. 驗證主行程預算分頁深度撈取 (住宿欄位結構精確對齊與大項交通專案同步)
+    assert 'h.costCurr === "TWD"' in html, "住宿未精準支援主手帳之 h.costCurr 幣別欄位"
+    assert 'h.priceType === "total"' in html, "住宿未支援主手帳之 h.priceType 總額模式"
+    assert 'plan.majorTransports' in html, "缺少主手帳大項交通專案陣列同步"
+    assert 'm_trans_sync_' in html, "缺少大項交通專案同步識別碼"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

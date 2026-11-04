@@ -201,3 +201,16 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
     - 升級 `resolvePricing`：完整支援主程式中的 `total` 與 `group` 模式，交通、門票、餐飲若為全團總計則嚴格定為 `total`，絕不被強制轉為每人單價乘算。
   - [x] 單元測試增加第 16 項「顯示幣別預設 TWD、機場專車去重與全團總計模式支援」斷言防護。
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.7`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
+
+- [x] **階段二十：深度撈取主行程【預算與實際費用】分頁資訊，徹底修復住宿與大項專案巨額偏差 (升級 V3.3.8)**
+  - [x] 住宿資料欄位與計價模式 100% 精確對齊：
+    - 根因：主行程手帳中飯店資料物件以 `h.priceType`（`perNight`/`total`）、`h.costCurr`（`TWD`/`LOCAL`）、`h.actualCost`、`h.price` 儲存；舊版同步僅讀取 `h.costTotal`（導致整段總額被誤當每晚單價乘算晚數）且僅讀取 `h.currency`（漏掉 `h.costCurr` 導致台幣被盲目定為人民幣），致使解放碑 Moxy（6,000 元）與來福士洲際（16,000 元）被乘上晚數與匯率，膨脹成 116,789 TWD 與 155,718 TWD 巨款！
+    - 修復：精確支援 `h.costCurr`（若為 TWD 則 100% 維持 TWD，LOCAL 則為當地幣）、`h.priceType === 'total'`（整段總額定為 `total_stay`，絕不再乘以晚數）、`h.actualCost` 實付房費與 `h.price` 預估房費。
+  - [x] 完整同步大項交通專案 (`plan.majorTransports`)：
+    - 根因：主行程預算分頁中設定的高鐵、包車、租車、保險、eSIM 存放於 `plan.majorTransports` 陣列，過去同步引擎未撈取該陣列，造成大項專案遺失。
+    - 修復：新增 `plan.majorTransports` 深度撈取，自動對齊類別、起訖路線、幣別、分攤模式與實付已付狀態。
+  - [x] 一鍵同步點擊即時重新讀取主手帳 localStorage 最新狀態：
+    - 根因：`syncFromMainPlan()` 點擊時優先採用了記憶體中的 `availablePlans` 舊快取，未重新讀取 localStorage，導致主手帳更新的資料無法立即反映。
+    - 修復：點擊同步時，第一時間立即強制重新自 `notion_travel_planner_v9_sidebar_state` 撈取最新手帳資料，杜絕快取停滯。
+  - [x] 單元測試增加第 17 項「主行程預算分頁深度撈取與住宿結構精準對齊」斷言防護。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.8`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
