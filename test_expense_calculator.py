@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.8
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.9
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.8" in html, "未同步升級版本號至 V3.3.8"
+    assert "V3.3.9" in html, "未同步升級版本號至 V3.3.9"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -117,7 +117,7 @@ def test_html_structure_and_features():
 
     for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
         with open(page, "r", encoding="utf-8") as pf:
-            assert "V3.3.8" in pf.read(), f"{page} 未同步升級至 V3.3.8"
+            assert "V3.3.9" in pf.read(), f"{page} 未同步升級至 V3.3.9"
 
     
     # 16. 驗證顯示幣別預設基準幣 (TWD) 對齊主行程、機場專車去重與全團總計模式
@@ -132,6 +132,11 @@ def test_html_structure_and_features():
     assert 'h.priceType === "total"' in html, "住宿未支援主手帳之 h.priceType 總額模式"
     assert 'plan.majorTransports' in html, "缺少主手帳大項交通專案陣列同步"
     assert 'm_trans_sync_' in html, "缺少大項交通專案同步識別碼"
+
+    
+    # 18. 驗證旅行計畫切換選單智慧去重 (杜絕東京自由行重複出現)
+    assert 'function filterDuplicatePlans' in html, "缺少 filterDuplicatePlans 行程去重過濾函式"
+    assert 'filterDuplicatePlans(mainAppState.plans)' in html, "未直接以主行程手帳真實 plans 為準"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

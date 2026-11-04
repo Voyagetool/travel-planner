@@ -214,3 +214,10 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
     - 修復：點擊同步時，第一時間立即強制重新自 `notion_travel_planner_v9_sidebar_state` 撈取最新手帳資料，杜絕快取停滯。
   - [x] 單元測試增加第 17 項「主行程預算分頁深度撈取與住宿結構精準對齊」斷言防護。
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.8`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
+
+- [x] **階段二十一：修復旅行計畫選單「東京自由行」重複問題，導入智慧標題去重 (升級 V3.3.9)**
+  - [x] 旅行計畫選單重複根因診斷：
+    - 根因：`expenses.html` 的多處初始化與更新函式中，無條件使用 `Object.assign({}, DEFAULT_PRESET_PLANS, plans)`；`DEFAULT_PRESET_PLANS` 裡硬編碼了一個假東京行程（ID: `tokyo-2026`），而主手帳傳進來的真實東京行程 ID 是另一個鍵值（如自訂 ID），導致選單同時塞入兩個「東京自由行」。
+    - 修復：實作 `filterDuplicatePlans()` 函式；主手帳已有真實 plans 時直接採用手帳真實 plans，不再強行合併 `DEFAULT_PRESET_PLANS`；並加入標題智慧去重演算法，優先保留含有真實活動內容的行程，徹底過濾標題重複項目。
+  - [x] 單元測試增加第 18 項「旅行計畫選單智慧去重 (杜絕東京重複)」斷言防護。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.9`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
