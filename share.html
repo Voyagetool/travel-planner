@@ -12314,12 +12314,7 @@ const firebaseConfig = {
                                 ${item.receiptNote ? `<span style="font-size:0.66rem; color:#64748b; max-width:110px; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.receiptNote)}">${escapeHtml(item.receiptNote)}</span>` : ''}
                             </div>
                         </td>
-                        <td style="padding:8px 8px; text-align:center; width:72px; white-space:nowrap;">
-                            <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.74rem; font-weight:600; color:${item.isPaid ? '#15803d' : '#64748b'};">
-                                <input type="checkbox" style="width:14px; height:14px; accent-color:#16a34a; cursor:pointer;" ${item.isPaid ? 'checked' : ''} onchange="updateActualDayCategoryItem(${d.dayNum}, '${catKey}', ${idx}, 'isPaid', this.checked)">
-                                ${item.isPaid ? '<span style="color:#16a34a;">已付</span>' : '待付'}
-                            </label>
-                        </td>
+
                         <td style="padding:8px 8px; text-align:right; width:44px; white-space:nowrap;">
                             <button type="button" class="n-btn n-btn-danger" style="padding:2px 6px; font-size:0.72rem;" onclick="deleteActualDayCategoryItem(${d.dayNum}, '${catKey}', ${idx})" title="刪除此筆項目">
                                 <i class="fa-regular fa-trash-can"></i>
@@ -12460,12 +12455,7 @@ const firebaseConfig = {
                                     ${d[slot.noteProp] ? `<span style="font-size:0.66rem; color:#64748b; max-width:110px; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(d[slot.noteProp])}</span>` : ''}
                                 </div>
                             </td>
-                            <td style="padding:8px 8px; text-align:center; width:72px; white-space:nowrap;">
-                                <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.74rem; font-weight:600; color:${d[slot.paidProp] ? '#15803d' : '#64748b'};">
-                                    <input type="checkbox" style="width:14px; height:14px; accent-color:#16a34a; cursor:pointer;" ${d[slot.paidProp] ? 'checked' : ''} onchange="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'isPaid', this.checked)">
-                                    ${d[slot.paidProp] ? '<span style="color:#16a34a;">已付</span>' : '待付'}
-                                </label>
-                            </td>
+
                             <td style="padding:8px 8px; text-align:right; width:44px; white-space:nowrap;">
                                 <button type="button" class="n-btn" style="padding:2px 6px; font-size:0.7rem;" onclick="openEditDayMetaModal(${d.dayNum}, 'meals')" title="開啟當日餐食設定">
                                     <i class="fa-solid fa-sliders"></i>
@@ -12614,7 +12604,6 @@ const firebaseConfig = {
                                         <th style="padding:7px 10px; text-align:right; width:185px;">實際花費 (實付)</th>
                                         <th style="padding:7px 8px; text-align:center; width:90px;">差額對比</th>
                                         <th style="padding:7px 8px; text-align:center; width:130px;">🧾 發票紀錄</th>
-                                        <th style="padding:7px 8px; text-align:center; width:72px;">狀態</th>
                                         <th style="padding:7px 8px; text-align:right; width:44px;">操作</th>
                                     </tr>
                                 </thead>
