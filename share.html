@@ -5555,7 +5555,56 @@
             font-weight: 800;
             background: #f8fafc;
         }
-</style>
+
+        /* === 區塊間距緊湊優化（縮短上下間距、提升資訊密度） === */
+        .okr-workspace-main {
+            padding: 8px 20px 40px !important;
+            gap: 6px !important;
+        }
+        #toolsCalloutBox.notion-callout {
+            padding: 5px 12px !important;
+            border-radius: 9px !important;
+            margin-bottom: 6px !important;
+            margin-top: 2px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: #ffffff !important;
+        }
+        .okr-kpi-grid {
+            gap: 8px !important;
+            margin-bottom: 6px !important;
+        }
+        .okr-kpi-card {
+            padding: 8px 12px !important;
+            border-radius: 10px !important;
+        }
+        #tripSummaryBox.trip-summary-box {
+            border-radius: 10px !important;
+            margin-bottom: 6px !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        #tripSummaryBox .trip-summary-header {
+            padding: 6px 12px !important;
+            min-height: 36px !important;
+        }
+        .day-filter-chips {
+            margin-bottom: 6px !important;
+            padding-bottom: 2px !important;
+        }
+        #logisticsKpiGrid {
+            margin-bottom: 6px !important;
+        }
+        .logistics-kpi-bar {
+            margin-bottom: 6px !important;
+        }
+        .expenses-kpi-summary-grid {
+            margin-bottom: 8px !important;
+            gap: 8px !important;
+        }
+
+    </style>
 </head>
 <body>
 
@@ -5662,7 +5711,13 @@
     <main class="okr-workspace-main">
         <section class="notion-main-col" style="width: 100%; max-width: 100%;">
             
-            <!-- 行前準備必備工具 (高密度單行膠囊列) -->
+            
+
+            <!-- VIEW 1: OVERVIEW & DAILY ITINERARY (總覽與行程時間軸) -->
+            <div class="view-content-pane active" id="view-timeline">
+                
+                <!-- 行前準備必備工具 (僅總覽分頁顯示) -->
+                <!-- 行前準備必備工具 (高密度單行膠囊列) -->
             <div class="notion-callout" id="toolsCalloutBox">
                 <div class="notion-callout-icon" id="toolsCalloutIcon" style="display:none;">💡</div>
                 <div class="notion-callout-content">
@@ -5682,8 +5737,6 @@
                 </div>
             </div>
 
-            <!-- VIEW 1: OVERVIEW & DAILY ITINERARY (總覽與行程時間軸) -->
-            <div class="view-content-pane active" id="view-timeline">
                 <!-- 行程 Summary 總結與 OKR 風格 4 大指標卡 (動態生成) -->
                 <div id="tripSummaryContainer"></div>
 
@@ -9101,6 +9154,9 @@ const firebaseConfig = {
                     selectNav.value = appState.activeView || 'timeline';
                 }
             }
+
+            // 切換分頁時平滑跳轉至頁面最頂部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // V3.0 真實彩色國旗解析與智慧國家推斷 (徹底解決 Windows 把國旗顯示成 JP 字母的問題)
