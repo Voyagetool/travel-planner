@@ -5516,7 +5516,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.3.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.3.7</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -12564,6 +12564,43 @@ const firebaseConfig = {
             d.budgetGroupTwd = cBf.groupTwd + cLc.groupTwd + cDn.groupTwd + cSnack.groupTwd + transGroupTotalTwd + spotGroupTotalTwd + extraGroupTotalTwd;
         }
 
+        // ==========================================
+        // V3.3.7 費用核銷日常項目完整分類體系 (支援最前面分類即時下拉切換與更新)
+        // ==========================================
+        const EXPENSE_ITEM_CATEGORIES = {
+            transit: { key: 'transit', label: '交通', icon: '🚕', color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' },
+            spot: { key: 'spot', label: '門票', icon: '🎫', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+            snack: { key: 'snack', label: '點心飲料', icon: '🧋', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+            dining: { key: 'dining', label: '餐飲美食', icon: '🍽️', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+            shopping: { key: 'shopping', label: '購物', icon: '🛍️', color: '#db2777', bg: '#fdf2f8', border: '#fbcfe8' },
+            massage: { key: 'massage', label: '按摩', icon: '💆', color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' },
+            activity: { key: 'activity', label: '娛樂', icon: '🎭', color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
+            hotel: { key: 'hotel', label: '住宿', icon: '🏨', color: '#7c3aed', bg: '#faf5ff', border: '#e9d5ff' },
+            breakfast: { key: 'breakfast', label: '早餐', icon: '🍳', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+            lunch: { key: 'lunch', label: '午餐', icon: '🍱', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+            dinner: { key: 'dinner', label: '晚餐', icon: '🍲', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+            other: { key: 'other', label: '其他', icon: '💼', color: '#d97706', bg: '#fffbeb', border: '#fde68a' }
+        };
+
+        function getActualExpenseItemCatKey(item, catKey) {
+            if (item && item.category && EXPENSE_ITEM_CATEGORIES[item.category]) {
+                return item.category;
+            }
+            if (catKey === 'transports') return 'transit';
+            if (catKey === 'spots') return 'spot';
+            if (item && item.title) {
+                const t = String(item.title);
+                if (t.includes('茶') || t.includes('飲') || t.includes('奶茶') || t.includes('咖啡') || t.includes('點心') || t.includes('蛋糕') || t.includes('冰')) return 'snack';
+                if (t.includes('飯') || t.includes('麵') || t.includes('餐') || t.includes('火鍋') || t.includes('燒烤') || t.includes('料理')) return 'dining';
+                if (t.includes('車') || t.includes('地鐵') || t.includes('打車') || t.includes('高鐵') || t.includes('機票') || t.includes('接送')) return 'transit';
+                if (t.includes('門票') || t.includes('博物館') || t.includes('景點') || t.includes('影城') || t.includes('園')) return 'spot';
+                if (t.includes('按摩') || t.includes('spa') || t.includes('SPA') || t.includes('足浴') || t.includes('放鬆')) return 'massage';
+                if (t.includes('買') || t.includes('購') || t.includes('伴手禮') || t.includes('特產') || t.includes('紀念品')) return 'shopping';
+                if (t.includes('劇') || t.includes('秀') || t.includes('表演') || t.includes('展覽') || t.includes('活動')) return 'activity';
+            }
+            return 'other';
+        }
+
         function renderActualExpensesView() {
             const container = document.getElementById('actualExpensesContainer');
             const plan = getCurrentPlan();
@@ -12603,7 +12640,7 @@ const firebaseConfig = {
                 { key: 'snack', icon: '🧋', label: '點心飲料', titleProp: 'snack', costProp: 'snackCost', currProp: 'snackCurr', modeProp: 'snackMode', actProp: 'actualSnackCost', paidProp: 'snackPaid', recProp: 'snackReceipts', noteProp: 'snackReceiptNote' }
             ];
 
-            // 渲染單一分類項目列 (交通 / 景點 / 其他項目共用)
+            // 渲染單一分類項目列 (最前面分類可隨時即時下拉更新切換)
             function renderCategoryItemRow(d, catKey, item, idx, themeColor, badgeLabel, badgeIcon) {
                 const estVal = Number(item.cost || 0);
                 const itemCurr = item.curr || 'LOCAL';
@@ -12618,16 +12655,30 @@ const firebaseConfig = {
                 const isItemSaved = diffGroupLocal >= 0;
                 const recs = Array.isArray(item.receipts) ? item.receipts : [];
 
+                const activeCatKey = getActualExpenseItemCatKey(item, catKey);
+                const catCfg = EXPENSE_ITEM_CATEGORIES[activeCatKey] || EXPENSE_ITEM_CATEGORIES.other;
+
                 return `
                     <tr style="border-bottom:1px solid #f1f5f9; background:#ffffff;">
                         <td style="padding:8px 10px;">
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <span style="font-size:0.72rem; font-weight:700; color:${themeColor}; background:#f8fafc; border:1px solid #e2e8f0; padding:2px 6px; border-radius:4px; white-space:nowrap;">
-                                    ${badgeIcon} ${badgeLabel}
-                                </span>
+                                <select class="form-input actual-cat-select" 
+                                        style="padding:2px 6px; font-size:0.75rem; font-weight:700; color:${catCfg.color}; background:${catCfg.bg}; border:1px solid ${catCfg.border}; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0;" 
+                                        onchange="changeActualDayItemCategory(${d.dayNum}, '${catKey}', ${idx}, this.value)"
+                                        title="點擊切換或更新費用分類">
+                                    <option value="transit" ${activeCatKey === 'transit' ? 'selected' : ''}>🚕 交通</option>
+                                    <option value="spot" ${activeCatKey === 'spot' ? 'selected' : ''}>🎫 門票</option>
+                                    <option value="snack" ${activeCatKey === 'snack' ? 'selected' : ''}>🧋 點心飲料</option>
+                                    <option value="dining" ${activeCatKey === 'dining' ? 'selected' : ''}>🍽️ 餐飲美食</option>
+                                    <option value="shopping" ${activeCatKey === 'shopping' ? 'selected' : ''}>🛍️ 購物</option>
+                                    <option value="massage" ${activeCatKey === 'massage' ? 'selected' : ''}>💆 按摩</option>
+                                    <option value="activity" ${activeCatKey === 'activity' ? 'selected' : ''}>🎭 娛樂</option>
+                                    <option value="hotel" ${activeCatKey === 'hotel' ? 'selected' : ''}>🏨 住宿</option>
+                                    <option value="other" ${activeCatKey === 'other' ? 'selected' : ''}>💼 其他</option>
+                                </select>
                                 <input type="text" class="form-input" style="flex:1; min-width:130px; padding:4px 8px; font-size:0.84rem; font-weight:700; color:#1e293b;" 
                                        value="${escapeHtml(item.title || '')}" 
-                                       placeholder="輸入${badgeLabel}名稱..." 
+                                       placeholder="輸入項目名稱 (如：滴滴打車/門票/茶百道)..." 
                                        onchange="updateActualDayCategoryItem(${d.dayNum}, '${catKey}', ${idx}, 'title', this.value)">
                             </div>
                         </td>
@@ -12764,12 +12815,20 @@ const firebaseConfig = {
                         <tr style="border-bottom:1px solid #fef3c7; background:#fffdf7;">
                             <td style="padding:8px 10px;">
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <span style="font-size:0.74rem; font-weight:800; color:#b45309; background:#fef3c7; padding:2px 7px; border-radius:4px; white-space:nowrap;">
-                                        ${slot.icon} ${slot.label}
-                                    </span>
+                                    <select class="form-input actual-cat-select" 
+                                            style="padding:2px 6px; font-size:0.75rem; font-weight:800; color:#b45309; background:#fef3c7; border:1px solid #fde68a; border-radius:5px; cursor:pointer; height:28px; line-height:1.2; flex-shrink:0;" 
+                                            onchange="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'category', this.value)"
+                                            title="點擊切換或更新餐食分類">
+                                        <option value="breakfast" ${slot.key === 'breakfast' ? 'selected' : ''}>🍳 早餐</option>
+                                        <option value="lunch" ${slot.key === 'lunch' ? 'selected' : ''}>🍱 午餐</option>
+                                        <option value="dinner" ${slot.key === 'dinner' ? 'selected' : ''}>🍲 晚餐</option>
+                                        <option value="snack" ${slot.key === 'snack' ? 'selected' : ''}>🧋 點心飲料</option>
+                                        <option value="dining" ${(d[slot.key + 'Category'] === 'dining') ? 'selected' : ''}>🍽️ 餐飲美食</option>
+                                        <option value="other" ${(d[slot.key + 'Category'] === 'other') ? 'selected' : ''}>💼 其他餐飲</option>
+                                    </select>
                                     <input type="text" class="form-input" style="flex:1; min-width:130px; padding:4px 8px; font-size:0.84rem; color:#1e293b; background:#ffffff;" 
                                            value="${escapeHtml(d[slot.titleProp] || '')}" 
-                                           placeholder="輸入${slot.label}安排 (如：重慶小麵 / 自理)..." 
+                                           placeholder="輸入${slot.label}安排 (如：重慶小麵 / 茶顏悅色 / 自理)..." 
                                            onchange="updateActualDayMealField(${d.dayNum}, '${slot.key}', 'title', this.value)">
                                 </div>
                             </td>
@@ -12973,17 +13032,11 @@ const firebaseConfig = {
                         <!-- 快速新增分類費用按鈕列 (同步預算與記帳) -->
                         <div style="background:#ffffff; padding:8px 16px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                             <span style="font-size:0.76rem; color:#64748b; font-weight:600;">
-                                <i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> 每日分類開銷明細（僅列早中晚、交通、景點、其他項目，修改後自動同步當日預算）：
+                                <i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> 每日分類開銷明細（最前面分類可隨時自由切換，修改後自動同步當日預算）：
                             </span>
                             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; background:#f0f9ff; color:#0284c7; border-color:#bae6fd; font-weight:700;" onclick="addActualDayCategoryItem(${d.dayNum}, 'transports')">
-                                    <i class="fa-solid fa-plus"></i> 新增交通項目
-                                </button>
-                                <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; font-weight:700;" onclick="addActualDayCategoryItem(${d.dayNum}, 'spots')">
-                                    <i class="fa-solid fa-plus"></i> 新增景點門票
-                                </button>
-                                <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; background:#fff7ed; color:#d97706; border-color:#fed7aa; font-weight:700;" onclick="addActualDayCategoryItem(${d.dayNum}, 'extraCosts')">
-                                    <i class="fa-solid fa-plus"></i> 新增其他項目
+                                <button type="button" class="n-btn" style="padding:4px 13px; font-size:0.76rem; background:#2563eb; color:#ffffff; border-color:#1d4ed8; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px; box-shadow:0 1px 3px rgba(37,99,235,0.22); cursor:pointer;" onclick="addActualDayUnifiedExpenseItem(${d.dayNum})" title="新增一筆費用項目，最前面可自由選擇並隨時切換分類">
+                                    <i class="fa-solid fa-plus"></i> 新增花費項目
                                 </button>
                             </div>
                         </div>
@@ -13380,6 +13433,73 @@ const firebaseConfig = {
             renderBudgetWidget();
             renderTimelineView();
             showToast('success', `已同步更新 Day ${dayNum} ${cfg.label}設定！`);
+        }
+
+        // 在實際開銷頁面新增單筆花費項目 (最前面分類可自由選擇與隨時切換)
+        function addActualDayUnifiedExpenseItem(dayNum) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const day = (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+
+            ensureDayCategoryArrays(day);
+            if (!Array.isArray(day.extraCosts)) day.extraCosts = [];
+            day.extraCosts.push({
+                title: '',
+                cost: 0,
+                curr: 'LOCAL',
+                mode: 'single',
+                isPaid: false,
+                receipts: [],
+                category: 'other'
+            });
+
+            syncDayBudgetFromCategories(day, plan);
+            saveState();
+            renderActualExpensesView();
+            renderBudgetView();
+            renderBudgetWidget();
+            renderTimelineView();
+            showToast('success', `已在 Day ${dayNum} 新增一筆花費項目，最前面可自由下拉選取分類！`);
+        }
+
+        // 即時切換並更新單日花費項目的分類 (交通 / 門票 / 點心飲料 / 餐飲 / 購物 / 按摩 / 娛樂 / 住宿 / 其他)
+        function changeActualDayItemCategory(dayNum, fromCatKey, idx, newCatKey) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const day = (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+
+            ensureDayCategoryArrays(day);
+            const sourceList = day[fromCatKey];
+            if (!Array.isArray(sourceList) || !sourceList[idx]) return;
+
+            const item = sourceList[idx];
+            item.category = newCatKey;
+
+            let targetArrayKey = 'extraCosts';
+            if (newCatKey === 'transit') {
+                targetArrayKey = 'transports';
+            } else if (newCatKey === 'spot') {
+                targetArrayKey = 'spots';
+            } else {
+                targetArrayKey = 'extraCosts';
+            }
+
+            if (fromCatKey !== targetArrayKey) {
+                sourceList.splice(idx, 1);
+                if (!Array.isArray(day[targetArrayKey])) day[targetArrayKey] = [];
+                day[targetArrayKey].push(item);
+            }
+
+            const catCfg = (typeof EXPENSE_ITEM_CATEGORIES !== 'undefined' && EXPENSE_ITEM_CATEGORIES[newCatKey]) || { label: '新分類', icon: '' };
+            syncDayBudgetFromCategories(day, plan);
+            saveState();
+            renderActualExpensesView();
+            renderBudgetView();
+            renderBudgetWidget();
+            renderTimelineView();
+            showToast('success', `已將「${item.title || '費用項目'}」分類更新為【${catCfg.icon || ''} ${catCfg.label}】！`);
         }
 
         // 在實際開銷頁面新增單日分類項目 (transports / spots / extraCosts)
