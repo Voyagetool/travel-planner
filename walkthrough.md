@@ -601,3 +601,44 @@ enderMajorItemsList 卡片呈現：卡片右側同時呈現換算後的記帳幣
   - `blank.html`
   - `share.html`
 - 單元測試腳本 `test_expense_calculator.py` 新增第 20 項斷言防護，測試 100% 通過。
+
+---
+
+## ✈️ 階段二十四：修復瀏覽器放大顯示異常問題，導入全自適應 RWD、超細平滑滾動條與防切邊佈局 (升級 V3.3.12)
+
+### 1. 瀏覽器放大後頁面顯示異常之根因剖析（依據最新截圖）
+- **現象回顧**（`media_1793784045347_ebd7369c.png`）：
+  - 瀏覽器放大（Zoom in 125%~150%）時：
+    1. 頂部導覽列右側功能按鈕（貨幣切換、同步主行程、匯出 Excel、+記一筆）被擠出視窗外看不見；
+    2. 天數切換列（`.days-nav-bar`）下方長出一條巨大粗糙的 Windows 原生深灰色橫向滑塊，橫切卡片極其突兀；
+    3. 右側內容卡片（當日預算總額、結餘超支徽章如 `結餘 +32,6...`、住宿編輯按鈕、每天費用右側編輯圖示）右邊界被硬生生切掉截斷！
+- **根本原因深入分析**：
+  1. **固定高度與過度延伸**：`.app-header` 固定 `height: 58px`，左側標籤過多折行時撐破 header，右側按鈕被排擠至視窗外；
+  2. **缺少自訂捲軸樣式**：`.days-nav-bar` 的 `overflow-x: auto` 觸發了 Windows 原生預設 17px 灰色巨大滾動槽；
+  3. **Flexbox min-width: auto 撐破**：`.main-content` 缺少 `min-width: 0`，內部 `.day-metrics` 與卡片沒有 `flex-wrap: wrap`，右側卡片超出可視空間而被父層裁切。
+
+---
+
+### 2. 全自適應排版與防切邊修復方案
+
+1. **頂部導覽列流式彈性化（保證按鈕永遠可見）**：
+   - 改用 `min-height: 58px; height: auto; padding: 8px 18px`，`.header-actions` 加上 `flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end`，核心操作鈕永遠留在畫面中。
+   - `.app-workspace` 改為 `flex: 1; height: 0; min-height: 0`，完美自適應 header 動態高度，頁面底部不再被截斷。
+2. **超細平滑微型自訂捲軸（徹底消除巨型灰色橫向滾動條）**：
+   - 增加現代自訂樣式：`scrollbar-width: thin` 與 `::-webkit-scrollbar`（僅 4px 高度、半透明膠囊造型、背景全透明），滑動極其滑順，視覺清爽乾淨！
+3. **右側內容防切邊排版（100% 完整呈現）**：
+   - `.main-content` 注入關鍵 `min-width: 0; overflow-x: hidden`，`.view-container` 優化 padding（`16px 20px`）；
+   - `.day-metrics`、`.day-summary-bar`、`.group-header` 注入 `flex-wrap: wrap; min-width: 0`，結餘徽章與編輯按鈕在任何縮放比例下皆 100% 完整可見、絕不切邊！
+4. **擴充中型螢幕與放大專用響應式斷點**：
+   - 新增 `@media (max-width: 1240px)` 與 `@media (max-width: 1024px)` 斷點，側邊欄自動適度收窄（280px / 260px），多讓出 46px~66px 空間給主內容區。
+
+---
+
+### 3. 全站版本同步升級與單元測試
+- 全站 5 核心檔案之 `.okr-version-tag` 同步升級至 **`V3.3.12`**：
+  - `expenses.html`
+  - `index.html`
+  - `travel_planner.html`
+  - `blank.html`
+  - `share.html`
+- 單元測試腳本 `test_expense_calculator.py` 新增第 21 項斷言防護，測試 100% 通過。

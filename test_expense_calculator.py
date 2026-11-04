@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.11
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.3.12
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.3.11" in html, "未同步升級版本號至 V3.3.11"
+    assert "V3.3.12" in html, "未同步升級版本號至 V3.3.12"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -117,7 +117,7 @@ def test_html_structure_and_features():
 
     for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
         with open(page, "r", encoding="utf-8") as pf:
-            assert "V3.3.11" in pf.read(), f"{page} 未同步升級至 V3.3.11"
+            assert "V3.3.12" in pf.read(), f"{page} 未同步升級至 V3.3.12"
 
     
     # 16. 驗證顯示幣別預設基準幣 (TWD) 對齊主行程、機場專車去重與全團總計模式
@@ -151,6 +151,12 @@ def test_html_structure_and_features():
     assert 'coveredMealSlots.add(mc.slot)' in html, "缺少主手帳預算餐點槽位登記邏輯"
     assert 'hasSyncedTrans || dayHasTransit' in html, "缺少時間軸 events 重複交通攔截"
     assert 'hasSyncedSpots' in html, "缺少時間軸 events 重複景點門票攔截"
+
+    # 21. 驗證瀏覽器放大與中型螢幕自適應、精緻細微滾動條與防切邊佈局
+    assert 'days-nav-bar::-webkit-scrollbar' in html, "缺少 days-nav-bar 平滑微型滾動條樣式"
+    assert 'max-width: 1240px' in html, "缺少中型螢幕/放大響應式斷點 1240px"
+    assert 'max-width: 1024px' in html, "缺少窄桌面/放大響應式斷點 1024px"
+    assert 'overflow-x: hidden' in html and 'min-width: 0' in html, "缺少主內容區 min-width: 0 與防溢出設定"
 
     print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接與 6 大分類模式檢查通過！")
 

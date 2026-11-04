@@ -245,3 +245,16 @@ enderMajorItemsList：卡片右側同時展示換算後幣別與原始幣別總�
     - 成果：第三天完全對齊使用者在主手帳預算分頁填寫的真實明細，徹底消除重複幽靈項目。
   - [x] 單元測試增加第 20 項「主手帳預算頁面唯一權威與槽位唯一性攔截」斷言防護。
   - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.11`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
+
+- [x] **階段二十四：修復瀏覽器放大顯示異常問題，導入全自適應 RWD、超細平滑滾動條與防切邊佈局 (升級 V3.3.12)**
+  - [x] 瀏覽器放大異常根因診斷：
+    - 根因 1（頂部按鈕被擠出視窗）：`.app-header` 原設定固定高度 `height: 58px`，左側標籤換行撐開後將右側功能按鈕（同步、記一筆、貨幣切換等）推擠出視窗外；
+    - 根因 2（粗暴深灰橫向捲軸）：`.days-nav-bar` 設置 `overflow-x: auto` 但無自訂捲軸，在 Windows 放大時長出 17px 的粗大原生灰色滾動槽橫切畫面；
+    - 根因 3（右側內容卡片被切邊）：`.main-content` 缺少 `min-width: 0`，卡片與 `.day-metrics` 缺少 `flex-wrap: wrap`，導致內容撐破容器外層截斷。
+  - [x] 全自適應版面與視覺美化修復：
+    - 頂部導覽列流式彈性化：`min-height: 58px; height: auto`，右側操作群組設定 `flex-shrink: 0; flex-wrap: wrap`，保證核心功能按鈕永遠留在視窗內；
+    - 超細平滑自訂捲軸：增加 `scrollbar-width: thin` 與 `::-webkit-scrollbar` (4px 半透明圓角膠囊)，徹底消除粗糙原生橫向滑塊；
+    - 防切邊佈局：`.main-content` 注入 `min-width: 0; overflow-x: hidden`，`.view-container` 優化 padding，`.day-metrics` 與 `.group-header` 支援自然換行，結餘徽章與編輯按鈕 100% 完整可見；
+    - 新增中型螢幕與縮放模式斷點（`@media (max-width: 1240px)` 與 `@media (max-width: 1024px)`）。
+  - [x] 單元測試增加第 21 項「瀏覽器放大自適應、微型平滑滾動條與防切邊佈局」斷言防護。
+  - [x] 依 GEMINI.md 進版規範同步更新全站 5 核心檔案版本號至 `V3.3.12`（`expenses.html`、`index.html`、`travel_planner.html`、`blank.html`、`share.html`）。
