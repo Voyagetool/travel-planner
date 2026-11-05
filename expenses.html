@@ -1807,7 +1807,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.4.2</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.4.3</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -2613,13 +2613,70 @@
       return 'plan-chongqing';
     }
 
+    // 為指定計畫動態建立對應之獨立初始帳本 (杜絕非重慶行程被誤塞重慶假資料)
+    function createEmptyExpenseStateForPlan(mainPlan, planId) {
+      const isChongqing = (planId === 'plan-chongqing' || String(planId).includes('chongqing') || (mainPlan && /重慶/i.test(mainPlan.title || '')));
+      if (isChongqing && (!mainPlan || (!mainPlan.flights && !mainPlan.hotels && (!mainPlan.days || mainPlan.days.length === 0)))) {
+        return JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
+      }
+
+      const title = (mainPlan && mainPlan.title) ? mainPlan.title : (planId && planId.includes('tokyo') ? '東京自由行' : (isChongqing ? '重慶自由行' : '旅遊行程支出'));
+      const days = (mainPlan && mainPlan.days && mainPlan.days.length) ? mainPlan.days.length : (isChongqing ? 7 : 6);
+      let cur = (mainPlan && (mainPlan.currencyCode || mainPlan.currency));
+      if (!cur) {
+        cur = /東京|日本|京都|大阪/i.test(title) ? 'JPY' : (/重慶|北京|上海|成都|南京/i.test(title) ? 'CNY' : 'TWD');
+      }
+      let rate = Number(mainPlan && mainPlan.exchangeRate);
+      if (!rate || isNaN(rate)) {
+        rate = (cur === 'JPY') ? 0.2071 : (cur === 'CNY' ? 4.65 : 1);
+      }
+      const members = Number(mainPlan && mainPlan.memberCount) || 2;
+
+      return {
+        version: "2026.11.05.v1",
+        tripInfo: {
+          title: title,
+          startDate: (mainPlan && mainPlan.startDate) ? mainPlan.startDate : new Date().toISOString().split('T')[0],
+          daysCount: days,
+          memberCount: members,
+          baseCurrency: "TWD",
+          foreignCurrency: cur,
+          exchangeRate: rate,
+          displayCurrency: "base"
+        },
+        majorExpenses: [],
+        accommodations: [],
+        dailyExpenses: []
+      };
+    }
+
+    // 主手帳標題即時自動校準 (保證支出中心標題隨主行程重新命名 100% 同步，無須手動按同步按鈕)
+    function syncTitleWithMainPlan() {
+      if (!appState || !appState.tripInfo) return;
+      const targetId = currentPlanId || getTargetPlanId();
+      const mainPlan = availablePlans[targetId];
+      if (mainPlan && mainPlan.title) {
+        const newTitle = mainPlan.title.trim();
+        if (appState.tripInfo.title !== newTitle) {
+          console.log(`[自動校準標題] 偵測到主行程名稱已變更為「${newTitle}」(原：「${appState.tripInfo.title}」)，即時自動對齊！`);
+          appState.tripInfo.title = newTitle;
+          if (mainPlan.daysCount || (mainPlan.days && mainPlan.days.length)) {
+            appState.tripInfo.daysCount = mainPlan.daysCount || mainPlan.days.length;
+          }
+          if (mainPlan.memberCount) {
+            appState.tripInfo.memberCount = Number(mainPlan.memberCount);
+          }
+          saveState(true);
+        }
+      }
+    }
+
     function initPlanSwitcherFromLocal() {
       try {
         const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
         if (raw) {
           const mainAppState = JSON.parse(raw);
           if (mainAppState && mainAppState.plans && Object.keys(mainAppState.plans).length > 0) {
-            // 直接以主行程手帳真實 plans 為主，徹底排除 DEFAULT_PRESET_PLANS 造成重複東京
             availablePlans = filterDuplicatePlans(mainAppState.plans);
             const targetId = getTargetPlanId() || mainAppState.activePlanId || Object.keys(availablePlans)[0] || "plan-chongqing";
             currentPlanId = targetId;
@@ -2636,29 +2693,74 @@
     }
 
     function initApp() {
-      // 0. 第一時間優先初始化旅行計畫選單，確保重新整理頁面絕對不消失！
+      // 1. 第一時間優先讀取主手帳計畫選單與目標 ID
       initPlanSwitcherFromLocal();
-
       currentPlanId = getTargetPlanId();
-      loadState();
-      renderAll();
-      initFirebaseSync();
 
-      // 核心：嘗試從主行程獲取最新設定並自動鏡像同步
+      // 2. 核心：在 loadState 之前，先嘗試自本地主手帳執行自動同步，確保最新標題與活動第一時間就緒！
       tryAutoSyncFromLocalMainPlan();
 
-      // 視窗獲得焦點時自動偵測主行程最新活躍計畫並平滑切換
-      window.addEventListener('focus', () => {
+      // 3. 載入當前目標計畫的帳本
+      loadState();
+
+      // 4. 即時校準標題與選單，確保 100% 與主手帳最新名稱一致
+      syncTitleWithMainPlan();
+      if (availablePlans && currentPlanId && availablePlans[currentPlanId]) {
+        updatePlanSwitcherUI(availablePlans, currentPlanId);
+      }
+
+      // 5. 渲染頁面 (標題、天數、選單完全一致)
+      renderAll();
+
+      // 6. 啟動 Firebase 雲端監聽
+      initFirebaseSync();
+
+      // 7. 啟動自動對齊監聽器 (視窗切換焦點或主手帳 storage 更新時即刻自動對齊，完全免手動點擊同步)
+      setupAutoSyncListeners();
+    }
+
+    // 自動對齊監聽器：當使用者在主程式編輯名稱、切換計畫後切回本頁面，即刻無縫自動對齊！
+    function setupAutoSyncListeners() {
+      const checkAndSyncFromLocal = () => {
         try {
           const raw = localStorage.getItem('notion_travel_planner_v9_sidebar_state');
           if (raw) {
             const mainState = JSON.parse(raw);
-            if (mainState && mainState.activePlanId && mainState.activePlanId !== currentPlanId) {
-              console.log('偵測到主行程切換至:', mainState.activePlanId);
-              switchPlanFromSelect(mainState.activePlanId);
+            if (mainState && mainState.plans) {
+              availablePlans = filterDuplicatePlans(mainState.plans);
+              const targetId = getTargetPlanId() || mainState.activePlanId || currentPlanId;
+              if (targetId && availablePlans[targetId]) {
+                const plan = availablePlans[targetId];
+                let needRender = false;
+                if (currentPlanId !== targetId) {
+                  console.log('[即時連動] 切換計畫至主行程活躍項目:', targetId);
+                  currentPlanId = targetId;
+                  loadState();
+                  needRender = true;
+                }
+                if (appState && appState.tripInfo && plan.title && appState.tripInfo.title !== plan.title) {
+                  console.log(`[即時連動] 更新標題為主手帳最新名稱：「${plan.title}」`);
+                  appState.tripInfo.title = plan.title;
+                  saveState(true);
+                  needRender = true;
+                }
+                updatePlanSwitcherUI(availablePlans, currentPlanId);
+                if (needRender) {
+                  renderAll();
+                }
+              }
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn("自動對齊失敗", e);
+        }
+      };
+
+      window.addEventListener('focus', checkAndSyncFromLocal);
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'notion_travel_planner_v9_sidebar_state') {
+          checkAndSyncFromLocal();
+        }
       });
     }
 
@@ -2687,12 +2789,11 @@
       window.location.href = url;
     }
 
-    // 更新旅行計畫選單 UI (永遠常駐顯示，絕不因為數量小於等於1而隱藏)
+    // 更新旅行計畫選單 UI (精準匹配當前計畫與標題，絕不選錯)
     function updatePlanSwitcherUI(plans, activeId) {
       const selectEl = document.getElementById("expensePlanSelect");
       if (!selectEl) return;
       
-      // 若 plans 存在且有項目，直接使用 filterDuplicatePlans 去重，不再強制塞入 DEFAULT_PRESET_PLANS 造成重複東京
       if (plans && Object.keys(plans).length > 0) {
         availablePlans = filterDuplicatePlans(plans);
       } else {
@@ -2700,19 +2801,37 @@
       }
       const planKeys = Object.keys(availablePlans);
       
-      selectEl.style.display = "inline-block"; // 永遠常駐保持可見！
+      selectEl.style.display = "inline-block";
       selectEl.innerHTML = planKeys.map(pk => {
         const p = availablePlans[pk];
         const flag = (p.currencyCode === 'JPY' || (p.title && /東京|日本|京都|大阪/i.test(p.title))) ? '🇯🇵 ' : 
                      ((p.currencyCode === 'CNY' || (p.title && /重慶|北京|上海|成都|中國/i.test(p.title))) ? '🇨🇳 ' : 
                      ((p.currencyCode === 'TWD' || (p.title && /台灣|台北/i.test(p.title))) ? '🇹🇼 ' : '✈️ '));
         const label = p.title || pk;
-        const isSelected = pk === activeId || (activeId && pk.toLowerCase().includes(activeId.toLowerCase()));
+        const isSelected = pk === activeId;
         return `<option value="${pk}" ${isSelected ? 'selected' : ''}>${flag}${label}</option>`;
       }).join("");
 
-      if (activeId && selectEl.querySelector(`option[value="${activeId}"]`)) {
+      // 1. 優先精準以 activeId 設定選中
+      if (activeId && availablePlans[activeId]) {
         selectEl.value = activeId;
+        currentPlanId = activeId;
+      } else if (currentPlanId && availablePlans[currentPlanId]) {
+        selectEl.value = currentPlanId;
+      } else if (appState && appState.tripInfo && appState.tripInfo.title) {
+        // 2. 若 activeId 匹配不到，依照當前帳本的 title 比對一致的 option
+        const curTitle = appState.tripInfo.title.trim();
+        for (const pk of planKeys) {
+          if (availablePlans[pk] && availablePlans[pk].title && availablePlans[pk].title.trim() === curTitle) {
+            selectEl.value = pk;
+            currentPlanId = pk;
+            break;
+          }
+        }
+      }
+
+      if (selectEl.value) {
+        currentPlanId = selectEl.value;
       }
     }
 
@@ -2874,30 +2993,37 @@
     }
 
     function loadState() {
+      const targetId = currentPlanId || getTargetPlanId();
       try {
-        const targetId = currentPlanId || getTargetPlanId();
         const planKey = targetId ? `travel_planner_expense_data_${targetId}` : "travel_planner_expense_data";
         const saved = localStorage.getItem(planKey);
         if (saved) {
           appState = JSON.parse(saved);
         } else {
-          appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
-          saveState();
+          // 關鍵修復：絕不把 DEFAULT_EXPENSE_DATA 盲目塞給非重慶計畫！
+          const mainPlan = availablePlans[targetId];
+          appState = createEmptyExpenseStateForPlan(mainPlan, targetId);
+          saveState(true);
         }
       } catch (e) {
-        console.error("載入失敗，還原範例資料", e);
-        appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
+        console.error("載入失敗，還原對應計畫初始資料", e);
+        const mainPlan = availablePlans[targetId];
+        appState = createEmptyExpenseStateForPlan(mainPlan, targetId);
       }
-      // 自動救援防呆：若重慶自由行的支出細項不幸被清空為 0，自動以 DEFAULT_EXPENSE_DATA 還原，確保數據不丟失！
-      const isChongqingPlan = (!currentPlanId || currentPlanId === 'plan-chongqing' || String(currentPlanId).includes('chongqing') || (appState.tripInfo && /重慶/i.test(appState.tripInfo.title || '')));
+
+      // 自動救援防呆：僅對重慶自由行且細項不幸全為 0 時還原 DEFAULT_EXPENSE_DATA
+      const isChongqingPlan = (targetId === 'plan-chongqing' || String(targetId).includes('chongqing') || (appState.tripInfo && /重慶/i.test(appState.tripInfo.title || '')));
       const isCurrentEmpty = (!appState.majorExpenses || appState.majorExpenses.length === 0) &&
                              (!appState.accommodations || appState.accommodations.length === 0) &&
                              (!appState.dailyExpenses || appState.dailyExpenses.length === 0);
       if (isChongqingPlan && isCurrentEmpty) {
         console.warn("偵測到重慶自由行支出數據為空，啟動自動救援還原 DEFAULT_EXPENSE_DATA！");
         appState = JSON.parse(JSON.stringify(DEFAULT_EXPENSE_DATA));
-        saveState();
+        saveState(true);
       }
+
+      // 即時對齊主手帳標題
+      syncTitleWithMainPlan();
 
       if (!appState.tripInfo) appState.tripInfo = {};
       if (!appState.tripInfo.displayCurrency || appState.tripInfo.displayCurrency === "TWD") {

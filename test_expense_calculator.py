@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.4.1
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.4.3
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.4.1" in html, "未同步升級版本號至 V3.4.1"
+    assert "V3.4.3" in html, "未同步升級版本號至 V3.4.3"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -112,7 +112,7 @@ def test_html_structure_and_features():
 
     for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
         with open(page, "r", encoding="utf-8") as pf:
-            assert "V3.4.1" in pf.read(), f"{page} 未同步升級至 V3.4.1"
+            assert "V3.4.3" in pf.read(), f"{page} 未同步升級至 V3.4.3"
 
     # 16. 驗證顯示幣別預設基準幣 (TWD) 對齊主行程、機場專車去重與全團總計模式
     assert 'displayCurrency: "base"' in html, "DEFAULT_STATE 顯示幣別未預設為 base (TWD)"
@@ -159,7 +159,12 @@ def test_html_structure_and_features():
     assert 'position: static !important' in html, "缺少手機端 cloudStatusBadge 防覆蓋卡片樣式"
     assert 'flex-wrap: nowrap !important' in html, "缺少手機端 header 防擠壓換行樣式"
 
-    print("[PASS] [1/2] 雲端同步、計畫切換常駐、輸入框對稱排版、大項總覽同步、住宿串接、6 大分類模式與手機端 Mobile-First RWD 檢查通過！")
+    # 23. 驗證主行程標題自動即時校準、杜絕跨行程假資料塞入與焦點變更自動對齊機制
+    assert 'syncTitleWithMainPlan' in html, "缺少 syncTitleWithMainPlan 標題即時自動校準函式"
+    assert 'createEmptyExpenseStateForPlan' in html, "缺少 createEmptyExpenseStateForPlan 獨立初始帳本產生函式"
+    assert 'setupAutoSyncListeners' in html, "缺少 setupAutoSyncListeners 自動對齊監聽器"
+
+    print("[PASS] [1/2] 雲端同步、計畫切換常駐、標題自動即時校準、手機端 Mobile-First RWD 檢查通過！")
 
 
 def test_calculation_logic():
