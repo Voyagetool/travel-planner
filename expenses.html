@@ -504,6 +504,122 @@
       white-space: nowrap;
     }
 
+    /* SVG 環形圓餅圖 (Donut Chart) 樣式 */
+    .category-donut-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 6px 0 10px;
+      margin-bottom: 4px;
+    }
+
+    .donut-chart-container {
+      position: relative;
+      width: 148px;
+      height: 148px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.05));
+    }
+
+    .donut-chart-svg {
+      width: 148px;
+      height: 148px;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      overflow: visible;
+    }
+
+    .donut-bg-ring {
+      fill: none;
+      stroke: var(--border-color, #e2e8f0);
+      stroke-width: 16;
+      opacity: 0.45;
+    }
+
+    .donut-segment {
+      fill: none;
+      stroke-width: 16;
+      cursor: pointer;
+      stroke-linecap: butt;
+      transition: stroke-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.2s ease,
+                  filter 0.2s ease;
+    }
+
+    .donut-segment:hover {
+      stroke-width: 22 !important;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+      opacity: 1 !important;
+    }
+
+    .donut-center-badge {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+      background: var(--bg-surface, #ffffff);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+      transition: all 0.2s ease;
+      z-index: 2;
+      padding: 4px;
+    }
+
+    .donut-center-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted, #64748b);
+      line-height: 1.2;
+      max-width: 78px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.2s ease;
+    }
+
+    .donut-center-value {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--text-main, #0f172a);
+      line-height: 1.2;
+      margin: 2px 0 1px;
+      letter-spacing: -0.3px;
+      max-width: 82px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .donut-center-currency {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--text-muted, #94a3b8);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .category-row.donut-row-active {
+      background: var(--bg-subtle, #f1f5f9) !important;
+      outline: 1.5px solid var(--primary, #2563eb);
+    }
+
     .stacked-bar-container {
       height: 6px;
       width: 100%;
@@ -1807,7 +1923,7 @@
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.4.3</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.4.4</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -1909,8 +2025,22 @@
           <span id="categoryCountSummary">共 6 類</span>
         </div>
 
-        <div class="stacked-bar-container" id="stackedBarContainer">
-          <!-- 彩色堆疊條 -->
+        <!-- 環形圓餅圖容器 (SVG Donut Chart) -->
+        <div class="category-donut-wrapper" id="categoryDonutWrapper">
+          <div class="donut-chart-container">
+            <svg class="donut-chart-svg" viewBox="0 0 160 160" width="148" height="148" id="donutChartSvg">
+              <!-- JS 動態生成底環與各分類扇區 -->
+            </svg>
+            <div class="donut-center-badge" id="donutCenterBadge">
+              <span class="donut-center-title" id="donutCenterTitle">實付總計</span>
+              <span class="donut-center-value" id="donutCenterValue">0</span>
+              <span class="donut-center-currency" id="donutCenterCurrency">TWD</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stacked-bar-container" id="stackedBarContainer" style="display: none;">
+          <!-- 彩色堆疊條 (保留相容) -->
         </div>
 
         <div class="category-list" id="categoryBreakdownList">
@@ -2341,7 +2471,7 @@
     const DEFAULT_EXPENSE_DATA = {
       version: "2026.11.02.v2",
       tripInfo: {
-        title: "重慶 7 天 6 夜魔幻之旅",
+        title: "重慶自由行",
         startDate: "2026-04-10",
         daysCount: 7,
         memberCount: 2,
@@ -2807,7 +2937,7 @@
         const flag = (p.currencyCode === 'JPY' || (p.title && /東京|日本|京都|大阪/i.test(p.title))) ? '🇯🇵 ' : 
                      ((p.currencyCode === 'CNY' || (p.title && /重慶|北京|上海|成都|中國/i.test(p.title))) ? '🇨🇳 ' : 
                      ((p.currencyCode === 'TWD' || (p.title && /台灣|台北/i.test(p.title))) ? '🇹🇼 ' : '✈️ '));
-        const label = p.title || pk;
+        const label = (p.title || pk).replace(/🇨🇳|\[CN\]|\s+CN$/g, "").trim();
         const isSelected = pk === activeId;
         return `<option value="${pk}" ${isSelected ? 'selected' : ''}>${flag}${label}</option>`;
       }).join("");
@@ -3311,7 +3441,7 @@
 
     function renderHeader() {
       const trip = appState.tripInfo;
-      document.getElementById("tripTitleText").textContent = trip.title;
+      document.getElementById("tripTitleText").textContent = (trip.title || "重慶自由行").replace(/🇨🇳|\[CN\]|\s+CN$/g, "").trim();
       document.getElementById("tripDaysBadge").textContent = `${trip.daysCount} 天`;
       document.getElementById("tripMembersBadge").textContent = `${trip.memberCount} 人同行`;
 
@@ -3363,49 +3493,201 @@
       renderDailyTrend(stats);
     }
 
-    function renderCategoryBreakdown(stats) {
-      // 使用者指定 6 大模式清單：機票、住宿、交通、餐飲、景點、購物
-      const cats = [
-        { key: "flight", name: "機票", color: "var(--cat-flight, #2563eb)", data: stats.categories.flight, icon: "✈️" },
-        { key: "lodging", name: "住宿", color: "var(--cat-lodging, #7c3aed)", data: stats.categories.lodging, icon: "🏨" },
-        { key: "transit", name: "交通", color: "var(--cat-transit, #059669)", data: stats.categories.transit, icon: "🚇" },
-        { key: "dining", name: "餐飲", color: "var(--cat-dining, #d97706)", data: stats.categories.dining, icon: "🍜" },
-        { key: "spot", name: "景點", color: "var(--cat-spot, #4f46e5)", data: stats.categories.spot, icon: "🎫" },
-        { key: "shopping", name: "購物", color: "var(--cat-shopping, #db2777)", data: stats.categories.shopping, icon: "🛍️" }
-      ];
+    let currentDonutStats = null;
+    let currentDonutCats = [];
 
-      const grandActual = stats.totalActualBase > 0 ? stats.totalActualBase : 1;
+    function onDonutCategoryHover(catKey) {
+      if (!currentDonutCats || currentDonutCats.length === 0) return;
+      const c = currentDonutCats.find(item => item.key === catKey);
+      if (!c) return;
+
       const trip = appState.tripInfo;
       const isBase = isBaseCurrency();
+      const curCode = isBase ? trip.baseCurrency : trip.foreignCurrency;
+      const grandActual = currentDonutStats && currentDonutStats.totalActualBase > 0 ? currentDonutStats.totalActualBase : 1;
+      const pct = ((c.data.actual / grandActual) * 100).toFixed(1);
+      const actualDisp = isBase ? c.data.actual : convertAmount(c.data.actual, trip.baseCurrency, trip.foreignCurrency);
 
-      const barContainer = document.getElementById("stackedBarContainer");
-      barContainer.innerHTML = cats.map(c => {
-        const pct = ((c.data.actual / grandActual) * 100).toFixed(1);
-        return `<div class="stacked-bar-seg" style="background: ${c.color}; width: ${pct}%;" title="${c.name}: ${pct}%"></div>`;
-      }).join("");
+      const titleEl = document.getElementById("donutCenterTitle");
+      const valEl = document.getElementById("donutCenterValue");
+      const curEl = document.getElementById("donutCenterCurrency");
+      if (titleEl) {
+        titleEl.textContent = `${c.icon} ${c.name}`;
+        titleEl.style.color = c.rawColor || "#2563eb";
+      }
+      if (valEl) {
+        valEl.textContent = formatCurrency(actualDisp);
+      }
+      if (curEl) {
+        curEl.textContent = `${pct}% ‧ ${curCode}`;
+      }
 
-      const listEl = document.getElementById("categoryBreakdownList");
-      listEl.innerHTML = cats.map(c => {
-        const pct = ((c.data.actual / grandActual) * 100).toFixed(1);
-        const actualDisp = isBase ? c.data.actual : convertAmount(c.data.actual, trip.baseCurrency, trip.foreignCurrency);
-        const budgetDisp = isBase ? c.data.budget : convertAmount(c.data.budget, trip.baseCurrency, trip.foreignCurrency);
-        const diff = c.data.budget - c.data.actual;
-        const diffText = diff > 0 ? `省 ${formatCurrency(diff)}` : (diff < 0 ? `超 ${formatCurrency(Math.abs(diff))}` : '平');
+      // 圓餅扇區突顯高亮
+      document.querySelectorAll(".donut-segment").forEach(seg => {
+        if (seg.getAttribute("data-key") === catKey) {
+          seg.style.opacity = "1";
+          seg.style.strokeWidth = "22";
+          seg.style.filter = "drop-shadow(0 2px 6px rgba(0,0,0,0.25))";
+        } else {
+          seg.style.opacity = "0.28";
+          seg.style.strokeWidth = "16";
+          seg.style.filter = "none";
+        }
+      });
 
-        return `
-          <div class="category-row" onclick="filterByCategory('${c.key}')" title="點擊篩選【${c.name}】項目">
-            <div class="category-info">
-              <span class="cat-dot" style="background: ${c.color};"></span>
-              <span class="category-name">${c.icon} ${c.name}</span>
-            </div>
-            <div class="category-amounts">
-              <span class="category-amount-val">${formatCurrency(actualDisp)} <span style="font-size: 10px; font-weight: normal; color: var(--text-muted);">(${pct}%)</span></span>
-              <span class="category-amount-sub">預算 ${formatCurrency(budgetDisp)} ‧ ${diffText}</span>
-            </div>
-          </div>
-        `;
-      }).join("");
+      // 下方清單同步高亮
+      document.querySelectorAll(".category-row").forEach(row => {
+        if (row.getAttribute("data-key") === catKey) {
+          row.classList.add("donut-row-active");
+        } else {
+          row.classList.remove("donut-row-active");
+        }
+      });
     }
+
+    function onDonutCategoryLeave() {
+      if (!currentDonutStats) return;
+      const trip = appState.tripInfo;
+      const isBase = isBaseCurrency();
+      const curCode = isBase ? trip.baseCurrency : trip.foreignCurrency;
+      const displayActual = isBase ? currentDonutStats.totalActualBase : currentDonutStats.totalActualForeign;
+
+      const titleEl = document.getElementById("donutCenterTitle");
+      const valEl = document.getElementById("donutCenterValue");
+      const curEl = document.getElementById("donutCenterCurrency");
+      if (titleEl) {
+        titleEl.textContent = "實付總計";
+        titleEl.style.color = "";
+      }
+      if (valEl) {
+        valEl.textContent = formatCurrency(displayActual);
+      }
+      if (curEl) {
+        curEl.textContent = curCode;
+      }
+
+      document.querySelectorAll(".donut-segment").forEach(seg => {
+        seg.style.opacity = "1";
+        seg.style.strokeWidth = "16";
+        seg.style.filter = "none";
+      });
+
+      document.querySelectorAll(".category-row").forEach(row => {
+        row.classList.remove("donut-row-active");
+      });
+    }
+
+    function renderCategoryBreakdown(stats) {
+      currentDonutStats = stats;
+      // 使用者指定 6 大模式清單：機票、住宿、交通、餐飲、景點、購物
+      const cats = [
+        { key: "flight", name: "機票", color: "var(--cat-flight, #2563eb)", rawColor: "#2563eb", data: stats.categories.flight, icon: "✈️" },
+        { key: "lodging", name: "住宿", color: "var(--cat-lodging, #7c3aed)", rawColor: "#7c3aed", data: stats.categories.lodging, icon: "🏨" },
+        { key: "transit", name: "交通", color: "var(--cat-transit, #059669)", rawColor: "#059669", data: stats.categories.transit, icon: "🚇" },
+        { key: "dining", name: "餐飲", color: "var(--cat-dining, #d97706)", rawColor: "#d97706", data: stats.categories.dining, icon: "🍜" },
+        { key: "spot", name: "景點", color: "var(--cat-spot, #4f46e5)", rawColor: "#4f46e5", data: stats.categories.spot, icon: "🎫" },
+        { key: "shopping", name: "購物", color: "var(--cat-shopping, #db2777)", rawColor: "#db2777", data: stats.categories.shopping, icon: "🛍️" }
+      ];
+      currentDonutCats = cats;
+
+      const grandActual = stats.totalActualBase > 0 ? stats.totalActualBase : 0;
+      const trip = appState.tripInfo;
+      const isBase = isBaseCurrency();
+      const curCode = isBase ? trip.baseCurrency : trip.foreignCurrency;
+      const displayActual = isBase ? stats.totalActualBase : stats.totalActualForeign;
+
+      // 1. 渲染 SVG 環形圓餅圖 (Donut Chart)
+      const donutSvg = document.getElementById("donutChartSvg");
+      const titleEl = document.getElementById("donutCenterTitle");
+      const valEl = document.getElementById("donutCenterValue");
+      const curEl = document.getElementById("donutCenterCurrency");
+
+      const cx = 80;
+      const cy = 80;
+      const r = 54;
+      const circumference = 2 * Math.PI * r; // 約 339.292
+
+      if (titleEl) {
+        titleEl.textContent = "實付總計";
+        titleEl.style.color = "";
+      }
+      if (valEl) {
+        valEl.textContent = formatCurrency(displayActual);
+      }
+      if (curEl) {
+        curEl.textContent = grandActual === 0 ? `${curCode} ‧ 尚無支出` : curCode;
+      }
+
+      if (donutSvg) {
+        let svgHtml = `<circle cx="${cx}" cy="${cy}" r="${r}" class="donut-bg-ring" stroke-dasharray="${circumference.toFixed(3)} ${circumference.toFixed(3)}" stroke-dashoffset="0" />`;
+        if (grandActual > 0) {
+          let currentOffset = 0;
+          cats.forEach(c => {
+            if (c.data.actual <= 0) return;
+            const pct = c.data.actual / grandActual;
+            const dashLen = pct * circumference;
+            const actualDisp = isBase ? c.data.actual : convertAmount(c.data.actual, trip.baseCurrency, trip.foreignCurrency);
+            svgHtml += `
+              <circle
+                id="donutSeg_${c.key}"
+                class="donut-segment"
+                cx="${cx}"
+                cy="${cy}"
+                r="${r}"
+                stroke="${c.color}"
+                stroke-dasharray="${dashLen.toFixed(3)} ${circumference.toFixed(3)}"
+                stroke-dashoffset="${(-currentOffset).toFixed(3)}"
+                data-key="${c.key}"
+                onmouseenter="onDonutCategoryHover('${c.key}')"
+                onmouseleave="onDonutCategoryLeave()"
+                onclick="filterByCategory('${c.key}')"
+              >
+                <title>${c.name}: ${formatCurrency(actualDisp)} (${(pct * 100).toFixed(1)}%)</title>
+              </circle>
+            `;
+            currentOffset += dashLen;
+          });
+        }
+        donutSvg.innerHTML = svgHtml;
+      }
+
+      // 2. 舊版堆疊條保留更新相容
+      const barContainer = document.getElementById("stackedBarContainer");
+      if (barContainer) {
+        const denom = grandActual > 0 ? grandActual : 1;
+        barContainer.innerHTML = cats.map(c => {
+          const pct = ((c.data.actual / denom) * 100).toFixed(1);
+          return `<div class="stacked-bar-seg" style="background: ${c.color}; width: ${pct}%;" title="${c.name}: ${pct}%"></div>`;
+        }).join("");
+      }
+
+      // 3. 渲染下方 6 大分類詳細清單 (包含雙向 hover 互動)
+      const listEl = document.getElementById("categoryBreakdownList");
+      if (listEl) {
+        const denom = grandActual > 0 ? grandActual : 1;
+        listEl.innerHTML = cats.map(c => {
+          const pct = ((c.data.actual / denom) * 100).toFixed(1);
+          const actualDisp = isBase ? c.data.actual : convertAmount(c.data.actual, trip.baseCurrency, trip.foreignCurrency);
+          const budgetDisp = isBase ? c.data.budget : convertAmount(c.data.budget, trip.baseCurrency, trip.foreignCurrency);
+          const diff = c.data.budget - c.data.actual;
+          const diffText = diff > 0 ? `省 ${formatCurrency(diff)}` : (diff < 0 ? `超 ${formatCurrency(Math.abs(diff))}` : '平');
+
+          return `
+            <div class="category-row" data-key="${c.key}" onclick="filterByCategory('${c.key}')" onmouseenter="onDonutCategoryHover('${c.key}')" onmouseleave="onDonutCategoryLeave()" title="點擊篩選【${c.name}】項目">
+              <div class="category-info">
+                <span class="cat-dot" style="background: ${c.color};"></span>
+                <span class="category-name">${c.icon} ${c.name}</span>
+              </div>
+              <div class="category-amounts">
+                <span class="category-amount-val">${formatCurrency(actualDisp)} <span style="font-size: 10px; font-weight: normal; color: var(--text-muted);">(${pct}%)</span></span>
+                <span class="category-amount-sub">預算 ${formatCurrency(budgetDisp)} ‧ ${diffText}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
     function renderDailyTrend(stats) {
       const daysCount = Number(appState.tripInfo.daysCount) || 7;
       const chartEl = document.getElementById("dailyTrendChart");

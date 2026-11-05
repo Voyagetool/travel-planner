@@ -5923,7 +5923,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.4.3</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.4.4</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -9561,10 +9561,9 @@ const firebaseConfig = {
         }
 
         function formatPlanOptionPrefix(rawEmoji, planObj = null) {
-            const code = planObj ? inferCountryCodeFromPlan(planObj) : extractRegionCodeFromEmoji(rawEmoji);
-            if (code) return `[${code}]`;
-            const val = (rawEmoji || '✈️').trim();
-            return val;
+            if (planObj && planObj.emoji) return planObj.emoji;
+            if (rawEmoji) return rawEmoji.trim();
+            return '✈️';
         }
 
         function renderPlanSelectDropdown() {
@@ -9574,7 +9573,8 @@ const firebaseConfig = {
             Object.values(appState.plans).forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                opt.innerText = `${formatPlanOptionPrefix(p.emoji, p)} ${p.title}`;
+                const cleanTitle = (p.title || '').replace(/🇨🇳|\[CN\]|\s+CN$/g, '').trim();
+                opt.innerText = `${formatPlanOptionPrefix(p.emoji, p)} ${cleanTitle}`;
                 if (p.id === appState.activePlanId) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -9585,7 +9585,7 @@ const firebaseConfig = {
             if (!plan) return;
 
             const titleEl = document.getElementById('pageTitleText');
-            if (titleEl) titleEl.innerText = plan.title;
+            if (titleEl) titleEl.innerText = (plan.title || '').replace(/🇨🇳|\[CN\]|\s+CN$/g, '').trim();
 
             const subtitleEl = document.getElementById('pageSubtitleText');
             if (subtitleEl) subtitleEl.innerText = plan.subtitle || '';

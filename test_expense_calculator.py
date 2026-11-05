@@ -48,11 +48,11 @@ def test_html_structure_and_features():
     assert "transportModeSelect" in html, "缺少交通細項分類選單"
     assert "transportRouteInput" in html, "缺少交通起訖路線輸入欄"
 
-    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.4.3
+    # 7. 驗證多計畫切換 (Plan Switcher) 常駐顯示與版本號 V3.4.4
     assert "expensePlanSelect" in html, "缺少旅行計畫切換下拉選單"
     assert "DEFAULT_PRESET_PLANS" in html, "缺少內建備援旅行計畫列表"
     assert "isPresetOrOldSyncItem" in html, "缺少範本假資料徹底清除函式"
-    assert "V3.4.3" in html, "未同步升級版本號至 V3.4.3"
+    assert "V3.4.4" in html, "未同步升級版本號至 V3.4.4"
 
     # 8. 驗證 6 大標準支出分類模式 (機票、住宿、交通、餐飲、景點、購物)
     for cat_name in ["機票", "住宿", "交通", "餐飲", "景點", "購物"]:
@@ -112,7 +112,7 @@ def test_html_structure_and_features():
 
     for page in ["index.html", "travel_planner.html", "blank.html", "share.html"]:
         with open(page, "r", encoding="utf-8") as pf:
-            assert "V3.4.3" in pf.read(), f"{page} 未同步升級至 V3.4.3"
+            assert "V3.4.4" in pf.read(), f"{page} 未同步升級至 V3.4.4"
 
     # 16. 驗證顯示幣別預設基準幣 (TWD) 對齊主行程、機場專車去重與全團總計模式
     assert 'displayCurrency: "base"' in html, "DEFAULT_STATE 顯示幣別未預設為 base (TWD)"
@@ -164,7 +164,17 @@ def test_html_structure_and_features():
     assert 'createEmptyExpenseStateForPlan' in html, "缺少 createEmptyExpenseStateForPlan 獨立初始帳本產生函式"
     assert 'setupAutoSyncListeners' in html, "缺少 setupAutoSyncListeners 自動對齊監聽器"
 
-    print("[PASS] [1/2] 雲端同步、計畫切換常駐、標題自動即時校準、手機端 Mobile-First RWD 檢查通過！")
+    # 24. 驗證支出分類分佈升級為純 SVG 環形圓餅圖 (Donut Chart) 與動態互動數值看板
+    assert "categoryDonutWrapper" in html, "缺少環形圓餅圖容器 categoryDonutWrapper"
+    assert "donutChartSvg" in html, "缺少 SVG 圓餅圖容器 donutChartSvg"
+    assert "donut-segment" in html, "缺少圓餅圖扇區 donut-segment 類別"
+    assert "donutCenterBadge" in html, "缺少圓餅圖中央數值看板 donutCenterBadge"
+    assert "donutCenterTitle" in html, "缺少中央看板標題 donutCenterTitle"
+    assert "onDonutCategoryHover" in html, "缺少圓餅圖懸停連動函式 onDonutCategoryHover"
+    assert "onDonutCategoryLeave" in html, "缺少圓餅圖懸停離開還原函式 onDonutCategoryLeave"
+    assert "donut-row-active" in html, "缺少列表行高亮樣式 donut-row-active"
+
+    print("[PASS] [1/2] 雲端同步、計畫切換常駐、標題自動即時校準、手機端 Mobile-First RWD 與 SVG 環形圓餅圖檢查通過！")
 
 
 def test_calculation_logic():
