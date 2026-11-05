@@ -5897,6 +5897,62 @@
             }
         }
 
+    
+        /* ===== V3.5.0 柔和圓潤化：分頁、膠囊、按鈕、彈窗與方案切換選單 ===== */
+        body .okr-pill-navbar .view-tab-btn {
+            border-radius: 12px !important;
+            transition: background .2s ease, color .2s ease, box-shadow .2s ease !important;
+        }
+        body .okr-pill-navbar .view-tab-btn.active {
+            background: #e4eff4 !important;
+            color: #1f5f78 !important;
+            box-shadow: inset 0 0 0 1px #cadfe8, 0 2px 8px rgba(31, 95, 120, 0.08) !important;
+        }
+        body .okr-pill-navbar .view-tab-btn.active i { color: #2b7690 !important; }
+        body .expenses-subtab-btn { border-radius: 10px !important; }
+        body .expenses-subtab-btn.active {
+            background: #e4eff4 !important;
+            color: #1f5f78 !important;
+            box-shadow: inset 0 0 0 1px #cadfe8 !important;
+        }
+        body .expenses-subtabs-bar { border-radius: 12px !important; }
+        body .okr-action-pill { border-radius: 999px !important; }
+        body .n-btn { border-radius: 10px !important; }
+        body .modal-dialog { border-radius: 18px !important; }
+        body .spot-guide-card { border-radius: 14px !important; }
+
+        body .okr-plan-badge-pill {
+            border-radius: 999px !important;
+            position: relative !important;
+            overflow: visible !important;
+        }
+        #travelPlanSelect { display: none !important; }
+        .plan-picker-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: transparent; border: none; cursor: pointer;
+            color: #235a6b; font-weight: 700; font-size: inherit; font-family: inherit;
+            padding: 0 2px; max-width: 220px;
+        }
+        .plan-picker-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .plan-picker-btn i { font-size: 0.62rem; transition: transform .2s ease; }
+        .plan-picker-btn.open i { transform: rotate(180deg); }
+        .plan-picker-menu {
+            display: none; position: absolute; top: calc(100% + 8px); left: 0;
+            min-width: 210px; max-width: 280px; z-index: 5000;
+            background: #ffffff; border: 1px solid #e3ecf1; border-radius: 16px;
+            padding: 6px; box-shadow: 0 12px 32px rgba(31, 64, 80, 0.14), 0 2px 6px rgba(31, 64, 80, 0.06);
+        }
+        .plan-picker-menu.open { display: block; animation: planPickerIn .16s ease; }
+        @keyframes planPickerIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        .plan-picker-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            width: 100%; text-align: left; background: transparent; border: none; cursor: pointer;
+            padding: 9px 12px; border-radius: 11px; font-size: 0.86rem; font-weight: 600;
+            color: #3b4d63; font-family: inherit; transition: background .15s ease;
+        }
+        .plan-picker-item:hover { background: #f0f6f9; }
+        .plan-picker-item.current { background: #e4eff4; color: #1f5f78; font-weight: 800; }
+        .plan-picker-item i { font-size: 0.72rem; color: #2b7690; }
     </style>
 </head>
 <body>
@@ -5919,11 +5975,13 @@
                         <select id="travelPlanSelect" class="okr-plan-select" onchange="changeCurrentTravelPlan(this.value)">
                             <!-- Populated dynamically -->
                         </select>
+                        <button type="button" id="planPickerBtn" class="plan-picker-btn" onclick="togglePlanPicker(event)" title="切換旅行計畫"><span id="planPickerLabel"></span><i class="fa-solid fa-chevron-down"></i></button>
+                        <div id="planPickerMenu" class="plan-picker-menu"></div>
                         <button type="button" onclick="deleteCurrentPlan()" title="刪除此計畫" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:0.72rem; padding:0 2px;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.4.7</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.5.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -9500,8 +9558,7 @@ const firebaseConfig = {
                 }
             }
 
-            // 切換分頁時平滑跳轉至頁面最頂部
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // 注意：renderAll 會在儲存、勾選、雲端同步時頻繁呼叫，不可在此重設捲動位置
         }
 
         // V3.0 真實彩色國旗解析與智慧國家推斷 (徹底解決 Windows 把國旗顯示成 JP 字母的問題)
@@ -9628,7 +9685,45 @@ const firebaseConfig = {
                 if (p.id === appState.activePlanId) opt.selected = true;
                 select.appendChild(opt);
             });
+            renderPlanPickerMenu();
         }
+
+        // 柔和圓角的自訂方案切換選單（取代原生直角下拉）
+        function renderPlanPickerMenu() {
+            const menu = document.getElementById('planPickerMenu');
+            const label = document.getElementById('planPickerLabel');
+            if (!menu || !label) return;
+            const clean = (t) => (t || '').replace(/🇨🇳|\[CN\]|\s+CN$|🌶️|🇯🇵|🇹🇼/g, '').trim();
+            let html = '';
+            Object.values(appState.plans).forEach(p => {
+                const isCur = p.id === appState.activePlanId;
+                if (isCur) label.textContent = clean(p.title);
+                html += `<button type="button" class="plan-picker-item${isCur ? ' current' : ''}" onclick="pickTravelPlan('${p.id}')"><span>${escapeHtml(clean(p.title))}</span>${isCur ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
+            });
+            menu.innerHTML = html;
+        }
+        function togglePlanPicker(ev) {
+            if (ev) ev.stopPropagation();
+            const menu = document.getElementById('planPickerMenu');
+            const btn = document.getElementById('planPickerBtn');
+            if (!menu) return;
+            const open = !menu.classList.contains('open');
+            menu.classList.toggle('open', open);
+            if (btn) btn.classList.toggle('open', open);
+        }
+        function closePlanPicker() {
+            const menu = document.getElementById('planPickerMenu');
+            const btn = document.getElementById('planPickerBtn');
+            if (menu) menu.classList.remove('open');
+            if (btn) btn.classList.remove('open');
+        }
+        function pickTravelPlan(planId) {
+            closePlanPicker();
+            changeCurrentTravelPlan(planId);
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest || !e.target.closest('.okr-plan-badge-pill')) closePlanPicker();
+        });
 
         function renderHeaderAndProperties() {
             const plan = getCurrentPlan();
@@ -15222,6 +15317,7 @@ const firebaseConfig = {
                 viewName = 'spots';
             }
 
+            const __prevView = appState.activeView;
             appState.activeView = viewName;
 
             // 4 大主膠囊標籤按鈕高亮狀態 (總覽與行程 / 交通與住宿 / 景點與搶票 / 費用與記帳)
@@ -15268,6 +15364,11 @@ const firebaseConfig = {
                     selectEl.value = viewName;
                 }
             }
+
+            // 僅在實際切換到不同分頁時才回到頁面頂部
+            if (__prevView !== viewName) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         // ==========================
@@ -15279,6 +15380,7 @@ const firebaseConfig = {
             appState.activeDayTab = 1;
             saveState();
             renderAll();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function deleteCurrentPlan() {
