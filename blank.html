@@ -5915,7 +5915,7 @@
                     </button>
                     <div class="okr-plan-badge-pill" title="切換或管理目前的旅行計畫">
                         <i class="fa-solid fa-Compass" style="display:none;"></i>
-                        <i class="fa-solid fa-suitcase-rolling" style="font-size:0.72rem;"></i>
+                        
                         <select id="travelPlanSelect" class="okr-plan-select" onchange="changeCurrentTravelPlan(this.value)">
                             <!-- Populated dynamically -->
                         </select>
@@ -5923,7 +5923,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.4.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.4.5</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -9588,9 +9588,7 @@ const firebaseConfig = {
         }
 
         function formatPlanOptionPrefix(rawEmoji, planObj = null) {
-            if (planObj && planObj.emoji) return planObj.emoji;
-            if (rawEmoji) return rawEmoji.trim();
-            return '✈️';
+            return '';
         }
 
         function renderPlanSelectDropdown() {
@@ -9600,8 +9598,8 @@ const firebaseConfig = {
             Object.values(appState.plans).forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                const cleanTitle = (p.title || '').replace(/🇨🇳|\[CN\]|\s+CN$/g, '').trim();
-                opt.innerText = `${formatPlanOptionPrefix(p.emoji, p)} ${cleanTitle}`;
+                const cleanTitle = (p.title || '').replace(/🇨🇳|\[CN\]|\s+CN$|🌶️|🇯🇵|🇹🇼/g, '').trim();
+                opt.innerText = cleanTitle;
                 if (p.id === appState.activePlanId) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -19174,7 +19172,7 @@ const firebaseConfig = {
 
         function getEventCategoryInfo(type) {
             const map = {
-                'spot': { label: '景點參觀', icon: 'fa-landmark', class: 'event-cat-spot', emoji: '🏛️' },
+                'spot': { label: '景點參觀', icon: 'fa-landmark', class: 'event-cat-spot', emoji: '' },
                 'food': { label: '美食餐飲', icon: 'fa-utensils', class: 'event-cat-food', emoji: '🍽️' },
                 'trans': { label: '交通移動', icon: 'fa-car', class: 'event-cat-trans', emoji: '🚗' },
                 'flight': { label: '航班航程', icon: 'fa-plane', class: 'event-cat-flight', emoji: '✈️' },

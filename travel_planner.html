@@ -5915,7 +5915,7 @@
                     </button>
                     <div class="okr-plan-badge-pill" title="切換或管理目前的旅行計畫">
                         <i class="fa-solid fa-Compass" style="display:none;"></i>
-                        <i class="fa-solid fa-suitcase-rolling" style="font-size:0.72rem;"></i>
+                        
                         <select id="travelPlanSelect" class="okr-plan-select" onchange="changeCurrentTravelPlan(this.value)">
                             <!-- Populated dynamically -->
                         </select>
@@ -5923,7 +5923,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.4.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.4.5</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8399,7 +8399,985 @@ const firebaseConfig = {
             id: 'plan-beijing',
             title: '北京 7 天 6 夜・頂級美食與皇家精華 🇨🇳',
             subtitle: '2026.05.05 - 05.11 ‧ 3 人同行 ‧ 美食與紫禁城長城文化漫遊',
-            emoji: '🏯',
+            emoji: '',
+            coverUrl: 'assets/hero_travel_cover.png',
+            dateRange: '2026.05.05 - 05.11 (7天)',
+            memberCount: 3,
+            members: '3 人同行 (Alice, Misa, Ming)',
+            currencyCode: 'CNY',
+            currencyName: '人民幣',
+            currencySymbol: '¥',
+            exchangeRate: 4.65,
+            budgetNote: '¥ 2,944 / 人 (約 NT$ 13,690)',
+            tags: ['頂級海鮮自助', '紫禁城深度', '慕田峪長城', '宮宴夜宴'],
+            
+            // 側邊欄住宿 (同交通卡片，顯示詳細資訊與地址)
+            hotels: [
+                {
+                    name: '建國・璞隱酒店 (北京天安門王府井店)',
+                    city: '北京 ‧ 王府井',
+                    stayLabel: '全程 6 晚 (05/05 - 05/11)',
+                    checkIn: '2026-05-05',
+                    checkOut: '2026-05-11',
+                    nights: 6,
+                    addr: '北京市東城區東安門大街55號 (王府井金街旁)',
+                    phone: '+86 10 6512 8888',
+                    notes: '近王府井步行街、地鐵站，鬧中取靜，打車進出極便利'
+                }
+            ],
+            hotel: {
+                name: '建國・璞隱酒店 (北京天安門王府井店)',
+                city: '北京 ‧ 王府井',
+                addr: '北京市東城區東安門大街55號 (王府井金街旁)',
+                checkIn: '2026-05-05',
+                checkOut: '2026-05-11'
+            },
+
+            // 側邊欄交通 (匹配第三張圖)
+            flights: {
+                transportType: 'flight',
+                pricingType: 'roundtrip',
+                cost: 15000,
+                costMode: 'single',
+                costCurr: 'TWD',
+                actualCost: 14800,
+                pnr: 'CI-PEK2026',
+                categoryTag: 'International',
+                isTransfer: false,
+                legs: [
+                    {
+                        type: 'outbound',
+                        isTransfer: false,
+                        airline: '中華航空',
+                        flightNo: 'CI 0517',
+                        depTime: '15:35',
+                        arrTime: '18:55',
+                        depLoc: '台北桃園 (TPE) T2',
+                        arrLoc: '北京首都 (PEK) T3',
+                        duration: '3 hrs 25 mins (直飛)',
+                        pnr: 'CI-PEK2026',
+                        categoryTag: 'International',
+                        cost: 7500
+                    },
+                    {
+                        type: 'inbound',
+                        isTransfer: false,
+                        airline: '中華航空',
+                        flightNo: 'CI 0512',
+                        depTime: '12:25',
+                        arrTime: '15:45',
+                        depLoc: '北京首都 (PEK) T3',
+                        arrLoc: '台北桃園 (TPE) T2',
+                        duration: '3 hrs 15 mins (直飛)',
+                        pnr: 'CI-PEK2026',
+                        categoryTag: 'International',
+                        cost: 7500
+                    }
+                ]
+            },
+
+            tools: [
+                { title: '支付寶 / 微信支付 (需實名認證，綁定海外卡免手續費)', checked: true },
+                { title: '滴滴出行 (內建於微信/支付寶，市區點對點移動最省時方便)', checked: true },
+                { title: '大眾點評 (超重要！查餐廳必吃榜、提前線上取號排隊、買足療券)', checked: true },
+                { title: '台胞證正本 (隨身攜帶！故宮、國博、飯店入場均刷台胞證實名驗證)', checked: true },
+                { title: '免翻牆中港澳 eSIM / 漫遊 (確保 LINE、Google、社群通暢無阻)', checked: true }
+            ],
+
+            bookingSchedule: [
+                { date: '即刻', time: '-', target: '宮宴 (5/9)、銘門盛宴 (5/6)、慕田峪包車 (5/8)', platform: '微信/點評/KKday', difficulty: '優先預約', status: '待開放' },
+                { date: '04/29 (三)', time: '17:00', target: '中國國家博物館 (5/6 參觀日)', platform: '微信：國家博物館', difficulty: '極難搶', status: '待開放' },
+                { date: '04/29 (三)', time: '20:00', target: '恭王府 (5/9 參觀日)', platform: '微信：恭王府', difficulty: '手速關鍵', status: '待開放' },
+                { date: '04/30 (四)', time: '20:00', target: '故宮博物院 + 珍寶館 (5/7 參觀日)', platform: '微信：故宮博物院', difficulty: '極難搶', status: '待開放' },
+                { date: '05/02 (六)', time: '09:00', target: '頤和園 & 圓明園聯票 (5/6 參觀日)', platform: '微信：頤和園', difficulty: '優先預約', status: '待開放' },
+                { date: '05/03 (日)', time: '21:00', target: '天壇公園 (5/10 參觀日)', platform: '微信：天壇公園', difficulty: '一般預約', status: '待開放' }
+            ],
+
+            spotTips: [
+                { name: '故宮博物院', address: '北京市東城區景山前街4號', tip: '午門進、神武門出。必看珍寶館、延禧宮。萬春金福下午茶建議提前在大眾點評取號，避開尖峰。' },
+                { name: '中國國家博物館', address: '北京市東城區東長安街16號', tip: '安檢極嚴格，務必提早排隊並攜帶台胞證。直奔地下一樓「古代中國」，看后母戊鼎、四羊方尊。' },
+                { name: '頤和園', address: '北京市海淀區新建宮門路19號', tip: '東宮門進，一定要登頂「佛香閣」俯瞰昆明湖，氣勢最磅礡；之後往北宮門方向出園。' },
+                { name: '圓明園', address: '北京市海淀區清華西路28號', tip: '園區極廣大，切勿全程徒步。買聯票搭電瓶車直達西洋樓大水法遺址，參觀完直接東門出打車。' },
+                { name: '慕田峪長城', address: '北京市懷柔區渤海鎮慕田峪村', tip: '避開八達嶺人潮！推薦「纜車上、滑道衝刺下」，體驗刺激又省力；包車司機會在停車場等待。' }
+            ],
+
+            days: [
+                {
+                    dayNum: 1,
+                    date: '5/5 (二)',
+                    title: '抵達北京 ➔ 王府井夜市宵夜',
+                    breakfast: '家中 / 機場輕食',
+                    lunch: '機上精緻餐點',
+                    dinner: '王府井商圈傳統老字號 / 宵夜',
+                    budget: 489,
+                    events: [
+                        { time: '15:35 - 18:55', title: '【2人先抵達】桃園飛往北京首都國際機場 CI 0517', type: 'flight', loc: '北京首都機場 T3', cost: 0, notes: '航班時間 15:35 - 18:55' },
+                        { time: '20:00 - 21:00', title: '領行李，打車前往建國璞隱酒店 (王府井店)', type: 'trans', loc: '建國璞隱酒店', cost: 256, notes: '避開下班尖峰，打車最方便 ($256/2人均攤)' },
+                        { time: '21:00 以後', title: '辦理入住放行李，王府井商圈漫步吃宵夜', type: 'food', loc: '王府井步行街', cost: 233, notes: '品嚐老北京炸醬麵、小吃與胡同漫遊' }
+                    ]
+                },
+                {
+                    dayNum: 2,
+                    date: '5/6 (三)',
+                    title: '皇家雙園 ➔ 合體海鮮大餐',
+                    breakfast: '璞隱飯店早餐',
+                    lunch: '國博周邊輕食 / 咖啡',
+                    dinner: '銘門盛宴 (頂級海鮮自助餐)',
+                    budget: 2688,
+                    events: [
+                        { time: '08:00 - 11:30', title: '【2人先走：圓明園】搭電瓶車直達大水法，東門出', type: 'spot', loc: '圓明園南門', cost: 302, notes: '06:00開門。門票含車186+車資116。⚠️4/29 買聯票' },
+                        { time: '13:00 - 16:30', title: '中國國家博物館 (核心國寶：古代中國展廳)', type: 'spot', loc: '國博北門', cost: 186, notes: '09:00開門。看后母戊鼎、四羊方尊。⚠️4/29 下午 17:00 瘋狂搶票' },
+                        { time: '17:00 - 18:00', title: '【3人合體】第3人抵達飯店，會合後前往餐廳', type: 'trans', loc: '璞隱酒店 ➔ 餐廳', cost: 93, notes: '車資約$93 (3人均攤)' },
+                        { time: '18:00 以後', title: '晚餐：銘門盛宴 (頂級海鮮活鮑龍蝦自助餐)', type: 'food', loc: '銘門盛宴', cost: 2200, notes: '頂級海鮮饗宴。⚠️需提前 1-2 週預訂座位' }
+                    ]
+                },
+                {
+                    dayNum: 3,
+                    date: '5/7 (四)',
+                    title: '故宮深度遊 ➔ 景山俯瞰 ➔ 足療放鬆',
+                    breakfast: '璞隱飯店早餐',
+                    lunch: '故宮萬春金福下午茶 (宮廷糕點)',
+                    dinner: '北京烤鴨 (大董 / 晟永興)',
+                    budget: 2224,
+                    events: [
+                        { time: '08:30 - 15:00', title: '故宮博物院深度遊 (午門進，萬春金福下午茶，神武門出)', type: 'spot', loc: '故宮東華門', cost: 763, notes: '08:30開門。必看珍寶館、延禧宮。⚠️4/30 晚 20:00 瘋搶' },
+                        { time: '15:30 - 16:30', title: '景山公園 (登萬春亭俯瞰紫禁城全景夕照)', type: 'spot', loc: '景山公園', cost: 9, notes: '06:00開門，當天現場購票，登高景色極為震撼' },
+                        { time: '18:00 以後', title: '晚餐：頂級北京烤鴨 + 專業足療按摩續命', type: 'food', loc: '大董烤鴨 / 足療會館', cost: 1861, notes: '走最多路的一天！足療建議傍晚先在APP預約' }
+                    ]
+                },
+                {
+                    dayNum: 4,
+                    date: '5/8 (五)',
+                    title: '長城挑戰 ➔ 新京禧銅鍋涮肉',
+                    breakfast: '外帶早餐 / 飯店早餐',
+                    lunch: '長城景區特色餐點',
+                    dinner: '新京禧 (老北京正宗銅鍋涮肉)',
+                    budget: 2525,
+                    events: [
+                        { time: '08:00 - 16:00', title: '慕田峪長城 (專屬包車飯店接送，纜車上、滑道下)', type: 'spot', loc: '慕田峪長城', cost: 2013, notes: '07:30開門。包車1,083+門票纜車滑道930。⚠️4月中前訂好包車' },
+                        { time: '18:30 以後', title: '晚餐：新京禧銅鍋涮肉，三里屯/胡同散步', type: 'food', loc: '新京禧', cost: 512, notes: '手切羊肉與麻醬香氣絕配，放鬆逛街' }
+                    ]
+                },
+                {
+                    dayNum: 5,
+                    date: '5/9 (六)',
+                    title: '王府風情 ➔ 宮宴夜宴',
+                    breakfast: '璞隱飯店早餐',
+                    lunch: '王府井輕食小點',
+                    dinner: '宮宴 (前門大街沉浸式宮廷晚餐與盛宴)',
+                    budget: 2153,
+                    events: [
+                        { time: '09:00 - 11:30', title: '恭王府精華漫步 (和珅府邸，摸福字碑沾財氣)', type: 'spot', loc: '恭王府 1 號門', cost: 186, notes: '08:30開門。⚠️4/29 晚 20:00 預約' },
+                        { time: '12:00 - 16:30', title: '【下午完全留白】回飯店睡午覺休息、妝髮造型', type: 'other', loc: '璞隱酒店', cost: 233, notes: '養足精神，換上古裝或優雅服飾迎接宮廷晚宴' },
+                        { time: '17:00 以後', title: '宮宴：前門大街沉浸式宮廷料理與文化樂舞表演', type: 'food', loc: '前門大街 宮宴', cost: 1683, notes: '一秒穿越大唐大明盛世！⚠️即刻預約！' }
+                    ]
+                },
+                {
+                    dayNum: 6,
+                    date: '5/10 (日)',
+                    title: '瑰麗神級早餐 ➔ 雍和宮 ➔ 天壇 ➔ 什剎海',
+                    breakfast: '北京瑰麗酒店 (怡庭 Bistrot B 法式早餐)',
+                    lunch: '五道營胡同特色咖啡輕食',
+                    dinner: '什剎海胡同散步烤串 (烤肉季/老北京炸醬)',
+                    budget: 3126,
+                    events: [
+                        { time: '08:00 - 10:00', title: '北京瑰麗酒店早餐 (怡庭 Bistrot B，必吃神級可頌與煎餅)', type: 'food', loc: '北京瑰麗酒店', cost: 1723, notes: '法式慵懶奢華享受，享受極品現烤可頌與經典蛋料理' },
+                        { time: '10:30 - 12:00', title: '雍和宮 (巨型彌勒佛，感受香火鼎盛之美)', type: 'spot', loc: '雍和宮', cost: 163, notes: '09:00開門。⚠️5/1 提前預約' },
+                        { time: '12:00 - 13:30', title: '五道營胡同 (文青漫步喝精品手沖咖啡)', type: 'food', loc: '五道營胡同', cost: 200, notes: '就在雍和宮旁，步行即達，綠意老槐樹與現代小店' },
+                        { time: '16:00 - 17:30', title: '天壇公園 (祈年殿、回音壁、皇穹宇)', type: 'spot', loc: '天壇公園東門', cost: 186, notes: '08:00開門。⚠️5/3 買聯票 (核心區17:00停止驗票)' },
+                        { time: '18:00 以後', title: '什剎海夜色散步、後海慢活烤肉擼串收尾', type: 'food', loc: '什剎海', cost: 726, notes: '微風輕拂湖面，胡同夜景慢活完美收官' }
+                    ]
+                },
+                {
+                    dayNum: 7,
+                    date: '5/11 (一)',
+                    title: '飯店退房 ➔ 首都機場返台',
+                    breakfast: '璞隱飯店退房早餐',
+                    lunch: '首都機場貴賓室 / 機上餐點',
+                    dinner: '台北溫馨家常晚餐',
+                    budget: 372,
+                    events: [
+                        { time: '09:00 - 10:00', title: '辦理退房，打車前往北京首都國際機場 (PEK)', type: 'trans', loc: '首都機場 T3', cost: 186, notes: '打車前往機場 ($186/3人均攤)，建議10:00前抵達報到' },
+                        { time: '12:25 - 15:45', title: '滿載回憶！搭乘 CI 0512 班機順利返抵台灣桃園機場', type: 'flight', loc: '桃園機場 T2', cost: 186, notes: '機票自理，順利平安返台' }
+                    ]
+                }
+            ]
+        };
+
+        // Preset 2: 重慶 7 天 6 夜自由行
+        const PRESET_CHONGQING = {
+        "bookingSchedule": [],
+        "emoji": "",
+        "members": "2人同行",
+        "memberCount": 2,
+        "dateRange": "2026.10.23 - 10.29 (7天)",
+        "version": 2026100504,
+        "id": "plan-chongqing",
+        "majorTransports": [],
+        "currencySymbol": "¥",
+        "flights": {
+                "transportType": "flight",
+                "pricingType": "separate",
+                "outboundCost": 6250,
+                "inboundCost": 6250,
+                "cost": 12500,
+                "costMode": "single",
+                "costCurr": "TWD",
+                "actualCost": 12500,
+                "pnr": "CX407 / CX945",
+                "categoryTag": "International",
+                "isTransfer": true,
+                "legs": [
+                        {
+                                "type": "outbound",
+                                "isTransfer": true,
+                                "airline": "國泰航空",
+                                "flightNo": "CX 407",
+                                "depTime": "08:00",
+                                "arrTime": "10:00",
+                                "depLoc": "台北桃園 (TPE) T1",
+                                "arrLoc": "香港 (HKG) T1",
+                                "transferInfo": "香港國際機場 (HKG) 轉機停留 3 小時 35 分鐘",
+                                "flightNo2": "CX 928",
+                                "depTime2": "13:35",
+                                "arrTime2": "16:10",
+                                "arrLoc2": "重慶江北 (CKG) T3",
+                                "duration": "8 hrs 10 mins (經香港轉機)",
+                                "pnr": "CX407",
+                                "categoryTag": "International",
+                                "cost": 6250
+                        },
+                        {
+                                "type": "inbound",
+                                "isTransfer": true,
+                                "airline": "國泰航空",
+                                "flightNo": "CX 945",
+                                "depTime": "10:50",
+                                "arrTime": "14:25",
+                                "depLoc": "重慶江北 (CKG) T3",
+                                "arrLoc": "香港 (HKG) T1",
+                                "transferInfo": "香港國際機場 (HKG) 轉機停留 4 小時 50 分鐘",
+                                "flightNo2": "CX 464",
+                                "depTime2": "19:35",
+                                "arrTime2": "21:20",
+                                "arrLoc2": "台北桃園 (TPE) T1",
+                                "duration": "10 hrs 30 mins (經香港轉機)",
+                                "pnr": "CX945",
+                                "categoryTag": "International",
+                                "cost": 6250
+                        }
+                ]
+        },
+        "_bookingMergedV3": true,
+        "title": "重慶自由行",
+        "coverUrl": "assets/hero_travel_cover.png",
+        "subtitle": "2026.10.23 - 10.29 ‧ 8D 魔幻山城 ‧ 天生三橋 ‧ 長江索道 ‧ 磁器口",
+        "budgetNote": "¥ 4,424 / 人 (約 NT$ 21,529)",
+        "currencyName": "人民幣",
+        "tags": [
+                "8D魔幻山城",
+                "來福士烤匠",
+                "武隆天生三橋",
+                "長江索道",
+                "磁器口古鎮"
+        ],
+        "tools": [
+                {
+                        "title": "早上 04:20 機場專車接送確認 (前一晚核對司機車號與聯絡電話)",
+                        "checked": true
+                },
+                {
+                        "title": "支付寶 / 微信支付 (綁定海外信用卡實名認證，乘車碼搭地鐵必備)",
+                        "checked": true
+                },
+                {
+                        "title": "高德地圖 APP (山城導航神器，定位多層立體道路與手扶梯出口)",
+                        "checked": true
+                },
+                {
+                        "title": "大眾點評 APP (搜尋烤匠/野果線上排隊取號、購買熱門門票)",
+                        "checked": true
+                },
+                {
+                        "title": "台胞證正本隨身攜帶 (高鐵、博物館實名預約、飯店 Check-in 必備)",
+                        "checked": true
+                },
+                {
+                        "title": "舒適防滑球鞋 (山城步道、天生三橋梯坎步道眾多，好穿鞋極度關鍵)",
+                        "checked": true
+                }
+        ],
+        "hotels": [
+                {
+                        "name": "重慶解放碑 Moxy 酒店",
+                        "city": "重慶 ‧ 解放碑商圈",
+                        "stayLabel": "前 4 晚 (10/23 - 10/27)",
+                        "checkIn": "2026-10-23",
+                        "checkOut": "2026-10-27",
+                        "nights": 4,
+                        "rooms": 1,
+                        "price": 6000,
+                        "priceType": "total",
+                        "costCurr": "TWD",
+                        "actualCost": 5660,
+                        "addr": "重慶市渝中區青年路77號 (解放碑國泰優活城市廣場旁)",
+                        "phone": "+86 23 8888 6666",
+                        "notes": "步行即達解放碑中心、八一路好吃街，地鐵 2 號線臨江門站旁"
+                },
+                {
+                        "name": "重慶來福士洲際酒店",
+                        "city": "重慶 ‧ 朝天門/來福士",
+                        "stayLabel": "後 2 晚 (10/27 - 10/29)",
+                        "checkIn": "2026-10-27",
+                        "checkOut": "2026-10-29",
+                        "nights": 2,
+                        "rooms": 1,
+                        "price": 4000,
+                        "priceType": "total",
+                        "costCurr": "LOCAL",
+                        "actualCost": 3556,
+                        "addr": "重慶市渝中區接聖街8號 (朝天門來福士廣場 T4N 棟)",
+                        "phone": "+86 23 6666 8888",
+                        "notes": "水晶連廊 250 公尺高空大廳，高空客房俯瞰兩江交匯百萬夜景"
+                }
+        ],
+        "hotel": {
+                "stayLabel": "前 4 晚 (10/23 - 10/27)",
+                "checkIn": "2026-10-23",
+                "priceType": "total",
+                "price": 6000,
+                "notes": "步行即達解放碑中心、八一路好吃街，地鐵 2 號線臨江門站旁",
+                "costCurr": "TWD",
+                "checkOut": "2026-10-27",
+                "name": "重慶解放碑 Moxy 酒店",
+                "addr": "重慶市渝中區青年路77號 (解放碑國泰優活城市廣場旁)",
+                "city": "重慶 ‧ 解放碑商圈",
+                "rooms": 1,
+                "phone": "+86 23 8888 6666",
+                "actualCost": 5660,
+                "nights": 4
+        },
+        "currencyCode": "CNY",
+        "spotTips": [
+                {
+                        "address": "重慶市渝中區人民路236號",
+                        "name": "重慶中國三峽博物館",
+                        "tip": "免費預約，巴渝青銅器與三峽大壩壯麗史詩必看；對面即是雄偉的人民大禮堂，可順道跨越廣場拍照合影。",
+                        "id": "sg_mw2zm7k8_0_lpgq",
+                        "hasBooking": true,
+                        "bookingDate": "2026-10-15",
+                        "bookingTime": "09:00",
+                        "bookingPlatform": "三峽博物館微信公眾號",
+                        "bookingDifficulty": "一般預約",
+                        "bookingStatus": "已完成"
+                },
+                {
+                        "address": "重慶市渝中區中興路1號",
+                        "name": "十八梯 ＆ 山城步道",
+                        "tip": "老重慶梯坎風貌代表，依山而築。穿梭老防空洞、懸崖棧道與江景咖啡，建議順坡而下走起來最舒適省力。",
+                        "id": "sg_mw2zm7k8_1_6th1"
+                },
+                {
+                        "address": "重慶市渝中區接聖街8號",
+                        "name": "來福士 ＆ 無人機表演",
+                        "tip": "朝天門兩江交匯地標。烤匠麻辣烤魚人氣極高，必吃黑豆花；夜間於朝天門廣場仰望無人機燈光矩陣表演，氣勢震撼。",
+                        "id": "sg_mw2zm7k8_2_hhth",
+                        "hasBooking": true,
+                        "bookingDate": "2026-10-24",
+                        "bookingTime": "16:00",
+                        "bookingPlatform": "大眾點評 APP",
+                        "bookingDifficulty": "手速關鍵",
+                        "bookingStatus": "待開放"
+                },
+                {
+                        "address": "重慶市渝中區李子壩正街39號",
+                        "name": "李子壩穿樓 ＆ 筷子館",
+                        "tip": "國泰藝術中心（筷子樓）紅色幾何樑柱視覺震撼；搭乘輕軌 2 號線至李子壩站，出站後下到底部觀景台仰拍穿樓奇景。",
+                        "id": "sg_mw2zm7k8_3_rgjp"
+                },
+                {
+                        "tip": "世界自然遺產，《變形金剛4》取景地。天龍橋、青龍橋、黑龍橋磅礡壯麗。包車直達省時省力，景區步道多階梯需穿防滑鞋。",
+                        "address": "重慶市武隆區仙女山鎮",
+                        "name": "武隆天生三橋",
+                        "id": "sg_mw2zm7k8_4_gxa6",
+                        "hasBooking": true,
+                        "bookingDate": "即刻",
+                        "bookingTime": "",
+                        "bookingPlatform": "KKday / 飛豬 / 本地專車",
+                        "bookingDifficulty": "優先預約",
+                        "bookingStatus": "待開放"
+                },
+                {
+                        "address": "重慶市渝中區新華路151號",
+                        "tip": "單程跨江體驗即可，從新華路搭至南岸上新街。下浩里依山而建，修繕後文藝古樸，中午在老街特色茶館餐廳用餐極有韻味。",
+                        "name": "長江索道 ＆ 下浩里",
+                        "id": "sg_mw2zm7k8_5_lbs4",
+                        "hasBooking": true,
+                        "bookingDate": "2026-10-10",
+                        "bookingTime": "10:00",
+                        "bookingPlatform": "重慶索道官方微信",
+                        "bookingDifficulty": "手速關鍵",
+                        "bookingStatus": "待開放"
+                },
+                {
+                        "address": "重慶市沙坪壩區磁南街1號",
+                        "name": "瓷器口古鎮",
+                        "tip": "千年巴渝古鎮，嘉陵江畔碼頭文化。必嚐香脆手工陳麻花、古鎮毛血旺，可走訪寶輪寺與後街文創小巷避開主街人潮。",
+                        "id": "sg_mw2zm7k8_6_l0o3"
+                },
+                {
+                        "id": "sg_migrated_4_mw2zm7ka",
+                        "name": "野果 Yeguo 晚餐訂位",
+                        "address": "",
+                        "tip": "預約提醒：請透過「電話 / 微信小程式」提前預約搶票（原備註：野果 Yeguo 晚餐訂位 (D3)）。",
+                        "visitDate": "2026-10-25",
+                        "visitStartTime": "",
+                        "visitEndTime": "",
+                        "scheduled": true,
+                        "scheduleNote": "",
+                        "hasBooking": true,
+                        "bookingDate": "2026-10-25",
+                        "bookingTime": "12:00",
+                        "bookingPlatform": "電話 / 微信小程式",
+                        "bookingDifficulty": "優先預約",
+                        "bookingStatus": "待開放"
+                }
+        ],
+        "days": [
+                {
+                        "title": "啟程重慶 ➔ 機場接送 ➔ 入住解放碑 ➔ 附近漫步",
+                        "budgetTwd": 11192,
+                        "breakfast": "家中 / 機場輕食",
+                        "transportCost": 1350,
+                        "spotNote": "解放碑步行街免費散步體驗",
+                        "transports": [
+                                {
+                                        "mode": "single",
+                                        "cost": 1350,
+                                        "title": "台北專車接送 (NT$ 1200) + 重慶機場專車送達飯店 (NT$ 150)",
+                                        "curr": "LOCAL"
+                                }
+                        ],
+                        "transportNote": "台北專車接送 (NT$ 1200) + 重慶機場專車送達飯店 (NT$ 150)",
+                        "dinner": "依狀況彈性調整 (暫不設定特定餐廳)",
+                        "spots": [
+                                {
+                                        "mode": "single",
+                                        "title": "解放碑步行街免費散步體驗",
+                                        "cost": 0,
+                                        "curr": "LOCAL"
+                                }
+                        ],
+                        "breakfastCost": 150,
+                        "events": [
+                                {
+                                        "time": "05:00 - 08:00",
+                                        "type": "flight",
+                                        "title": "抵達桃園機場辦理登機手續、托運行李與候機",
+                                        "notes": "備妥台胞證與護照，提早辦理登機與行李托運，享用機場輕食或貴賓室",
+                                        "cost": 0,
+                                        "loc": "桃園機場 T1"
+                                },
+                                {
+                                        "type": "flight",
+                                        "cost": 0,
+                                        "title": "搭乘班機出發：台北桃園 ➔ 香港轉機 ➔ 抵達重慶江北 (國泰 CX407 / CX928)",
+                                        "notes": "香港轉機停留 3.5 小時，下午 16:10 順利降落山城重慶，提領行李出關",
+                                        "loc": "重慶江北國際機場 T3",
+                                        "time": "08:00 - 16:10",
+                                        "transit": {
+                                                "minutes": 490,
+                                                "title": "搭乘國泰班機航程",
+                                                "mode": "flight",
+                                                "custom": true
+                                        }
+                                },
+                                {
+                                        "time": "17:00 - 18:30",
+                                        "title": "到達重慶解放碑商圈飯店 (Moxy) Check-in 辦理入住",
+                                        "notes": "機場專車接送直達飯店，辦理入住手續、放行李並稍作梳洗休息",
+                                        "type": "hotel",
+                                        "transit": {
+                                                "minutes": 50,
+                                                "title": "重慶機場專車接送直達飯店",
+                                                "notes": "機場專車接送直達飯店，車程約 50 分鐘",
+                                                "cost": 150,
+                                                "custom": true,
+                                                "mode": "car"
+                                        },
+                                        "cost": 0,
+                                        "loc": "解放碑商圈飯店 (Moxy)"
+                                },
+                                {
+                                        "loc": "解放碑步行街 / 八一路好吃街",
+                                        "transit": {
+                                                "title": "步行散步前往商圈",
+                                                "mode": "walk",
+                                                "minutes": 15,
+                                                "custom": true
+                                        },
+                                        "title": "飯店周邊附近逛逛漫步，晚餐依據狀況調整先不設定餐廳",
+                                        "time": "18:45 以後",
+                                        "notes": "放鬆散步適應山城氣候與地形，晚餐依當天體力與胃口自由調整探索周邊特色小吃",
+                                        "cost": 0,
+                                        "type": "spot"
+                                }
+                        ],
+                        "spotCost": 0,
+                        "date": "10/23 (五)",
+                        "dayNum": 1,
+                        "dinnerCost": 600,
+                        "lunchCost": 200,
+                        "firstTransit": {
+                                "startTimeStr": "04:20",
+                                "fromLoc": "台北",
+                                "title": "專車接送出發前往桃園機場",
+                                "notes": "早上 04:20 專車接送準時出發，備妥台胞證與護照，前往桃園機場 T1",
+                                "minutes": 40,
+                                "cost": 1200,
+                                "endTimeStr": "05:00",
+                                "mode": "car",
+                                "custom": true
+                        },
+                        "extraCosts": [],
+                        "lunch": "機上精緻餐點 / 香港轉機美食",
+                        "budget": 2300,
+                        "actualBreakfastCost": 150,
+                        "breakfastCurr": "LOCAL",
+                        "breakfastMode": "single",
+                        "actualLunchCost": 200,
+                        "lunchCurr": "LOCAL",
+                        "lunchMode": "single",
+                        "actualDinnerCost": 600,
+                        "dinnerCurr": "LOCAL",
+                        "dinnerMode": "single",
+                        "actualTransportCost": 1350,
+                        "transportCurr": "LOCAL",
+                        "transportMode": "single",
+                        "actualSpotCost": 0,
+                        "spotCurr": "LOCAL",
+                        "spotMode": "single"
+                },
+                {
+                        "dayNum": 2,
+                        "spotCost": 0,
+                        "lunchCost": 450,
+                        "transports": [
+                                {
+                                        "curr": "LOCAL",
+                                        "title": "市區滴滴打車前往十八梯 / 地鐵乘車碼",
+                                        "cost": 50,
+                                        "mode": "single"
+                                }
+                        ],
+                        "spotNote": "三峽博物館、山城步道與夜空無人機表演免費",
+                        "lunch": "午餐 TBD (十八梯 / 山城步道周邊特色料理)",
+                        "date": "10/24 (六)",
+                        "budget": 1500,
+                        "title": "三峽博物館 ➔ 十八梯 ➔ 山城步道 ➔ 來福士烤匠 ➔ 無人機表演",
+                        "breakfast": "飯店早餐 / 渝味重慶小麵",
+                        "breakfastCost": 100,
+                        "transportNote": "市區滴滴打車前往十八梯 / 地鐵乘車碼",
+                        "dinnerCost": 900,
+                        "transportCost": 50,
+                        "extraCosts": [],
+                        "spots": [
+                                {
+                                        "mode": "single",
+                                        "title": "三峽博物館、山城步道與夜空無人機表演免費",
+                                        "cost": 0,
+                                        "curr": "LOCAL"
+                                }
+                        ],
+                        "dinner": "來福士「烤匠麻辣烤魚」",
+                        "events": [
+                                {
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "loc": "三峽博物館 (人民廣場旁)",
+                                        "title": "早上先去參觀「重慶中國三峽博物館」",
+                                        "notes": "免費預約參觀，館藏壯觀，了解巴渝文化與三峽水利工程歷史；對面可順拍人民大禮堂",
+                                        "time": "09:30 - 12:00"
+                                },
+                                {
+                                        "time": "12:30 - 14:30",
+                                        "loc": "十八梯老街",
+                                        "type": "trans",
+                                        "title": "之後漫遊「十八梯」傳統風貌區，午餐自由享用",
+                                        "notes": "打車前往十八梯老街；走訪老重慶吊腳樓梯坎，《從你的全世界路過》景點，午餐現場挑選喜歡的小吃",
+                                        "cost": 50
+                                },
+                                {
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "loc": "山城步道 / 山城巷",
+                                        "title": "漫步巡禮「山城步道」(懸崖棧道與老防空洞)",
+                                        "notes": "沿山崖依山而建的原生態步道，穿過老防空洞與特色茶館，俯瞰長江南岸江景",
+                                        "time": "14:30 - 16:30"
+                                },
+                                {
+                                        "loc": "重慶來福士購物中心 烤匠",
+                                        "time": "17:30 - 19:30",
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "title": "晚上前往來福士享用「烤匠麻辣烤魚」美食晚餐",
+                                        "notes": "「不吃火鍋就吃烤匠」！必吃人氣麻辣烤魚配手工黑豆花，建議提早於大眾點評取號"
+                                },
+                                {
+                                        "time": "20:00 - 21:00",
+                                        "type": "spot",
+                                        "loc": "朝天門廣場 / 來福士觀景平台",
+                                        "title": "之後再去看朝天門夜空震撼「無人機表演」",
+                                        "notes": "在兩江交匯璀璨夜空下，仰望壯麗無人機燈光矩陣編隊表演，震撼難忘",
+                                        "cost": 0
+                                }
+                        ]
+                },
+                {
+                        "spotCost": 20,
+                        "transportCost": 80,
+                        "spots": [
+                                {
+                                        "cost": 20,
+                                        "mode": "single",
+                                        "curr": "LOCAL",
+                                        "title": "羅漢寺香花券 (門票) ¥ 20"
+                                }
+                        ],
+                        "transports": [
+                                {
+                                        "curr": "LOCAL",
+                                        "title": "輕軌 2 號線 + 滴滴打車前往萬象城",
+                                        "cost": 80,
+                                        "mode": "single"
+                                }
+                        ],
+                        "transportNote": "輕軌 2 號線 + 滴滴打車前往萬象城",
+                        "events": [
+                                {
+                                        "loc": "羅漢寺 (解放碑旁)",
+                                        "cost": 20,
+                                        "type": "spot",
+                                        "title": "早上去「羅漢寺」祈福晃晃",
+                                        "notes": "千年古剎，隱身摩天大樓之間。《瘋狂的石頭》取景地，香火鼎盛，羅漢堂造像莊嚴",
+                                        "time": "09:30 - 10:30"
+                                },
+                                {
+                                        "loc": "國泰藝術中心 (筷子樓)",
+                                        "title": "之後前往國泰藝術中心「筷子館」打卡合影",
+                                        "notes": "極具衝擊力的中國紅建築外觀，傳統「題湊」結構交織如筷子，重慶經典打卡建築",
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "time": "10:45 - 11:30"
+                                },
+                                {
+                                        "loc": "李子壩輕軌站 ＆ 觀景台",
+                                        "time": "12:00 - 14:00",
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "title": "前往「李子壩」打卡輕軌穿樓奇景 ＋ 中午在李子壩吃午餐",
+                                        "notes": "搭乘 2 號線親歷穿樓，隨後下至地面觀景平台打卡拍照。午餐於周邊享用馳名李子壩梁山雞或特色小吃"
+                                },
+                                {
+                                        "loc": "九龍坡 萬象城 (華潤萬象城)",
+                                        "time": "14:30 - 17:30",
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "title": "下午打車去「萬象城」時尚商圈晃晃",
+                                        "notes": "重慶頂級購物地標，空間開闊品牌齊全，室內外園林步道設計，悠閒逛街、喝下午茶"
+                                },
+                                {
+                                        "loc": "野果 Yeguo 餐廳",
+                                        "time": "18:00 - 20:30",
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "title": "晚上前往「野果 Yeguo」享用美味精緻晚餐",
+                                        "notes": "重慶話題熱門先鋒融合料理，在地風味結合現代美學，氛圍極佳，需提早預約"
+                                }
+                        ],
+                        "breakfastCost": 100,
+                        "dinner": "野果 Yeguo (重慶先鋒精緻融合菜)",
+                        "title": "羅漢寺 ➔ 筷子館 ➔ 李子壩 ➔ 萬象城 ➔ 晚餐野果",
+                        "spotNote": "羅漢寺香花券 (門票) ¥ 20",
+                        "date": "10/25 (日)",
+                        "lunchCost": 500,
+                        "dinnerCost": 1200,
+                        "breakfast": "飯店早餐 / 八一路小吃 (九園包子)",
+                        "dayNum": 3,
+                        "lunch": "李子壩梁山雞 / 穿樓觀景餐廳",
+                        "extraCosts": [],
+                        "budget": 1900
+                },
+                {
+                        "extraCosts": [],
+                        "dayNum": 4,
+                        "lunchCost": 400,
+                        "spotCost": 350,
+                        "spots": [
+                                {
+                                        "mode": "single",
+                                        "title": "天生三橋門票 + 環保接駁車 + 天福官驛",
+                                        "cost": 350,
+                                        "curr": "LOCAL"
+                                }
+                        ],
+                        "title": "武隆天生三橋包車一日遊 ➔ 觀音橋打卡 ＋ 吃飯",
+                        "budget": 2850,
+                        "dinnerCost": 800,
+                        "spotNote": "天生三橋門票 + 環保接駁車 + 天福官驛",
+                        "transports": [
+                                {
+                                        "cost": 1200,
+                                        "mode": "single",
+                                        "curr": "LOCAL",
+                                        "title": "專屬包車往返武隆全天 (NT$ 1200 / 均攤)"
+                                }
+                        ],
+                        "transportCost": 1200,
+                        "lunch": "武隆仙女山土家菜風味料理",
+                        "events": [
+                                {
+                                        "type": "spot",
+                                        "cost": 350,
+                                        "title": "武隆天生三橋景區參觀 (天龍橋、青龍橋、黑龍橋)",
+                                        "notes": "世界自然遺產壯麗喀斯特地貌，《變形金剛4》取景地；俯瞰天福官驛，乘坐高聳觀光垂直電梯",
+                                        "time": "07:30 - 14:30",
+                                        "loc": "武隆天生三橋風景區"
+                                },
+                                {
+                                        "time": "15:00 - 17:30",
+                                        "loc": "武隆 ➔ 重慶市區 觀音橋",
+                                        "cost": 1200,
+                                        "type": "trans",
+                                        "title": "武隆天生三橋專屬包車往返市區與觀音橋",
+                                        "notes": "專屬舒適專車往返，車程約 2.5 小時，沿途補眠休息，傍晚直達觀音橋商圈"
+                                },
+                                {
+                                        "time": "18:00 - 20:30",
+                                        "type": "spot",
+                                        "title": "晚上去「觀音橋」大地標 3D 裸眼巨幕打卡 ＋ 吃飯",
+                                        "loc": "觀音橋步行街 / 大融城 3D 巨幕",
+                                        "notes": "觀音橋人潮如織，欣賞視覺震撼的戶外 3D 裸眼巨幕；周邊遍佈九街熱門火鍋與江湖菜，盡享地道煙火氣",
+                                        "cost": 0
+                                }
+                        ],
+                        "dinner": "觀音橋九街人氣江湖菜 / 特色美食",
+                        "date": "10/26 (一)",
+                        "transportNote": "專屬包車往返武隆全天 (NT$ 1200 / 均攤)",
+                        "breakfastCost": 100,
+                        "breakfast": "提早出發 / 專車沿途早餐輕食"
+                },
+                {
+                        "dayNum": 5,
+                        "spotCost": 20,
+                        "title": "Check-out ➔ 長江索道 ➔ 下浩里午餐 ➔ 換飯店入住來福士",
+                        "lunchCost": 500,
+                        "spots": [
+                                {
+                                        "cost": 20,
+                                        "title": "長江索道單程體驗門票 ¥ 20",
+                                        "mode": "single",
+                                        "curr": "LOCAL"
+                                }
+                        ],
+                        "transports": [
+                                {
+                                        "mode": "single",
+                                        "cost": 60,
+                                        "title": "長江索道單程票 + 換飯店打車費用",
+                                        "curr": "LOCAL"
+                                }
+                        ],
+                        "spotNote": "長江索道單程體驗門票 ¥ 20",
+                        "budget": 1720,
+                        "breakfast": "飯店早餐 / 解放碑周邊輕食",
+                        "dinnerCost": 1000,
+                        "transportNote": "長江索道單程票 + 換飯店打車費用",
+                        "breakfastCost": 100,
+                        "date": "10/27 (二)",
+                        "lunch": "下浩里老街景觀餐廳 (依山而坐)",
+                        "extraCosts": [],
+                        "dinner": "來福士水晶連廊 / 兩江夜景晚餐",
+                        "transportCost": 60,
+                        "events": [
+                                {
+                                        "time": "09:30 - 10:30",
+                                        "loc": "重慶解放碑 Moxy 酒店",
+                                        "cost": 0,
+                                        "type": "hotel",
+                                        "title": "先辦理飯店退房 (Check-out)，收拾行李準備出發",
+                                        "notes": "辦理退房，行李寄存或直接隨車攜帶，開啟後半段旅程"
+                                },
+                                {
+                                        "time": "10:45 - 11:45",
+                                        "title": "去搭乘「長江索道」體驗空中飛渡長江壯闊景觀",
+                                        "notes": "山城空中公車，俯瞰滾滾長江與兩岸林立摩天高樓，單程體驗視野極佳",
+                                        "type": "spot",
+                                        "loc": "長江索道 (新華路北站 ➔ 上新街南站)",
+                                        "cost": 20
+                                },
+                                {
+                                        "loc": "下浩里老街 (南岸)",
+                                        "cost": 0,
+                                        "type": "spot",
+                                        "title": "中午在「下浩里」老街漫步與享用美味午餐",
+                                        "notes": "新興文藝依山步道，保留百年開埠歷史建築，依山林立質感茶屋與特色私房餐廳",
+                                        "time": "12:00 - 14:00"
+                                },
+                                {
+                                        "loc": "重慶來福士洲際酒店 (朝天門廣場)",
+                                        "title": "下午打車返回換飯店，Check-in 入住「重慶來福士洲際酒店」",
+                                        "time": "14:30 - 15:30",
+                                        "notes": "打車前往朝天門來福士，直上 42 樓水晶連廊接待大廳辦理 Check-in，尊享兩江交匯壯美客房",
+                                        "cost": 40,
+                                        "type": "hotel"
+                                },
+                                {
+                                        "time": "17:30 - 21:00",
+                                        "title": "晚上在來福士商圈水晶連廊漫步，享用晚餐與高空夜景",
+                                        "notes": "漫步重慶新地標水晶連廊俯瞰山城百萬夜景，商場內匯聚多元國際美食與地道川渝名饌",
+                                        "type": "spot",
+                                        "loc": "來福士購物中心 ＆ 水晶連廊",
+                                        "cost": 0
+                                }
+                        ],
+                        "budgetTwd": 8370
+                },
+                {
+                        "extraCosts": [],
+                        "spotNote": "瓷器口古鎮走街串巷免費參觀",
+                        "budget": 1580,
+                        "breakfastCost": 150,
+                        "transportNote": "市區滴滴往返瓷器口古鎮",
+                        "date": "10/28 (三)",
+                        "lunchCost": 450,
+                        "lunch": "瓷器口古鎮風味小吃 / 毛血旺正餐",
+                        "spotCost": 0,
+                        "dinnerCost": 900,
+                        "dayNum": 6,
+                        "transportCost": 80,
+                        "transports": [
+                                {
+                                        "title": "市區滴滴往返瓷器口古鎮",
+                                        "curr": "LOCAL",
+                                        "mode": "single",
+                                        "cost": 80
+                                }
+                        ],
+                        "title": "打車去瓷器口 ➔ 巴渝老街巡禮 ➔ 夜宿來福士",
+                        "dinner": "重慶特色江湖菜 (楊記隆府 / 臨江江湖菜)",
+                        "events": [
+                                {
+                                        "type": "trans",
+                                        "title": "打車前往「瓷器口 (磁器口古鎮)」",
+                                        "notes": "市區打車直達古鎮景區入口，避開擁擠路段",
+                                        "cost": 40,
+                                        "time": "09:30 - 10:15",
+                                        "loc": "來福士 ➔ 瓷器口古鎮"
+                                },
+                                {
+                                        "time": "10:15 - 13:30",
+                                        "loc": "瓷器口老街 ＆ 嘉陵江碼頭",
+                                        "type": "spot",
+                                        "title": "瓷器口古鎮走街串巷深度遊 ＋ 品嚐正宗古街風味午餐",
+                                        "notes": "千年巴渝古鎮，參觀寶輪寺、尋訪老字號陳麻花，午餐品嚐招牌古鎮毛血旺",
+                                        "cost": 0
+                                },
+                                {
+                                        "type": "spot",
+                                        "cost": 0,
+                                        "title": "瓷器口後街文創小巷漫逛，選購特色伴手禮後打車回飯店",
+                                        "time": "14:00 - 16:30",
+                                        "notes": "避開主街喧囂漫步幽靜後街，挑選重慶火鍋底料等手信，下午打車返回來福士休整",
+                                        "loc": "瓷器口後街文創區"
+                                },
+                                {
+                                        "time": "18:00 - 20:30",
+                                        "loc": "重慶特色江湖菜名店",
+                                        "type": "spot",
+                                        "title": "晚餐：重慶特色江湖菜大餐，品味山城最後一夜",
+                                        "notes": "辣子雞、太安魚、毛血旺，感受大盤豪邁的經典川味江湖氣魄，回味滿滿",
+                                        "cost": 0
+                                }
+                        ],
+                        "spots": [
+                                {
+                                        "curr": "LOCAL",
+                                        "title": "瓷器口古鎮走街串巷免費參觀",
+                                        "mode": "single",
+                                        "cost": 0
+                                }
+                        ],
+                        "breakfast": "來福士洲際高空自助早餐"
+                },
+                {
+                        "transports": [
+                                {
+                                        "title": "來福士洲際酒店預約專車送達江北機場 T3",
+                                        "curr": "LOCAL",
+                                        "cost": 150,
+                                        "mode": "single"
+                                }
+                        ],
+                        "dayNum": 7,
+                        "spots": [
+                                {
+                                        "curr": "LOCAL",
+                                        "title": "順利返台圓滿落幕",
+                                        "cost": 0,
+                                        "mode": "single"
+                                }
+                        ],
+                        "title": "Check out ➔ 叫車去機場 ➔ 圓滿返台",
+                        "lunchCost": 200,
+                        "budget": 800,
+                        "extraCosts": [],
+                        "breakfast": "來福士高空早餐 / 朝天門老字號小吃",
+                        "breakfastCost": 150,
+                        "transportNote": "來福士洲際酒店預約專車送達江北機場 T3",
+                        "spotCost": 0,
+                        "lunch": "重慶江北機場貴賓室 / 機上輕食",
+                        "events": [
+                                {
+                                        "loc": "重慶來福士洲際酒店 42F 大廳",
+                                        "cost": 0,
+                                        "type": "hotel",
+                                        "title": "來福士飯店辦理 Check-out 退房手續",
+                                        "notes": "辦妥退房手續，行李上車，準時出發",
+                                        "time": "07:30 - 08:15"
+                                },
+                                {
+                                        "loc": "來福士 ➔ 重慶江北機場 T3",
+                                        "title": "辦理 Check-out 後叫車前往重慶江北國際機場",
+                                        "notes": "專車直達江北機場 T3 航站樓，車程約 40 分鐘，辦理登機與行李托運",
+                                        "cost": 150,
+                                        "type": "trans",
+                                        "time": "08:15 - 09:00"
+                                },
+                                {
+                                        "time": "10:50 - 21:20",
+                                        "loc": "國泰航空 CX 945 / CX 464",
+                                        "type": "flight",
+                                        "title": "滿載山城回憶！搭機返台 (經香港轉機) 平安抵達桃園機場",
+                                        "notes": "搭乘國泰班機經香港轉機，晚間 21:20 順利平安抵達台灣桃園國際機場",
+                                        "cost": 0
+                                }
+                        ],
+                        "dinnerCost": 300,
+                        "dinner": "台北溫暖家常晚餐",
+                        "date": "10/29 (四)",
+                        "transportCost": 150,
+                        "spotNote": "順利返台圓滿落幕"
+                }
+        ],
+        "exchangeRate": 4.8662
+};
+
+        const PRESET_BEIJING = {
+            id: 'plan-beijing',
+            title: '北京 7 天 6 夜・頂級美食與皇家精華 🇨🇳',
+            subtitle: '2026.05.05 - 05.11 ‧ 3 人同行 ‧ 美食與紫禁城長城文化漫遊',
+            emoji: '',
             coverUrl: 'assets/hero_travel_cover.png',
             dateRange: '2026.05.05 - 05.11 (7天)',
             memberCount: 3,
@@ -8610,7 +9588,7 @@ const firebaseConfig = {
             version: 2026100504,
             title: '重慶自由行',
             subtitle: '2026.10.23 - 10.29 ‧ 8D 魔幻山城 ‧ 天生三橋 ‧ 長江索道 ‧ 磁器口',
-            emoji: '🌶️',
+            emoji: '',
             coverUrl: 'assets/hero_travel_cover.png',
             dateRange: '2026.10.23 - 10.29 (7天)',
             memberCount: 2,
@@ -10190,9 +11168,7 @@ const firebaseConfig = {
         }
 
         function formatPlanOptionPrefix(rawEmoji, planObj = null) {
-            if (planObj && planObj.emoji) return planObj.emoji;
-            if (rawEmoji) return rawEmoji.trim();
-            return '✈️';
+            return '';
         }
 
         function renderPlanSelectDropdown() {
@@ -10202,8 +11178,8 @@ const firebaseConfig = {
             Object.values(appState.plans).forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                const cleanTitle = (p.title || '').replace(/🇨🇳|\[CN\]|\s+CN$/g, '').trim();
-                opt.innerText = `${formatPlanOptionPrefix(p.emoji, p)} ${cleanTitle}`;
+                const cleanTitle = (p.title || '').replace(/🇨🇳|\[CN\]|\s+CN$|🌶️|🇯🇵|🇹🇼/g, '').trim();
+                opt.innerText = cleanTitle;
                 if (p.id === appState.activePlanId) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -19761,7 +20737,7 @@ const firebaseConfig = {
 
         function getEventCategoryInfo(type) {
             const map = {
-                'spot': { label: '景點參觀', icon: 'fa-landmark', class: 'event-cat-spot', emoji: '🏛️' },
+                'spot': { label: '景點參觀', icon: 'fa-landmark', class: 'event-cat-spot', emoji: '' },
                 'food': { label: '美食餐飲', icon: 'fa-utensils', class: 'event-cat-food', emoji: '🍽️' },
                 'trans': { label: '交通移動', icon: 'fa-car', class: 'event-cat-trans', emoji: '🚗' },
                 'flight': { label: '航班航程', icon: 'fa-plane', class: 'event-cat-flight', emoji: '✈️' },

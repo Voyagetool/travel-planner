@@ -1914,16 +1914,16 @@
       <div class="trip-title-wrapper">
         <!-- 旅行計畫一鍵切換選單 (東京、重慶等多行程切換，常駐顯示) -->
         <select id="expensePlanSelect" class="plan-switcher-select" onchange="switchPlanFromSelect(this.value)" title="切換不同的旅行行程計畫">
-          <option value="plan-chongqing">🇨🇳 重慶自由行</option>
-          <option value="tokyo-2026">🇯🇵 東京自由行</option>
-          <option value="plan-beijing">🇨🇳 北京探索之旅</option>
+          <option value="plan-chongqing">重慶自由行</option>
+          <option value="tokyo-2026">東京自由行</option>
+          <option value="plan-beijing">北京探索之旅</option>
         </select>
 
         <div class="trip-title" id="tripTitleDisplay" onclick="openTripSettingsModal()" title="點擊設定旅程基本資訊">
           <span id="tripTitleText">旅遊行程支出</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </div>
-        <span class="okr-version-tag" id="appVersionTag">V3.4.4</span>
+        <span class="okr-version-tag" id="appVersionTag">V3.4.5</span>
         <span class="trip-badge" id="tripDaysBadge">6 天</span>
         <span class="trip-badge" id="tripMembersBadge">2 人同行</span>
         <span class="trip-badge badge-cloud" id="cloudStatusBadge" onclick="openCloudRoomModal()" title="點擊查看房間碼與手機存取連結">
@@ -2934,12 +2934,9 @@
       selectEl.style.display = "inline-block";
       selectEl.innerHTML = planKeys.map(pk => {
         const p = availablePlans[pk];
-        const flag = (p.currencyCode === 'JPY' || (p.title && /東京|日本|京都|大阪/i.test(p.title))) ? '🇯🇵 ' : 
-                     ((p.currencyCode === 'CNY' || (p.title && /重慶|北京|上海|成都|中國/i.test(p.title))) ? '🇨🇳 ' : 
-                     ((p.currencyCode === 'TWD' || (p.title && /台灣|台北/i.test(p.title))) ? '🇹🇼 ' : '✈️ '));
-        const label = (p.title || pk).replace(/🇨🇳|\[CN\]|\s+CN$/g, "").trim();
+        const label = (p.title || pk).replace(/🇨🇳|\[CN\]|\s+CN$|🌶️|🇯🇵|🇹🇼/g, "").trim();
         const isSelected = pk === activeId;
-        return `<option value="${pk}" ${isSelected ? 'selected' : ''}>${flag}${label}</option>`;
+        return `<option value="${pk}" ${isSelected ? 'selected' : ''}>${label}</option>`;
       }).join("");
 
       // 1. 優先精準以 activeId 設定選中
