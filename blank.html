@@ -5923,7 +5923,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.4.5</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.4.6</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -5984,7 +5984,7 @@
                 <i class="fa-solid fa-plane-up"></i> 交通與住宿
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
-                <i class="fa-solid fa-landmark-dome"></i> 景點攻略
+                <i class="fa-solid fa-map-location-dot"></i> 景點與餐飲攻略
             </button>
             <button class="view-tab-btn" id="tabBtn-expenses" onclick="switchView('expenses')">
                 <i class="fa-solid fa-chart-pie"></i> 費用與記帳
@@ -6181,19 +6181,19 @@
                 </div>
             </div>
 
-            <!-- VIEW 2 & 3 MERGED: 景點攻略整合中心（合併搶票預約與景點速通攻略） -->
+            <!-- VIEW 2 & 3 MERGED: 景點與餐飲攻略整合中心（合併景點與特色餐飲、搶票預約與速通攻略） -->
             <div class="view-content-pane" id="view-spots">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span style="font-size: 0.95rem; font-weight: 800; color: #0369a1; display: inline-flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-landmark-dome" style="color: #0284c7;"></i>
-                            <span>景點攻略</span>
+                            <i class="fa-solid fa-map-location-dot" style="color: #0284c7;"></i>
+                            <span>景點與餐飲攻略</span>
                         </span>
-                        <span style="font-size: 0.76rem; font-weight: 500; color: #64748b;">彙整景點路線防雷、預約搶票時程提醒，並依造訪日期時間自動串聯至每日行程</span>
+                        <span style="font-size: 0.76rem; font-weight: 500; color: #64748b;">彙整熱門景點與特色餐飲防雷避坑、預約搶票/訂位排隊時程，並依造訪日期時間自動串聯至每日行程</span>
                     </div>
                     <div style="display: flex; gap: 6px; align-items: center;">
                         <button type="button" class="n-btn n-btn-primary" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700;" onclick="openAddSpotGuideModal()">
-                            <i class="fa-solid fa-plus"></i> 新增景點攻略
+                            <i class="fa-solid fa-plus"></i> 新增景點/餐飲攻略
                         </button>
                     </div>
                 </div>
@@ -7954,34 +7954,45 @@
         </div>
     </div>
 
-    <!-- 7. 新增/編輯 景點攻略（整合造訪日期時間行程串聯 ＋ 預約搶票時程設定） -->
+    <!-- 7. 新增/編輯 景點與餐飲攻略（整合造訪/用餐日期時間行程串聯 ＋ 預約搶票/訂位時程設定） -->
     <div class="modal-backdrop" id="editSpotGuideModal" onclick="handleBackdropClick(event, 'editSpotGuideModal')">
         <div class="modal-dialog" style="max-width: 680px;" onclick="event.stopPropagation();">
             <div class="modal-header">
-                <div class="modal-title" id="spotGuideModalTitle"><i class="fa-solid fa-landmark-dome" style="color:#0284c7;"></i> 新增景點攻略</div>
+                <div class="modal-title" id="spotGuideModalTitle"><i class="fa-solid fa-map-location-dot" style="color:#0284c7;"></i> 新增景點/餐飲攻略</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editSpotGuideModal')"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="spotGuideForm" onsubmit="handleSaveSpotGuideSubmit(event); return false;">
                 <input type="hidden" id="sgEditIndex" value="-1">
                 <div class="modal-body" style="max-height: 76vh; overflow-y: auto;">
-                    <!-- 1. 景點基本與速通攻略 -->
+                    <!-- 攻略類別切換：景點參觀 VS 美食餐飲 -->
+                    <div style="margin-bottom: 12px; background: #f1f5f9; padding: 4px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                        <button type="button" class="sg-type-pill active" id="sgTypeBtn-spot" onclick="setSpotGuideCategory('spot')" style="padding: 6px 12px; font-size: 0.82rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: #ffffff; color: #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                            <i class="fa-solid fa-landmark-dome"></i> 🏛️ 景點參觀
+                        </button>
+                        <button type="button" class="sg-type-pill" id="sgTypeBtn-food" onclick="setSpotGuideCategory('food')" style="padding: 6px 12px; font-size: 0.82rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: #64748b;">
+                            <i class="fa-solid fa-utensils"></i> 🍽️ 美食餐飲
+                        </button>
+                    </div>
+                    <input type="hidden" id="sgCategory" value="spot">
+
+                    <!-- 1. 基本資訊與攻略指南 -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">景點名稱 <span style="color:#ef4444;">*</span></label>
+                            <label class="form-label" id="sgNameLabel">景點名稱 <span style="color:#ef4444;">*</span></label>
                             <input type="text" id="sgNameInput" class="form-input" oninput="updateSgScheduledDayStatusUI()" placeholder="例如：故宮博物院 或 洪崖洞">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">景點詳細地址 (選填，用於導航定位)</label>
+                            <label class="form-label" id="sgAddressLabel">景點詳細地址 (選填，用於導航定位)</label>
                             <input type="text" id="sgAddressInput" class="form-input" placeholder="例如：北京市東城區景山前街4號">
                         </div>
                     </div>
 
-                    <!-- 景點門票 ＋ 營業時間（24 小時制時分分離） -->
+                    <!-- 門票/消費 ＋ 營業時間（24 小時制時分分離） -->
                     <div class="mt-date-time-row" style="margin-bottom: 12px;">
-                        <!-- 左欄：景點門票 -->
+                        <!-- 左欄：門票 / 人均消費 -->
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
-                                <span><i class="fa-solid fa-ticket-simple" style="color:#9333ea;"></i> 景點門票 (選填)</span>
+                                <span id="sgTicketLabel"><i class="fa-solid fa-ticket-simple" style="color:#9333ea;"></i> 景點門票 (選填)</span>
                                 <span id="sgTicketConvertHint" style="font-size:0.72rem; color:#7e22ce; font-weight:700;"></span>
                             </label>
                             <div style="display:grid; grid-template-columns: 118px 1fr; gap:6px; margin-bottom:6px;">
@@ -7997,7 +8008,7 @@
 
                         <!-- 右欄：營業時間（24 小時制，時與分分開設定） -->
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label"><i class="fa-regular fa-clock" style="color:#0284c7;"></i> 營業時間 (選填，24 小時制)</label>
+                            <label class="form-label" id="sgOpenLabel"><i class="fa-regular fa-clock" style="color:#0284c7;"></i> 營業時間 (選填，24 小時制)</label>
                             <div class="sg-24h-row" style="margin-bottom:6px;">
                                 <div class="sg-24h-unit" title="開始營業時間（24小時制）">
                                     <select id="sgOpenStartHour" onchange="onSgOpenHoursChange()"></select>
@@ -8016,24 +8027,24 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom: 12px;">
-                        <label class="form-label">速通攻略與防雷指南 (選填)</label>
+                        <label class="form-label" id="sgTipLabel">速通攻略與防雷指南 (選填)</label>
                         <textarea id="sgTipInput" class="form-input" style="min-height: 66px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
                     </div>
 
-                    <!-- 2. 造訪日期與時間（串聯回每日行程 ＋ 顯示第幾天） -->
+                    <!-- 2. 造訪/用餐日期與時間（串聯回每日行程 ＋ 顯示第幾天） -->
                     <div class="sg-section-box">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
                             <div style="font-size:0.84rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:6px;">
                                 <i class="fa-regular fa-calendar-check" style="color:#2f6fed;"></i>
-                                <span>預計造訪日期與時間（串聯每日行程）</span>
+                                <span id="sgVisitTitleText">預計造訪日期與時間（串聯每日行程）</span>
                             </div>
-                            <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.7rem; color:#64748b;" onclick="clearSpotGuideVisitDateTime()">清除造訪日期時間</button>
+                            <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.7rem; color:#64748b;" onclick="clearSpotGuideVisitDateTime()">清除日期時間</button>
                         </div>
 
                         <div class="mt-date-time-row" style="margin-bottom: 10px;">
-                            <!-- 造訪日期：互動式行事曆 -->
+                            <!-- 造訪/用餐日期：互動式行事曆 -->
                             <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label" style="font-size:0.76rem;">造訪日期（點選行事曆自動對應行程天數）</label>
+                                <label class="form-label" id="sgVisitDateLabel" style="font-size:0.76rem;">造訪日期（點選行事曆自動對應行程天數）</label>
                                 <input type="hidden" id="sgVisitDate">
                                 <div class="bcal-wrapper" id="sgVisitCalWrapper">
                                     <div class="mt-single-cal-trigger" id="sgVisitCalTrigger" onclick="toggleSgCalendar('visit', event)">
@@ -8047,9 +8058,9 @@
                                 </div>
                             </div>
 
-                            <!-- 造訪時間：24 小時制（時、分分開設定） -->
+                            <!-- 造訪/用餐時間：24 小時制（時、分分開設定） -->
                             <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label" style="font-size:0.76rem;">造訪時間（24 小時制，時與分分開設定）</label>
+                                <label class="form-label" id="sgVisitTimeLabel" style="font-size:0.76rem;">造訪時間（24 小時制，時與分分開設定）</label>
                                 <div class="sg-24h-row">
                                     <div class="sg-24h-unit" title="開始時間（24小時制）">
                                         <select id="sgVisitStartHour" onchange="onSgVisitTimeChange()"></select>
@@ -8079,21 +8090,21 @@
                         </div>
                     </div>
 
-                    <!-- 3. 預約／搶票時程設定（整合原搶票預約功能） -->
+                    <!-- 3. 預約／搶票／訂位時程設定 -->
                     <div class="sg-section-box booking-theme" style="margin-bottom: 4px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                             <label style="display:inline-flex; align-items:center; gap:7px; font-size:0.84rem; font-weight:800; color:#b45309; cursor:pointer; margin:0; user-select:none;">
                                 <input type="checkbox" id="sgHasBookingCheck" class="n-checkbox" onchange="toggleSgBookingFields()">
-                                <span><i class="fa-solid fa-ticket"></i> 需提前預約／搶票時程設定</span>
+                                <span id="sgBookingCheckLabel"><i class="fa-solid fa-ticket"></i> 需提前預約／搶票時程設定</span>
                             </label>
-                            <span style="font-size:0.72rem; color:#92400e;">勾選後可設定開放預約日期、24小時制時間與預約狀態</span>
+                            <span id="sgBookingSubHint" style="font-size:0.72rem; color:#92400e;">勾選後可設定開放預約日期、24小時制時間與預約狀態</span>
                         </div>
 
                         <div id="sgBookingFieldsWrap" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #fcd34d;">
                             <div class="mt-date-time-row" style="margin-bottom: 10px;">
-                                <!-- 開放／搶票日期：互動式行事曆 -->
+                                <!-- 開放／搶票／訂位日期：互動式行事曆 -->
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size:0.76rem;">開放／搶票日期（點選行事曆）</label>
+                                    <label class="form-label" id="sgBookingDateLabel" style="font-size:0.76rem;">開放／搶票日期（點選行事曆）</label>
                                     <input type="hidden" id="sgBookingDate">
                                     <div class="bcal-wrapper" id="sgBookingCalWrapper">
                                         <div class="mt-single-cal-trigger" id="sgBookingCalTrigger" onclick="toggleSgCalendar('booking', event)">
@@ -8107,11 +8118,11 @@
                                     </div>
                                 </div>
 
-                                <!-- 開放／搶票時間：24 小時制（時、分分開設定） -->
+                                <!-- 開放／搶票／訂位時間：24 小時制（時、分分開設定） -->
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size:0.76rem;">開放時間（24 小時制，時與分分開設定）</label>
+                                    <label class="form-label" id="sgBookingTimeLabel" style="font-size:0.76rem;">開放時間（24 小時制，時與分分開設定）</label>
                                     <div class="sg-24h-row">
-                                        <div class="sg-24h-unit" title="開放搶票時間（24小時制）">
+                                        <div class="sg-24h-unit" title="開放時間（24小時制）">
                                             <select id="sgBookingHour" onchange="onSgBookingTimeChange()"></select>
                                             <span class="sg-24h-sep">:</span>
                                             <select id="sgBookingMin"></select>
@@ -8123,7 +8134,7 @@
 
                             <div class="form-row" style="margin-bottom: 0;">
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size:0.76rem;">預約平台／管道</label>
+                                    <label class="form-label" id="sgBookingPlatformLabel" style="font-size:0.76rem;">預約平台／管道</label>
                                     <input type="text" id="sgBookingPlatform" class="form-input" placeholder="例如：官方網站 / 微信公眾號 / Klook">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
@@ -8149,7 +8160,7 @@
                     <span style="font-size:0.74rem; color:#64748b; flex:1; min-width:0;"><i class="fa-solid fa-rotate" style="color:#0284c7;"></i> 勾選「已安排至行程中」將依日期與時間自動同步至對應天數行程</span>
                     <div style="display:flex; gap:8px; flex-shrink:0;">
                         <button type="button" class="n-btn" onclick="closeModal('editSpotGuideModal')">取消</button>
-                        <button type="button" class="n-btn n-btn-primary" id="sgSubmitBtn" onclick="handleSaveSpotGuideSubmit(event)"><i class="fa-solid fa-check"></i> 儲存景點攻略</button>
+                        <button type="button" class="n-btn n-btn-primary" id="sgSubmitBtn" onclick="handleSaveSpotGuideSubmit(event)"><i class="fa-solid fa-check"></i> 儲存景點/餐飲攻略</button>
                     </div>
                 </div>
             </form>
@@ -9051,7 +9062,21 @@ const firebaseConfig = {
         }
 
         function getCurrentPlan() {
-            return appState.plans[appState.activePlanId] || null;
+            if (appState && appState.plans && appState.plans[appState.activePlanId]) {
+                return appState.plans[appState.activePlanId];
+            }
+            if (appState && appState.plans && appState.plans['plan-chongqing']) {
+                appState.activePlanId = 'plan-chongqing';
+                return appState.plans['plan-chongqing'];
+            }
+            if (appState && appState.plans) {
+                const keys = Object.keys(appState.plans);
+                if (keys.length > 0) {
+                    appState.activePlanId = keys[0];
+                    return appState.plans[keys[0]];
+                }
+            }
+            return null;
         }
 
         // ==========================
@@ -11310,6 +11335,108 @@ const firebaseConfig = {
             return timePart || notePart;
         }
 
+        function setSpotGuideCategory(cat = 'spot') {
+            const isFood = (cat === 'food' || cat === 'dining');
+            const targetCat = isFood ? 'food' : 'spot';
+            const catInp = document.getElementById('sgCategory');
+            if (catInp) catInp.value = targetCat;
+
+            const btnSpot = document.getElementById('sgTypeBtn-spot');
+            const btnFood = document.getElementById('sgTypeBtn-food');
+            if (btnSpot && btnFood) {
+                if (isFood) {
+                    btnFood.style.background = '#ffffff';
+                    btnFood.style.color = '#ea580c';
+                    btnFood.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                    btnSpot.style.background = 'transparent';
+                    btnSpot.style.color = '#64748b';
+                    btnSpot.style.boxShadow = 'none';
+                } else {
+                    btnSpot.style.background = '#ffffff';
+                    btnSpot.style.color = '#0284c7';
+                    btnSpot.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                    btnFood.style.background = 'transparent';
+                    btnFood.style.color = '#64748b';
+                    btnFood.style.boxShadow = 'none';
+                }
+            }
+
+            const titleEl = document.getElementById('spotGuideModalTitle');
+            const isEdit = (document.getElementById('sgEditIndex')?.value || '-1') !== '-1';
+            if (titleEl) {
+                if (isFood) {
+                    titleEl.innerHTML = `<i class="fa-solid fa-utensils" style="color:#ea580c;"></i> ${isEdit ? '編輯餐飲攻略' : '新增餐飲攻略'}`;
+                } else {
+                    titleEl.innerHTML = `<i class="fa-solid fa-landmark-dome" style="color:#0284c7;"></i> ${isEdit ? '編輯景點攻略' : '新增景點攻略'}`;
+                }
+            }
+
+            const nameLbl = document.getElementById('sgNameLabel');
+            const nameInp = document.getElementById('sgNameInput');
+            if (nameLbl) nameLbl.innerHTML = isFood ? `餐廳 / 美食名稱 <span style="color:#ef4444;">*</span>` : `景點名稱 <span style="color:#ef4444;">*</span>`;
+            if (nameInp) nameInp.placeholder = isFood ? '例如：珮姐老火鍋 (洪崖洞店) 或 茶顏悅色' : '例如：故宮博物院 或 洪崖洞';
+
+            const addrLbl = document.getElementById('sgAddressLabel');
+            const addrInp = document.getElementById('sgAddressInput');
+            if (addrLbl) addrLbl.textContent = isFood ? '餐廳詳細地址 (選填，用於導航定位)' : '景點詳細地址 (選填，用於導航定位)';
+            if (addrInp) addrInp.placeholder = isFood ? '例如：渝中區解放碑較場口夜市' : '例如：北京市東城區景山前街4號';
+
+            const tLbl = document.getElementById('sgTicketLabel');
+            const tCost = document.getElementById('sgTicketCost');
+            const tNote = document.getElementById('sgTicketNote');
+            if (tLbl) {
+                tLbl.innerHTML = isFood
+                    ? `<i class="fa-solid fa-utensils" style="color:#ea580c;"></i> 人均消費 / 預估費用 (選填)`
+                    : `<i class="fa-solid fa-ticket-simple" style="color:#9333ea;"></i> 景點門票 (選填)`;
+            }
+            if (tCost) tCost.placeholder = isFood ? '人均消費金額' : '單人票價金額';
+            if (tNote) tNote.placeholder = isFood ? '消費備註 (選填，如：包廂低消 / 需加收服務費)' : '門票備註 (選填，如：成人票 / 含導覽 / 現場購票)';
+
+            const opLbl = document.getElementById('sgOpenLabel');
+            const opNote = document.getElementById('sgOpenNote');
+            if (opLbl) opLbl.innerHTML = `<i class="fa-regular fa-clock" style="color:#0284c7;"></i> ${isFood ? '營業時間 / 供餐時段 (選填，24 小時制)' : '營業時間 (選填，24 小時制)'}`;
+            if (opNote) opNote.placeholder = isFood ? '營業備註 (選填，如：午市 11:30-14:00、晚市 17:00-21:00 / 週一公休)' : '營業備註 (選填，如：週一公休 / 最後入場 17:00)';
+
+            const tipLbl = document.getElementById('sgTipLabel');
+            const tipInp = document.getElementById('sgTipInput');
+            if (tipLbl) tipLbl.textContent = isFood ? '必點菜色與防雷建議 (選填)' : '速通攻略與防雷指南 (選填)';
+            if (tipInp) tipInp.placeholder = isFood ? '例如：必點招牌麻辣鴛鴦鍋、現撕脆毛肚；晚間排隊人多建議提早美團線上取號...' : '例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀...';
+
+            const vTitle = document.getElementById('sgVisitTitleText');
+            const vDateLbl = document.getElementById('sgVisitDateLabel');
+            const vTimeLbl = document.getElementById('sgVisitTimeLabel');
+            if (vTitle) vTitle.textContent = isFood ? '預計用餐日期與時間（串聯每日行程）' : '預計造訪日期與時間（串聯每日行程）';
+            if (vDateLbl) vDateLbl.textContent = isFood ? '用餐日期（點選行事曆自動對應行程天數）' : '造訪日期（點選行事曆自動對應行程天數）';
+            if (vTimeLbl) vTimeLbl.textContent = isFood ? '用餐時間（24 小時制，時與分分開設定）' : '造訪時間（24 小時制，時與分分開設定）';
+
+            const schNote = document.getElementById('sgScheduleNoteInput');
+            if (schNote) schNote.placeholder = isFood ? '安排備註 (選填，例如：已訂包廂、備註靠窗位、微辣)' : '安排備註 (選填，例如：午門進神武門出、建議提早 20 分鐘安檢)';
+
+            const bkLbl = document.getElementById('sgBookingCheckLabel');
+            const bkHint = document.getElementById('sgBookingSubHint');
+            const bkDtLbl = document.getElementById('sgBookingDateLabel');
+            const bkTmLbl = document.getElementById('sgBookingTimeLabel');
+            const bkPlat = document.getElementById('sgBookingPlatform');
+            if (bkLbl) {
+                bkLbl.innerHTML = isFood
+                    ? `<i class="fa-solid fa-bell-concierge" style="color:#d97706;"></i> 需提前訂位／線上排隊取號時程設定`
+                    : `<i class="fa-solid fa-ticket" style="color:#b45309;"></i> 需提前預約／搶票時程設定`;
+            }
+            if (bkHint) {
+                bkHint.textContent = isFood
+                    ? '勾選後可設定開放訂位/取號日期、24小時制時間與訂位狀態'
+                    : '勾選後可設定開放預約日期、24小時制時間與預約狀態';
+            }
+            if (bkDtLbl) bkDtLbl.textContent = isFood ? '開放訂位／取號日期（點選行事曆）' : '開放／搶票日期（點選行事曆）';
+            if (bkTmLbl) bkTmLbl.textContent = isFood ? '開放訂位時間（24 小時制，時與分分開設定）' : '開放時間（24 小時制，時與分分開設定）';
+            if (bkPlat) bkPlat.placeholder = isFood ? '例如：美團線上取號 / 大眾點評訂位 / 電話預約 / 現場候位' : '例如：官方網站 / 微信公眾號 / Klook';
+
+            const subBtn = document.getElementById('sgSubmitBtn');
+            if (subBtn) {
+                subBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${isEdit ? '儲存變更' : (isFood ? '新增餐飲攻略' : '新增景點攻略')}`;
+            }
+        }
+
         function formatSpotTicketText(plan, item) {
             if (!item) return '';
             const curr = (typeof getPlanCurrency === 'function') ? getPlanCurrency(plan) : { symbol: '¥', rate: 1 };
@@ -11317,14 +11444,15 @@ const firebaseConfig = {
             const rawCost = item.ticketCost;
             const hasNum = (rawCost !== undefined && rawCost !== null && String(rawCost).trim() !== '' && !isNaN(Number(rawCost)));
             const notePart = (item.ticketNote || '').trim();
+            const isFood = (item.category === 'food');
 
             let pricePart = '';
-            if (tCurr === 'FREE' || (hasNum && Number(rawCost) === 0 && (notePart.includes('免費') || item.ticketCurr === 'FREE'))) {
-                pricePart = '免費參觀';
+            if (tCurr === 'FREE' || (hasNum && Number(rawCost) === 0 && (notePart.includes('免費') || notePart.includes('無低消') || item.ticketCurr === 'FREE'))) {
+                pricePart = isFood ? '無低消限制' : '免費參觀';
             } else if (hasNum) {
                 const num = Number(rawCost);
                 if (num === 0) {
-                    pricePart = '免費參觀';
+                    pricePart = isFood ? '無低消限制' : '免費參觀';
                 } else if (tCurr === 'TWD') {
                     pricePart = `NT$ ${Math.round(num).toLocaleString()} / 人`;
                 } else {
@@ -11338,20 +11466,23 @@ const firebaseConfig = {
         }
 
         function formatSpotMetaPillsHtml(plan, item) {
+            const isFood = (item && item.category === 'food');
             const openTxt = formatSpotOpeningText(item);
             const ticketTxt = formatSpotTicketText(plan, item);
             if (!openTxt && !ticketTxt) return '';
 
             const pills = [];
             if (openTxt) {
-                pills.push(`<span style="background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; font-size:0.73rem; font-weight:700; padding:1px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;"><i class="fa-regular fa-clock"></i> 營業時間：${escapeHtml(openTxt)}</span>`);
+                pills.push(`<span style="background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; font-size:0.73rem; font-weight:700; padding:1px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;"><i class="fa-regular fa-clock"></i> ${isFood ? '供餐/營業' : '營業時間'}：${escapeHtml(openTxt)}</span>`);
             }
             if (ticketTxt) {
-                const isFree = ticketTxt.startsWith('免費');
-                const bg = isFree ? '#ecfdf5' : '#faf5ff';
-                const fg = isFree ? '#047857' : '#7e22ce';
-                const bd = isFree ? '#a7f3d0' : '#e9d5ff';
-                pills.push(`<span style="background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.73rem; font-weight:700; padding:1px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-ticket-simple"></i> 門票：${escapeHtml(ticketTxt)}</span>`);
+                const isFree = ticketTxt.startsWith('免費') || ticketTxt.startsWith('無低消');
+                const bg = isFree ? '#ecfdf5' : (isFood ? '#fff7ed' : '#faf5ff');
+                const fg = isFree ? '#047857' : (isFood ? '#c2410c' : '#7e22ce');
+                const bd = isFree ? '#a7f3d0' : (isFood ? '#fed7aa' : '#e9d5ff');
+                const icon = isFood ? 'fa-utensils' : 'fa-ticket-simple';
+                const labelPrefix = isFood ? '人均/低消' : '門票';
+                pills.push(`<span style="background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.73rem; font-weight:700; padding:1px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid ${icon}"></i> ${labelPrefix}：${escapeHtml(ticketTxt)}</span>`);
             }
             return `<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:5px;">${pills.join('')}</div>`;
         }
@@ -11363,17 +11494,22 @@ const firebaseConfig = {
 
             const list = ensureUnifiedSpotGuides(plan);
             if (list.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:28px 16px; color:var(--notion-text-sub); background:#ffffff; border:1px dashed #cbd5e1; border-radius:10px;">尚未建立景點攻略，點擊右上角「＋ 新增景點攻略」即可設定景點指南、行程日期時間串聯與搶票提醒。</div>`;
+                container.innerHTML = `<div style="text-align:center; padding:28px 16px; color:var(--notion-text-sub); background:#ffffff; border:1px dashed #cbd5e1; border-radius:10px;">尚未建立景點或餐飲攻略，點擊右上角「＋ 新增景點/餐飲攻略」即可設定景點美食指南、行程日期時間串聯與預約訂位提醒。</div>`;
                 return;
             }
 
             // 統計各狀態數量
             const totalCount = list.length;
+            let spotCount = 0;
+            let foodCount = 0;
             let scheduledCount = 0;
             let bookingCount = 0;
             let bookingPendingCount = 0;
 
             const resolvedList = list.map(item => {
+                if (item.category === 'food') foodCount++;
+                else spotCount++;
+
                 const info = resolveSpotScheduledDayInfo(plan, item);
                 if (info.isScheduled) scheduledCount++;
                 if (item.hasBooking) {
@@ -11388,19 +11524,25 @@ const firebaseConfig = {
             const filterBarHtml = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 8px;">
                     <div style="font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span>共 <strong>${totalCount}</strong> 個景點</span>
+                        <span>共 <strong>${totalCount}</strong> 項</span>
+                        <span style="color: #cbd5e1;">|</span>
+                        <span style="color: #0369a1; font-weight: 700;">🏛️ 景點：${spotCount}</span>
+                        <span style="color: #cbd5e1;">|</span>
+                        <span style="color: #c2410c; font-weight: 700;">🍽️ 美食：${foodCount}</span>
                         <span style="color: #cbd5e1;">|</span>
                         <span style="color: #15803d; font-weight: 700;">✅ 已安排：${scheduledCount}</span>
                         <span style="color: #cbd5e1;">|</span>
                         <span style="color: #64748b; font-weight: 700;">⏳ 待安排：${pendingCount}</span>
                         <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #b45309; font-weight: 700;">🎫 需預約/搶票：${bookingCount}${bookingPendingCount > 0 ? ` (待搶 ${bookingPendingCount})` : ''}</span>
+                        <span style="color: #b45309; font-weight: 700;">🎫 需預約/訂位：${bookingCount}${bookingPendingCount > 0 ? ` (待辦 ${bookingPendingCount})` : ''}</span>
                     </div>
                     <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'all' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('all')">全部</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'spot' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('spot')">🏛️ 景點 (${spotCount})</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'food' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('food')">🍽️ 美食 (${foodCount})</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'scheduled' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('scheduled')">已安排行程</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'pending' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('pending')">待安排</button>
-                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">🎫 需預約/搶票</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">🎫 需預約/訂位</button>
                     </div>
                 </div>
             `;
@@ -11410,8 +11552,11 @@ const firebaseConfig = {
             const cardsHtml = list.map((item, idx) => {
                 const info = resolvedList[idx];
                 const isScheduled = info.isScheduled;
+                const isFood = (item.category === 'food');
 
                 // 篩選模式過濾
+                if (spotGuidesFilterMode === 'spot' && isFood) return '';
+                if (spotGuidesFilterMode === 'food' && !isFood) return '';
                 if (spotGuidesFilterMode === 'pending' && isScheduled) return '';
                 if (spotGuidesFilterMode === 'scheduled' && !isScheduled) return '';
                 if (spotGuidesFilterMode === 'booking' && !item.hasBooking) return '';
@@ -11422,7 +11567,15 @@ const firebaseConfig = {
                 if (info.timeDisplay) timeMetaParts.push(info.timeDisplay);
                 const visitDateTimeSummary = timeMetaParts.join(' ‧ ');
 
-                // 預約／搶票時程區塊
+                // 類型標籤與圖示
+                const catBadgeHtml = isFood
+                    ? `<span style="background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; font-size: 0.71rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-utensils"></i> 美食</span>`
+                    : `<span style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.71rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-landmark-dome"></i> 景點</span>`;
+                const itemIconHtml = isFood
+                    ? `<i class="fa-solid fa-utensils" style="color: #ea580c;"></i>`
+                    : `<i class="fa-solid fa-location-dot" style="color: #b0654a;"></i>`;
+
+                // 預約／搶票／訂位時程區塊
                 let bookingStripHtml = '';
                 if (item.hasBooking) {
                     const isDone = (item.bookingStatus === '已完成');
@@ -11440,18 +11593,22 @@ const firebaseConfig = {
                     }
                     const bTimeLabel = (item.bookingTime && item.bookingTime !== '-') ? item.bookingTime : '';
 
+                    const bookingTitle = isFood ? '訂位／開放取號' : '搶票／開放預約';
+                    const statusDoneText = isFood ? '✅ 訂位已完成' : '✅ 預約已完成';
+                    const statusPendingText = isFood ? '⏳ 待開放／待取號' : '⏳ 待開放／待搶票';
+
                     bookingStripHtml = `
                         <div class="sg-card-booking-strip ${isDone ? 'is-done' : ''}">
                             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                                 <span style="font-weight:800; color:${isDone ? '#15803d' : '#b45309'}; display:inline-flex; align-items:center; gap:4px;">
-                                    <i class="fa-solid fa-ticket"></i> 搶票／開放預約：${escapeHtml(bDateLabel)}${bTimeLabel ? ` <strong style="color:#0284c7;">${escapeHtml(bTimeLabel)}</strong>` : ''}
+                                    <i class="${isFood ? 'fa-solid fa-bell-concierge' : 'fa-solid fa-ticket'}"></i> ${bookingTitle}：${escapeHtml(bDateLabel)}${bTimeLabel ? ` <strong style="color:#0284c7;">${escapeHtml(bTimeLabel)}</strong>` : ''}
                                 </span>
                                 ${item.bookingPlatform ? `<span style="color:#475569; background:#ffffff; border:1px solid #e2e8f0; padding:1px 7px; border-radius:5px; font-size:0.74rem;"><i class="fa-solid fa-globe" style="color:#64748b;"></i> ${escapeHtml(item.bookingPlatform)}</span>` : ''}
                                 <span class="prop-pill ${diffBadgeClass}" style="font-size:0.72rem; padding:1px 7px;">${diffIcon} ${escapeHtml(diff)}</span>
                             </div>
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <button type="button" class="prop-pill ${isDone ? 'pill-green' : 'pill-yellow'}" style="cursor:pointer; border:none; font-size:0.74rem; font-weight:700; padding:2px 9px;" onclick="toggleSpotBookingStatus(${idx})" title="點擊切換預約狀態（待開放 ⇄ 已完成）">
-                                    ${isDone ? '✅ 預約已完成' : '⏳ 待開放／待搶票'}
+                                <button type="button" class="prop-pill ${isDone ? 'pill-green' : 'pill-yellow'}" style="cursor:pointer; border:none; font-size:0.74rem; font-weight:700; padding:2px 9px;" onclick="toggleSpotBookingStatus(${idx})" title="點擊切換狀態">
+                                    ${isDone ? statusDoneText : statusPendingText}
                                 </button>
                             </div>
                         </div>
@@ -11463,12 +11620,13 @@ const firebaseConfig = {
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
                             <div style="display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0;">
                                 <div style="margin-top: 3px; flex-shrink: 0;">
-                                    <input type="checkbox" class="n-checkbox" id="spotGuideCheck_${idx}" ${isScheduled ? 'checked' : ''} onchange="toggleSpotGuideScheduled(${idx}, this.checked)" title="勾選設定此景點是否已安排入行程">
+                                    <input type="checkbox" class="n-checkbox" id="spotGuideCheck_${idx}" ${isScheduled ? 'checked' : ''} onchange="toggleSpotGuideScheduled(${idx}, this.checked)" title="勾選設定是否已排入行程">
                                 </div>
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                                        ${catBadgeHtml}
                                         <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 0.98rem; color: var(--notion-text); cursor: pointer; margin: 0;">
-                                            <i class="fa-solid fa-location-dot" style="color: #b0654a;"></i> ${escapeHtml(item.name)}
+                                            ${itemIconHtml} ${escapeHtml(item.name)}
                                         </label>
 
                                         ${isScheduled ? `
@@ -11513,7 +11671,7 @@ const firebaseConfig = {
 
                         <!-- 攻略說明 -->
                         ${item.tip ? `
-                        <div style="font-size: 0.85rem; color: var(--notion-text-sub); line-height: 1.5; margin-top: 4px; background:#f8fafc; padding:7px 10px; border-radius:6px; border-left:3px solid #0284c7;">
+                        <div style="font-size: 0.85rem; color: var(--notion-text-sub); line-height: 1.5; margin-top: 4px; background:#f8fafc; padding:7px 10px; border-radius:6px; border-left:3px solid ${isFood ? '#ea580c' : '#0284c7'};">
                             ${escapeHtml(item.tip)}
                         </div>` : ''}
 
@@ -11522,7 +11680,7 @@ const firebaseConfig = {
                 `;
             }).join('');
 
-            container.innerHTML = filterBarHtml + (cardsHtml || '<div style="text-align:center; padding:18px; color:#94a3b8; font-size:0.85rem;">當前篩選條件下無符合的景點攻略</div>');
+            container.innerHTML = filterBarHtml + (cardsHtml || '<div style="text-align:center; padding:18px; color:#94a3b8; font-size:0.85rem;">當前篩選條件下無符合的景點或餐飲攻略</div>');
         }
 
         // ==========================================
@@ -22474,7 +22632,7 @@ const firebaseConfig = {
             const newEv = {
                 time: timeStr,
                 title: spotObj.name,
-                type: 'spot',
+                type: (spotObj.category === 'food' ? 'food' : 'spot'),
                 loc: spotObj.address || '',
                 cost: syncedLocalCost,
                 notes: noteParts.join(' ‧ '),
@@ -22574,6 +22732,7 @@ const firebaseConfig = {
             }
 
             document.getElementById('sgEditIndex').value = isEdit ? editIdx : '-1';
+            setSpotGuideCategory(curItem.category || 'spot');
             document.getElementById('sgNameInput').value = curItem.name || '';
             document.getElementById('sgAddressInput').value = curItem.address || '';
             document.getElementById('sgTipInput').value = curItem.tip || '';
@@ -22630,13 +22789,15 @@ const firebaseConfig = {
                 if (!plan) return false;
                 ensureUnifiedSpotGuides(plan);
 
+                const category = document.getElementById('sgCategory')?.value || 'spot';
+                const isFood = (category === 'food');
                 const nameInput = document.getElementById('sgNameInput');
                 const tipInput = document.getElementById('sgTipInput');
                 const name = nameInput ? nameInput.value.trim() : '';
                 const tip = tipInput ? tipInput.value.trim() : '';
 
                 if (!name) {
-                    showToast('error', '請填寫「景點名稱」！');
+                    showToast('error', isFood ? '請填寫「餐廳 / 美食名稱」！' : '請填寫「景點名稱」！');
                     if (nameInput) nameInput.focus();
                     return false;
                 }
@@ -22671,6 +22832,7 @@ const firebaseConfig = {
 
                 const spotObj = {
                     id: itemId,
+                    category,
                     name,
                     address: (document.getElementById('sgAddressInput')?.value || '').trim(),
                     openStartTime,
@@ -22714,7 +22876,7 @@ const firebaseConfig = {
                 if (syncRes.synced) {
                     showToast('success', `${editIdx >= 0 ? '已更新景點攻略' : '已新增景點攻略'}，並同步排入第 ${syncRes.dayNum} 天行程！`);
                 } else {
-                    showToast('success', editIdx >= 0 ? `已更新「${name}」景點攻略！` : `已新增「${name}」景點攻略！`);
+                    showToast('success', editIdx >= 0 ? `已更新「${name}」${isFood ? '餐飲攻略' : '景點攻略'}！` : `已新增「${name}」${isFood ? '餐飲攻略' : '景點攻略'}！`);
                 }
             } catch (err) {
                 console.error('儲存景點攻略發生錯誤:', err);
