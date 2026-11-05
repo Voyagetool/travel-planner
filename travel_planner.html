@@ -7452,7 +7452,7 @@
                 <div class="modal-title" id="flightModalHeaderTitle"><i class="fa-solid fa-plane" style="color: #2383e2;"></i> 編輯交通資訊</div>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editFlightModal')"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="editFlightForm" onsubmit="handleSaveFlightSubmit(event); return false;" novalidate>
+            <form id="editFlightForm" onsubmit="handleSaveFlightSubmit(event); return false;" onkeydown="if(event.key==='Enter'&&event.target.tagName==='INPUT'){event.preventDefault();handleSaveFlightSubmit(event);}" novalidate>
                 <div class="modal-body">
                     <input type="hidden" id="fTransportType" value="flight">
 
@@ -9053,18 +9053,39 @@ const firebaseConfig = {
                             }
                         });
 
+                        const isRecentlySaved = (typeof localLastSavedAt !== 'undefined') && (Date.now() - localLastSavedAt < 5000);
+                        const isAnyModalActive = !!document.querySelector('.modal-backdrop.active');
+
+                        // 智慧保護：若本機 5 秒內剛儲存，雲端舊快照絕不覆蓋本機剛剛儲存的交通與航班設定
+                        if (isRecentlySaved && appState && appState.plans) {
+                            Object.keys(appState.plans).forEach(pid => {
+                                const lPlan = appState.plans[pid];
+                                const cPlan = data.appState.plans[pid];
+                                if (lPlan && cPlan && lPlan.flights) {
+                                    cPlan.flights = JSON.parse(JSON.stringify(lPlan.flights));
+                                }
+                            });
+                        }
+
+                        // 若本機剛儲存或當前有開啟中視窗，保留當前 activePlanId，不被雲端強制跳轉
+                        const keepActivePlanId = (isRecentlySaved || isAnyModalActive) ? appState.activePlanId : data.appState.activePlanId;
+
                         appState = data.appState;
+                        if (keepActivePlanId && appState.plans[keepActivePlanId]) {
+                            appState.activePlanId = keepActivePlanId;
+                        }
+
                         saveState(true); // 備份至本機 localStorage，但不重複推播雲端
 
-                        // 防護：若使用者此時正打開分類選單或正在輸入中，保護當前畫面不被粗暴重刷抹除
+                        // 防護：若使用者此時正打開彈窗、分類選單或正在輸入中，保護當前畫面不被粗暴重刷抹除（徹底防閃退）
                         const pickerMenu = document.getElementById('expenseCategoryDropdownPopover');
                         const isPickerOpen = pickerMenu && pickerMenu.style.display === 'block';
                         const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA');
 
-                        if (!isPickerOpen && !isTyping) {
+                        if (!isPickerOpen && !isTyping && !isAnyModalActive) {
                             renderAll();
                         } else {
-                            console.log('使用者正處於操作中，已平滑保存雲端資料並保護當前互動視窗不閃退');
+                            console.log('使用者正處於操作或彈窗中，已平滑保存雲端資料並保護當前互動視窗不閃退');
                         }
                         isReceivingCloudUpdate = false;
 
@@ -9328,6 +9349,11 @@ const firebaseConfig = {
             const targetPlanId = urlParams.get('planId');
             if (targetPlanId && appState.plans[targetPlanId]) {
                 appState.activePlanId = targetPlanId;
+            } else {
+                const roomParam = urlParams.get('room') || '';
+                if (roomParam.toLowerCase().includes('chongqing') && appState.plans['plan-chongqing']) {
+                    appState.activePlanId = 'plan-chongqing';
+                }
             }
 
             renderAll();
@@ -9616,7 +9642,10 @@ const firebaseConfig = {
             }
         }
 
+        let localLastSavedAt = 0;
+
         function saveState(skipCloud) {
+            localLastSavedAt = Date.now();
             localStorage.setItem('notion_travel_planner_v9_sidebar_state', JSON.stringify(appState));
             if (firestoreDb && !skipCloud && !isReceivingCloudUpdate) {
                 pushStateToCloud();
@@ -9921,9 +9950,10 @@ const firebaseConfig = {
                 return;
             }
 
+            const currSymbolDisplay = (currType === 'TWD') ? 'NT$' : curr.symbol;
             let pricingModeBadge = isRoundtrip
                 ? `<span style="background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px; font-weight:700;">🎫 來回合併計價 (維持1筆總計)</span>`
-                : `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:700;">↔️ 去回分開計價 (去程 ${curr.symbol} ${outVal.toLocaleString()} + 回程 ${curr.symbol} ${inVal.toLocaleString()})</span>`;
+                : `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:700;">↔️ 去回分開計價 (去程 ${currSymbolDisplay} ${outVal.toLocaleString()} + 回程 ${currSymbolDisplay} ${inVal.toLocaleString()})</span>`;
 
             let html = `
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
@@ -19375,21 +19405,18 @@ const firebaseConfig = {
             }
         }
 
-        // 儲存交通表單設定
+        // 儲存交通表單設定 (徹底防止閃退、加強樂觀鎖與安全儲存)
         function handleSaveFlightSubmit(e) {
             if (e && e.preventDefault) e.preventDefault();
             try {
                 const plan = getCurrentPlan();
                 if (!plan) {
-                    closeModal('editFlightModal');
-                    const modalEl = document.getElementById('editFlightModal');
-                    if (modalEl) modalEl.classList.remove('active');
-                    showToast('warning', '找不到當前行程計劃，請重新整理頁面');
+                    showToast('warning', '找不到當前行程計劃，請確認已選擇旅行計畫');
                     return false;
                 }
 
                 FLIGHT_SEG_KEYS.forEach(seg => syncSegmentCombinedFields(seg));
-                recalcAllFlightTimings();
+                try { recalcAllFlightTimings(); } catch (timeErr) { console.warn('時間重新計算警告:', timeErr); }
 
                 const transportType = document.getElementById('fTransportType')?.value || 'flight';
                 const isPricingRoundtrip = document.getElementById('fPricingRoundtrip')?.checked ?? true;
@@ -19407,13 +19434,13 @@ const firebaseConfig = {
                     type: 'outbound',
                     transportType: transportType,
                     isTransfer: isOutTrans,
-                    airline: getVal('fOutAirline'),
-                    flightNo: getVal('fOutNo'),
-                    depTime: getVal('fOutDepTime'),
-                    arrTime: getVal('fOutArrTime1'),
-                    depLoc: getVal('fOutDepLoc'),
-                    arrLoc: getVal('fOutArrLoc1'),
-                    duration: getVal('fOutDuration'),
+                    airline: getVal('fOutAirline') || (transportType === 'flight' ? '國泰航空' : '交通營運商'),
+                    flightNo: getVal('fOutNo') || '',
+                    depTime: getVal('fOutDepTime') || '',
+                    arrTime: getVal('fOutArrTime1') || '',
+                    depLoc: getVal('fOutDepLoc') || '',
+                    arrLoc: getVal('fOutArrLoc1') || '',
+                    duration: getVal('fOutDuration') || '',
                     categoryTag: cat,
                     pnr: pnrVal
                 };
@@ -19422,13 +19449,13 @@ const firebaseConfig = {
                     type: 'inbound',
                     transportType: transportType,
                     isTransfer: isInTrans,
-                    airline: getVal('fInAirline'),
-                    flightNo: getVal('fInNo'),
-                    depTime: getVal('fInDepTime'),
-                    arrTime: getVal('fInArrTime1'),
-                    depLoc: getVal('fInDepLoc'),
-                    arrLoc: getVal('fInArrLoc1'),
-                    duration: getVal('fInDuration'),
+                    airline: getVal('fInAirline') || outLeg.airline,
+                    flightNo: getVal('fInNo') || '',
+                    depTime: getVal('fInDepTime') || '',
+                    arrTime: getVal('fInArrTime1') || '',
+                    depLoc: getVal('fInDepLoc') || '',
+                    arrLoc: getVal('fInArrLoc1') || '',
+                    duration: getVal('fInDuration') || '',
                     categoryTag: cat,
                     pnr: pnrVal
                 };
@@ -19483,12 +19510,7 @@ const firebaseConfig = {
                 const actParsed = parseSafeNum(rawActCost);
                 const parsedActCost = (rawActCost !== '' && rawActCost !== undefined && actParsed > 0) ? actParsed : null;
 
-                const legsToSave = [outLeg];
-                if (inLeg.airline || inLeg.flightNo || inLeg.depLoc || inLeg.arrLoc || inLeg.depTime || inLeg.isTransfer) {
-                    legsToSave.push(inLeg);
-                } else {
-                    legsToSave.push(inLeg);
-                }
+                const legsToSave = [outLeg, inLeg];
 
                 plan.flights = {
                     transportType: transportType,
@@ -19505,10 +19527,7 @@ const firebaseConfig = {
                     legs: legsToSave
                 };
 
-                closeModal('editFlightModal');
-                const modalEl = document.getElementById('editFlightModal');
-                if (modalEl) modalEl.classList.remove('active');
-
+                // 2. 同步更新每日行程中關聯之交通時間與資訊
                 const syncToSchedule = document.getElementById('fSyncToScheduleCheckbox')?.checked ?? true;
                 if (syncToSchedule && Array.isArray(plan.days)) {
                     try {
@@ -19576,24 +19595,31 @@ const firebaseConfig = {
                     }
                 }
 
-                try { saveState(); } catch (saveErr) {}
+                // 3. 儲存狀態並啟動本地樂觀鎖 (5秒內雲端推播不覆蓋本地交通設定)
+                localLastSavedAt = Date.now();
+                try { saveState(); } catch (saveErr) { console.error('saveState 失敗:', saveErr); }
+
+                // 4. 全部儲存完成後，平滑關閉彈窗 (徹底杜絕提前關閉與未存閃退)
+                closeModal('editFlightModal');
+                const modalEl = document.getElementById('editFlightModal');
+                if (modalEl) modalEl.classList.remove('active');
+
+                // 5. 更新所有連動 UI
                 try {
                     if (typeof renderSidebarFlights === 'function') renderSidebarFlights();
                     if (typeof renderTripSummary === 'function') renderTripSummary();
                     if (typeof renderBudgetWidget === 'function') renderBudgetWidget();
                     if (typeof renderBudgetView === 'function') renderBudgetView();
                     if (typeof renderActualExpensesView === 'function') renderActualExpensesView();
-                } catch (uiErr) {}
+                } catch (uiErr) { console.warn('UI 渲染非致命異常:', uiErr); }
 
-                const cfg = TRANSPORT_CONFIG[transportType] || TRANSPORT_CONFIG.flight;
+                const cfg = (typeof TRANSPORT_CONFIG !== 'undefined' && TRANSPORT_CONFIG[transportType]) ? TRANSPORT_CONFIG[transportType] : { name: '交通' };
                 showToast('success', syncToSchedule ? `${cfg.name}資訊與費用已成功儲存，並同步更新行程！` : `${cfg.name}資訊與費用已成功儲存！`);
                 return false;
             } catch (err) {
                 console.error('儲存交通時發生例外錯誤:', err);
-                closeModal('editFlightModal');
-                const modalEl = document.getElementById('editFlightModal');
-                if (modalEl) modalEl.classList.remove('active');
-                showToast('danger', '儲存失敗：' + (err.message || '未知錯誤'));
+                // 發生例外時保留使用者輸入，絕不關閉彈窗閃退！
+                showToast('danger', '儲存失敗：' + (err.message || '未知錯誤，請檢查輸入內容'));
                 return false;
             }
         }
