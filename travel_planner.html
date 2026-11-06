@@ -5986,6 +5986,30 @@
         .sg-merge-date { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.68rem; font-weight: 700; padding: 0 7px; border-radius: 999px; white-space: nowrap; }
         .sg-merge-chipbtn { border: 1px solid #cadfe8; background: #ffffff; color: #286678; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; cursor: pointer; }
         .sg-merge-chipbtn:hover { background: #e4eff4; }
+    
+        /* ===== V3.8.0 細部景點排程 / 餐別 ===== */
+        .sg-child-block { margin-bottom: 8px; padding: 6px 8px; border: 1px solid #e6eef3; border-radius: 12px; background: #fbfdfe; }
+        .sg-child-block .sg-child-row { margin-bottom: 4px; }
+        .sg-child-sched { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.76rem; color: #475569; }
+        .sg-child-sched label { display: inline-flex; align-items: center; gap: 5px; margin: 0; cursor: pointer; font-weight: 700; color: #15803d; }
+        .sg-child-datebtn { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #cadfe8; background: #ffffff; color: #1f5f78; border-radius: 9px; padding: 3px 10px; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
+        .sg-child-datebtn:hover { background: #eef5f8; }
+        .sg-child-sel { padding: 3px 4px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.76rem; background: #fff; color: #1e293b; }
+        .sg-child-daybadge { font-size: 0.68rem; font-weight: 800; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+        .sg-child-daybadge.ok { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .sg-child-daybadge.warn { background: #fff4e0; color: #b45309; border: 1px solid #f5d9a8; }
+        .sg-child-cal { margin-top: 6px; padding: 8px; border: 1px solid #d6e5ec; border-radius: 12px; background: #ffffff; max-width: 280px; }
+        .sg-child-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .sg-child-cal-head { text-align: center; font-size: 0.66rem; color: #94a3b8; font-weight: 700; }
+        .sg-child-cal-cell { text-align: center; padding: 4px 0; border-radius: 8px; font-size: 0.76rem; border: none; background: transparent; color: #cbd5e1; }
+        .sg-child-cal-cell.in { background: #eef5f8; color: #1f5f78; font-weight: 700; cursor: pointer; }
+        .sg-child-cal-cell.in:hover { background: #d9eaf1; }
+        .sg-child-cal-cell.sel { background: #286678; color: #ffffff; }
+        .sg-child-cal-cell small { display: block; font-size: 0.55rem; opacity: .8; line-height: 1; }
+        .sg-meal-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+        .sg-meal-pill { border: 1px solid #e2e8f0; background: #ffffff; color: #475569; border-radius: 999px; padding: 3px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+        .sg-meal-pill:hover { background: #f8fafc; }
+        .sg-meal-pill.active { background: #fff4e0; color: #b45309; border-color: #f5d9a8; }
     </style>
 </head>
 <body>
@@ -6014,7 +6038,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.7.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.8.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7991,6 +8015,19 @@
                         </button>
                     </div>
                     <input type="hidden" id="sgCategory" value="spot">
+                    <div id="sgMealRow" style="display:none; margin-bottom: 12px; padding: 8px 10px; background: #fffaf0; border: 1px solid #fde8c4; border-radius: 12px;">
+                        <label class="form-label" style="margin-bottom:6px;"><i class="fa-solid fa-bell-concierge" style="color:#d97706;"></i> 餐別（同步到每日餐食與預算）</label>
+                        <div class="sg-meal-pills">
+                            <button type="button" class="sg-meal-pill" data-meal="" onclick="setSgMealType('')">不指定</button>
+                            <button type="button" class="sg-meal-pill" data-meal="breakfast" onclick="setSgMealType('breakfast')">早餐</button>
+                            <button type="button" class="sg-meal-pill" data-meal="lunch" onclick="setSgMealType('lunch')">午餐</button>
+                            <button type="button" class="sg-meal-pill" data-meal="dinner" onclick="setSgMealType('dinner')">晚餐</button>
+                            <button type="button" class="sg-meal-pill" data-meal="snack" onclick="setSgMealType('snack')">點心</button>
+                        </div>
+                        <input type="hidden" id="sgMealType" value="">
+                        <div id="sgMealHint" style="font-size:0.72rem; color:#92400e; margin-top:6px;"></div>
+                    </div>
+
 
                     <!-- 1. 基本資訊與攻略指南 -->
                     <div class="form-row">
@@ -11473,7 +11510,7 @@ const firebaseConfig = {
                         </div>
                         <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:0.72rem; color:#64748b;">
                             <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><i class="fa-solid fa-location-dot" style="color:#b0654a; font-size:0.68rem;"></i> ${escapeHtml(spotText)}</span>
-                            <span style="flex-shrink:0; font-size:0.69rem; color:#94a3b8;">${escapeHtml(d.date || '')}</span>
+                            <span style="flex-shrink:0; font-size:0.69rem; color:#94a3b8;">${escapeHtml(getDayDateLabel(plan, d))}</span>
                         </div>
                     </div>
                 `;
@@ -11616,7 +11653,7 @@ const firebaseConfig = {
                     .filter(e => e.type === 'spot')
                     .map(e => e.title.split('(')[0].trim());
                 const spotText = spotNames.length > 0 ? ` ｜ 景點：${spotNames.join('、')}` : '';
-                text += `Day ${d.dayNum} (${d.date || ''})：${d.title}${spotText}\n`;
+                text += `Day ${d.dayNum}${sgDayParen(d)}：${d.title}${spotText}\n`;
                 text += `  🍽️ 餐飲：早 [${d.breakfast || '自理'}] ｜ 午 [${d.lunch || '自理'}] ｜ 晚 [${d.dinner || '自理'}]${d.snack ? ` ｜ 點心飲料 [${d.snack}]` : ''}\n`;
             });
 
@@ -12023,7 +12060,7 @@ const firebaseConfig = {
 
             chipsBar.innerHTML = days.map(d => `
                 <button class="day-chip ${d.dayNum === appState.activeDayTab ? 'active' : ''}" onclick="selectDayTab(${d.dayNum})">
-                    Day ${d.dayNum} ‧ ${d.date || ''}
+                    Day ${d.dayNum}${getDayDateLabel(plan, d) ? ' ‧ ' + getDayDateLabel(plan, d) : ''}
                 </button>
             `).join('') + `
                 <button class="day-chip" style="border-style: dashed; color: #3b7386; border-color: #b8d2dc !important;" onclick="addNewDayToPlan()">
@@ -12247,6 +12284,7 @@ const firebaseConfig = {
                                 <h4 class="timeline-event-title">${escapeHtml(ev.title)}</h4>
                                 <div class="timeline-event-meta">
                                     ${ev.loc ? `<span><i class="fa-solid fa-location-dot" style="color:#b0654a;"></i> ${escapeHtml(ev.loc)}</span>` : ''}
+                                    ${ev.mealType ? `<span style="background:#fff4e0; color:#b45309; border:1px solid #f5d9a8; padding:1px 8px; border-radius:999px; font-weight:700; font-size:0.72rem;" title="已同步到當日餐食預算"><i class="fa-solid fa-utensils"></i> ${sgMealLabels[ev.mealType] || ''} 人均 ${curr.symbol}${Number(ev.mealCostPP || 0).toLocaleString()} <span style="font-weight:500;">(≈ NT$ ${Math.round(Number(ev.mealCostPP || 0) * curr.rate).toLocaleString()})・已計入餐食預算</span></span>` : ''}
                                     ${ev.cost ? `<span><i class="fa-solid fa-coins" style="color:#0f766e;"></i> ${curr.symbol} ${Number(ev.cost).toLocaleString()} <span style="font-size:0.72rem; color:#64748b;">(≈ NT$ ${Math.round(Number(ev.cost) * curr.rate).toLocaleString()})</span></span>` : ''}
                                     ${(ev.actualCost !== undefined && ev.actualCost !== null) ? `
                                         <span style="background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; padding:1px 6px; border-radius:4px; font-weight:700; font-size:0.72rem;" title="實付金額">
@@ -12419,7 +12457,7 @@ const firebaseConfig = {
                             <div class="day-card-title-group">
                                 <span class="day-badge-text">${activeDay.title}</span>
                                 <div class="day-badge-sub">
-                                    ${activeDay.date || ''} ‧ 當日支出預估: 每人 ${curr.symbol} ${dayGrandLocal.toLocaleString()} (≈ NT$ ${dayGrandTwd.toLocaleString()}) ｜ 全團 (${memberCount}人) ${curr.symbol} ${groupGrandLocal.toLocaleString()} (≈ NT$ ${groupGrandTwd.toLocaleString()})
+                                    ${getDayDateLabel(plan, activeDay) ? getDayDateLabel(plan, activeDay) + ' ‧ ' : ''}當日支出預估: 每人 ${curr.symbol} ${dayGrandLocal.toLocaleString()} (≈ NT$ ${dayGrandTwd.toLocaleString()}) ｜ 全團 (${memberCount}人) ${curr.symbol} ${groupGrandLocal.toLocaleString()} (≈ NT$ ${groupGrandTwd.toLocaleString()})
                                 </div>
                             </div>
                         </div>
@@ -12786,6 +12824,7 @@ const firebaseConfig = {
                 showToast('info', `已取消「${item.name}」的行程安排`);
             }
 
+            try { syncMealsFromSpotGuides(plan); } catch (e) {}
             saveState();
             renderAll();
         }
@@ -12907,6 +12946,9 @@ const firebaseConfig = {
             if (bkTmLbl) bkTmLbl.textContent = isFood ? '開放訂位時間（24 小時制，時與分分開設定）' : '開放時間（24 小時制，時與分分開設定）';
             if (bkPlat) bkPlat.placeholder = isFood ? '例如：美團線上取號 / 大眾點評訂位 / 電話預約 / 現場候位' : '例如：官方網站 / 微信公眾號 / Klook';
 
+            const mealRow = document.getElementById('sgMealRow');
+            if (mealRow) mealRow.style.display = isFood ? 'block' : 'none';
+            if (!isFood) { const mtEl = document.getElementById('sgMealType'); if (mtEl) mtEl.value = ''; }
             const chLbl = document.getElementById('sgChildrenLabel');
             if (chLbl) chLbl.innerHTML = isFood
                 ? `<i class="fa-solid fa-sitemap" style="color:#ea580c;"></i> 細部餐廳 / 美食（選填：這個主項目下的店家或推薦）`
@@ -12970,19 +13012,294 @@ const firebaseConfig = {
 
         
 
+
+        // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
+        const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
+        const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+        let sgChildCal = null;
+
+        // 每日標籤：依行程起始日推算「M/D (週)」；已有完整日期字串則沿用，只有「第 N 天」則不重複顯示
+        function getDayDateLabel(plan, d) {
+            if (!d) return '';
+            const raw = String(d.date || '').trim();
+            if (/\d{1,2}\s*[\/.\-]\s*\d{1,2}/.test(raw) && /[（(][日一二三四五六][）)]/.test(raw)) return raw;
+            try {
+                const info = (typeof buildPlanDateToDayMap === 'function') ? buildPlanDateToDayMap(plan) : null;
+                if (info && info.startYmd && typeof bcalAddDays === 'function' && typeof bcalParseYMD === 'function') {
+                    const ymd = bcalAddDays(info.startYmd, Math.max(0, (Number(d.dayNum) || 1) - 1));
+                    const dt = ymd ? bcalParseYMD(ymd) : null;
+                    if (dt) return `${dt.getMonth() + 1}/${dt.getDate()} (${SG_WEEKDAYS[dt.getDay()]})`;
+                }
+            } catch (e) {}
+            if (/^第\s*\d+\s*天$/.test(raw)) return '';
+            return raw;
+        }
+        function sgDayParen(d) {
+            const l = getDayDateLabel(getCurrentPlan(), d);
+            return l ? ` (${l})` : '';
+        }
+        function sgFmtYmd(ymd) {
+            const m = String(ymd || '').match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (!m) return '';
+            const dt = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            return `${Number(m[2])}/${Number(m[3])} (${SG_WEEKDAYS[dt.getDay()]})`;
+        }
+        function sgYmdFromDayNum(plan, dayNum) {
+            const info = buildPlanDateToDayMap(plan);
+            if (!info.startYmd) return '';
+            const idx = (plan.days || []).findIndex(d => d.dayNum === dayNum);
+            return bcalAddDays(info.startYmd, Math.max(0, idx));
+        }
+        function sgTimeParts(timeStr) {
+            const p = parseTimeString(timeStr);
+            if (p.startMinutes === 9999) return { start: '', end: '' };
+            return { start: p.startTimeStr || '', end: p.hasEnd ? (p.endTimeStr || '') : '' };
+        }
+
+        // 細部景點在每日行程中的對應項目：優先以 id 綁定，其次以名稱比對
+        function sgChildTimeline(plan, c) {
+            if (!plan || !c || !Array.isArray(plan.days)) return null;
+            let byName = null;
+            for (const d of plan.days) {
+                for (const ev of (d.events || [])) {
+                    if (c.id && ev.spotGuideId === c.id) return { dayNum: d.dayNum, time: ev.time };
+                    if (!byName && !ev.spotGuideId && ev.type !== 'flight' && !ev.majorTransId && ev.title && c.name &&
+                        (ev.title === c.name || (c.name.length >= 3 && ev.title.includes(c.name)))) {
+                        byName = { dayNum: d.dayNum, time: ev.time };
+                    }
+                }
+            }
+            return byName;
+        }
+        function sgChildSchedView(plan, c) {
+            const tl = sgChildTimeline(plan, c);
+            if (tl) {
+                const t = sgTimeParts(tl.time);
+                return { ymd: sgYmdFromDayNum(plan, tl.dayNum), start: t.start, end: t.end, dayNum: tl.dayNum, fromTimeline: true };
+            }
+            const s = c.srcItem || {};
+            const ymd = c.visitDate || '';
+            const day = (ymd && plan) ? resolvePlanDayByDate(plan, ymd) : null;
+            return { ymd, start: c.visitStartTime || '', end: c.visitEndTime || '', dayNum: day ? day.dayNum : null, fromTimeline: false };
+        }
+        function sgChildInitSchedule(plan, c) {
+            if (!c) return;
+            const v = sgChildSchedView(plan, c);
+            if (v.fromTimeline) {
+                c.visitDate = v.ymd || '';
+                c.visitStartTime = v.start || '';
+                c.visitEndTime = v.end || '';
+                c.scheduled = true;
+            } else {
+                c.visitDate = c.visitDate || '';
+                c.visitStartTime = c.visitStartTime || '';
+                c.visitEndTime = c.visitEndTime || '';
+                c.scheduled = (c.scheduled === true);
+            }
+            c._dirty = false;
+        }
+        function sgChildWhen(c) {
+            const plan = getCurrentPlan();
+            if (!plan || !c) return '';
+            const v = sgChildSchedView(plan, c);
+            if (!v.ymd || !(v.fromTimeline || c.scheduled === true)) return '';
+            const m = v.ymd.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (!m) return '';
+            let t = `${Number(m[2])}/${Number(m[3])}`;
+            if (v.start) t += ' ' + v.start + (v.end ? '-' + v.end : '');
+            return t;
+        }
+
+        function setSgChildField(i, k, v) {
+            const c = sgChildrenDraft[i];
+            if (!c) return;
+            c[k] = v;
+            c._dirty = true;
+            if (k === 'visitDate' && v) {
+                if (c.scheduled !== true) c.scheduled = true;
+                if (!c.visitStartTime) c.visitStartTime = '10:00';
+            }
+            renderSgChildren();
+        }
+        function onSgChildTimeChange(i) {
+            const c = sgChildrenDraft[i];
+            if (!c) return;
+            const g = (id) => (document.getElementById(id) || {}).value || '';
+            const sh = g(`sgc-sh-${i}`), sm = g(`sgc-sm-${i}`) || '00';
+            const eh = g(`sgc-eh-${i}`), em = g(`sgc-em-${i}`) || '00';
+            c.visitStartTime = sh ? `${sh}:${sm}` : '';
+            c.visitEndTime = eh ? `${eh}:${em}` : '';
+            c._dirty = true;
+        }
+        function openSgChildCal(i, ev) {
+            if (ev) ev.stopPropagation();
+            const c = sgChildrenDraft[i];
+            const plan = getCurrentPlan();
+            if (!c || !plan) return;
+            if (sgChildCal && sgChildCal.i === i) { sgChildCal = null; renderSgChildren(); return; }
+            const info = buildPlanDateToDayMap(plan);
+            const base = c.visitDate || info.startYmd || '';
+            const m = base.match(/(\d{4})-(\d{1,2})/);
+            const now = new Date();
+            sgChildCal = { i, y: m ? Number(m[1]) : now.getFullYear(), m: m ? Number(m[2]) - 1 : now.getMonth() };
+            renderSgChildren();
+        }
+        function navSgChildCal(delta, ev) {
+            if (ev) ev.stopPropagation();
+            if (!sgChildCal) return;
+            const d = new Date(sgChildCal.y, sgChildCal.m + delta, 1);
+            sgChildCal.y = d.getFullYear();
+            sgChildCal.m = d.getMonth();
+            renderSgChildren();
+        }
+        function pickSgChildDate(ymd, ev) {
+            if (ev) ev.stopPropagation();
+            if (!sgChildCal) return;
+            const i = sgChildCal.i;
+            sgChildCal = null;
+            setSgChildField(i, 'visitDate', ymd);
+        }
+        function sgChildCalHtml(i, info, selected) {
+            const y = sgChildCal.y, m = sgChildCal.m;
+            const first = new Date(y, m, 1).getDay();
+            const days = new Date(y, m + 1, 0).getDate();
+            let cells = SG_WEEKDAYS.map(w => `<div class="sg-child-cal-head">${w}</div>`).join('');
+            for (let k = 0; k < first; k++) cells += '<div></div>';
+            for (let d = 1; d <= days; d++) {
+                const ymd = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dn = info.map[ymd];
+                if (dn) cells += `<button type="button" class="sg-child-cal-cell in ${selected === ymd ? 'sel' : ''}" onclick="pickSgChildDate('${ymd}', event)">${d}<small>D${dn}</small></button>`;
+                else cells += `<div class="sg-child-cal-cell">${d}</div>`;
+            }
+            return `<div class="sg-child-cal" onclick="event.stopPropagation()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <button type="button" class="n-btn" style="padding:1px 8px;" onclick="navSgChildCal(-1, event)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <strong style="font-size:0.8rem; color:#1f5f78;">${y} 年 ${m + 1} 月</strong>
+                    <button type="button" class="n-btn" style="padding:1px 8px;" onclick="navSgChildCal(1, event)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="sg-child-cal-grid">${cells}</div>
+                <div style="font-size:0.66rem; color:#94a3b8; margin-top:5px;">只能選擇行程期間內的日期（D1＝第 1 天）</div>
+            </div>`;
+        }
+
+        function relinkChildEvents(plan, c) {
+            (plan.days || []).forEach(d => (d.events || []).forEach(ev => {
+                if (!ev.spotGuideId && ev.type !== 'flight' && !ev.majorTransId && ev.title && c.name &&
+                    (ev.title === c.name || (c.name.length >= 3 && ev.title.includes(c.name)))) {
+                    ev.spotGuideId = c.id;
+                }
+            }));
+        }
+        function syncSgChildrenSchedules(plan, parentObj) {
+            const parentCat = (parentObj && parentObj.category) || 'spot';
+            sgChildrenDraft.forEach(c => {
+                if (!c || !c._dirty || !String(c.name || '').trim()) return;
+                relinkChildEvents(plan, c);
+                const s = c.srcItem || {};
+                const tipFull = (s.tip && c.note === String(s.tip).slice(0, 80)) ? s.tip : (c.note || '');
+                const obj = Object.assign({}, s, {
+                    id: c.id,
+                    name: String(c.name).trim(),
+                    address: c.address || s.address || '',
+                    tip: tipFull,
+                    category: s.category || parentCat,
+                    mealType: s.mealType || '',
+                    visitDate: c.visitDate || '',
+                    visitStartTime: c.visitStartTime || '',
+                    visitEndTime: c.visitEndTime || '',
+                    scheduled: !!c.scheduled && !!c.visitDate
+                });
+                syncSpotGuideToDailySchedule(plan, obj);
+                c._dirty = false;
+            });
+        }
+
+        // 餐飲攻略的「餐別」同步到每日餐食（早餐/午餐/晚餐/點心）：名稱、時間、人均預算
+        function syncMealsFromSpotGuides(plan) {
+            if (!plan || !Array.isArray(plan.days)) return;
+            const rate = Number((typeof getPlanCurrency === 'function' ? getPlanCurrency(plan) : {}).rate) || 1;
+            const entries = [];
+            const pushEntry = (s, ymd, start) => {
+                const meal = s.mealType;
+                if (!meal || !sgMealLabels[meal]) return;
+                const day = resolvePlanDayByDate(plan, ymd);
+                if (!day) return;
+                let cost = 0;
+                if (s.ticketCurr !== 'FREE' && s.ticketCost !== '' && s.ticketCost !== null && s.ticketCost !== undefined && !isNaN(Number(s.ticketCost))) {
+                    cost = Number(s.ticketCost);
+                    if (s.ticketCurr === 'TWD' && rate > 0) cost = Math.round(cost / rate * 100) / 100;
+                }
+                entries.push({ day: day.dayNum, meal, name: s.name, time: start || '', cost });
+            };
+            (plan.spotTips || []).forEach(s => {
+                if (!s) return;
+                if (s.category === 'food' && s.scheduled && s.visitDate) pushEntry(s, s.visitDate, s.visitStartTime);
+                (Array.isArray(s.children) ? s.children : []).forEach(c => {
+                    const src = c && c.srcItem;
+                    if (!src || src.category !== 'food' || !src.mealType) return;
+                    const v = sgChildSchedView(plan, c);
+                    if (!v.ymd || !(v.fromTimeline || c.scheduled === true)) return;
+                    pushEntry(Object.assign({}, src, { name: c.name }), v.ymd, v.start);
+                });
+            });
+            plan.days.forEach(day => {
+                Object.keys(sgMealLabels).forEach(k => {
+                    const g = entries.filter(e => e.day === day.dayNum && e.meal === k);
+                    if (!day._mealOrig) day._mealOrig = {};
+                    if (g.length) {
+                        if (!day._mealOrig[k]) {
+                            const o = {};
+                            if (day[k] !== undefined) o.text = day[k];
+                            if (day[k + 'Cost'] !== undefined) o.cost = day[k + 'Cost'];
+                            if (day[k + 'Curr'] !== undefined) o.curr = day[k + 'Curr'];
+                            if (day[k + 'Mode'] !== undefined) o.mode = day[k + 'Mode'];
+                            day._mealOrig[k] = o;
+                        }
+                        day[k] = g.map(e => e.name + (e.time ? `（${e.time}）` : '')).join(' / ');
+                        day[k + 'Cost'] = Math.round(g.reduce((a, e) => a + e.cost, 0) * 100) / 100;
+                        day[k + 'Curr'] = 'LOCAL';
+                        day[k + 'Mode'] = 'single';
+                    } else if (day._mealOrig[k]) {
+                        const o = day._mealOrig[k];
+                        ['', 'Cost', 'Curr', 'Mode'].forEach((suf, n) => {
+                            const key = k + suf;
+                            const val = [o.text, o.cost, o.curr, o.mode][n];
+                            if (val === undefined) delete day[key]; else day[key] = val;
+                        });
+                        delete day._mealOrig[k];
+                    }
+                });
+                if (day._mealOrig && Object.keys(day._mealOrig).length === 0) delete day._mealOrig;
+            });
+        }
+
+        function setSgMealType(m, skipDefaults) {
+            m = sgMealLabels[m] ? m : '';
+            const inp = document.getElementById('sgMealType');
+            if (inp) inp.value = m;
+            document.querySelectorAll('.sg-meal-pill').forEach(b => b.classList.toggle('active', (b.dataset.meal || '') === m));
+            const hint = document.getElementById('sgMealHint');
+            if (hint) {
+                hint.textContent = m
+                    ? `人均費用、日期與時間會同步為當天的「${sgMealLabels[m]}」餐食（行程預算、實際開銷、行程大綱都會一起更新）`
+                    : '不指定餐別時，只會在當天行程新增一筆餐飲項目，不改動每日餐食預算';
+            }
+            if (!skipDefaults && m) {
+                const st = getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin');
+                const en = getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin');
+                if ((!st || st === '09:30') && (!en || en === '11:30')) {
+                    const d = { breakfast: ['08:00', '09:00'], lunch: ['12:00', '13:30'], dinner: ['18:00', '19:30'], snack: ['15:00', '16:00'] }[m];
+                    setSg24hPairValues('sgVisitStartHour', 'sgVisitStartMin', d[0]);
+                    setSg24hPairValues('sgVisitEndHour', 'sgVisitEndMin', d[1]);
+                    if (typeof onSgVisitTimeChange === 'function') onSgVisitTimeChange();
+                }
+            }
+        }
+
         // ===== 整合既有景點為「主項目 ＋ 細部景點」(V3.7.0) =====
         let sgMergedIds = [];
         let sgSplitOut = [];
 
-        function sgChildWhen(c) {
-            const s = c && c.srcItem;
-            if (!s || !s.visitDate) return '';
-            const m = String(s.visitDate).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-            if (!m) return '';
-            let t = `${Number(m[2])}/${Number(m[3])}`;
-            if (s.visitStartTime) t += ' ' + s.visitStartTime + (s.visitEndTime ? '-' + s.visitEndTime : '');
-            return t;
-        }
 
         function sgMergeCandidates() {
             const plan = getCurrentPlan();
@@ -13061,6 +13378,7 @@ const firebaseConfig = {
                     srcItem: JSON.parse(JSON.stringify(s))
                 });
                 sgMergedIds.push(s.id);
+                sgChildInitSchedule(plan, sgChildrenDraft[sgChildrenDraft.length - 1]);
                 n++;
             });
             renderSgChildren();
@@ -13084,7 +13402,7 @@ const firebaseConfig = {
                 if (id === selfId) return;
                 const k = plan.spotTips.findIndex(s => s.id === id);
                 if (k >= 0) plan.spotTips.splice(k, 1);
-                (plan.days || []).forEach(d => (d.events || []).forEach(ev => { if (ev.spotGuideId === id) delete ev.spotGuideId; }));
+                // 保留行程項目與細部景點的 id 連結，之後可直接在細部景點上調整日期與時間
             });
             sgSplitOut.forEach(c => {
                 const src = c.srcItem ? JSON.parse(JSON.stringify(c.srcItem)) : { category: 'spot', name: c.name, address: c.address || '', tip: c.note || '', scheduled: false, hasBooking: false };
@@ -13110,13 +13428,39 @@ const firebaseConfig = {
                 box.innerHTML = '<div style="font-size:0.76rem; color:#94a3b8; padding:4px 2px;">尚未新增。例如主項目「鎌倉」可加入：高德院（大佛）、小町通、鶴岡八幡宮…</div>';
                 return;
             }
-            box.innerHTML = sgChildrenDraft.map((c, i) => `
-                <div class="sg-child-row">
-                    <input type="text" class="form-input" value="${escapeHtml(c.name || '')}" placeholder="細部景點名稱" oninput="updateSgChild(${i}, 'name', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
-                    <input type="text" class="form-input" value="${escapeHtml(c.note || '')}" placeholder="備註（如：必拍大佛、約 40 分鐘）" oninput="updateSgChild(${i}, 'note', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
-                    <span style="display:inline-flex; gap:4px;">${sgMergedIds.includes(c.id) ? '' : `<button type="button" class="n-btn" style="padding:2px 8px;" onclick="splitSgChild(${i})" title="拆出成獨立景點"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>`}<button type="button" class="n-btn n-btn-danger" style="padding:2px 9px;" onclick="removeSgChild(${i})" title="移除（整合進來的景點會恢復為獨立景點）"><i class="fa-regular fa-trash-can"></i></button></span>
-                </div>
-            `).join('');
+            const plan = getCurrentPlan();
+            const info = buildPlanDateToDayMap(plan);
+            const hourOpts = (sel) => '<option value="">-- 時</option>' + Array.from({ length: 24 }, (_, h) => { const v = String(h).padStart(2, '0'); return `<option value="${v}"${sel === v ? ' selected' : ''}>${v} 時</option>`; }).join('');
+            const minOpts = (sel) => Array.from({ length: 60 }, (_, m) => { const v = String(m).padStart(2, '0'); return `<option value="${v}"${sel === v ? ' selected' : ''}>${v} 分</option>`; }).join('');
+            const split = (t) => { const m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? [m[1].padStart(2, '0'), m[2]] : ['', '00']; };
+            box.innerHTML = sgChildrenDraft.map((c, i) => {
+                const [sh, sm] = split(c.visitStartTime);
+                const [eh, em] = split(c.visitEndTime);
+                const day = (c.visitDate && plan) ? resolvePlanDayByDate(plan, c.visitDate) : null;
+                const dateLabel = c.visitDate ? sgFmtYmd(c.visitDate) : '選擇日期';
+                const badge = c.scheduled
+                    ? (day ? `<span class="sg-child-daybadge ok">第 ${day.dayNum} 天</span>` : `<span class="sg-child-daybadge warn">${c.visitDate ? '不在行程期間內' : '尚未選日期'}</span>`)
+                    : '';
+                return `
+                <div class="sg-child-block">
+                    <div class="sg-child-row">
+                        <input type="text" class="form-input" value="${escapeHtml(c.name || '')}" placeholder="細部景點名稱" oninput="updateSgChild(${i}, 'name', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
+                        <input type="text" class="form-input" value="${escapeHtml(c.note || '')}" placeholder="備註（如：必拍大佛、約 40 分鐘）" oninput="updateSgChild(${i}, 'note', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
+                        <span style="display:inline-flex; gap:4px;">${sgMergedIds.includes(c.id) ? '' : `<button type="button" class="n-btn" style="padding:2px 8px;" onclick="splitSgChild(${i})" title="拆出成獨立景點"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>`}<button type="button" class="n-btn n-btn-danger" style="padding:2px 9px;" onclick="removeSgChild(${i})" title="移除（整合進來的景點會恢復為獨立景點）"><i class="fa-regular fa-trash-can"></i></button></span>
+                    </div>
+                    <div class="sg-child-sched">
+                        <label><input type="checkbox" class="n-checkbox" ${c.scheduled ? 'checked' : ''} onchange="setSgChildField(${i}, 'scheduled', this.checked)"> 排入行程</label>
+                        <button type="button" class="sg-child-datebtn" onclick="openSgChildCal(${i}, event)"><i class="fa-regular fa-calendar"></i> ${escapeHtml(dateLabel)}</button>
+                        ${badge}
+                        <span style="display:inline-flex; align-items:center; gap:3px;">
+                            <select class="sg-child-sel" id="sgc-sh-${i}" onchange="onSgChildTimeChange(${i})">${hourOpts(sh)}</select>:<select class="sg-child-sel" id="sgc-sm-${i}" onchange="onSgChildTimeChange(${i})">${minOpts(sm)}</select>
+                            <span style="color:#94a3b8;">~</span>
+                            <select class="sg-child-sel" id="sgc-eh-${i}" onchange="onSgChildTimeChange(${i})">${hourOpts(eh)}</select>:<select class="sg-child-sel" id="sgc-em-${i}" onchange="onSgChildTimeChange(${i})">${minOpts(em)}</select>
+                        </span>
+                    </div>
+                    ${(sgChildCal && sgChildCal.i === i) ? sgChildCalHtml(i, info, c.visitDate) : ''}
+                </div>`;
+            }).join('');
         }
         function addSgChild() {
             sgChildrenDraft.push({ id: 'sc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: '', note: '', picked: false });
@@ -13325,6 +13669,7 @@ const firebaseConfig = {
                     ${bookingStripHtml}
                 ` : '';
 
+                const mealChipHtml = (isFood && item.mealType && sgMealLabels[item.mealType]) ? `<span class="sg-booking-mini" style="background:#fff4e0;"><i class="fa-solid fa-bell-concierge"></i> ${sgMealLabels[item.mealType]}</span>` : '';
                 const pad = isCompactMode ? '8px 12px' : '11px 14px';
                 return `
                     <div class="spot-guide-card" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#bfe3cc' : '#e2e8f0'}; border-radius:14px; padding:${pad}; margin-bottom:${isCompactMode ? '7px' : '10px'}; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
@@ -13333,6 +13678,7 @@ const firebaseConfig = {
                             ${catBadgeHtml}
                             <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 0.95rem; color: var(--notion-text); cursor: pointer; margin: 0;">${itemIconHtml} ${escapeHtml(item.name)}</label>
                             ${statusPillHtml}
+                            ${mealChipHtml}
                             ${bookingMiniHtml}
                             ${countChipHtml}
                             <div style="margin-left:auto; display:flex; gap:5px; flex-shrink:0;">
@@ -13888,7 +14234,7 @@ const firebaseConfig = {
                         <div style="flex:1; min-width:0; padding-right:12px;">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <strong style="color:var(--notion-text); font-size:0.92rem;">Day ${d.dayNum} ‧ ${d.title}</strong>
-                                <span style="font-size:0.75rem; color:var(--notion-text-sub); background:#f1f1ef; padding:1px 6px; border-radius:3px;">${d.date || ''}</span>
+                                <span style="font-size:0.75rem; color:var(--notion-text-sub); background:#f1f1ef; padding:1px 6px; border-radius:3px;">${getDayDateLabel(getCurrentPlan(), d)}</span>
                                 <span style="font-size:0.7rem; color:#0284c7; background:#e0f2fe; padding:1px 6px; border-radius:3px;"><i class="fa-solid fa-pen-to-square"></i> 點擊編輯</span>
                             </div>
                             <!-- 餐飲與點心詳細拆解 (當地幣別) -->
@@ -14776,7 +15122,7 @@ const firebaseConfig = {
                             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                                 <span style="background:#0284c7; color:#ffffff; font-weight:800; font-size:0.78rem; padding:2px 8px; border-radius:4px;">Day ${d.dayNum}</span>
                                 <strong style="font-size:0.96rem; color:#0f172a;">${escapeHtml(d.title)}</strong>
-                                <span style="font-size:0.78rem; color:#64748b;">(${d.date || ''})</span>
+                                <span style="font-size:0.78rem; color:#64748b;">${getDayDateLabel(getCurrentPlan(), d) ? '(' + getDayDateLabel(getCurrentPlan(), d) + ')' : ''}</span>
                                 <span style="background:#fffbeb; border:1px solid #fde68a; color:#b45309; font-size:0.72rem; font-weight:700; padding:1px 7px; border-radius:999px;">
                                     🍽️ 餐食實付: ${curr.symbol}${Math.round(dayMealActGroupLocal / m).toLocaleString()}/人
                                 </span>
@@ -15511,7 +15857,7 @@ const firebaseConfig = {
                 const dnAct = (d.actualDinnerCost !== undefined && d.actualDinnerCost !== null && d.actualDinnerCost !== '') ? Number(d.actualDinnerCost) : Number(d.dinnerCost || 0);
                 const snAct = (d.actualSnackCost !== undefined && d.actualSnackCost !== null && d.actualSnackCost !== '') ? Number(d.actualSnackCost) : Number(d.snackCost || 0);
 
-                txt += `\n[Day ${d.dayNum} ‧ ${d.title} (${d.date || ''})]\n`;
+                txt += `\n[Day ${d.dayNum} ‧ ${d.title}${sgDayParen(d)}]\n`;
                 txt += `  🍽️ 餐食 (單人)：早餐 ${curr.symbol}${bfAct} / 午餐 ${curr.symbol}${lcAct} / 晚餐 ${curr.symbol}${dnAct}${snAct > 0 ? ` / 點心 ${curr.symbol}${snAct}` : ''}\n`;
                 (d.transports || []).forEach(t => {
                     const act = (t.actualCost !== undefined && t.actualCost !== null && t.actualCost !== '') ? t.actualCost : (t.cost || 0);
@@ -16832,7 +17178,7 @@ const firebaseConfig = {
                             const isRail = text.includes('高鐵') || text.includes('新幹線');
                             plan.majorTransports.push({
                                 category: isAirport ? 'transfer' : (isRail ? 'rail' : 'charter'),
-                                date: `Day ${d.dayNum} (${d.date || ''}) ${ev.time || ''}`.trim(),
+                                date: `Day ${d.dayNum}${sgDayParen(d)} ${ev.time || ''}`.trim(),
                                 title: ev.title,
                                 dep: '',
                                 arr: ev.loc || '',
@@ -17052,7 +17398,7 @@ const firebaseConfig = {
             // 3. 每日行程重點
             text += `🗓️【每日行程表】\n`;
             days.forEach(d => {
-                text += `\n📍 Day ${d.dayNum} (${d.date || ''}) ${d.title || ''}\n`;
+                text += `\n📍 Day ${d.dayNum}${sgDayParen(d)} ${d.title || ''}\n`;
                 const events = d.events || [];
                 if (events.length > 0) {
                     events.forEach(e => {
@@ -17210,7 +17556,7 @@ const firebaseConfig = {
                             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0284c7; padding-bottom:8px; margin-bottom:14px;">
                                 <div style="font-size:1.15rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
                                     <span style="background:#0284c7; color:white; padding:3px 10px; border-radius:6px; font-size:0.88rem;">DAY ${d.dayNum}</span>
-                                    <span>${d.date ? `${escapeHtml(d.date)} ` : ''}${escapeHtml(d.title || '')}</span>
+                                    <span>${getDayDateLabel(getCurrentPlan(), d) ? `${escapeHtml(getDayDateLabel(getCurrentPlan(), d))} ` : ''}${escapeHtml(d.title || '')}</span>
                                 </div>
                                 <div style="font-size:0.82rem; color:#64748b; font-weight:600;">
                                     第 ${d.dayNum} 天 ｜ 家人隨身小冊
@@ -17703,7 +18049,7 @@ const firebaseConfig = {
                         <div class="booklet-sheet-body">
                             <!-- 頁首 Header -->
                             <div class="booklet-page-header">
-                                <span><span class="tag">DAY ${d.dayNum}</span> ‧ ${d.date ? `${escapeHtml(d.date)} ` : ''}${escapeHtml(d.title)}</span>
+                                <span><span class="tag">DAY ${d.dayNum}</span> ‧ ${getDayDateLabel(getCurrentPlan(), d) ? `${escapeHtml(getDayDateLabel(getCurrentPlan(), d))} ` : ''}${escapeHtml(d.title)}</span>
                                 <span style="color: #64748b; font-weight: normal; font-size: 0.76rem;">
                                     預估單人：NT$ ${dayTwd.toLocaleString()} (${curr.symbol} ${dayCost.toLocaleString()})
                                 </span>
@@ -24258,6 +24604,7 @@ const firebaseConfig = {
                 }
             }
 
+            const spotMealType = (spotObj.category === 'food' && spotObj.mealType && sgMealLabels[spotObj.mealType]) ? spotObj.mealType : '';
             const noteParts = [];
             const openSummary = formatSpotOpeningText(spotObj);
             if (openSummary) noteParts.push(`🕒 營業：${openSummary}`);
@@ -24285,7 +24632,16 @@ const firebaseConfig = {
                 if (startT) existEv.time = timeStr;
                 existEv.title = spotObj.name;
                 if (spotObj.address) existEv.loc = spotObj.address;
-                if (hasTicketSetting) existEv.cost = syncedLocalCost;
+                if (spotMealType) {
+                    existEv.cost = 0;
+                    existEv.type = 'food';
+                    existEv.mealType = spotMealType;
+                    existEv.mealCostPP = syncedLocalCost;
+                } else {
+                    if (hasTicketSetting) existEv.cost = syncedLocalCost;
+                    delete existEv.mealType;
+                    delete existEv.mealCostPP;
+                }
                 existEv.notes = noteParts.join(' ‧ ');
                 existEv.spotGuideId = spotObj.id;
                 if (typeof sortDayEventsByTime === 'function') {
@@ -24299,10 +24655,14 @@ const firebaseConfig = {
                 title: spotObj.name,
                 type: (spotObj.category === 'food' ? 'food' : 'spot'),
                 loc: spotObj.address || '',
-                cost: syncedLocalCost,
+                cost: spotMealType ? 0 : syncedLocalCost,
                 notes: noteParts.join(' ‧ '),
                 spotGuideId: spotObj.id
             };
+            if (spotMealType) {
+                newEv.mealType = spotMealType;
+                newEv.mealCostPP = syncedLocalCost;
+            }
 
             // 3. 若有設定明確起訖時間，檢查當日既有一般項目是否衝突並順移時間（與新增交通一致）
             if (startT && endT && typeof parseTimeString === 'function' && typeof shiftTimeString === 'function') {
@@ -24398,10 +24758,13 @@ const firebaseConfig = {
 
             document.getElementById('sgEditIndex').value = isEdit ? editIdx : '-1';
             setSpotGuideCategory(curItem.category || 'spot');
+            setSgMealType(curItem.mealType || '', true);
             sgChildrenDraft = JSON.parse(JSON.stringify(Array.isArray(curItem.children) ? curItem.children : []));
             sgMergedIds = [];
             sgSplitOut = [];
+            sgChildCal = null;
             closeSgMergePicker();
+            sgChildrenDraft.forEach(cc => sgChildInitSchedule(getCurrentPlan(), cc));
             renderSgChildren();
             document.getElementById('sgNameInput').value = curItem.name || '';
             document.getElementById('sgAddressInput').value = curItem.address || '';
@@ -24503,6 +24866,7 @@ const firebaseConfig = {
                 const spotObj = {
                     id: itemId,
                     category,
+                    mealType: (category === 'food') ? (document.getElementById('sgMealType')?.value || '') : '',
                     name,
                     address: (document.getElementById('sgAddressInput')?.value || '').trim(),
                     openStartTime,
@@ -24524,7 +24888,7 @@ const firebaseConfig = {
                     bookingPlatform,
                     bookingDifficulty,
                     bookingStatus,
-                    children: sgChildrenDraft.filter(x => x && String(x.name || '').trim()).map(x => { const o = { id: x.id, name: String(x.name).trim(), note: String(x.note || '').trim(), picked: !!x.picked }; if (x.address) o.address = x.address; if (x.srcItem) o.srcItem = x.srcItem; return o; })
+                    children: sgChildrenDraft.filter(x => x && String(x.name || '').trim()).map(x => { const o = { id: x.id, name: String(x.name).trim(), note: String(x.note || '').trim(), picked: !!x.picked }; if (x.address) o.address = x.address; if (x.srcItem) o.srcItem = x.srcItem; o.visitDate = x.visitDate || ''; o.visitStartTime = x.visitStartTime || ''; o.visitEndTime = x.visitEndTime || ''; o.scheduled = !!x.scheduled; return o; })
                 };
 
                 const prevIdForMerge = prevItem ? prevItem.id : null;
@@ -24543,6 +24907,8 @@ const firebaseConfig = {
                     console.warn('同步景點至每日行程時略過:', syncErr);
                 }
 
+                try { syncSgChildrenSchedules(plan, spotObj); } catch (childErr) { console.warn('細部景點排程同步略過:', childErr); }
+                try { syncMealsFromSpotGuides(plan); } catch (mealErr) { console.warn('餐別同步略過:', mealErr); }
                 saveState();
                 closeModal('editSpotGuideModal');
                 renderAll();
@@ -24568,11 +24934,12 @@ const firebaseConfig = {
                 if (target.id && Array.isArray(plan.days)) {
                     plan.days.forEach(d => {
                         if (Array.isArray(d.events)) {
-                            d.events = d.events.filter(ev => ev.spotGuideId !== target.id);
+                            d.events = d.events.filter(ev => ev.spotGuideId !== target.id && !(Array.isArray(target.children) && target.children.some(cc => cc.id === ev.spotGuideId)));
                         }
                     });
                 }
                 plan.spotTips.splice(idx, 1);
+                try { syncMealsFromSpotGuides(plan); } catch (e) {}
                 saveState();
                 renderAll();
                 showToast('success', '已刪除景點攻略');
@@ -25284,7 +25651,7 @@ const firebaseConfig = {
                 out.push('🗓️ 每日詳細行程安排');
                 out.push('');
                 plan.days.forEach(day => {
-                    out.push(`【Day ${day.dayNum || 1}】${day.date || ''} - ${day.title || '行程活動'}`);
+                    out.push(`【Day ${day.dayNum || 1}】${getDayDateLabel(getCurrentPlan(), day)} - ${day.title || '行程活動'}`);
                     if (day.breakfast) out.push(`🍳 早餐：${day.breakfast}`);
                     if (day.lunch) out.push(`🍱 午餐：${day.lunch}`);
                     if (day.dinner) out.push(`🍲 晚餐：${day.dinner}`);
