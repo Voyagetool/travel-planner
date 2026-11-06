@@ -6077,7 +6077,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.10.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.10.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8908,6 +8908,7 @@ const firebaseConfig = {
                         // 若本機剛儲存或當前有開啟中視窗，保留當前 activePlanId，不被雲端強制跳轉
                         const localPref = (function () { try { return localStorage.getItem(ACTIVE_PLAN_KEY); } catch (e) { return null; } })();
                         const keepActivePlanId = (localPref && data.appState.plans[localPref]) ? localPref : ((isRecentlySaved || isAnyModalActive) ? appState.activePlanId : data.appState.activePlanId);
+                        if (!localPref && keepActivePlanId && data.appState.plans[keepActivePlanId]) setActivePlanPref(keepActivePlanId);
 
                         appState = data.appState;
                         if (keepActivePlanId && appState.plans[keepActivePlanId]) {
@@ -9183,12 +9184,15 @@ const firebaseConfig = {
         }
 
         // 每台裝置各自記住「上次看的旅行計畫」，不再被雲端（其他裝置）的選擇帶著跑
-        const ACTIVE_PLAN_KEY = 'travel_planner_active_plan_local_blank';
+        const ACTIVE_PLAN_KEY = 'travel_planner_active_plan_pref2_blank';
+        // 只有使用者在這台裝置「手動切換行程」時才記住；其餘情況沿用雲端最後的選擇，避免載入過程誤鎖
+        function setActivePlanPref(id) { try { if (id) localStorage.setItem(ACTIVE_PLAN_KEY, id); } catch (e) {} }
         function removeBootMask() {
             if (document.body) document.body.classList.remove('app-booting');
         }
         window.addEventListener('DOMContentLoaded', () => {
             const hadLocalState = !!localStorage.getItem('notion_travel_pure_blank_v3');
+            const hadPref = !!localStorage.getItem(ACTIVE_PLAN_KEY);
             loadState();
 
             // 支援從 URL 參數帶入指定的 planId (例如 ?planId=plan-template)
@@ -9205,7 +9209,7 @@ const firebaseConfig = {
 
             renderAll();
             // 本機已有資料：立即顯示；全新裝置則等第一次雲端同步（最久 3 秒）再顯示，避免先閃過預設內容
-            if (hadLocalState) removeBootMask(); else setTimeout(removeBootMask, 3000);
+            if (hadLocalState && hadPref) removeBootMask(); else setTimeout(removeBootMask, 3000);
             setTimeout(removeBootMask, 5000);
 
             // 初始化 Firebase 雲端即時同步
@@ -9264,7 +9268,6 @@ const firebaseConfig = {
 
         function saveState(skipCloud) {
             localStorage.setItem('notion_travel_pure_blank_v3', JSON.stringify(appState));
-            try { if (appState.activePlanId) localStorage.setItem(ACTIVE_PLAN_KEY, appState.activePlanId); } catch (e) {}
             if (firestoreDb && !skipCloud && !isReceivingCloudUpdate) {
                 pushStateToCloud();
             }
@@ -16426,6 +16429,7 @@ const firebaseConfig = {
         function changeCurrentTravelPlan(planId) {
             if (!appState.plans[planId]) return;
             appState.activePlanId = planId;
+            setActivePlanPref(planId);
             appState.activeDayTab = 1;
             saveState();
             renderAll();
@@ -16441,6 +16445,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除當前旅行計畫嗎？')) {
                 delete appState.plans[appState.activePlanId];
                 appState.activePlanId = Object.keys(appState.plans)[0];
+                setActivePlanPref(appState.activePlanId);
                 saveState();
                 renderAll();
                 showToast('success', '已刪除旅行計畫');
