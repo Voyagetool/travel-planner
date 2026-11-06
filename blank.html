@@ -6077,7 +6077,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.10.3</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.10.4</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8470,6 +8470,10 @@
                 <button class="modal-close-btn" onclick="closeModal('cloudSyncModal')"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" style="padding: 20px 24px;">
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:0.8rem; line-height:1.6; color:#1e3a8a;">
+                    🔒 <strong>這份空白範本不會連到任何人的雲端。</strong>要在手機與電腦之間同步，請建立<strong>你自己的免費 Firebase 專案</strong>，把設定貼在下方；行程資料只會存到你自己的帳號。<br>
+                    想和旅伴共編：把「同一組 Firebase 設定＋房間碼」給對方，雙方各自貼上即可。
+                </div>
                 <!-- 連線狀態橫幅 -->
                 <div id="cloudBannerState" style="padding: 12px 16px; border-radius: 8px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; border: 1px solid #cbd5e1;">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -8539,7 +8543,8 @@ const firebaseConfig = {
                         <strong>步驟 1</strong>：前往 <a href="https://console.firebase.google.com/" target="_blank" style="color:#0284c7;">Firebase Console</a>，登入 Google 帳號並點「新增專案」（可取名例如 <code>my-trip</code>，關閉 Google Analytics 即可）。<br>
                         <strong>步驟 2</strong>：進入專案首頁，點左側「<strong>Firestore Database</strong>」➔ 點「<strong>建立資料庫</strong>」➔ 安全規則選擇「<strong>以測試模式啟動 (Test Mode)</strong>」完成建立。<br>
                         <strong>步驟 3</strong>：點左上角「專案總覽」旁的齒輪 ⚙️ ➔「專案設定」，在下方「您的應用程式」點擊網頁圖標 <strong>&lt;/&gt;</strong>。<br>
-                        <strong>步驟 4</strong>：複製畫面中的 <code>const firebaseConfig = { ... };</code>，完整貼回上方輸入框，按下「儲存設定並開始即時同步」即可！
+                        <strong>步驟 4</strong>：複製畫面中的 <code>const firebaseConfig = { ... };</code>，完整貼回上方輸入框，按下「儲存設定並開始即時同步」即可！<br>
+                        <span style="color:#b45309;">⚠️ 「測試模式」規則 30 天後會到期；到期後請到 Firestore「規則」頁面延長，之後才能繼續同步。</span>
                     </div>
                 </details>
             </div>
@@ -8785,20 +8790,11 @@ const firebaseConfig = {
         let cloudUnsubscribe = null;
         let isReceivingCloudUpdate = false;
 
-        const CLOUD_CONFIG_STORAGE_KEY = 'notion_travel_planner_firebase_config';
-        const CLOUD_ROOM_STORAGE_KEY = 'notion_travel_planner_firebase_room';
+        const CLOUD_CONFIG_STORAGE_KEY = 'notion_blank_template_firebase_config';
+        const CLOUD_ROOM_STORAGE_KEY = 'notion_blank_template_firebase_room';
         const DEFAULT_CLOUD_ROOM = '';
 
-        // 您的專屬 Firebase 專案設定 (已自動內建配置)
-        const DEFAULT_FIREBASE_CONFIG = {
-            apiKey: "AIzaSyBqKgK7zKjy4-t7dPeOFYp8jwmMMRXO95g",
-            authDomain: "travel-plan-7f507.firebaseapp.com",
-            projectId: "travel-plan-7f507",
-            storageBucket: "travel-plan-7f507.firebasestorage.app",
-            messagingSenderId: "940410528659",
-            appId: "1:940410528659:web:d210557f29b0f180fb3e66",
-            measurementId: "G-BM3RSRQ1PD"
-        };
+        // 空白範本不內建任何 Firebase 設定，由使用者自行貼上自己的專案設定
 
         function getCloudRoomId() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -8817,10 +8813,36 @@ const firebaseConfig = {
         }
 
                 function initFirebaseCloudSync() {
-            // 空白範本預設為完全離線模式，絕不自動連接任何預設房間或拉取私人行程
+            // 空白範本不內建任何人的雲端：只會連到「這台裝置的使用者自己設定」的 Firebase
             const roomInput = document.getElementById('cloudRoomIdInput');
-            if (roomInput) roomInput.value = '';
-            updateCloudStatusUI('local', '☁️ 雲端同步 (未連線)');
+            if (roomInput) roomInput.value = getCloudRoomId();
+            let configObj = null;
+            try {
+                const raw = localStorage.getItem(CLOUD_CONFIG_STORAGE_KEY);
+                if (raw) configObj = JSON.parse(raw);
+            } catch (e) {}
+            const roomId = getCloudRoomId();
+            if (configObj && configObj.apiKey && configObj.projectId && roomId) {
+                try {
+                    if (!firebaseAppInstance) {
+                        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+                            firebaseAppInstance = firebase.apps[0];
+                        } else if (typeof firebase !== 'undefined') {
+                            firebaseAppInstance = firebase.initializeApp(configObj);
+                        }
+                    }
+                    if (typeof firebase !== 'undefined') {
+                        firestoreDb = firebase.firestore();
+                        startListeningCloudRoom();
+                        return;
+                    }
+                } catch (err) {
+                    console.error('初始化 Firebase 失敗', err);
+                    updateCloudStatusUI('error', '⚠️ 雲端設定有誤');
+                    return;
+                }
+            }
+            updateCloudStatusUI('local', '☁️ 雲端同步 (未連線・請設定你自己的雲端)');
         }
 
         function startListeningCloudRoom() {
@@ -9055,9 +9077,9 @@ const firebaseConfig = {
         }
 
         function openCloudSyncModal() {
-            const rawConfig = localStorage.getItem(CLOUD_CONFIG_STORAGE_KEY) || JSON.stringify(DEFAULT_FIREBASE_CONFIG);
+            const rawConfig = localStorage.getItem(CLOUD_CONFIG_STORAGE_KEY) || '';
             const configInput = document.getElementById('firebaseConfigInput');
-            if (configInput && (!configInput.value || configInput.value.trim() === '')) {
+            if (configInput && rawConfig && (!configInput.value || configInput.value.trim() === '')) {
                 try {
                     configInput.value = JSON.stringify(JSON.parse(rawConfig), null, 2);
                 } catch(e) {
@@ -9110,7 +9132,11 @@ const firebaseConfig = {
 
         function saveAndConnectFirebase() {
             const rawText = document.getElementById('firebaseConfigInput').value;
-            const newRoom = document.getElementById('cloudRoomIdInput').value || DEFAULT_CLOUD_ROOM;
+            let newRoom = (document.getElementById('cloudRoomIdInput').value || '').trim().replace(/[\/\s]+/g, '-');
+            if (!newRoom) {
+                newRoom = 'trip-' + Math.random().toString(36).slice(2, 8);
+                document.getElementById('cloudRoomIdInput').value = newRoom;
+            }
             
             if (!rawText.trim()) {
                 alert('請貼上 Firebase 設定物件內容！');
@@ -9125,6 +9151,13 @@ const firebaseConfig = {
 
             localStorage.setItem(CLOUD_CONFIG_STORAGE_KEY, JSON.stringify(configObj));
             setCloudRoomId(newRoom);
+
+            // 已用其他專案初始化過 Firebase：重新載入頁面以套用新的設定
+            if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0 && firebase.apps[0].options && firebase.apps[0].options.projectId !== configObj.projectId) {
+                alert('已儲存新的雲端設定，頁面將重新載入以套用。');
+                location.reload();
+                return;
+            }
 
             if (cloudUnsubscribe) {
                 cloudUnsubscribe();
@@ -9158,6 +9191,7 @@ const firebaseConfig = {
                 }
                 firestoreDb = null;
                 localStorage.removeItem(CLOUD_CONFIG_STORAGE_KEY);
+                localStorage.removeItem(CLOUD_ROOM_STORAGE_KEY);
                 updateCloudStatusUI('local', '☁️ 雲端同步 (本機)');
                 showToast('info', '已中斷雲端連線，恢復為本機離線模式');
             }
