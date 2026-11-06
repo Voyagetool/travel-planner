@@ -6011,9 +6011,26 @@
         .sg-meal-pill { border: 1px solid #e2e8f0; background: #ffffff; color: #475569; border-radius: 999px; padding: 3px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
         .sg-meal-pill:hover { background: #f8fafc; }
         .sg-meal-pill.active { background: #fff4e0; color: #b45309; border-color: #f5d9a8; }
+    
+        /* ===== V3.9.0 載入遮罩 / 已完成·安排中 ===== */
+        body.app-booting .okr-top-header, body.app-booting .okr-pill-navbar, body.app-booting .okr-workspace-main { visibility: hidden; }
+        body.app-booting::before { content: '載入行程中…'; position: fixed; top: 42%; left: 50%; transform: translateX(-50%); color: #7b8c99; font-size: 0.92rem; letter-spacing: 0.08em; }
+        .tl-status-chip { cursor: pointer; font-size: 0.68rem; font-weight: 700; padding: 1px 9px; border-radius: 999px; border: 1px solid; user-select: none; white-space: nowrap; }
+        .tl-status-chip.plan { background: #eef4f7; color: #286678; border-color: #d6e5ec; }
+        .tl-status-chip.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
+        .timeline-event-row.is-done { opacity: .62; }
+        .timeline-event-row.is-done .timeline-event-title { text-decoration: line-through; text-decoration-color: #9fb0bd; }
+        .tl-status-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 2px 0 10px; }
+        .tl-status-seg { display: inline-flex; background: #eef2f5; border-radius: 999px; padding: 2px; }
+        .tl-status-seg button { border: none; background: transparent; border-radius: 999px; padding: 3px 12px; font-size: 0.74rem; font-weight: 700; color: #64748b; cursor: pointer; }
+        .tl-status-seg button.on { background: #ffffff; color: #1f5f78; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+        .tl-status-link { border: 1px dashed #cadfe8; background: #f7fbfd; color: #286678; border-radius: 999px; padding: 3px 11px; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+        .tl-status-link:hover { background: #eaf3f7; }
+        .day-chip.is-done:not(.active) { color: #1f6b45; border-color: #bfe3cc !important; background: #f3fbf6; }
+        .day-chip.is-done i { color: #2f9e63; }
     </style>
 </head>
-<body>
+<body class="app-booting">
 
         <!-- ====================================================
          V3.0 INTEGRATED FULL-WIDTH DASHBOARD HEADER (對齊第三張截圖樣式)
@@ -6039,7 +6056,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.8.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.9.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -9692,7 +9709,8 @@ const firebaseConfig = {
                         }
 
                         // 若本機剛儲存或當前有開啟中視窗，保留當前 activePlanId，不被雲端強制跳轉
-                        const keepActivePlanId = (isRecentlySaved || isAnyModalActive) ? appState.activePlanId : data.appState.activePlanId;
+                        const localPref = (function () { try { return localStorage.getItem(ACTIVE_PLAN_KEY); } catch (e) { return null; } })();
+                        const keepActivePlanId = (localPref && data.appState.plans[localPref]) ? localPref : ((isRecentlySaved || isAnyModalActive) ? appState.activePlanId : data.appState.activePlanId);
 
                         appState = data.appState;
                         if (keepActivePlanId && appState.plans[keepActivePlanId]) {
@@ -9712,6 +9730,7 @@ const firebaseConfig = {
                             console.log('使用者正處於操作或彈窗中，已平滑保存雲端資料並保護當前互動視窗不閃退');
                         }
                         isReceivingCloudUpdate = false;
+                        removeBootMask();
 
                         const timeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         updateCloudStatusUI('connected', `🟢 雲端已即時同步 (${timeStr})`);
@@ -9965,7 +9984,13 @@ const firebaseConfig = {
             });
         }
 
+        // 每台裝置各自記住「上次看的旅行計畫」，不再被雲端（其他裝置）的選擇帶著跑
+        const ACTIVE_PLAN_KEY = 'travel_planner_active_plan_local';
+        function removeBootMask() {
+            if (document.body) document.body.classList.remove('app-booting');
+        }
         window.addEventListener('DOMContentLoaded', () => {
+            const hadLocalState = !!localStorage.getItem('notion_travel_planner_v9_sidebar_state');
             loadState();
 
             // 支援從 URL 參數帶入指定的 planId (例如 ?planId=plan-beijing)
@@ -9975,12 +10000,15 @@ const firebaseConfig = {
                 appState.activePlanId = targetPlanId;
             } else {
                 const roomParam = urlParams.get('room') || '';
-                if (roomParam.toLowerCase().includes('chongqing') && appState.plans['plan-chongqing']) {
+                if (!hadLocalState && roomParam.toLowerCase().includes('chongqing') && appState.plans['plan-chongqing']) {
                     appState.activePlanId = 'plan-chongqing';
                 }
             }
 
             renderAll();
+            // 本機已有資料：立即顯示；全新裝置則等第一次雲端同步（最久 3 秒）再顯示，避免先閃過預設內容
+            if (hadLocalState) removeBootMask(); else setTimeout(removeBootMask, 3000);
+            setTimeout(removeBootMask, 5000);
 
             // 初始化 Firebase 雲端即時同步
             initFirebaseCloudSync();
@@ -10010,6 +10038,11 @@ const firebaseConfig = {
                 }
             }
 
+            try {
+                const la = localStorage.getItem(ACTIVE_PLAN_KEY);
+                if (la && appState.plans && appState.plans[la]) appState.activePlanId = la;
+            } catch (e) {}
+
             if (!appState.plans || Object.keys(appState.plans).length === 0) {
                 appState.plans = {
                     'plan-beijing': JSON.parse(JSON.stringify(PRESET_BEIJING)),
@@ -10018,14 +10051,9 @@ const firebaseConfig = {
                 appState.activePlanId = 'plan-chongqing';
                 saveState();
             } else {
-                if (!appState.plans['plan-beijing']) {
-                    appState.plans['plan-beijing'] = JSON.parse(JSON.stringify(PRESET_BEIJING));
-                }
+                // 已存在的使用者資料不再自動補回預設行程（刪除後不會重新出現）
                 // 僅在尚未有重慶計畫時初始化範本，絕不覆蓋使用者的自訂修改（如同行人數、自訂標題、行程等）
-                if (!appState.plans['plan-chongqing']) {
-                    appState.plans['plan-chongqing'] = JSON.parse(JSON.stringify(PRESET_CHONGQING));
-                    saveState();
-                } else if (!appState.plans['plan-chongqing'].days || appState.plans['plan-chongqing'].days.length === 0) {
+                if (appState.plans['plan-chongqing'] && (!appState.plans['plan-chongqing'].days || appState.plans['plan-chongqing'].days.length === 0)) {
                     // 若有計畫但天數為空，僅補齊天數結構，保留使用者的標題、人數與設定
                     appState.plans['plan-chongqing'].days = JSON.parse(JSON.stringify(PRESET_CHONGQING.days));
                     saveState();
@@ -10271,6 +10299,7 @@ const firebaseConfig = {
         function saveState(skipCloud) {
             localLastSavedAt = Date.now();
             localStorage.setItem('notion_travel_planner_v9_sidebar_state', JSON.stringify(appState));
+            try { if (appState.activePlanId) localStorage.setItem(ACTIVE_PLAN_KEY, appState.activePlanId); } catch (e) {}
             if (firestoreDb && !skipCloud && !isReceivingCloudUpdate) {
                 pushStateToCloud();
             }
@@ -12066,9 +12095,9 @@ const firebaseConfig = {
                 appState.activeDayTab = days[0].dayNum;
             }
 
-            chipsBar.innerHTML = days.map(d => `
-                <button class="day-chip ${d.dayNum === appState.activeDayTab ? 'active' : ''}" onclick="selectDayTab(${d.dayNum})">
-                    Day ${d.dayNum}${getDayDateLabel(plan, d) ? ' ‧ ' + getDayDateLabel(plan, d) : ''}
+            chipsBar.innerHTML = days.filter(d => !(tlStatusFilter === 'planning' && dayDoneState(d) === 'done' && d.dayNum !== appState.activeDayTab)).map(d => `
+                <button class="day-chip ${d.dayNum === appState.activeDayTab ? 'active' : ''} ${dayDoneState(d) === 'done' ? 'is-done' : ''}" onclick="selectDayTab(${d.dayNum})">
+                    ${dayDoneState(d) === 'done' ? '<i class="fa-solid fa-circle-check"></i> ' : ''}Day ${d.dayNum}${getDayDateLabel(plan, d) ? ' ‧ ' + getDayDateLabel(plan, d) : ''}
                 </button>
             `).join('') + `
                 <button class="day-chip" style="border-style: dashed; color: #3b7386; border-color: #b8d2dc !important;" onclick="addNewDayToPlan()">
@@ -12128,11 +12157,23 @@ const firebaseConfig = {
                 `;
             }
 
+            const doneCount = events.filter(e => e.done).length;
+            const statusBarHtml = events.length ? `
+                <div class="tl-status-bar">
+                    <div class="tl-status-seg">
+                        <button type="button" class="${tlStatusFilter === 'all' ? 'on' : ''}" onclick="setTlStatusFilter('all')">全部 ${events.length}</button>
+                        <button type="button" class="${tlStatusFilter === 'planning' ? 'on' : ''}" onclick="setTlStatusFilter('planning')">安排中 ${events.length - doneCount}</button>
+                        <button type="button" class="${tlStatusFilter === 'done' ? 'on' : ''}" onclick="setTlStatusFilter('done')">已完成 ${doneCount}</button>
+                    </div>
+                    <button type="button" class="tl-status-link" onclick="markDayDone(${activeDay.dayNum}, ${doneCount === events.length ? 'false' : 'true'})">${doneCount === events.length ? '取消整天完成' : '整天標為已完成'}</button>
+                    <button type="button" class="tl-status-link" onclick="markPastDaysDone()" title="依旅程日期，把今天以前的天數全部標為已完成">把今天以前的行程標為已完成</button>
+                </div>` : '';
             let eventsHtml = '';
             if (events.length === 0) {
                 eventsHtml = `<div style="text-align:center; padding:20px; color:var(--notion-text-sub); font-size:0.86rem;">當天尚無排定活動</div>`;
             } else {
                 eventsHtml = events.map((ev, eIdx) => {
+                    if (isHiddenByStatus(ev)) return '';
                     const parsed = parseTimeString(ev.time);
                     const catInfo = getEventCategoryInfo(ev.type);
 
@@ -12150,7 +12191,7 @@ const firebaseConfig = {
 
                     // 3. 行程間移動時間接駁條 (Transit Connector & Map Route)
                     let transitHtml = '';
-                    if (eIdx > 0) {
+                    if (eIdx > 0 && !isHiddenByStatus(events[eIdx - 1])) {
                         const prevEvent = events[eIdx - 1];
                         const prevParsed = parseTimeString(prevEvent.time);
                         // 前項有效起算時間（單點時間即出發時間，區間時間即結束時間）
@@ -12281,13 +12322,14 @@ const firebaseConfig = {
 
                     return `
                         ${transitHtml}
-                        <div class="timeline-event-row" data-day="${activeDay.dayNum}" data-idx="${eIdx}">
+                        <div class="timeline-event-row${ev.done ? ' is-done' : ''}" data-day="${activeDay.dayNum}" data-idx="${eIdx}">
                             <div class="timeline-node-dot"></div>
                             <div style="flex:1; min-width:0;">
                                 <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
                                     <span class="timeline-time-tag">${escapeHtml(ev.time || '全天')}</span>
                                     ${durationHtml}
                                     ${catBadgeHtml}
+                                    <span class="tl-status-chip ${ev.done ? 'done' : 'plan'}" onclick="event.stopPropagation(); toggleEventDone(${activeDay.dayNum}, ${eIdx})" title="點一下切換「安排中／已完成」">${ev.done ? '<i class="fa-solid fa-check"></i> 已完成' : '安排中'}</span>
                                 </div>
                                 <h4 class="timeline-event-title">${escapeHtml(ev.title)}</h4>
                                 <div class="timeline-event-meta">
@@ -12326,6 +12368,9 @@ const firebaseConfig = {
                         </div>
                     `;
                 }).join('');
+                if (events.length > 0 && !eventsHtml.trim()) {
+                    eventsHtml = `<div style="text-align:center; padding:18px; color:#94a3b8; font-size:0.85rem;">${tlStatusFilter === 'planning' ? '這一天的行程都已完成 🎉（切換到「全部」或「已完成」可以查看）' : '這一天還沒有已完成的行程'}</div>`;
+                }
             }
 
             const memberCountForMeals = Math.max(1, parseInt(plan.memberCount || 1));
@@ -12535,6 +12580,7 @@ const firebaseConfig = {
                     </div>
 
                     <div class="timeline-events-list">
+                        ${statusBarHtml}
                         ${firstTransitHtml}
                         ${eventsHtml}
                     </div>
@@ -13020,6 +13066,72 @@ const firebaseConfig = {
 
         
 
+
+
+        // ===== V3.9.0：行程「已完成 / 安排中」狀態 =====
+        let tlStatusFilter = (function () { try { return localStorage.getItem('tl_status_filter') || 'all'; } catch (e) { return 'all'; } })();
+
+        function dayDoneState(d) {
+            const evs = (d && d.events) || [];
+            if (!evs.length) return 'empty';
+            const n = evs.filter(e => e.done).length;
+            return n === 0 ? 'planning' : (n === evs.length ? 'done' : 'partial');
+        }
+        function isHiddenByStatus(ev) {
+            return !!ev && ((tlStatusFilter === 'planning' && !!ev.done) || (tlStatusFilter === 'done' && !ev.done));
+        }
+        function setTlStatusFilter(f) {
+            tlStatusFilter = ['all', 'planning', 'done'].includes(f) ? f : 'all';
+            try { localStorage.setItem('tl_status_filter', tlStatusFilter); } catch (e) {}
+            if (tlStatusFilter === 'planning') {
+                const plan = getCurrentPlan();
+                const cur = plan && (plan.days || []).find(d => d.dayNum === appState.activeDayTab);
+                if (cur && dayDoneState(cur) === 'done') {
+                    const next = (plan.days || []).find(d => dayDoneState(d) !== 'done');
+                    if (next) appState.activeDayTab = next.dayNum;
+                }
+            }
+            renderTimelineView();
+        }
+        function toggleEventDone(dayNum, idx) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day || !Array.isArray(day.events)) return;
+            day.events = sortDayEventsByTime(day.events);
+            const ev = day.events[idx];
+            if (!ev) return;
+            if (ev.done) delete ev.done; else ev.done = true;
+            saveState();
+            renderTimelineView();
+        }
+        function markDayDone(dayNum, done) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day || !Array.isArray(day.events)) return;
+            day.events.forEach(e => { if (done) e.done = true; else delete e.done; });
+            saveState();
+            renderTimelineView();
+            showToast('success', done ? `已將 Day ${day.dayNum} 全部標為已完成` : `已取消 Day ${day.dayNum} 的完成標記`);
+        }
+        function markPastDaysDone() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            let n = 0, dayCnt = 0;
+            (plan.days || []).forEach(d => {
+                const ymd = sgYmdFromDayNum(plan, d.dayNum);
+                if (ymd && ymd < today) {
+                    let touched = false;
+                    (d.events || []).forEach(e => { if (!e.done) { e.done = true; n++; touched = true; } });
+                    if (touched) dayCnt++;
+                }
+            });
+            if (!n) { showToast('warning', '沒有需要標記的項目：今天以前的行程都已完成，或這趟旅程還沒開始'); return; }
+            saveState();
+            renderTimelineView();
+            showToast('success', `已把今天以前的 ${dayCnt} 天（共 ${n} 個項目）標為已完成`);
+        }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
