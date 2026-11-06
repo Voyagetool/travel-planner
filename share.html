@@ -5978,6 +5978,14 @@
         .sg-count-chip { background: #eef4f7; color: #286678; border: 1px solid #d6e5ec; font-size: 0.7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
         .sg-booking-mini { background: #fff4e0; color: #b45309; border: 1px solid #f5d9a8; font-size: 0.7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
         .sg-booking-mini.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
+    
+        /* ===== V3.7.0 景點整合面板 ===== */
+        .sg-merge-panel { border: 1px solid #d6e5ec; background: #f7fafc; border-radius: 14px; padding: 10px 12px; margin-top: 8px; }
+        .sg-merge-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 9px; cursor: pointer; font-size: 0.82rem; color: #334155; }
+        .sg-merge-row:hover { background: #eaf2f6; }
+        .sg-merge-date { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.68rem; font-weight: 700; padding: 0 7px; border-radius: 999px; white-space: nowrap; }
+        .sg-merge-chipbtn { border: 1px solid #cadfe8; background: #ffffff; color: #286678; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; cursor: pointer; }
+        .sg-merge-chipbtn:hover { background: #e4eff4; }
     </style>
 </head>
 <body>
@@ -6006,7 +6014,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.6.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.7.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8116,9 +8124,10 @@
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
                             <span id="sgChildrenLabel"><i class="fa-solid fa-sitemap" style="color:#0284c7;"></i> 細部景點（選填：這個主項目下可參觀的景點）</span>
-                            <button type="button" class="n-btn" style="padding:2px 9px; font-size:0.72rem;" onclick="addSgChild()"><i class="fa-solid fa-plus"></i> 新增細部景點</button>
+                            <span style="display:inline-flex; gap:5px;"><button type="button" class="n-btn" style="padding:2px 9px; font-size:0.72rem;" onclick="openSgMergePicker()" title="把已經建立的其他景點整合進這個主項目"><i class="fa-solid fa-object-group"></i> 從既有景點整合</button><button type="button" class="n-btn" style="padding:2px 9px; font-size:0.72rem;" onclick="addSgChild()"><i class="fa-solid fa-plus"></i> 新增細部景點</button></span>
                         </label>
                         <div id="sgChildrenList"></div>
+                        <div id="sgMergePanel" style="display:none;"></div>
                     </div>
 
 
@@ -11890,6 +11899,138 @@ const firebaseConfig = {
         }
 
         
+
+        // ===== 整合既有景點為「主項目 ＋ 細部景點」(V3.7.0) =====
+        let sgMergedIds = [];
+        let sgSplitOut = [];
+
+        function sgChildWhen(c) {
+            const s = c && c.srcItem;
+            if (!s || !s.visitDate) return '';
+            const m = String(s.visitDate).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (!m) return '';
+            let t = `${Number(m[2])}/${Number(m[3])}`;
+            if (s.visitStartTime) t += ' ' + s.visitStartTime + (s.visitEndTime ? '-' + s.visitEndTime : '');
+            return t;
+        }
+
+        function sgMergeCandidates() {
+            const plan = getCurrentPlan();
+            if (!plan || !Array.isArray(plan.spotTips)) return [];
+            const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
+            const selfId = (editIdx >= 0 && plan.spotTips[editIdx]) ? plan.spotTips[editIdx].id : null;
+            return plan.spotTips.filter(s => s && s.id !== selfId && !sgMergedIds.includes(s.id) && !(Array.isArray(s.children) && s.children.length));
+        }
+
+        function openSgMergePicker() {
+            const p = document.getElementById('sgMergePanel');
+            if (!p) return;
+            p.style.display = 'block';
+            renderSgMergePicker();
+            if (p.scrollIntoView) p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        function closeSgMergePicker() {
+            const p = document.getElementById('sgMergePanel');
+            if (p) p.style.display = 'none';
+        }
+
+        function renderSgMergePicker() {
+            const p = document.getElementById('sgMergePanel');
+            if (!p) return;
+            const cands = sgMergeCandidates().slice().sort((a, b) =>
+                String(a.visitDate || '9999').localeCompare(String(b.visitDate || '9999')) || String(a.name || '').localeCompare(String(b.name || '')));
+            if (!cands.length) {
+                p.className = 'sg-merge-panel';
+                p.innerHTML = `<div style="font-size:0.8rem; color:#64748b;">目前沒有可整合的其他景點。</div><div style="text-align:right; margin-top:6px;"><button type="button" class="n-btn" style="padding:2px 9px; font-size:0.72rem;" onclick="closeSgMergePicker()">關閉</button></div>`;
+                return;
+            }
+            const dateCount = {};
+            cands.forEach(s => { if (s.visitDate) dateCount[s.visitDate] = (dateCount[s.visitDate] || 0) + 1; });
+            const dateBtns = Object.keys(dateCount).sort().map(d => {
+                const m = d.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+                const label = m ? `${Number(m[2])}/${Number(m[3])}` : d;
+                return `<button type="button" class="sg-merge-chipbtn" onclick="selectSgMergeByDate('${d}')">勾選 ${label}（${dateCount[d]}）</button>`;
+            }).join('');
+            p.className = 'sg-merge-panel';
+            p.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+                    <strong style="font-size:0.82rem; color:#1f5f78;"><i class="fa-solid fa-object-group"></i> 勾選要整合進此項目的既有景點</strong>
+                    <button type="button" class="n-btn" style="padding:2px 9px; font-size:0.72rem;" onclick="closeSgMergePicker()">收合</button>
+                </div>
+                ${dateBtns ? `<div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px;">${dateBtns}</div>` : ''}
+                <div style="max-height:220px; overflow-y:auto; border:1px solid #e3ecf1; border-radius:10px; background:#fff; padding:3px;">
+                    ${cands.map(s => {
+                        const m = String(s.visitDate || '').match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+                        const when = m ? `${Number(m[2])}/${Number(m[3])}` : '';
+                        return `<label class="sg-merge-row"><input type="checkbox" class="n-checkbox sg-merge-cb" value="${escapeHtml(s.id)}" data-date="${escapeHtml(s.visitDate || '')}"><span>${s.category === 'food' ? '🍽️' : '🏛️'}</span><span style="flex:1; min-width:0;">${escapeHtml(s.name || '')}</span>${when ? `<span class="sg-merge-date">${when}</span>` : ''}</label>`;
+                    }).join('')}
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;">
+                    <span style="font-size:0.72rem; color:#64748b;">加入後仍需按下方「儲存變更」才會正式整合；每日行程裡的項目不受影響。</span>
+                    <button type="button" class="n-btn n-btn-primary" style="padding:3px 12px; font-size:0.78rem;" onclick="applySgMergeSelection()"><i class="fa-solid fa-plus"></i> 加入選取項目</button>
+                </div>`;
+        }
+
+        function selectSgMergeByDate(date) {
+            document.querySelectorAll('.sg-merge-cb').forEach(cb => { if ((cb.dataset.date || '') === date) cb.checked = true; });
+        }
+
+        function applySgMergeSelection() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const ids = Array.from(document.querySelectorAll('.sg-merge-cb:checked')).map(cb => cb.value);
+            if (!ids.length) { showToast('warning', '請先勾選要整合的景點'); return; }
+            let n = 0;
+            plan.spotTips.filter(s => ids.includes(s.id)).forEach(s => {
+                sgChildrenDraft.push({
+                    id: s.id,
+                    name: s.name || '',
+                    note: String(s.tip || '').slice(0, 80),
+                    address: s.address || '',
+                    picked: false,
+                    srcItem: JSON.parse(JSON.stringify(s))
+                });
+                sgMergedIds.push(s.id);
+                n++;
+            });
+            renderSgChildren();
+            renderSgMergePicker();
+            showToast('success', `已加入 ${n} 個景點，按「儲存變更」後正式整合`);
+        }
+
+        function splitSgChild(i) {
+            const c = sgChildrenDraft[i];
+            if (!c) return;
+            sgChildrenDraft.splice(i, 1);
+            if (sgMergedIds.includes(c.id)) sgMergedIds = sgMergedIds.filter(x => x !== c.id);
+            else sgSplitOut.push(c);
+            renderSgChildren();
+            const p = document.getElementById('sgMergePanel');
+            if (p && p.style.display !== 'none') renderSgMergePicker();
+        }
+
+        function applySgMergeOnSave(plan, selfId) {
+            sgMergedIds.forEach(id => {
+                if (id === selfId) return;
+                const k = plan.spotTips.findIndex(s => s.id === id);
+                if (k >= 0) plan.spotTips.splice(k, 1);
+                (plan.days || []).forEach(d => (d.events || []).forEach(ev => { if (ev.spotGuideId === id) delete ev.spotGuideId; }));
+            });
+            sgSplitOut.forEach(c => {
+                const src = c.srcItem ? JSON.parse(JSON.stringify(c.srcItem)) : { category: 'spot', name: c.name, address: c.address || '', tip: c.note || '', scheduled: false, hasBooking: false };
+                if (!src.id || plan.spotTips.some(s => s.id === src.id)) src.id = 'sg_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+                plan.spotTips.push(src);
+            });
+            sgMergedIds = [];
+            sgSplitOut = [];
+        }
+
+        // ===== 彈窗防誤關閉：遮罩只有在「按下與放開都在遮罩上」才關閉 =====
+        window.__lastPointerDownTarget = null;
+        ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, (e) => { window.__lastPointerDownTarget = e.target; }, true);
+        });
+
         // ===== 景點「主項目 ＋ 細部景點」編輯 (V3.6.0) =====
         let sgChildrenDraft = [];
         function renderSgChildren() {
@@ -11903,7 +12044,7 @@ const firebaseConfig = {
                 <div class="sg-child-row">
                     <input type="text" class="form-input" value="${escapeHtml(c.name || '')}" placeholder="細部景點名稱" oninput="updateSgChild(${i}, 'name', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
                     <input type="text" class="form-input" value="${escapeHtml(c.note || '')}" placeholder="備註（如：必拍大佛、約 40 分鐘）" oninput="updateSgChild(${i}, 'note', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
-                    <button type="button" class="n-btn n-btn-danger" style="padding:2px 9px;" onclick="removeSgChild(${i})" title="移除"><i class="fa-regular fa-trash-can"></i></button>
+                    <span style="display:inline-flex; gap:4px;">${sgMergedIds.includes(c.id) ? '' : `<button type="button" class="n-btn" style="padding:2px 8px;" onclick="splitSgChild(${i})" title="拆出成獨立景點"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>`}<button type="button" class="n-btn n-btn-danger" style="padding:2px 9px;" onclick="removeSgChild(${i})" title="移除（整合進來的景點會恢復為獨立景點）"><i class="fa-regular fa-trash-can"></i></button></span>
                 </div>
             `).join('');
         }
@@ -11916,7 +12057,14 @@ const firebaseConfig = {
             if (last) { const inp = last.querySelector('input'); if (inp) inp.focus(); }
         }
         function updateSgChild(i, k, v) { if (sgChildrenDraft[i]) sgChildrenDraft[i][k] = v; }
-        function removeSgChild(i) { sgChildrenDraft.splice(i, 1); renderSgChildren(); }
+        function removeSgChild(i) {
+            const c = sgChildrenDraft[i];
+            sgChildrenDraft.splice(i, 1);
+            if (c && sgMergedIds.includes(c.id)) sgMergedIds = sgMergedIds.filter(x => x !== c.id);
+            renderSgChildren();
+            const p = document.getElementById('sgMergePanel');
+            if (p && p.style.display !== 'none') renderSgMergePicker();
+        }
 
         // ===== 景點清單檢視模式：精簡 / 詳細 =====
         let spotGuidesViewMode = (function () { try { return localStorage.getItem('spot_guide_view_mode') || 'compact'; } catch (e) { return 'compact'; } })();
@@ -12040,7 +12188,7 @@ const firebaseConfig = {
                     <div style="display:flex; flex-wrap:wrap; gap:5px; margin:7px 0 0 26px;">
                         ${children.slice(0, MAX_CHIPS).map(c => {
                             const cIdx = item.children.indexOf(c);
-                            return `<span class="sg-child-chip ${c.picked ? 'picked' : ''}" onclick="toggleSgChildPicked(${idx}, ${cIdx})" title="${escapeHtml(c.note || '點一下標記為「想去」')}">${c.picked ? '<i class="fa-solid fa-check"></i>' : ''}${escapeHtml(c.name)}</span>`;
+                            return `<span class="sg-child-chip ${c.picked ? 'picked' : ''}" onclick="toggleSgChildPicked(${idx}, ${cIdx})" title="${escapeHtml([sgChildWhen(c), c.note].filter(Boolean).join(' ‧ ') || '點一下標記為「想去」')}">${c.picked ? '<i class="fa-solid fa-check"></i>' : ''}${escapeHtml(c.name)}</span>`;
                         }).join('')}
                         ${children.length > MAX_CHIPS ? `<span class="sg-child-chip" style="cursor:default;">+${children.length - MAX_CHIPS}</span>` : ''}
                     </div>` : '';
@@ -12081,9 +12229,9 @@ const firebaseConfig = {
                     `;
                 }
 
-                const childDetailHtml = children.some(c => c.note || c.address) ? `
+                const childDetailHtml = children.some(c => c.note || c.address || sgChildWhen(c)) ? `
                     <div style="margin:8px 0 0 26px; font-size:0.8rem; color:#475569; line-height:1.55;">
-                        ${children.filter(c => c.note || c.address).map(c => `<div>・<strong>${escapeHtml(c.name)}</strong>${c.note ? ` — ${escapeHtml(c.note)}` : ''}</div>`).join('')}
+                        ${children.filter(c => c.note || c.address || sgChildWhen(c)).map(c => `<div>・<strong>${escapeHtml(c.name)}</strong>${sgChildWhen(c) ? ` <span style="color:#1e40af;">(${escapeHtml(sgChildWhen(c))})</span>` : ''}${c.note ? ` — ${escapeHtml(c.note)}` : ''}</div>`).join('')}
                     </div>` : '';
 
                 const detailHtml = isOpen ? `
@@ -12119,6 +12267,7 @@ const firebaseConfig = {
                             ${countChipHtml}
                             <div style="margin-left:auto; display:flex; gap:5px; flex-shrink:0;">
                                 ${isCompactMode ? `<button type="button" class="n-btn" style="padding:2px 8px; font-size:0.73rem;" onclick="toggleSpotGuideExpand('${item.id}')" title="${isOpen ? '收合詳細' : '展開詳細'}"><i class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'}"></i></button>` : ''}
+                                <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx}); openSgMergePicker();" title="把其他景點整合進這個項目"><i class="fa-solid fa-object-group"></i> 整合</button>
                                 <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i> 編輯</button>
                                 <button type="button" class="n-btn n-btn-danger" style="padding: 2px 8px; font-size: 0.73rem;" onclick="deleteSpotGuideItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
                             </div>
@@ -16935,7 +17084,11 @@ const firebaseConfig = {
             if (!event || !event.target) return;
             const el = document.getElementById(modalId);
             // 防閃退保護：若剛開啟小於 300ms，忽略 backdrop 點擊
-            if (el && el.dataset.openedAt && (Date.now() - Number(el.dataset.openedAt) < 300)) {
+            if (el && el.dataset.openedAt && (Date.now() - Number(el.dataset.openedAt) < 600)) {
+                return;
+            }
+            // 按下的位置不在遮罩上（例如在輸入框內拖曳選字後放開），不視為關閉動作
+            if (window.__lastPointerDownTarget && window.__lastPointerDownTarget !== event.target) {
                 return;
             }
             if (event.target.id === modalId) {
@@ -16945,7 +17098,7 @@ const firebaseConfig = {
 
         // 支援鍵盤 ESC 鍵快速關閉任何開啟中的彈窗
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && !e.isComposing && e.keyCode !== 229) {
                 document.querySelectorAll('.modal-backdrop.active').forEach(m => m.classList.remove('active'));
             }
         });
@@ -22504,11 +22657,11 @@ const firebaseConfig = {
                 const vWrap = document.getElementById('sgVisitCalWrapper');
                 const bWrap = document.getElementById('sgBookingCalWrapper');
                 let changed = false;
-                if (sgCalStates.visit.isOpen && vWrap && !vWrap.contains(ev.target)) {
+                if (sgCalStates.visit.isOpen && vWrap && !(ev.composedPath ? ev.composedPath().includes(vWrap) : vWrap.contains(ev.target))) {
                     sgCalStates.visit.isOpen = false;
                     changed = true;
                 }
-                if (sgCalStates.booking.isOpen && bWrap && !bWrap.contains(ev.target)) {
+                if (sgCalStates.booking.isOpen && bWrap && !(ev.composedPath ? ev.composedPath().includes(bWrap) : bWrap.contains(ev.target))) {
                     sgCalStates.booking.isOpen = false;
                     changed = true;
                 }
@@ -23191,6 +23344,9 @@ const firebaseConfig = {
             document.getElementById('sgEditIndex').value = isEdit ? editIdx : '-1';
             setSpotGuideCategory(curItem.category || 'spot');
             sgChildrenDraft = JSON.parse(JSON.stringify(Array.isArray(curItem.children) ? curItem.children : []));
+            sgMergedIds = [];
+            sgSplitOut = [];
+            closeSgMergePicker();
             renderSgChildren();
             document.getElementById('sgNameInput').value = curItem.name || '';
             document.getElementById('sgAddressInput').value = curItem.address || '';
@@ -23313,11 +23469,14 @@ const firebaseConfig = {
                     bookingPlatform,
                     bookingDifficulty,
                     bookingStatus,
-                    children: sgChildrenDraft.filter(x => x && String(x.name || '').trim()).map(x => ({ id: x.id, name: String(x.name).trim(), note: String(x.note || '').trim(), picked: !!x.picked }))
+                    children: sgChildrenDraft.filter(x => x && String(x.name || '').trim()).map(x => { const o = { id: x.id, name: String(x.name).trim(), note: String(x.note || '').trim(), picked: !!x.picked }; if (x.address) o.address = x.address; if (x.srcItem) o.srcItem = x.srcItem; return o; })
                 };
 
-                if (editIdx >= 0 && editIdx < plan.spotTips.length) {
-                    plan.spotTips[editIdx] = spotObj;
+                const prevIdForMerge = prevItem ? prevItem.id : null;
+                applySgMergeOnSave(plan, itemId);
+                const atIdx = prevIdForMerge ? plan.spotTips.findIndex(s => s.id === prevIdForMerge) : -1;
+                if (atIdx >= 0) {
+                    plan.spotTips[atIdx] = spotObj;
                 } else {
                     plan.spotTips.push(spotObj);
                 }
@@ -24316,7 +24475,7 @@ const firebaseConfig = {
 
         // Global Esc to close modal
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && !e.isComposing && e.keyCode !== 229) {
                 document.querySelectorAll('.modal-backdrop.active').forEach(m => m.classList.remove('active'));
             }
         });
