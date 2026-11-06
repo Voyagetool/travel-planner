@@ -6077,7 +6077,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.10.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.10.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7675,7 +7675,14 @@
                         <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
                             <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('Out1')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
                             <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem;" onclick="openExternalFlightCheck('Out1')" title="用 Google 搜尋此班機的最新航班資訊"><i class="fa-brands fa-google"></i> 在 Google 查</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; color:#1d5fb4; border-color:#cfe1f8; background:#f2f7ff; font-weight:700;" onclick="toggleFlightPaste('Out1')" title="把 Google 航班卡片的文字貼上，自動帶入時間、航廈與飛行時間"><i class="fa-regular fa-paste"></i> 貼上 Google 航班資訊</button>
                             <span id="fOnline_Out1" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
+                        <div id="fPaste_Out1" style="display:none; margin:-4px 0 10px; padding:9px; border:1px dashed #cfe1f8; border-radius:12px; background:#f7fbff;">
+                            <div style="font-size:0.74rem; color:#475569; margin-bottom:5px;">先按「在 Google 查」，把搜尋結果的航班卡片整段文字（含起飛／抵達時間、航廈、飛行時間）複製貼到這裡：</div>
+                            <textarea id="fPasteText_Out1" class="form-input" style="min-height:72px; font-size:0.8rem;" placeholder="例如：上午7:15 … 預定起飛時間 上午7:15 航廈 1 … 預定抵達時間 上午11:00 航廈 3 … 2 小時45 分鐘"></textarea>
+                            <div style="text-align:right; margin-top:6px;"><button type="button" class="n-btn n-btn-primary" style="padding:3px 14px; font-size:0.78rem;" onclick="applyGoogleFlightPaste('Out1')">解析並帶入</button></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -7729,7 +7736,14 @@
                         <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
                             <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('Out2')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
                             <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem;" onclick="openExternalFlightCheck('Out2')" title="用 Google 搜尋此班機的最新航班資訊"><i class="fa-brands fa-google"></i> 在 Google 查</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; color:#1d5fb4; border-color:#cfe1f8; background:#f2f7ff; font-weight:700;" onclick="toggleFlightPaste('Out2')" title="把 Google 航班卡片的文字貼上，自動帶入時間、航廈與飛行時間"><i class="fa-regular fa-paste"></i> 貼上 Google 航班資訊</button>
                             <span id="fOnline_Out2" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
+                        <div id="fPaste_Out2" style="display:none; margin:-4px 0 10px; padding:9px; border:1px dashed #cfe1f8; border-radius:12px; background:#f7fbff;">
+                            <div style="font-size:0.74rem; color:#475569; margin-bottom:5px;">先按「在 Google 查」，把搜尋結果的航班卡片整段文字（含起飛／抵達時間、航廈、飛行時間）複製貼到這裡：</div>
+                            <textarea id="fPasteText_Out2" class="form-input" style="min-height:72px; font-size:0.8rem;" placeholder="例如：上午7:15 … 預定起飛時間 上午7:15 航廈 1 … 預定抵達時間 上午11:00 航廈 3 … 2 小時45 分鐘"></textarea>
+                            <div style="text-align:right; margin-top:6px;"><button type="button" class="n-btn n-btn-primary" style="padding:3px 14px; font-size:0.78rem;" onclick="applyGoogleFlightPaste('Out2')">解析並帶入</button></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -7791,7 +7805,14 @@
                         <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
                             <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('In1')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
                             <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem;" onclick="openExternalFlightCheck('In1')" title="用 Google 搜尋此班機的最新航班資訊"><i class="fa-brands fa-google"></i> 在 Google 查</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; color:#1d5fb4; border-color:#cfe1f8; background:#f2f7ff; font-weight:700;" onclick="toggleFlightPaste('In1')" title="把 Google 航班卡片的文字貼上，自動帶入時間、航廈與飛行時間"><i class="fa-regular fa-paste"></i> 貼上 Google 航班資訊</button>
                             <span id="fOnline_In1" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
+                        <div id="fPaste_In1" style="display:none; margin:-4px 0 10px; padding:9px; border:1px dashed #cfe1f8; border-radius:12px; background:#f7fbff;">
+                            <div style="font-size:0.74rem; color:#475569; margin-bottom:5px;">先按「在 Google 查」，把搜尋結果的航班卡片整段文字（含起飛／抵達時間、航廈、飛行時間）複製貼到這裡：</div>
+                            <textarea id="fPasteText_In1" class="form-input" style="min-height:72px; font-size:0.8rem;" placeholder="例如：上午7:15 … 預定起飛時間 上午7:15 航廈 1 … 預定抵達時間 上午11:00 航廈 3 … 2 小時45 分鐘"></textarea>
+                            <div style="text-align:right; margin-top:6px;"><button type="button" class="n-btn n-btn-primary" style="padding:3px 14px; font-size:0.78rem;" onclick="applyGoogleFlightPaste('In1')">解析並帶入</button></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -7845,7 +7866,14 @@
                         <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
                             <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('In2')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
                             <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem;" onclick="openExternalFlightCheck('In2')" title="用 Google 搜尋此班機的最新航班資訊"><i class="fa-brands fa-google"></i> 在 Google 查</button>
+                            <button type="button" class="n-btn" style="padding:3px 10px; font-size:0.74rem; color:#1d5fb4; border-color:#cfe1f8; background:#f2f7ff; font-weight:700;" onclick="toggleFlightPaste('In2')" title="把 Google 航班卡片的文字貼上，自動帶入時間、航廈與飛行時間"><i class="fa-regular fa-paste"></i> 貼上 Google 航班資訊</button>
                             <span id="fOnline_In2" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
+                        <div id="fPaste_In2" style="display:none; margin:-4px 0 10px; padding:9px; border:1px dashed #cfe1f8; border-radius:12px; background:#f7fbff;">
+                            <div style="font-size:0.74rem; color:#475569; margin-bottom:5px;">先按「在 Google 查」，把搜尋結果的航班卡片整段文字（含起飛／抵達時間、航廈、飛行時間）複製貼到這裡：</div>
+                            <textarea id="fPasteText_In2" class="form-input" style="min-height:72px; font-size:0.8rem;" placeholder="例如：上午7:15 … 預定起飛時間 上午7:15 航廈 1 … 預定抵達時間 上午11:00 航廈 3 … 2 小時45 分鐘"></textarea>
+                            <div style="text-align:right; margin-top:6px;"><button type="button" class="n-btn n-btn-primary" style="padding:3px 14px; font-size:0.78rem;" onclick="applyGoogleFlightPaste('In2')">解析並帶入</button></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -19476,11 +19504,106 @@ const firebaseConfig = {
                 if (depLocEl && !depLocEl.value.trim() && o.iata_code) depLocEl.value = formatAirportWithTerminal(o.iata_code, prefix);
                 if (arrLocEl && !arrLocEl.value.trim() && d.iata_code) arrLocEl.value = formatAirportWithTerminal(d.iata_code, prefix);
                 if (durEl && (!durEl.value.trim() || durEl.dataset.autoCalc === '1')) { durEl.value = `約 ${estTxt} (預估)`; durEl.dataset.autoCalc = '1'; }
-                setMsg(`<i class="fa-solid fa-circle-info" style="color:#d97706;"></i> ${apiErr ? escapeHtml(apiErr) + '；' : '尚未設定查詢金鑰，'}已依航線（${escapeHtml(o.iata_code || '')} → ${escapeHtml(d.iata_code || '')}，約 ${km.toLocaleString()} km）估算飛行時間約 <strong>${escapeHtml(estTxt)}</strong>（僅供參考，非官方時刻）。要自動帶入起降時刻請按「查詢金鑰」設定。`);
+                setMsg(`<i class="fa-solid fa-circle-info" style="color:#d97706;"></i> ${apiErr ? escapeHtml(apiErr) + '；' : '<strong>尚未設定查詢金鑰，無法取得官方起降時刻</strong>；'}已依航線（${escapeHtml(o.iata_code || '')} → ${escapeHtml(d.iata_code || '')}，約 ${km.toLocaleString()} km）估算飛行時間約 <strong>${escapeHtml(estTxt)}</strong>（僅供參考，非官方時刻）。<strong>要帶入像 Google 上看到的起降時刻：</strong>按「在 Google 查」複製航班卡片後，用「貼上 Google 航班資訊」帶入；或按「查詢金鑰」設定後一鍵自動帶入。`);
                 return;
             } catch (e2) {
                 setMsg(`<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626;"></i> ${apiErr ? escapeHtml(apiErr) + '；' : ''}目前查不到 <strong>${escapeHtml(label)}</strong> 的公開資料。可按「核對即時班表」到網路搜尋，或直接手動填寫時間。`);
             }
+        }
+
+
+        // ===== 貼上 Google 航班卡片文字 → 解析起降時間／航廈／飛行時間（免金鑰）=====
+        function sgTo24h(marker, h, m) {
+            h = Number(h); m = Number(m);
+            if (marker) {
+                if (/下午|晚上|PM/i.test(marker)) { if (h < 12) h += 12; }
+                else if (/上午|凌晨|早上|AM/i.test(marker)) { if (h === 12) h = 0; }
+                else if (/中午/.test(marker)) { if (h < 11) h += 12; }
+            }
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        function parseGoogleFlightText(raw) {
+            const txt = String(raw || '').replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ');
+            const TIME_RE = /(上午|下午|凌晨|中午|晚上|早上|AM|PM|am|pm)?\s*(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/g;
+            const timeAfter = (pos) => {
+                TIME_RE.lastIndex = pos;
+                const m = TIME_RE.exec(txt);
+                return m ? { hhmm: sgTo24h(m[1] || m[4], m[2], m[3]), end: m.index + m[0].length } : null;
+            };
+            const find = (labels, from) => {
+                for (const lb of labels) {
+                    const i = txt.indexOf(lb, from || 0);
+                    if (i >= 0) return { i, end: i + lb.length };
+                }
+                return null;
+            };
+            const dl = find(['預定起飛時間', '預計起飛時間', '預定出發時間', 'Scheduled departure', '起飛時間']);
+            const al = find(['預定抵達時間', '預計抵達時間', 'Scheduled arrival', '抵達時間'], dl ? dl.end : 0);
+            let dep = dl ? timeAfter(dl.end) : null;
+            let arr = al ? timeAfter(al.end) : null;
+            if (!dep || !arr) {
+                const t1 = timeAfter(0);
+                const t2 = t1 ? timeAfter(t1.end) : null;
+                dep = dep || t1;
+                arr = arr || t2;
+            }
+            const termAfter = (pos) => {
+                const m = txt.slice(pos).match(/航廈\s*([A-Z0-9]{1,3}|-)/);
+                return (m && m[1] !== '-') ? m[1] : '';
+            };
+            const depTerm = dl ? termAfter(dl.end) : '';
+            const arrTerm = al ? termAfter(al.end) : '';
+            let depIata = '', arrIata = '';
+            const pairRe = /\b([A-Z]{3})\b\s*(?:✈|→|➔|-|—|–|\s)\s*\b([A-Z]{3})\b/g;
+            let pm;
+            while ((pm = pairRe.exec(txt)) !== null) {
+                if (AIRPORT_INFO_MAP[pm[1]] && AIRPORT_INFO_MAP[pm[2]]) { depIata = pm[1]; arrIata = pm[2]; break; }
+            }
+            let durMin = null;
+            const dm = txt.match(/(\d+)\s*小時\s*(?:(\d+)\s*分)?/) || txt.match(/(\d+)\s*hr?s?\s*(?:(\d+)\s*min)?/i);
+            if (dm) {
+                const v = Number(dm[1]) * 60 + Number(dm[2] || 0);
+                if (v > 0 && v < 1440) durMin = v;
+            }
+            return { depTime: dep ? dep.hhmm : '', arrTime: arr ? arr.hhmm : '', depTerm, arrTerm, depIata, arrIata, durMin };
+        }
+        function toggleFlightPaste(seg) {
+            const p = document.getElementById(`fPaste_${seg}`);
+            if (!p) return;
+            p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+            if (p.style.display === 'block') { const t = document.getElementById(`fPasteText_${seg}`); if (t) t.focus(); }
+        }
+        function applyGoogleFlightPaste(seg) {
+            const ta = document.getElementById(`fPasteText_${seg}`);
+            const out = document.getElementById(`fOnline_${seg}`);
+            const r = parseGoogleFlightText(ta ? ta.value : '');
+            if (!r.depTime || !r.arrTime) {
+                showToast('error', '在貼上的文字裡找不到起飛／抵達時間，請把 Google 航班卡片整段複製過來');
+                return;
+            }
+            const prefix = (document.getElementById(`fCodePrefix_${seg}`)?.value || '').trim().toUpperCase();
+            const depEl = document.getElementById(getSegFieldId(seg, 'depTime'));
+            const arrEl = document.getElementById(getSegFieldId(seg, 'arrTime'));
+            const depLocEl = document.getElementById(getSegFieldId(seg, 'depLoc'));
+            const arrLocEl = document.getElementById(getSegFieldId(seg, 'arrLoc'));
+            if (depEl) depEl.value = r.depTime;
+            if (arrEl) arrEl.value = r.arrTime;
+            const mk = (iata, term) => iata ? adbAirportText({ iata, name: '', terminal: term }, prefix) : '';
+            const dTxt = mk(r.depIata, r.depTerm), aTxt = mk(r.arrIata, r.arrTerm);
+            if (dTxt && depLocEl) depLocEl.value = dTxt;
+            if (aTxt && arrLocEl) arrLocEl.value = aTxt;
+            const isOutDir = seg.startsWith('Out');
+            const isTrans = !!document.getElementById(isOutDir ? 'fOutIsTransfer' : 'fInIsTransfer')?.checked;
+            const durEl = document.getElementById(isOutDir ? 'fOutDuration' : 'fInDuration');
+            if (r.durMin && !isTrans && durEl) { durEl.value = `${formatMinutesDiff(r.durMin)} (直達)`; durEl.dataset.autoCalc = '1'; }
+            recalcAllFlightTimings();
+            if (out) {
+                out.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#059669;"></i> 已從 Google 資訊帶入：<strong>${r.depTime} → ${r.arrTime}</strong>${r.depTerm || r.arrTerm ? `（航廈 ${r.depTerm || '-'} → ${r.arrTerm || '-'}）` : ''}${r.durMin ? `，飛行時間 <strong>${escapeHtml(formatMinutesDiff(r.durMin))}</strong>` : ''}。<strong>記得按下方「儲存交通設定」</strong>，行程與費用才會更新。`;
+            }
+            const p = document.getElementById(`fPaste_${seg}`);
+            if (p) p.style.display = 'none';
+            if (ta) ta.value = '';
+            showToast('success', `已帶入 ${r.depTime} → ${r.arrTime}，請按「儲存交通設定」`);
         }
 
         function formatAirportWithTerminal(airportCode, iataAirline) {
@@ -19701,7 +19824,7 @@ const firebaseConfig = {
 
                 if (statusEl) {
                     statusEl.innerHTML = `
-                        <span><i class="fa-solid fa-circle-check" style="color:#059669;"></i> 已自動帶入 <strong>${escapeHtml(displayFlightCode)}</strong> 最新班表與航廈（若遇航空公司換季或微調航班時間，可直接於上方欄位修改）</span>
+                        <span><i class="fa-solid fa-circle-check" style="color:#059669;"></i> 已自動帶入 <strong>${escapeHtml(displayFlightCode)}</strong> 內建參考班表與航廈（<strong>可能與航空公司最新公告不同</strong>，請按「在 Google 查」核對，或用「貼上 Google 航班資訊」更新）</span>
                         <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.69rem; color:#1d4ed8; border-color:#bfdbfe; background:#eff6ff; flex-shrink:0;" onclick="openExternalFlightCheck('${seg}')">
                             <i class="fa-solid fa-globe"></i> 核對即時班表
                         </button>
