@@ -5954,6 +5954,31 @@
         .plan-picker-item:hover { background: #f0f6f9; }
         .plan-picker-item.current { background: #e4eff4; color: #1f5f78; font-weight: 800; }
         .plan-picker-item i { font-size: 0.72rem; color: #2b7690; }
+    
+        /* ===== V3.6.0 行程拖曳換序 / Google 路線 / 景點細部清單 ===== */
+        .tl-drag-group { display: inline-flex; align-items: center; gap: 2px; margin-right: 2px; }
+        .tl-drag-handle { cursor: grab; color: #9fb0bd; padding: 5px 7px; border-radius: 9px; font-size: 0.8rem; transition: background .15s, color .15s; user-select: none; }
+        .tl-drag-handle:hover { background: #eef4f7; color: #286678; }
+        .tl-drag-handle:active { cursor: grabbing; }
+        .tl-move-btns { display: inline-flex; flex-direction: column; gap: 1px; }
+        .tl-move-btn { border: none; background: transparent; color: #9fb0bd; font-size: 0.6rem; line-height: 1.1; padding: 0 6px; border-radius: 6px; cursor: pointer; }
+        .tl-move-btn:hover:not(:disabled) { background: #eef4f7; color: #286678; }
+        .tl-move-btn:disabled { opacity: .3; cursor: default; }
+        .timeline-event-row.tl-dragging { opacity: .45; }
+        .timeline-event-row.tl-drop-before { box-shadow: 0 -3px 0 0 #3b8aa5; border-radius: 6px; }
+        .timeline-event-row.tl-drop-after { box-shadow: 0 3px 0 0 #3b8aa5; border-radius: 6px; }
+        .tl-stale-chip { background: #fff4e0; color: #b45309; border: 1px solid #f5d9a8; border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 1px 9px; white-space: nowrap; }
+        .tl-google-chip { background: #eaf3ff; color: #1d5fb4; border: 1px solid #cfe1f8; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 1px 9px; white-space: nowrap; }
+        .tl-google-btn { color: #1d5fb4 !important; background: #f2f7ff !important; border-color: #cfe1f8 !important; }
+        .tl-google-btn.attn { background: #fff4e0 !important; color: #b45309 !important; border-color: #f5d9a8 !important; }
+
+        .sg-child-row { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 6px; margin-bottom: 6px; }
+        .sg-child-chip { display: inline-flex; align-items: center; gap: 4px; background: #f1f6f9; border: 1px solid #dbe8ee; color: #35596a; font-size: 0.74rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; cursor: pointer; transition: all .15s; }
+        .sg-child-chip:hover { background: #e6f0f5; }
+        .sg-child-chip.picked { background: #e4f4ea; border-color: #bfe3cc; color: #1f6b45; }
+        .sg-count-chip { background: #eef4f7; color: #286678; border: 1px solid #d6e5ec; font-size: 0.7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+        .sg-booking-mini { background: #fff4e0; color: #b45309; border: 1px solid #f5d9a8; font-size: 0.7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+        .sg-booking-mini.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
     </style>
 </head>
 <body>
@@ -5982,7 +6007,7 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.5.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.6.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8022,6 +8047,14 @@
                         <label class="form-label" id="sgTipLabel">速通攻略與防雷指南 (選填)</label>
                         <textarea id="sgTipInput" class="form-input" style="min-height: 66px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
                     </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="sgChildrenLabel"><i class="fa-solid fa-sitemap" style="color:#0284c7;"></i> 細部景點（選填：這個主項目下可參觀的景點）</span>
+                            <button type="button" class="n-btn" style="padding:2px 9px; font-size:0.72rem;" onclick="addSgChild()"><i class="fa-solid fa-plus"></i> 新增細部景點</button>
+                        </label>
+                        <div id="sgChildrenList"></div>
+                    </div>
+
 
                     <!-- 2. 造訪/用餐日期與時間（串聯回每日行程 ＋ 顯示第幾天） -->
                     <div class="sg-section-box">
@@ -11704,6 +11737,266 @@ const firebaseConfig = {
             }, 1600);
         }
 
+
+        // ==========================================
+        // 行程拖曳換序 ＋ Google 路線自動帶入 (V3.6.0)
+        // ==========================================
+        let tlDragState = null;
+
+        function fmtMinutesToHHMM(m) {
+            const v = Math.max(0, Math.min(1439, Math.round(m)));
+            return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0');
+        }
+
+        function alignEventToTransit(day, i) {
+            const evs = day.events || [];
+            if (i <= 0 || i >= evs.length) return;
+            const prev = evs[i - 1];
+            const cur = evs[i];
+            if (cur.type === 'flight') return;
+            const pp = parseTimeString(prev.time);
+            const pc = parseTimeString(cur.time);
+            if (pp.startMinutes === 9999 || pc.startMinutes === 9999) return;
+            const t = cur.transit;
+            if (!t || t.minutes === undefined || t.minutes === null || t.minutes === '') return;
+            const prevEnd = pp.hasEnd ? pp.endMinutes : pp.startMinutes;
+            const shift = prevEnd + Number(t.minutes) - pc.startMinutes;
+            if (!shift) return;
+            for (let k = i; k < evs.length; k++) {
+                if (evs[k].type === 'flight') break;
+                evs[k].time = shiftTimeString(evs[k].time, shift);
+            }
+        }
+
+        function reorderDayEvent(dayNum, fromIdx, toIdx) {
+            const plan = getCurrentPlan();
+            if (!plan) return false;
+            const day = (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day || !Array.isArray(day.events)) return false;
+            day.events = sortDayEventsByTime(day.events);
+            const evs = day.events;
+            if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= evs.length || toIdx >= evs.length) return false;
+
+            const lo = Math.min(fromIdx, toIdx);
+            const hi = Math.max(fromIdx, toIdx);
+            for (let i = lo; i <= hi; i++) {
+                if (evs[i].type === 'flight') {
+                    showToast('warning', '航班是固定時間，無法跨越航班調整順序');
+                    return false;
+                }
+                if (parseTimeString(evs[i].time).startMinutes === 9999) {
+                    showToast('warning', `「${evs[i].title}」尚未設定時間，請先設定時間再調整順序`);
+                    return false;
+                }
+            }
+
+            const info = evs.slice(lo, hi + 1).map(e => {
+                const p = parseTimeString(e.time);
+                return {
+                    e,
+                    hasEnd: p.hasEnd,
+                    dur: p.hasEnd ? (p.endMinutes - p.startMinutes) : 0,
+                    start: p.startMinutes,
+                    end: p.hasEnd ? p.endMinutes : p.startMinutes
+                };
+            });
+            const anchor = info[0].start;
+            const gaps = info.map((it, k) => k === 0 ? 0 : Math.max(0, it.start - info[k - 1].end));
+
+            const moved = info.splice(fromIdx - lo, 1)[0];
+            info.splice(toIdx - lo, 0, moved);
+
+            let cursor = anchor;
+            info.forEach((it, k) => {
+                const s = cursor;
+                it.e.time = it.hasEnd ? `${fmtMinutesToHHMM(s)} - ${fmtMinutesToHHMM(s + it.dur)}` : fmtMinutesToHHMM(s);
+                cursor = s + it.dur + (gaps[k + 1] || 0);
+            });
+            evs.splice(lo, info.length, ...info.map(it => it.e));
+
+            const from2 = Math.max(1, lo);
+            const to2 = Math.min(hi + 1, evs.length - 1);
+            for (let i = from2; i <= to2; i++) evs[i].transitStale = true;
+
+            saveState();
+            renderTimelineView();
+
+            const hasKey = !!getGoogleMapsKey();
+            showToast('success', hasKey
+                ? '已調整順序並重排時間，正在自動帶入 Google 路線…'
+                : '已調整順序並重排時間；受影響的路段已標示「路線待確認」');
+            if (hasKey) refreshTransitsAfterReorder(day.dayNum, from2, to2);
+            return true;
+        }
+
+        function moveDayEvent(dayNum, idx, delta) {
+            reorderDayEvent(dayNum, idx, idx + delta);
+        }
+
+        function initTimelineDnD(container) {
+            if (!container || container.__tlDnd) return;
+            container.__tlDnd = true;
+            const clearMarks = () => {
+                container.querySelectorAll('.tl-dragging,.tl-drop-before,.tl-drop-after').forEach(el => {
+                    el.classList.remove('tl-dragging', 'tl-drop-before', 'tl-drop-after');
+                });
+            };
+            container.addEventListener('dragstart', (e) => {
+                const h = e.target && e.target.closest ? e.target.closest('[data-tl-handle]') : null;
+                if (!h) return;
+                const row = h.closest('.timeline-event-row');
+                if (!row) return;
+                tlDragState = { day: Number(row.dataset.day), from: Number(row.dataset.idx) };
+                row.classList.add('tl-dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', 'tl'); e.dataTransfer.setDragImage(row, 24, 24); } catch (_) {}
+            });
+            container.addEventListener('dragover', (e) => {
+                if (!tlDragState) return;
+                const row = e.target.closest ? e.target.closest('.timeline-event-row[data-idx]') : null;
+                if (!row) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                container.querySelectorAll('.tl-drop-before,.tl-drop-after').forEach(el => el.classList.remove('tl-drop-before', 'tl-drop-after'));
+                const r = row.getBoundingClientRect();
+                row.classList.add(e.clientY > r.top + r.height / 2 ? 'tl-drop-after' : 'tl-drop-before');
+            });
+            container.addEventListener('drop', (e) => {
+                if (!tlDragState) return;
+                const row = e.target.closest ? e.target.closest('.timeline-event-row[data-idx]') : null;
+                const st = tlDragState;
+                tlDragState = null;
+                if (!row) { clearMarks(); return; }
+                e.preventDefault();
+                const r = row.getBoundingClientRect();
+                const after = e.clientY > r.top + r.height / 2;
+                const ins = Number(row.dataset.idx) + (after ? 1 : 0);
+                const to = ins > st.from ? ins - 1 : ins;
+                clearMarks();
+                reorderDayEvent(st.day, st.from, to);
+            });
+            container.addEventListener('dragend', () => { tlDragState = null; clearMarks(); });
+        }
+
+        const GMAPS_KEY_STORAGE = 'travel_planner_gmaps_api_key';
+        function getGoogleMapsKey() {
+            try { return (localStorage.getItem(GMAPS_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
+        }
+        function promptGoogleMapsKey() {
+            const cur = getGoogleMapsKey();
+            const v = window.prompt(
+                '要讓景點之間的移動時間自動帶入 Google 地圖資訊，需要 Google Maps API Key（請在 Google Cloud 啟用 Routes API）。\n' +
+                '金鑰只會存放在這台裝置的瀏覽器，不會上傳雲端或寫進程式。\n\n' +
+                '請貼上 API Key（留空後按確定可清除）：', cur);
+            if (v === null) return false;
+            try {
+                if (v.trim()) localStorage.setItem(GMAPS_KEY_STORAGE, v.trim());
+                else localStorage.removeItem(GMAPS_KEY_STORAGE);
+            } catch (e) {}
+            return !!v.trim();
+        }
+
+        async function fetchGoogleRouteInfo(origin, dest, modeKey) {
+            const key = getGoogleMapsKey();
+            if (!key) throw new Error('尚未設定 Google Maps API Key');
+            const toG = { transit: 'TRANSIT', train: 'TRANSIT', bus: 'TRANSIT', walk: 'WALK', bike: 'BICYCLE', car: 'DRIVE' };
+            const back = { TRANSIT: 'transit', WALK: 'walk', BICYCLE: 'bike', DRIVE: 'car' };
+            const first = toG[modeKey] || 'DRIVE';
+            const order = [first].concat(['TRANSIT', 'WALK', 'DRIVE'].filter(m => m !== first));
+            let lastErr = null;
+            for (const gm of order) {
+                const body = { origin: { address: origin }, destination: { address: dest }, travelMode: gm, languageCode: 'zh-TW' };
+                if (gm === 'DRIVE') body.routingPreference = 'TRAFFIC_UNAWARE';
+                const resp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters' },
+                    body: JSON.stringify(body)
+                });
+                if (!resp.ok) {
+                    let msg = 'HTTP ' + resp.status;
+                    try { const j = await resp.json(); if (j && j.error && j.error.message) msg += '：' + j.error.message; } catch (_) {}
+                    if (resp.status === 400 || resp.status === 404) { lastErr = new Error(msg); continue; }
+                    throw new Error(msg);
+                }
+                const data = await resp.json();
+                const r = data && data.routes && data.routes[0];
+                if (r && r.duration) {
+                    const secs = parseInt(String(r.duration), 10);
+                    const usedKey = (gm === first) ? modeKey : back[gm];
+                    return {
+                        minutes: Math.max(1, Math.round(secs / 60)),
+                        km: r.distanceMeters ? Math.round(r.distanceMeters / 100) / 10 : null,
+                        mode: usedKey
+                    };
+                }
+                lastErr = new Error('找不到可用路線');
+            }
+            throw lastErr || new Error('找不到可用路線');
+        }
+
+        async function autoFillTransitFromGoogle(dayNum, eIdx, opts) {
+            opts = opts || {};
+            const plan = getCurrentPlan();
+            if (!plan) return false;
+            const day = (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day || !Array.isArray(day.events)) return false;
+            const cur = day.events[eIdx];
+            const prev = day.events[eIdx - 1];
+            if (!cur || !prev) return false;
+
+            if (!getGoogleMapsKey()) {
+                if (opts.silent) return false;
+                const ok = promptGoogleMapsKey();
+                if (!ok) {
+                    openTransitExternalMapQuick(dayNum, eIdx);
+                    showToast('warning', '尚未設定 API Key，已改為開啟 Google 地圖路線頁');
+                    return false;
+                }
+            }
+
+            const origin = (prev.loc || prev.title || '').replace(/➔/g, ' ').trim();
+            const dest = (cur.loc || cur.title || '').replace(/➔/g, ' ').trim();
+            if (!origin || !dest) {
+                if (!opts.silent) showToast('warning', '請先填寫兩個行程的地點');
+                return false;
+            }
+            const startMode = (cur.transit && cur.transit.mode) ? cur.transit.mode : 'transit';
+            try {
+                const info = await fetchGoogleRouteInfo(origin, dest, startMode);
+                cur.transit = Object.assign({}, cur.transit || {}, {
+                    mode: info.mode,
+                    minutes: info.minutes,
+                    googleInfo: `約 ${info.minutes} 分` + (info.km !== null ? `・${info.km} km` : ''),
+                    source: 'google'
+                });
+                cur.transitStale = false;
+                if (opts.noCommit) return true;
+                alignEventToTransit(day, eIdx);
+                saveState();
+                renderTimelineView();
+                showToast('success', `已帶入 Google 路線：${cur.transit.googleInfo}`);
+                return true;
+            } catch (err) {
+                if (!opts.silent) showToast('error', 'Google 路線查詢失敗：' + (err && err.message ? err.message : '請稍後再試'));
+                return false;
+            }
+        }
+
+        async function refreshTransitsAfterReorder(dayNum, from2, to2) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+            let okCount = 0;
+            for (let i = from2; i <= to2 && i < day.events.length; i++) {
+                const ok = await autoFillTransitFromGoogle(dayNum, i, { silent: true, noCommit: true });
+                if (ok) { alignEventToTransit(day, i); okCount++; }
+            }
+            saveState();
+            renderTimelineView();
+            if (okCount > 0) showToast('success', `已自動帶入 ${okCount} 段 Google 路線資訊`);
+            else showToast('warning', 'Google 路線帶入失敗，請確認 API Key 或點路段上的「Google 帶入」重試');
+        }
+
         // ==========================================
         // VIEW 1: TIMELINE
         // ==========================================
@@ -11714,6 +12007,7 @@ const firebaseConfig = {
             if (!plan || !chipsBar || !cardsContainer) return;
 
             renderTripSummary();
+            initTimelineDnD(cardsContainer);
 
             const days = plan.days || [];
             if (days.length === 0) {
@@ -11910,6 +12204,8 @@ const firebaseConfig = {
                             `;
                         }
 
+                        const staleChipHtml = ev.transitStale ? `<span class="tl-stale-chip" title="調整過順序，這段移動時間需要重新確認">路線待確認</span>` : '';
+                        const googleChipHtml = (ev.transit && ev.transit.googleInfo) ? `<span class="tl-google-chip" title="由 Google 地圖自動帶入"><i class="fa-brands fa-google"></i> ${escapeHtml(ev.transit.googleInfo)}</span>` : '';
                         transitHtml = `
                             <div class="timeline-transit-row">
                                 ${badgeInnerHtml ? `
@@ -11920,7 +12216,12 @@ const firebaseConfig = {
                                 ` : ''}
                                 ${alignBtnHtml}
                                 ${conflictHtml}
+                                ${staleChipHtml}
+                                ${googleChipHtml}
                                 <div class="timeline-transit-actions">
+                                    <button type="button" class="n-btn transit-action-btn tl-google-btn ${ev.transitStale ? 'attn' : ''}" onclick="event.stopPropagation(); autoFillTransitFromGoogle(${activeDay.dayNum}, ${eIdx})" title="自動帶入 Google 地圖的移動時間與距離（需 API Key）">
+                                        <i class="fa-brands fa-google"></i> Google 帶入
+                                    </button>
                                     <button type="button" class="n-btn transit-action-btn map-btn" onclick="openTransitExternalMapQuick(${activeDay.dayNum}, ${eIdx})" title="在 Google 地圖上開啟兩站間的路線規劃與交通時間">
                                         <i class="fa-solid fa-map-location-dot"></i> 地圖路線
                                     </button>
@@ -11934,7 +12235,7 @@ const firebaseConfig = {
 
                     return `
                         ${transitHtml}
-                        <div class="timeline-event-row">
+                        <div class="timeline-event-row" data-day="${activeDay.dayNum}" data-idx="${eIdx}">
                             <div class="timeline-node-dot"></div>
                             <div style="flex:1; min-width:0;">
                                 <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
@@ -11962,6 +12263,7 @@ const firebaseConfig = {
                                 </div>
                             </div>
                             <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                ${ev.type !== 'flight' ? `<span class="tl-drag-group"><span class="tl-drag-handle" draggable="true" data-tl-handle="1" title="按住拖曳，調整景點順序"><i class="fa-solid fa-grip-vertical"></i></span><span class="tl-move-btns"><button type="button" class="tl-move-btn" ${eIdx === 0 ? 'disabled' : ''} onclick="event.stopPropagation(); moveDayEvent(${activeDay.dayNum}, ${eIdx}, -1)" title="上移"><i class="fa-solid fa-chevron-up"></i></button><button type="button" class="tl-move-btn" ${eIdx === events.length - 1 ? 'disabled' : ''} onclick="event.stopPropagation(); moveDayEvent(${activeDay.dayNum}, ${eIdx}, 1)" title="下移"><i class="fa-solid fa-chevron-down"></i></button></span></span>` : ''}
                                 ${ev.type === 'trans' ? `
                                     <button type="button" class="n-btn" style="padding:2px 8px; font-size:0.72rem; color:#0369a1; background:#e0f2fe; border-color:#7dd3fc; font-weight:700;" onclick="event.stopPropagation(); convertEventToTransit(${activeDay.dayNum}, ${eIdx})" title="將此交通活動轉為行程間移動接駁，時間軸更流暢乾淨">
                                         <i class="fa-solid fa-arrows-split-up-and-left"></i> 轉為站間移動
@@ -12604,6 +12906,11 @@ const firebaseConfig = {
             if (bkTmLbl) bkTmLbl.textContent = isFood ? '開放訂位時間（24 小時制，時與分分開設定）' : '開放時間（24 小時制，時與分分開設定）';
             if (bkPlat) bkPlat.placeholder = isFood ? '例如：美團線上取號 / 大眾點評訂位 / 電話預約 / 現場候位' : '例如：官方網站 / 微信公眾號 / Klook';
 
+            const chLbl = document.getElementById('sgChildrenLabel');
+            if (chLbl) chLbl.innerHTML = isFood
+                ? `<i class="fa-solid fa-sitemap" style="color:#ea580c;"></i> 細部餐廳 / 美食（選填：這個主項目下的店家或推薦）`
+                : `<i class="fa-solid fa-sitemap" style="color:#0284c7;"></i> 細部景點（選填：這個主項目下可參觀的景點）`;
+
             const subBtn = document.getElementById('sgSubmitBtn');
             if (subBtn) {
                 subBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${isEdit ? '儲存變更' : (isFood ? '新增餐飲攻略' : '新增景點攻略')}`;
@@ -12660,6 +12967,57 @@ const firebaseConfig = {
             return `<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:5px;">${pills.join('')}</div>`;
         }
 
+        
+        // ===== 景點「主項目 ＋ 細部景點」編輯 (V3.6.0) =====
+        let sgChildrenDraft = [];
+        function renderSgChildren() {
+            const box = document.getElementById('sgChildrenList');
+            if (!box) return;
+            if (!sgChildrenDraft.length) {
+                box.innerHTML = '<div style="font-size:0.76rem; color:#94a3b8; padding:4px 2px;">尚未新增。例如主項目「鎌倉」可加入：高德院（大佛）、小町通、鶴岡八幡宮…</div>';
+                return;
+            }
+            box.innerHTML = sgChildrenDraft.map((c, i) => `
+                <div class="sg-child-row">
+                    <input type="text" class="form-input" value="${escapeHtml(c.name || '')}" placeholder="細部景點名稱" oninput="updateSgChild(${i}, 'name', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
+                    <input type="text" class="form-input" value="${escapeHtml(c.note || '')}" placeholder="備註（如：必拍大佛、約 40 分鐘）" oninput="updateSgChild(${i}, 'note', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
+                    <button type="button" class="n-btn n-btn-danger" style="padding:2px 9px;" onclick="removeSgChild(${i})" title="移除"><i class="fa-regular fa-trash-can"></i></button>
+                </div>
+            `).join('');
+        }
+        function addSgChild() {
+            sgChildrenDraft.push({ id: 'sc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: '', note: '', picked: false });
+            renderSgChildren();
+            const box = document.getElementById('sgChildrenList');
+            const inputs = box ? box.querySelectorAll('.sg-child-row') : [];
+            const last = inputs[inputs.length - 1];
+            if (last) { const inp = last.querySelector('input'); if (inp) inp.focus(); }
+        }
+        function updateSgChild(i, k, v) { if (sgChildrenDraft[i]) sgChildrenDraft[i][k] = v; }
+        function removeSgChild(i) { sgChildrenDraft.splice(i, 1); renderSgChildren(); }
+
+        // ===== 景點清單檢視模式：精簡 / 詳細 =====
+        let spotGuidesViewMode = (function () { try { return localStorage.getItem('spot_guide_view_mode') || 'compact'; } catch (e) { return 'compact'; } })();
+        const spotGuideExpanded = new Set();
+        function setSpotGuideViewMode(mode) {
+            spotGuidesViewMode = (mode === 'detail') ? 'detail' : 'compact';
+            try { localStorage.setItem('spot_guide_view_mode', spotGuidesViewMode); } catch (e) {}
+            renderSpotGuidesView();
+        }
+        function toggleSpotGuideExpand(id) {
+            if (spotGuideExpanded.has(id)) spotGuideExpanded.delete(id); else spotGuideExpanded.add(id);
+            renderSpotGuidesView();
+        }
+        function toggleSgChildPicked(idx, cidx) {
+            const plan = getCurrentPlan();
+            if (!plan || !plan.spotTips || !plan.spotTips[idx] || !Array.isArray(plan.spotTips[idx].children)) return;
+            const c = plan.spotTips[idx].children[cidx];
+            if (!c) return;
+            c.picked = !c.picked;
+            saveState();
+            renderSpotGuidesView();
+        }
+
         function renderSpotGuidesView() {
             const plan = getCurrentPlan();
             const container = document.getElementById('spotGuidesContainer');
@@ -12671,18 +13029,12 @@ const firebaseConfig = {
                 return;
             }
 
-            // 統計各狀態數量
             const totalCount = list.length;
-            let spotCount = 0;
-            let foodCount = 0;
-            let scheduledCount = 0;
-            let bookingCount = 0;
-            let bookingPendingCount = 0;
+            let spotCount = 0, foodCount = 0, scheduledCount = 0, bookingCount = 0, bookingPendingCount = 0, childTotal = 0;
 
             const resolvedList = list.map(item => {
-                if (item.category === 'food') foodCount++;
-                else spotCount++;
-
+                if (item.category === 'food') foodCount++; else spotCount++;
+                childTotal += Array.isArray(item.children) ? item.children.filter(c => c && c.name).length : 0;
                 const info = resolveSpotScheduledDayInfo(plan, item);
                 if (info.isScheduled) scheduledCount++;
                 if (item.hasBooking) {
@@ -12692,30 +13044,30 @@ const firebaseConfig = {
                 return info;
             });
             const pendingCount = totalCount - scheduledCount;
+            const isCompactMode = (spotGuidesViewMode !== 'detail');
 
-            // 頂部統計與篩選導覽列
             const filterBarHtml = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #ffffff; padding: 8px 12px; border-radius: 12px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 8px;">
                     <div style="font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span>共 <strong>${totalCount}</strong> 項</span>
+                        <span>共 <strong>${totalCount}</strong> 項${childTotal ? `（含 ${childTotal} 個細部景點）` : ''}</span>
                         <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #0369a1; font-weight: 700;">🏛️ 景點：${spotCount}</span>
+                        <span style="color: #0369a1; font-weight: 700;">景點：${spotCount}</span>
+                        <span style="color: #c2410c; font-weight: 700;">美食：${foodCount}</span>
                         <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #c2410c; font-weight: 700;">🍽️ 美食：${foodCount}</span>
-                        <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #15803d; font-weight: 700;">✅ 已安排：${scheduledCount}</span>
-                        <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #64748b; font-weight: 700;">⏳ 待安排：${pendingCount}</span>
-                        <span style="color: #cbd5e1;">|</span>
-                        <span style="color: #b45309; font-weight: 700;">🎫 需預約/訂位：${bookingCount}${bookingPendingCount > 0 ? ` (待辦 ${bookingPendingCount})` : ''}</span>
+                        <span style="color: #15803d; font-weight: 700;">已安排：${scheduledCount}</span>
+                        <span style="color: #64748b; font-weight: 700;">待安排：${pendingCount}</span>
+                        <span style="color: #b45309; font-weight: 700;">需預約/訂位：${bookingCount}${bookingPendingCount > 0 ? ` (待辦 ${bookingPendingCount})` : ''}</span>
                     </div>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'all' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('all')">全部</button>
-                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'spot' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('spot')">🏛️ 景點 (${spotCount})</button>
-                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'food' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('food')">🍽️ 美食 (${foodCount})</button>
-                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'scheduled' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('scheduled')">已安排行程</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'spot' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('spot')">景點 (${spotCount})</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'food' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('food')">美食 (${foodCount})</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'scheduled' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('scheduled')">已安排</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'pending' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('pending')">待安排</button>
-                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">🎫 需預約/訂位</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">需預約/訂位</button>
+                        <span style="width:1px; height:18px; background:#e2e8f0; margin:0 3px;"></span>
+                        <button type="button" class="n-btn ${isCompactMode ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('compact')" title="每個項目縮成一列，快速瀏覽"><i class="fa-solid fa-list"></i> 精簡</button>
+                        <button type="button" class="n-btn ${!isCompactMode ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('detail')" title="展開所有詳細資訊"><i class="fa-solid fa-table-list"></i> 詳細</button>
                     </div>
                 </div>
             `;
@@ -12727,28 +13079,50 @@ const firebaseConfig = {
                 const isScheduled = info.isScheduled;
                 const isFood = (item.category === 'food');
 
-                // 篩選模式過濾
                 if (spotGuidesFilterMode === 'spot' && isFood) return '';
                 if (spotGuidesFilterMode === 'food' && !isFood) return '';
                 if (spotGuidesFilterMode === 'pending' && isScheduled) return '';
                 if (spotGuidesFilterMode === 'scheduled' && !isScheduled) return '';
                 if (spotGuidesFilterMode === 'booking' && !item.hasBooking) return '';
 
-                const dayLabelText = info.dayNum ? `第 ${info.dayNum} 天` : '已安排（未指定天數）';
+                const isOpen = !isCompactMode || spotGuideExpanded.has(item.id);
+                const children = (Array.isArray(item.children) ? item.children : []).filter(c => c && c.name);
+
+                const dayLabelText = info.dayNum ? `第 ${info.dayNum} 天` : '已安排';
                 const timeMetaParts = [];
                 if (info.dateDisplay) timeMetaParts.push(info.dateDisplay);
                 if (info.timeDisplay) timeMetaParts.push(info.timeDisplay);
                 const visitDateTimeSummary = timeMetaParts.join(' ‧ ');
 
-                // 類型標籤與圖示
                 const catBadgeHtml = isFood
-                    ? `<span style="background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; font-size: 0.71rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-utensils"></i> 美食</span>`
-                    : `<span style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.71rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-landmark-dome"></i> 景點</span>`;
+                    ? `<span style="background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; font-size: 0.71rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-utensils"></i> 美食</span>`
+                    : `<span style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.71rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-landmark-dome"></i> 景點</span>`;
                 const itemIconHtml = isFood
                     ? `<i class="fa-solid fa-utensils" style="color: #ea580c;"></i>`
                     : `<i class="fa-solid fa-location-dot" style="color: #b0654a;"></i>`;
 
-                // 預約／搶票／訂位時程區塊
+                const statusPillHtml = isScheduled
+                    ? `<span style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.72rem; font-weight: 800; padding: 1px 9px; border-radius: 999px; white-space: nowrap;"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(dayLabelText)}</span>`
+                    : `<span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap;">待安排</span>`;
+
+                let bookingMiniHtml = '';
+                if (item.hasBooking) {
+                    const done = (item.bookingStatus === '已完成');
+                    bookingMiniHtml = `<span class="sg-booking-mini ${done ? 'done' : ''}"><i class="fa-solid ${isFood ? 'fa-bell-concierge' : 'fa-ticket'}"></i> ${done ? '已預約' : '待預約'}</span>`;
+                }
+
+                const countChipHtml = children.length ? `<span class="sg-count-chip"><i class="fa-solid fa-sitemap"></i> ${children.length} 個細部景點</span>` : '';
+
+                const MAX_CHIPS = isOpen ? 99 : 8;
+                const chipsHtml = children.length ? `
+                    <div style="display:flex; flex-wrap:wrap; gap:5px; margin:7px 0 0 26px;">
+                        ${children.slice(0, MAX_CHIPS).map(c => {
+                            const cIdx = item.children.indexOf(c);
+                            return `<span class="sg-child-chip ${c.picked ? 'picked' : ''}" onclick="toggleSgChildPicked(${idx}, ${cIdx})" title="${escapeHtml(c.note || '點一下標記為「想去」')}">${c.picked ? '<i class="fa-solid fa-check"></i>' : ''}${escapeHtml(c.name)}</span>`;
+                        }).join('')}
+                        ${children.length > MAX_CHIPS ? `<span class="sg-child-chip" style="cursor:default;">+${children.length - MAX_CHIPS}</span>` : ''}
+                    </div>` : '';
+
                 let bookingStripHtml = '';
                 if (item.hasBooking) {
                     const isDone = (item.bookingStatus === '已完成');
@@ -12761,11 +13135,8 @@ const firebaseConfig = {
 
                     let bDateLabel = item.bookingDate || '即刻';
                     const bDt = (bDateLabel !== '即刻' && typeof bcalParseYMD === 'function') ? bcalParseYMD(bDateLabel) : null;
-                    if (bDt) {
-                        bDateLabel = `${bDateLabel} (週${weekdays[bDt.getDay()]})`;
-                    }
+                    if (bDt) bDateLabel = `${bDateLabel} (週${weekdays[bDt.getDay()]})`;
                     const bTimeLabel = (item.bookingTime && item.bookingTime !== '-') ? item.bookingTime : '';
-
                     const bookingTitle = isFood ? '訂位／開放取號' : '搶票／開放預約';
                     const statusDoneText = isFood ? '✅ 訂位已完成' : '✅ 預約已完成';
                     const statusPendingText = isFood ? '⏳ 待開放／待取號' : '⏳ 待開放／待搶票';
@@ -12788,67 +13159,50 @@ const firebaseConfig = {
                     `;
                 }
 
+                const childDetailHtml = children.some(c => c.note || c.address) ? `
+                    <div style="margin:8px 0 0 26px; font-size:0.8rem; color:#475569; line-height:1.55;">
+                        ${children.filter(c => c.note || c.address).map(c => `<div>・<strong>${escapeHtml(c.name)}</strong>${c.note ? ` — ${escapeHtml(c.note)}` : ''}</div>`).join('')}
+                    </div>` : '';
+
+                const detailHtml = isOpen ? `
+                    <div style="margin:6px 0 0 26px;">
+                        ${isScheduled && visitDateTimeSummary ? `<span style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; font-size:0.74rem; font-weight:700; padding:1px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px; margin-right:6px;"><i class="fa-regular fa-clock"></i> ${escapeHtml(visitDateTimeSummary)}</span>` : ''}
+                        ${isScheduled && item.scheduleNote ? `<span style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:0.74rem; padding:1px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px;">💡 ${escapeHtml(item.scheduleNote)}</span>` : ''}
+                        ${item.address ? `
+                            <div style="font-size: 0.77rem; color: #0284c7; display: flex; align-items: center; gap: 4px; margin-top:5px;">
+                                <i class="fa-solid fa-map-pin"></i> <span>${escapeHtml(item.address)}</span>
+                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.address)}" target="_blank" style="font-size: 0.73rem; color: #0369a1; text-decoration: underline; margin-left: 2px; white-space: nowrap;" title="開啟線上地圖搜尋導航">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 導航定位
+                                </a>
+                            </div>` : ''}
+                        ${formatSpotMetaPillsHtml(plan, item)}
+                    </div>
+                    ${childDetailHtml}
+                    ${item.tip ? `
+                    <div style="font-size: 0.85rem; color: var(--notion-text-sub); line-height: 1.5; margin: 8px 0 0 26px; background:#f8fafc; padding:7px 10px; border-radius:10px; border-left:3px solid ${isFood ? '#ea580c' : '#0284c7'};">
+                        ${escapeHtml(item.tip)}
+                    </div>` : ''}
+                    ${bookingStripHtml}
+                ` : '';
+
+                const pad = isCompactMode ? '8px 12px' : '11px 14px';
                 return `
-                    <div class="spot-guide-card" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#86efac' : '#e2e8f0'}; border-radius:10px; padding:11px 14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
-                            <div style="display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0;">
-                                <div style="margin-top: 3px; flex-shrink: 0;">
-                                    <input type="checkbox" class="n-checkbox" id="spotGuideCheck_${idx}" ${isScheduled ? 'checked' : ''} onchange="toggleSpotGuideScheduled(${idx}, this.checked)" title="勾選設定是否已排入行程">
-                                </div>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
-                                        ${catBadgeHtml}
-                                        <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 0.98rem; color: var(--notion-text); cursor: pointer; margin: 0;">
-                                            ${itemIconHtml} ${escapeHtml(item.name)}
-                                        </label>
-
-                                        ${isScheduled ? `
-                                            <span style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.74rem; font-weight: 800; padding: 1px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
-                                                <i class="fa-solid fa-circle-check"></i> 已安排至行程：${escapeHtml(dayLabelText)}
-                                            </span>
-                                            ${visitDateTimeSummary ? `
-                                            <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.74rem; font-weight: 700; padding: 1px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
-                                                <i class="fa-regular fa-clock"></i> ${escapeHtml(visitDateTimeSummary)}
-                                            </span>` : ''}
-                                            ${item.scheduleNote ? `
-                                            <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 0.74rem; padding: 1px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                                <span>💡 ${escapeHtml(item.scheduleNote)}</span>
-                                            </span>` : ''}
-                                        ` : `
-                                            <span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap;">
-                                                待安排至行程
-                                            </span>
-                                        `}
-
-                                        ${item.address ? `
-                                            <span style="font-size: 0.77rem; color: #0284c7; display: inline-flex; align-items: center; gap: 4px;">
-                                                <i class="fa-solid fa-map-pin"></i> <span>${escapeHtml(item.address)}</span>
-                                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.address)}" target="_blank" style="font-size: 0.73rem; color: #0369a1; text-decoration: underline; margin-left: 2px; white-space: nowrap;" title="開啟線上地圖搜尋導航">
-                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 導航定位
-                                                </a>
-                                            </span>
-                                        ` : ''}
-                                    </div>
-                                    ${formatSpotMetaPillsHtml(plan, item)}
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 5px; flex-shrink: 0;">
-                                <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx})">
-                                    <i class="fa-solid fa-pen"></i> 編輯
-                                </button>
-                                <button type="button" class="n-btn n-btn-danger" style="padding: 2px 8px; font-size: 0.73rem;" onclick="deleteSpotGuideItem(${idx})">
-                                    <i class="fa-regular fa-trash-can"></i> 刪除
-                                </button>
+                    <div class="spot-guide-card" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#bfe3cc' : '#e2e8f0'}; border-radius:14px; padding:${pad}; margin-bottom:${isCompactMode ? '7px' : '10px'}; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <input type="checkbox" class="n-checkbox" id="spotGuideCheck_${idx}" ${isScheduled ? 'checked' : ''} onchange="toggleSpotGuideScheduled(${idx}, this.checked)" title="勾選設定是否已排入行程">
+                            ${catBadgeHtml}
+                            <label for="spotGuideCheck_${idx}" style="font-weight: 800; font-size: 0.95rem; color: var(--notion-text); cursor: pointer; margin: 0;">${itemIconHtml} ${escapeHtml(item.name)}</label>
+                            ${statusPillHtml}
+                            ${bookingMiniHtml}
+                            ${countChipHtml}
+                            <div style="margin-left:auto; display:flex; gap:5px; flex-shrink:0;">
+                                ${isCompactMode ? `<button type="button" class="n-btn" style="padding:2px 8px; font-size:0.73rem;" onclick="toggleSpotGuideExpand('${item.id}')" title="${isOpen ? '收合詳細' : '展開詳細'}"><i class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'}"></i></button>` : ''}
+                                <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i> 編輯</button>
+                                <button type="button" class="n-btn n-btn-danger" style="padding: 2px 8px; font-size: 0.73rem;" onclick="deleteSpotGuideItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
                             </div>
                         </div>
-
-                        <!-- 攻略說明 -->
-                        ${item.tip ? `
-                        <div style="font-size: 0.85rem; color: var(--notion-text-sub); line-height: 1.5; margin-top: 4px; background:#f8fafc; padding:7px 10px; border-radius:6px; border-left:3px solid ${isFood ? '#ea580c' : '#0284c7'};">
-                            ${escapeHtml(item.tip)}
-                        </div>` : ''}
-
-                        ${bookingStripHtml}
+                        ${chipsHtml}
+                        ${detailHtml}
                     </div>
                 `;
             }).join('');
@@ -21406,6 +21760,7 @@ const firebaseConfig = {
             const pCurr = parseTimeString(curr.time);
 
             // 儲存自訂接駁物件
+            curr.transitStale = false;
             curr.transit = {
                 title: title,
                 minutes: minutes,
@@ -23893,6 +24248,8 @@ const firebaseConfig = {
 
             document.getElementById('sgEditIndex').value = isEdit ? editIdx : '-1';
             setSpotGuideCategory(curItem.category || 'spot');
+            sgChildrenDraft = JSON.parse(JSON.stringify(Array.isArray(curItem.children) ? curItem.children : []));
+            renderSgChildren();
             document.getElementById('sgNameInput').value = curItem.name || '';
             document.getElementById('sgAddressInput').value = curItem.address || '';
             document.getElementById('sgTipInput').value = curItem.tip || '';
@@ -24013,7 +24370,8 @@ const firebaseConfig = {
                     bookingTime,
                     bookingPlatform,
                     bookingDifficulty,
-                    bookingStatus
+                    bookingStatus,
+                    children: sgChildrenDraft.filter(x => x && String(x.name || '').trim()).map(x => ({ id: x.id, name: String(x.name).trim(), note: String(x.note || '').trim(), picked: !!x.picked }))
                 };
 
                 if (editIdx >= 0 && editIdx < plan.spotTips.length) {
