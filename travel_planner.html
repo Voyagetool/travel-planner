@@ -6027,6 +6027,27 @@
         .tl-status-link:hover { background: #eaf3f7; }
         .day-chip.is-done:not(.active) { color: #1f6b45; border-color: #bfe3cc !important; background: #f3fbf6; }
         .day-chip.is-done i { color: #2f9e63; }
+    
+        /* ===== V3.10.0 行程狀態（已完成/安排中）與航班網路查詢 ===== */
+        .plan-status-wrap { position: relative; display: inline-flex; }
+        .plan-status-btn { display: inline-flex; align-items: center; gap: 5px; border: 1px solid; border-radius: 999px; padding: 2px 11px; font-size: 0.74rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+        .plan-status-btn small { font-size: 0.6rem; font-weight: 700; opacity: .75; }
+        .plan-status-btn.planning { background: #eaf3ff; color: #1d5fb4; border-color: #cfe1f8; }
+        .plan-status-btn.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
+        .plan-status-btn i.chev { font-size: 0.58rem; }
+        .plan-status-menu { display: none; position: absolute; top: calc(100% + 8px); left: 0; min-width: 190px; z-index: 5000; background: #fff; border: 1px solid #e3ecf1; border-radius: 16px; padding: 6px; box-shadow: 0 12px 32px rgba(31,64,80,.14), 0 2px 6px rgba(31,64,80,.06); }
+        .plan-status-menu.open { display: block; animation: planPickerIn .16s ease; }
+        .plan-status-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 8px 12px; border-radius: 11px; font-size: 0.84rem; font-weight: 700; color: #3b4d63; font-family: inherit; }
+        .plan-status-opt:hover { background: #f0f6f9; }
+        .plan-status-opt.on { background: #e4eff4; color: #1f5f78; }
+        .plan-status-opt small { font-weight: 500; color: #94a3b8; font-size: 0.68rem; }
+        .plan-picker-group { font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: .06em; padding: 8px 12px 3px; }
+        .plan-picker-foot { border-top: 1px solid #eef2f5; margin-top: 4px; padding: 7px 12px 4px; font-size: 0.74rem; color: #64748b; }
+        .plan-picker-foot label { display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; }
+        .plan-status-tag { font-size: 0.62rem; font-weight: 800; padding: 0 7px; border-radius: 999px; border: 1px solid; margin-left: auto; white-space: nowrap; }
+        .plan-status-tag.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
+        .plan-status-tag.planning { background: #eaf3ff; color: #1d5fb4; border-color: #cfe1f8; }
+        .plan-picker-item span.pp-name { flex: 1; min-width: 0; }
     </style>
 </head>
 <body class="app-booting">
@@ -6055,7 +6076,8 @@
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </div>
-                    <span class="okr-version-tag" id="appVersionTag">V3.9.0</span>
+                    <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.10.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7647,6 +7669,11 @@
                             </div>
                         </div>
                         <div id="fAutoHint_Out1" class="flight-auto-hint"></div>
+                        <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
+                            <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('Out1')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
+                            <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <span id="fOnline_Out1" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" id="labelOutDepLoc">起飛機場 / 航廈</label>
@@ -7696,6 +7723,11 @@
                             </div>
                         </div>
                         <div id="fAutoHint_Out2" class="flight-auto-hint"></div>
+                        <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
+                            <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('Out2')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
+                            <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <span id="fOnline_Out2" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" id="labelOutDepLoc2">起飛機場 / 航廈</label>
@@ -7753,6 +7785,11 @@
                             </div>
                         </div>
                         <div id="fAutoHint_In1" class="flight-auto-hint"></div>
+                        <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
+                            <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('In1')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
+                            <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <span id="fOnline_In1" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" id="labelInDepLoc">起飛機場 / 航廈</label>
@@ -7802,6 +7839,11 @@
                             </div>
                         </div>
                         <div id="fAutoHint_In2" class="flight-auto-hint"></div>
+                        <div class="flight-online-row" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-2px 0 10px;">
+                            <button type="button" class="n-btn" style="padding:3px 11px; font-size:0.76rem; color:#1d5fb4; background:#f2f7ff; border-color:#cfe1f8; font-weight:700;" onclick="fetchFlightTimesOnline('In2')"><i class="fa-solid fa-cloud-arrow-down"></i> 從網路查詢航班時刻</button>
+                            <button type="button" class="n-btn" style="padding:3px 9px; font-size:0.72rem;" onclick="promptFlightApiKey()" title="設定 AeroDataBox 金鑰，才能自動帶入官方起降時刻"><i class="fa-solid fa-key"></i> 查詢金鑰</button>
+                            <span id="fOnline_In2" style="font-size:0.76rem; color:#475569; line-height:1.5;"></span>
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" id="labelInDepLoc2">起飛機場 / 航廈</label>
@@ -10864,6 +10906,7 @@ const firebaseConfig = {
                 select.appendChild(opt);
             });
             renderPlanPickerMenu();
+            renderPlanStatusUI();
         }
 
         // 柔和圓角的自訂方案切換選單（取代原生直角下拉）
@@ -10872,12 +10915,24 @@ const firebaseConfig = {
             const label = document.getElementById('planPickerLabel');
             if (!menu || !label) return;
             const clean = (t) => (t || '').replace(/🇨🇳|\[CN\]|\s+CN$|🌶️|🇯🇵|🇹🇼/g, '').trim();
-            let html = '';
+            let hideDone = false;
+            try { hideDone = localStorage.getItem(PLAN_HIDE_DONE_KEY) === '1'; } catch (e) {}
+            const planning = [], done = [];
             Object.values(appState.plans).forEach(p => {
-                const isCur = p.id === appState.activePlanId;
-                if (isCur) label.textContent = clean(p.title);
-                html += `<button type="button" class="plan-picker-item${isCur ? ' current' : ''}" onclick="pickTravelPlan('${p.id}')"><span>${escapeHtml(clean(p.title))}</span>${isCur ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
+                if (p.id === appState.activePlanId) label.textContent = clean(p.title);
+                (getPlanStatus(p).key === 'done' ? done : planning).push(p);
             });
+            const item = (p) => {
+                const isCur = p.id === appState.activePlanId;
+                const st = getPlanStatus(p).key;
+                return `<button type="button" class="plan-picker-item${isCur ? ' current' : ''}" onclick="pickTravelPlan('${p.id}')"><span class="pp-name">${escapeHtml(clean(p.title))}</span><span class="plan-status-tag ${st}">${st === 'done' ? '已完成' : '安排中'}</span>${isCur ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
+            };
+            let html = '';
+            if (planning.length) html += `<div class="plan-picker-group">安排中 (${planning.length})</div>` + planning.map(item).join('');
+            const shownDone = hideDone ? done.filter(p => p.id === appState.activePlanId) : done;
+            if (shownDone.length) html += `<div class="plan-picker-group">已完成 (${done.length})</div>` + shownDone.map(item).join('');
+            if (hideDone && done.length - shownDone.length > 0) html += `<div class="plan-picker-group" style="font-weight:500;">已隱藏 ${done.length - shownDone.length} 個已完成行程</div>`;
+            html += `<div class="plan-picker-foot"><label><input type="checkbox" ${hideDone ? 'checked' : ''} onchange="setHideDonePlans(this.checked)"> 隱藏已完成的行程</label></div>`;
             menu.innerHTML = html;
         }
         function togglePlanPicker(ev) {
@@ -20285,6 +20340,199 @@ const firebaseConfig = {
             }
         }
 
+
+        // ===== V3.10.0：行程狀態（已完成 / 安排中）=====
+        const PLAN_HIDE_DONE_KEY = 'travel_planner_hide_done_plans';
+        function getPlanStatus(plan) {
+            if (!plan) return { key: 'planning', auto: true };
+            if (plan.status === 'done' || plan.status === 'planning') return { key: plan.status, auto: false };
+            try {
+                const info = buildPlanDateToDayMap(plan);
+                const n = new Date();
+                const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+                if (info.endYmd && info.endYmd < today) return { key: 'done', auto: true };
+            } catch (e) {}
+            return { key: 'planning', auto: true };
+        }
+        function renderPlanStatusUI() {
+            const btn = document.getElementById('planStatusBtn');
+            const plan = getCurrentPlan();
+            if (!btn || !plan) return;
+            const st = getPlanStatus(plan);
+            btn.className = 'plan-status-btn ' + st.key;
+            btn.innerHTML = (st.key === 'done' ? '<i class="fa-solid fa-circle-check"></i> 已完成' : '<i class="fa-solid fa-hourglass-half"></i> 安排中') + (st.auto ? '<small>自動</small>' : '') + ' <i class="fa-solid fa-chevron-down chev"></i>';
+            const mode = plan.status === 'done' || plan.status === 'planning' ? plan.status : 'auto';
+            document.querySelectorAll('.plan-status-opt').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+            document.body.dataset.planStatus = st.key;
+        }
+        function togglePlanStatusMenu(ev) {
+            if (ev) ev.stopPropagation();
+            const m = document.getElementById('planStatusMenu');
+            if (m) m.classList.toggle('open');
+            closePlanPicker();
+        }
+        function closePlanStatusMenu() {
+            const m = document.getElementById('planStatusMenu');
+            if (m) m.classList.remove('open');
+        }
+        function setPlanStatus(mode) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            closePlanStatusMenu();
+            if (mode === 'auto') delete plan.status; else plan.status = mode;
+            if (mode === 'done') {
+                let pending = 0;
+                (plan.days || []).forEach(d => (d.events || []).forEach(e => { if (!e.done) pending++; }));
+                if (pending > 0 && confirm(`這趟旅程已標為「已完成」。\n要順便把所有行程項目（${pending} 個）也標為已完成嗎？`)) {
+                    (plan.days || []).forEach(d => (d.events || []).forEach(e => { e.done = true; }));
+                }
+            }
+            saveState();
+            renderAll();
+            const st = getPlanStatus(plan);
+            showToast('success', mode === 'auto' ? `已改為依旅程日期自動判斷（目前：${st.key === 'done' ? '已完成' : '安排中'}）` : `已將「${(plan.title || '').replace(/🇨🇳|\[CN\]|\s+CN$/g, '').trim()}」標為${st.key === 'done' ? '已完成' : '安排中'}`);
+        }
+        function setHideDonePlans(v) {
+            try { localStorage.setItem(PLAN_HIDE_DONE_KEY, v ? '1' : '0'); } catch (e) {}
+            renderPlanPickerMenu();
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest || !e.target.closest('.plan-status-wrap')) closePlanStatusMenu();
+        });
+
+        // ===== V3.10.0：航班時刻網路查詢（AeroDataBox）＋ 時差精準飛行時間 =====
+        const AIRPORT_TZ = {
+            TPE: 8, TSA: 8, KHH: 8, RMQ: 8, NRT: 9, HND: 9, KIX: 9, FUK: 9, OKA: 9, CTS: 9, NGO: 9, SDJ: 9, KMJ: 9, HIJ: 9, TAK: 9, OKJ: 9, HKD: 9, KMQ: 9,
+            ICN: 9, GMP: 9, PUS: 9, CJU: 9, HKG: 8, MFM: 8, CKG: 8, PEK: 8, PKX: 8, PVG: 8, SHA: 8, TFU: 8, CAN: 8, SZX: 8, XMN: 8,
+            BKK: 7, DMK: 7, CNX: 7, SGN: 7, HAN: 7, DAD: 7, SIN: 8, KUL: 8, MNL: 8, DPS: 8, DXB: 4, IST: 3
+        };
+        const FLIGHT_API_KEY_STORAGE = 'travel_planner_aerodatabox_key';
+        function getFlightApiKey() {
+            try { return (localStorage.getItem(FLIGHT_API_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
+        }
+        function promptFlightApiKey() {
+            const v = window.prompt(
+                '要自動帶入航班的起降時刻，需要 AeroDataBox 的 API Key（在 rapidapi.com 搜尋 AeroDataBox 並訂閱免費方案即可取得）。\n' +
+                '金鑰只會存放在這台裝置的瀏覽器，不會上傳雲端或寫進程式。\n\n' +
+                '請貼上 API Key（留空後按確定可清除）：', getFlightApiKey());
+            if (v === null) return false;
+            try {
+                if (v.trim()) localStorage.setItem(FLIGHT_API_KEY_STORAGE, v.trim());
+                else localStorage.removeItem(FLIGHT_API_KEY_STORAGE);
+            } catch (e) {}
+            return !!v.trim();
+        }
+        function tzOfLocText(txt) {
+            const m = String(txt || '').match(/\(([A-Z]{3})\)/);
+            return (m && AIRPORT_TZ[m[1]] !== undefined) ? AIRPORT_TZ[m[1]] : null;
+        }
+        function haversineKm(lat1, lon1, lat2, lon2) {
+            const R = 6371, rad = Math.PI / 180;
+            const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+            return 2 * R * Math.asin(Math.sqrt(a));
+        }
+        function adbMovementInfo(m) {
+            m = m || {};
+            const lt = (m.scheduledTime && m.scheduledTime.local) || m.scheduledTimeLocal || (m.revisedTime && m.revisedTime.local) || m.revisedTimeLocal || '';
+            const ut = (m.scheduledTime && m.scheduledTime.utc) || m.scheduledTimeUtc || (m.revisedTime && m.revisedTime.utc) || m.revisedTimeUtc || '';
+            const hm = String(lt).match(/[T ](\d{2}):(\d{2})/);
+            const utcMs = ut ? Date.parse(String(ut).trim().replace(' ', 'T')) : NaN;
+            return { hhmm: hm ? `${hm[1]}:${hm[2]}` : '', utcMs, iata: (m.airport && m.airport.iata) || '', name: (m.airport && (m.airport.name || m.airport.shortName)) || '', terminal: m.terminal ? String(m.terminal) : '' };
+        }
+        function adbAirportText(mv, prefix) {
+            if (!mv.iata) return '';
+            const info = AIRPORT_INFO_MAP[mv.iata];
+            let term = '';
+            if (mv.terminal) term = /^\d+$/.test(mv.terminal) ? 'T' + mv.terminal : mv.terminal;
+            else if (info) term = (info.terms && info.terms[prefix]) || info.defTerm || '';
+            return info ? `${info.name} ${term}`.trim() : `${mv.name || mv.iata} (${mv.iata}) ${term}`.trim();
+        }
+
+        async function fetchFlightTimesOnline(seg) {
+            const prefix = (document.getElementById(`fCodePrefix_${seg}`)?.value || '').trim().toUpperCase();
+            const rawNum = (document.getElementById(`fCodeNum_${seg}`)?.value || '').trim();
+            const out = document.getElementById(`fOnline_${seg}`);
+            const setMsg = (html) => { if (out) out.innerHTML = html; };
+            if (!prefix || !rawNum) { showToast('warning', '請先選擇航空公司並輸入班機號碼'); return; }
+            const cleanNum = rawNum.replace(/^0+/, '') || '0';
+            const code = `${prefix}${cleanNum}`;
+            const label = `${prefix} ${rawNum}`;
+            const plan = getCurrentPlan();
+            const info = plan ? buildPlanDateToDayMap(plan) : { startYmd: '', endYmd: '' };
+            const ymd = seg.startsWith('Out') ? info.startYmd : info.endYmd;
+            const depEl = document.getElementById(getSegFieldId(seg, 'depTime'));
+            const arrEl = document.getElementById(getSegFieldId(seg, 'arrTime'));
+            const depLocEl = document.getElementById(getSegFieldId(seg, 'depLoc'));
+            const arrLocEl = document.getElementById(getSegFieldId(seg, 'arrLoc'));
+            const isOutDir = seg.startsWith('Out');
+            const isTrans = !!document.getElementById(isOutDir ? 'fOutIsTransfer' : 'fInIsTransfer')?.checked;
+            const durEl = document.getElementById(isOutDir ? 'fOutDuration' : 'fInDuration');
+            setMsg(`<i class="fa-solid fa-spinner fa-spin" style="color:#0284c7;"></i> 正在從網路查詢 <strong>${escapeHtml(label)}</strong> ${ymd ? '（' + ymd + '）' : ''}…`);
+
+            // ① 有金鑰：AeroDataBox 官方班表（起降時刻、航廈、機場）
+            const key = getFlightApiKey();
+            let apiErr = '';
+            if (key) {
+                try {
+                    const url = `https://aerodatabox.p.rapidapi.com/flights/number/${encodeURIComponent(code)}${ymd ? '/' + ymd : ''}?withAircraftImage=false&withLocation=false`;
+                    const resp = await fetch(url, { headers: { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': 'aerodatabox.p.rapidapi.com' } });
+                    if (resp.status === 401 || resp.status === 403) throw new Error(`金鑰無效或尚未訂閱 AeroDataBox（HTTP ${resp.status}）`);
+                    if (resp.status === 429) throw new Error('已超過免費查詢額度');
+                    if (resp.status === 204 || resp.status === 404) throw new Error('查無此班次在該日期的班表（可能尚未開放或班次有誤）');
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    const list = Array.isArray(data) ? data : (data ? [data] : []);
+                    const f = list.find(x => x && x.departure && x.arrival && x.codeshareStatus !== 'IsCodeshared') || list.find(x => x && x.departure && x.arrival);
+                    if (!f) throw new Error('查無此班次');
+                    const dep = adbMovementInfo(f.departure), arr = adbMovementInfo(f.arrival);
+                    if (!dep.hhmm || !arr.hhmm) throw new Error('班表缺少起降時刻');
+                    if (depEl) depEl.value = dep.hhmm;
+                    if (arrEl) arrEl.value = arr.hhmm;
+                    const dTxt = adbAirportText(dep, prefix), aTxt = adbAirportText(arr, prefix);
+                    if (dTxt && depLocEl) depLocEl.value = dTxt;
+                    if (aTxt && arrLocEl) arrLocEl.value = aTxt;
+                    let durTxt = '';
+                    if (!isNaN(dep.utcMs) && !isNaN(arr.utcMs) && arr.utcMs > dep.utcMs) {
+                        const mins = Math.round((arr.utcMs - dep.utcMs) / 60000);
+                        durTxt = formatMinutesDiff(mins);
+                        if (!isTrans && durEl) { durEl.value = `${durTxt} (直達)`; durEl.dataset.autoCalc = '1'; }
+                    }
+                    recalcAllFlightTimings();
+                    setMsg(`<i class="fa-solid fa-circle-check" style="color:#059669;"></i> 已從網路帶入 <strong>${escapeHtml(label)}</strong>${ymd ? '（' + ymd + '）' : ''}：${dep.hhmm} → ${arr.hhmm}${durTxt ? '，飛行時間 <strong>' + escapeHtml(durTxt) + '</strong>' : ''}（資料來源 AeroDataBox，實際以航空公司公告為準）`);
+                    showToast('success', `已帶入 ${label} 的航班時刻`);
+                    return;
+                } catch (err) {
+                    apiErr = (err && err.message) ? err.message : '查詢失敗';
+                }
+            }
+
+            // ② 無金鑰或查詢失敗：以公開航線資料（機場座標）估算飛行時間
+            try {
+                const meta = findAirlineMeta(prefix);
+                const icao = meta && meta.icao;
+                if (!icao) throw new Error('no-icao');
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), 5000);
+                const resp = await fetch(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(icao + cleanNum)}`, { signal: ctrl.signal });
+                clearTimeout(tid);
+                const json = resp.ok ? await resp.json() : null;
+                const route = json && json.response && json.response.flightroute;
+                const o = route && route.origin, d = route && route.destination;
+                if (!o || !d || o.latitude == null || d.latitude == null) throw new Error('no-route');
+                const km = Math.round(haversineKm(o.latitude, o.longitude, d.latitude, d.longitude));
+                const estMin = Math.max(30, Math.round(km / 850 * 60 + 25));
+                const estTxt = formatMinutesDiff(estMin);
+                if (depLocEl && !depLocEl.value.trim() && o.iata_code) depLocEl.value = formatAirportWithTerminal(o.iata_code, prefix);
+                if (arrLocEl && !arrLocEl.value.trim() && d.iata_code) arrLocEl.value = formatAirportWithTerminal(d.iata_code, prefix);
+                if (durEl && (!durEl.value.trim() || durEl.dataset.autoCalc === '1')) { durEl.value = `約 ${estTxt} (預估)`; durEl.dataset.autoCalc = '1'; }
+                setMsg(`<i class="fa-solid fa-circle-info" style="color:#d97706;"></i> ${apiErr ? escapeHtml(apiErr) + '；' : '尚未設定查詢金鑰，'}已依航線（${escapeHtml(o.iata_code || '')} → ${escapeHtml(d.iata_code || '')}，約 ${km.toLocaleString()} km）估算飛行時間約 <strong>${escapeHtml(estTxt)}</strong>（僅供參考，非官方時刻）。要自動帶入起降時刻請按「查詢金鑰」設定。`);
+                return;
+            } catch (e2) {
+                setMsg(`<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626;"></i> ${apiErr ? escapeHtml(apiErr) + '；' : ''}目前查不到 <strong>${escapeHtml(label)}</strong> 的公開資料。可按「核對即時班表」到網路搜尋，或直接手動填寫時間。`);
+            }
+        }
+
         function formatAirportWithTerminal(airportCode, iataAirline) {
             if (!airportCode) return '';
             const code = airportCode.toUpperCase();
@@ -20648,8 +20896,10 @@ const firebaseConfig = {
             if (!isTrans) {
                 // 直飛模式：若尚未有手動時區精準值或剛改時間，可計算基礎時間差
                 if (dep1 !== null && arr1 !== null && durInput && (!durInput.value.trim() || durInput.dataset.autoCalc === '1')) {
-                    let diff1 = arr1 - dep1;
-                    if (diff1 <= 0) diff1 += 1440;
+                    const tzA = tzOfLocText(document.getElementById(isOut ? 'fOutDepLoc' : 'fInDepLoc')?.value);
+                    const tzB = tzOfLocText(document.getElementById(isOut ? 'fOutArrLoc1' : 'fInArrLoc1')?.value);
+                    let diff1 = arr1 - dep1 - ((tzA !== null && tzB !== null) ? (tzB - tzA) * 60 : 0);
+                    while (diff1 <= 0) diff1 += 1440;
                     durInput.value = `${formatMinutesDiff(diff1)} (直達)`;
                     durInput.dataset.autoCalc = '1';
                 }
@@ -20680,10 +20930,13 @@ const firebaseConfig = {
 
                 // 計算含中轉之總行程參考時長
                 if (dep1 !== null && arr2 !== null && durInput) {
-                    let leg1Mins = arr1 - dep1;
-                    if (leg1Mins <= 0) leg1Mins += 1440;
-                    let leg2Mins = arr2 - dep2;
-                    if (leg2Mins <= 0) leg2Mins += 1440;
+                    const tzOf = (id) => tzOfLocText(document.getElementById(id)?.value);
+                    const tz1a = tzOf(isOut ? 'fOutDepLoc' : 'fInDepLoc'), tz1b = tzOf(isOut ? 'fOutArrLoc1' : 'fInArrLoc1');
+                    const tz2a = tzOf(isOut ? 'fOutDepLoc2' : 'fInDepLoc2'), tz2b = tzOf(isOut ? 'fOutArrLoc2' : 'fInArrLoc2');
+                    let leg1Mins = arr1 - dep1 - ((tz1a !== null && tz1b !== null) ? (tz1b - tz1a) * 60 : 0);
+                    while (leg1Mins <= 0) leg1Mins += 1440;
+                    let leg2Mins = arr2 - dep2 - ((tz2a !== null && tz2b !== null) ? (tz2b - tz2a) * 60 : 0);
+                    while (leg2Mins <= 0) leg2Mins += 1440;
                     const totalMins = leg1Mins + layoverMins + leg2Mins;
                     const cityShort = portShort.split(' ')[0].replace(/\(.*?\)/g, '') || '中轉';
                     durInput.value = `約 ${formatMinutesDiff(totalMins)} (經${cityShort}轉機停留 ${layoverText})`;
