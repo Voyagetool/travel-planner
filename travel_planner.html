@@ -2,6 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -6013,7 +6015,7 @@
     
         /* ===== V3.9.0 載入遮罩 / 已完成·安排中 ===== */
         body.app-booting .okr-top-header, body.app-booting .okr-pill-navbar, body.app-booting .okr-workspace-main { visibility: hidden; }
-        body.app-booting::before { content: '載入行程中…'; position: fixed; top: 42%; left: 50%; transform: translateX(-50%); color: #7b8c99; font-size: 0.92rem; letter-spacing: 0.08em; }
+        body.app-booting::before { content: attr(data-boot); position: fixed; top: 42%; left: 50%; transform: translateX(-50%); color: #7b8c99; font-size: 0.92rem; letter-spacing: 0.08em; }
         .tl-status-chip { cursor: pointer; font-size: 0.68rem; font-weight: 700; padding: 1px 9px; border-radius: 999px; border: 1px solid; user-select: none; white-space: nowrap; }
         .tl-status-chip.plan { background: #eef4f7; color: #286678; border-color: #d6e5ec; }
         .tl-status-chip.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
@@ -6050,7 +6052,7 @@
         .plan-picker-item span.pp-name { flex: 1; min-width: 0; }
     </style>
 </head>
-<body class="app-booting">
+<body class="app-booting" data-boot="載入行程中…">
 
         <!-- ====================================================
          V3.0 INTEGRATED FULL-WIDTH DASHBOARD HEADER (對齊第三張截圖樣式)
@@ -6077,7 +6079,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.10.5</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.10.6</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -9773,6 +9775,7 @@ const firebaseConfig = {
                         // 若本機剛儲存或當前有開啟中視窗，保留當前 activePlanId，不被雲端強制跳轉
                         const localPref = (function () { try { return localStorage.getItem(ACTIVE_PLAN_KEY); } catch (e) { return null; } })();
                         const keepActivePlanId = (localPref && data.appState.plans[localPref]) ? localPref : ((isAnyModalActive && appState.plans[appState.activePlanId]) ? appState.activePlanId : data.appState.activePlanId);
+                        bootLog('雲端同步 雲端行程=' + data.appState.activePlanId + ' 本機記憶=' + localPref + ' 採用=' + keepActivePlanId);
                         if (!localPref && keepActivePlanId && data.appState.plans[keepActivePlanId]) setActivePlanPref(keepActivePlanId);
 
                         appState = data.appState;
@@ -10048,16 +10051,38 @@ const firebaseConfig = {
         }
 
         // 每台裝置各自記住「上次看的旅行計畫」，不再被雲端（其他裝置）的選擇帶著跑
-        const ACTIVE_PLAN_KEY = 'travel_planner_active_plan_pref2';
+        const ACTIVE_PLAN_KEY = 'travel_planner_active_plan_pref3';
         // 只有使用者在這台裝置「手動切換行程」時才記住；其餘情況沿用雲端最後的選擇，避免載入過程誤鎖
         function setActivePlanPref(id) { try { if (id) localStorage.setItem(ACTIVE_PLAN_KEY, id); } catch (e) {} }
+
+        // 載入診斷：在網址加上 ?debug 會在畫面底部顯示載入過程（用來判斷手機載入的版本與選到行程的原因）
+        const __bootLog = [];
+        function renderBootDebug() {
+            let el = document.getElementById('bootDebugBox');
+            if (!el) {
+                el = document.createElement('pre');
+                el.id = 'bootDebugBox';
+                el.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;max-height:42vh;overflow:auto;background:rgba(15,23,42,.92);color:#e2e8f0;font-size:11px;line-height:1.45;padding:8px 10px;border-radius:10px;white-space:pre-wrap;margin:0;';
+                document.body.appendChild(el);
+            }
+            el.textContent = '版本 ' + ((document.getElementById('appVersionTag') || {}).textContent || '?') + '\\n' + __bootLog.join('\\n');
+        }
+        function bootLog(msg) {
+            __bootLog.push(Math.round(performance.now()) + 'ms ' + msg);
+            try { if (new URLSearchParams(location.search).has('debug')) renderBootDebug(); } catch (e) {}
+        }
         function removeBootMask() {
-            if (document.body) document.body.classList.remove('app-booting');
+            if (document.body && document.body.classList.contains('app-booting')) {
+                try { bootLog('解除遮罩 目前行程=' + (appState && appState.activePlanId)); } catch (e) {}
+                document.body.classList.remove('app-booting');
+            }
         }
         window.addEventListener('DOMContentLoaded', () => {
             const hadLocalState = !!localStorage.getItem('notion_travel_planner_v9_sidebar_state');
             const hadPref = !!localStorage.getItem(ACTIVE_PLAN_KEY);
+            try { document.body.setAttribute('data-boot', '載入行程中… ' + ((document.getElementById('appVersionTag') || {}).textContent || '')); } catch (e) {}
             loadState();
+            bootLog('載入完成 本機有資料=' + hadLocalState + ' 本機有記憶=' + hadPref + ' 記憶=' + localStorage.getItem(ACTIVE_PLAN_KEY) + ' 本機行程=' + appState.activePlanId);
 
             // 支援從 URL 參數帶入指定的 planId (例如 ?planId=plan-beijing)
             const urlParams = new URLSearchParams(window.location.search);
@@ -10069,6 +10094,7 @@ const firebaseConfig = {
             }
 
             renderAll();
+            bootLog('首次繪製 行程=' + appState.activePlanId);
             // 本機已有資料：立即顯示；全新裝置則等第一次雲端同步（最久 3 秒）再顯示，避免先閃過預設內容
             if (hadLocalState && hadPref) removeBootMask(); else setTimeout(removeBootMask, 8000);
             setTimeout(removeBootMask, 9000);
