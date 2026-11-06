@@ -6077,7 +6077,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.10.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.10.5</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8929,7 +8929,7 @@ const firebaseConfig = {
 
                         // 若本機剛儲存或當前有開啟中視窗，保留當前 activePlanId，不被雲端強制跳轉
                         const localPref = (function () { try { return localStorage.getItem(ACTIVE_PLAN_KEY); } catch (e) { return null; } })();
-                        const keepActivePlanId = (localPref && data.appState.plans[localPref]) ? localPref : ((isRecentlySaved || isAnyModalActive) ? appState.activePlanId : data.appState.activePlanId);
+                        const keepActivePlanId = (localPref && data.appState.plans[localPref]) ? localPref : ((isAnyModalActive && appState.plans[appState.activePlanId]) ? appState.activePlanId : data.appState.activePlanId);
                         if (!localPref && keepActivePlanId && data.appState.plans[keepActivePlanId]) setActivePlanPref(keepActivePlanId);
 
                         appState = data.appState;
@@ -9235,16 +9235,13 @@ const firebaseConfig = {
             if (targetPlanId && appState.plans[targetPlanId]) {
                 appState.activePlanId = targetPlanId;
             } else {
-                const roomParam = urlParams.get('room') || '';
-                if (!hadLocalState && roomParam.toLowerCase().includes('chongqing') && appState.plans['plan-chongqing']) {
-                    appState.activePlanId = 'plan-chongqing';
-                }
+                // 不再依網址的 room 參數強制切換行程（行程由雲端最後選擇或使用者手動選擇決定）
             }
 
             renderAll();
             // 本機已有資料：立即顯示；全新裝置則等第一次雲端同步（最久 3 秒）再顯示，避免先閃過預設內容
-            if (hadLocalState && hadPref) removeBootMask(); else setTimeout(removeBootMask, 3000);
-            setTimeout(removeBootMask, 5000);
+            if (hadLocalState && hadPref) removeBootMask(); else setTimeout(removeBootMask, 8000);
+            setTimeout(removeBootMask, 9000);
 
             // 初始化 Firebase 雲端即時同步
             initFirebaseCloudSync();
