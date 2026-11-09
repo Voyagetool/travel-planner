@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.11.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.11.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7214,7 +7214,6 @@
                         </div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
                             <button type="button" class="n-btn" style="font-size:0.76rem;" onclick="fillFirstTransitFromLodging()"><i class="fa-solid fa-hotel"></i> 依住宿帶入</button>
-                            <button type="button" class="n-btn tl-google-btn" style="font-size:0.76rem;" onclick="googleFillFirstTransit()"><i class="fa-brands fa-google"></i> Google 帶入交通時間</button>
                             <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.76rem; font-weight:700; color:#334155; margin:0;">出門緩衝
                                 <input type="number" id="transitBufferInput" min="0" max="120" value="10" style="width:62px; padding:3px 6px; border:1px solid #cbd5e1; border-radius:8px;" oninput="updateFirstTransitPreview()"> 分鐘
                             </label>
@@ -7268,6 +7267,7 @@
                             <button type="button" class="n-btn" style="background:#fff; border-color:#7dd3fc; color:#0369a1; font-size:0.76rem; padding:4px 8px;" onclick="openTransitExternalMap('walking', 'google')">
                                 <i class="fa-solid fa-person-walking"></i> Google 步行
                             </button>
+                            <button type="button" id="transitGoogleFillBtn" class="n-btn tl-google-btn" style="display:none; font-size:0.76rem; padding:4px 8px; font-weight:700;" onclick="googleFillFirstTransit()"><i class="fa-brands fa-google"></i> Google 自動帶入交通時間</button>
                             <button type="button" class="n-btn" style="background:#fff; border-color:#fed7aa; color:#c2410c; font-size:0.76rem; padding:4px 8px;" onclick="openTransitExternalMap('driving', 'amap')">
                                 <i class="fa-solid fa-map-pin"></i> 高德地圖規劃 (港澳大陸)
                             </button>
@@ -12534,6 +12534,8 @@ const firebaseConfig = {
         function enhanceTransitModal(dayNum, eventIdx) {
             const box = document.getElementById('transitFirstExtra');
             if (!box) return;
+            const gfb = document.getElementById('transitGoogleFillBtn');
+            if (gfb) gfb.style.display = (Number(eventIdx) === 0) ? 'inline-flex' : 'none';
             if (Number(eventIdx) !== 0) { box.style.display = 'none'; return; }
             const plan = getCurrentPlan();
             const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
@@ -22407,14 +22409,24 @@ const firebaseConfig = {
             const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
             const eventIdx = Number(document.getElementById('transitEventIdx')?.value || 1);
             const day = (plan.days || []).find(d => d.dayNum === dayNum);
-            if (!day || !day.events || !day.events[eventIdx] || eventIdx <= 0) return;
+            if (!day || !day.events || !day.events[eventIdx] || eventIdx < 0) return;
 
-            const prev = day.events[eventIdx - 1];
-            const curr = day.events[eventIdx];
-
-            // 擷取最佳地點字串（優先使用 loc，若無則用 title）
-            const originStr = (prev.loc || prev.title || '').replace(/➔/g, ' ').trim();
-            const destStr = (curr.loc || curr.title || '').replace(/➔/g, ' ').trim();
+            let originStr, destStr;
+            if (eventIdx === 0) {
+                // 起程交通：出發地取自輸入框（預設住宿），目的地為當天第一站
+                const hotel = (typeof getDayLodging === 'function') ? getDayLodging(plan, dayNum) : null;
+                const typed = (document.getElementById('transitFromLocInput')?.value || '').trim();
+                originStr = (hotel && typed === hotel.name && hotel.addr) ? hotel.addr : typed;
+                const first = day.events[0];
+                destStr = (first.loc || first.title || '').replace(/➔/g, ' ').trim();
+                if (!originStr) { showToast('warning', '請先填寫出發地'); return; }
+            } else {
+                const prev = day.events[eventIdx - 1];
+                const curr = day.events[eventIdx];
+                // 擷取最佳地點字串（優先使用 loc，若無則用 title）
+                originStr = (prev.loc || prev.title || '').replace(/➔/g, ' ').trim();
+                destStr = (curr.loc || curr.title || '').replace(/➔/g, ' ').trim();
+            }
 
             const url = getMapRouteUrl(originStr, destStr, mode, provider);
             if (url) {
