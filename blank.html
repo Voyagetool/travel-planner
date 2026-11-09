@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.7</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.8</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8534,6 +8534,7 @@
                 <label class="shop-field">交通方式<select id="ltMode"><option value="transit">大眾運輸／地鐵</option><option value="mixed">捷運＋步行（混合）</option><option value="car">開車／計程車</option><option value="walk">步行</option></select></label>
                 <label class="shop-field">預估交通時間（分鐘）<input type="number" id="ltMinutes" min="0" step="5" inputmode="numeric"></label>
                 <label class="shop-field">備註（選填）<input type="text" id="ltNotes" placeholder="例如：末班車 23:40、建議搭計程車"></label>
+                <label class="shop-field">交通費用（當地幣、每人，選填；會同步到預算）<input type="number" id="ltCost" min="0" step="any" inputmode="decimal" placeholder="例如 240"></label>
             </div>
             <div class="modal-footer">
                 <button type="button" class="n-btn n-btn-danger" style="margin-right:auto;" onclick="clearLastTransit()">恢復預設</button>
@@ -13569,6 +13570,7 @@ const firebaseConfig = {
                     <span>→</span>
                     <i class="fa-solid ${modeInfo.icon}"></i>
                     <span>${modeInfo.label}約 <strong>${formatDuration(minutes)}</strong>${saved ? '' : ' <span style="color:#94a3b8;">（預設估算）</span>'}</span>
+                    ${Number(lt.cost) > 0 ? `<span style="color:#0f766e;font-weight:700;font-size:0.74rem;background:#ccfbf1;padding:1px 6px;border-radius:4px;"><i class="fa-solid fa-coins"></i> ${getPlanCurrency(plan).symbol}${Number(lt.cost).toLocaleString()}</span>` : ''}
                     ${lt.googleInfo ? `<span class="tl-google-chip"><i class="fa-brands fa-google"></i> ${escapeHtml(lt.googleInfo)}</span>` : ''}
                     ${lt.notes ? `<span style="font-size:0.74rem;color:#64748b;"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(lt.notes)}</span>` : ''}
                 </div>
@@ -13641,6 +13643,7 @@ const firebaseConfig = {
             document.getElementById('ltMode').value = lt.mode || 'transit';
             document.getElementById('ltMinutes').value = (lt.minutes !== undefined && lt.minutes !== '') ? lt.minutes : 30;
             document.getElementById('ltNotes').value = lt.notes || '';
+            document.getElementById('ltCost').value = (Number(lt.cost) > 0) ? lt.cost : '';
             openModal('lastTransitModal');
         }
         function saveLastTransit() {
@@ -13650,7 +13653,7 @@ const firebaseConfig = {
             const prev = day.lastTransit || {};
             const minutes = Math.max(0, parseInt(document.getElementById('ltMinutes').value, 10) || 0);
             const mode = document.getElementById('ltMode').value;
-            day.lastTransit = { mode, minutes, notes: document.getElementById('ltNotes').value.trim() };
+            day.lastTransit = { mode, minutes, notes: document.getElementById('ltNotes').value.trim(), cost: Math.max(0, parseFloat(document.getElementById('ltCost').value) || 0) };
             if (prev.googleInfo && prev.minutes === minutes) day.lastTransit.googleInfo = prev.googleInfo;
             saveState();
             closeModal('lastTransitModal');
@@ -14002,6 +14005,80 @@ const firebaseConfig = {
         selectDayTab = function (n) {
             __tlUserPicked = true;
             return __origSelectDayTabForPick(n);
+        };
+
+        
+        // ===== V3.13.8：行程交通費用（站間／起程／回飯店）同步到預算 =====
+        function sgSyncTransitCostItems(plan) {
+            if (!plan || !Array.isArray(plan.days)) return false;
+            const curr = getPlanCurrency(plan);
+            const memberCount = Math.max(1, Number(plan.memberCount) || 1);
+            let changed = false;
+            const uid = (o, p) => { if (!o._uid) { o._uid = p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); changed = true; } return o._uid; };
+            plan.days.forEach(d => {
+                const srcs = [];
+                const evs = d.events || [];
+                evs.forEach((ev, i) => {
+                    if (ev && ev.transit && Number(ev.transit.cost) > 0) {
+                        const prev = evs[i - 1];
+                        if (!ev._eid) { ev._eid = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); changed = true; }
+                        srcs.push({ key: 'tr-' + ev._eid, title: `行程交通：${prev ? prev.title : '出發'} → ${ev.title}`, cost: Number(ev.transit.cost) });
+                    }
+                });
+                if (d.firstTransit && Number(d.firstTransit.cost) > 0) {
+                    if (!d._ftUid) { d._ftUid = 'ft' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); changed = true; }
+                    srcs.push({ key: 'ft-' + d._ftUid, title: `起程交通：${d.firstTransit.fromLoc && d.firstTransit.fromLoc !== '出發地' ? d.firstTransit.fromLoc : '出發地'} → 首站`, cost: Number(d.firstTransit.cost) });
+                }
+                if (d.lastTransit && Number(d.lastTransit.cost) > 0) {
+                    if (!d._ltUid) { d._ltUid = 'lt' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); changed = true; }
+                    srcs.push({ key: 'lt-' + d._ltUid, title: '回飯店交通', cost: Number(d.lastTransit.cost) });
+                }
+                const oldAuto = Array.isArray(d.transports) ? d.transports.filter(t => t && t.autoKey) : [];
+                if (!srcs.length && !oldAuto.length) return;
+                if (!Array.isArray(d.transports)) {
+                    if (typeof ensureDayCategoryArrays === 'function') ensureDayCategoryArrays(d);
+                    if (!Array.isArray(d.transports)) d.transports = [];
+                }
+                const keep = d.transports.filter(t => !(t && t.autoKey));
+                const newAuto = srcs.map(s => {
+                    const old = oldAuto.find(t => t.autoKey === s.key) || {};
+                    return Object.assign({}, old, { title: s.title, cost: s.cost, curr: 'LOCAL', mode: 'single', autoKey: s.key });
+                });
+                const sig = a => JSON.stringify(a.map(t => [t.autoKey, t.title, t.cost]));
+                if (sig(oldAuto) !== sig(newAuto)) {
+                    d.transports = keep.concat(newAuto);
+                    changed = true;
+                }
+                // 同步每日預算彙總欄位（只加上這次自動項目與上次的差額）
+                const tot = { pl: 0, pt: 0, gl: 0, gt: 0 };
+                newAuto.forEach(t => {
+                    const c = calcCostItemBreakdown(t.cost, 'LOCAL', 'single', memberCount, curr, curr.rate);
+                    tot.pl += c.personLocal; tot.pt += c.personTwd; tot.gl += c.groupLocal; tot.gt += c.groupTwd;
+                });
+                const prevTot = d._autoTrans || { pl: 0, pt: 0, gl: 0, gt: 0 };
+                const dl = { pl: tot.pl - prevTot.pl, pt: tot.pt - prevTot.pt, gl: tot.gl - prevTot.gl, gt: tot.gt - prevTot.gt };
+                if (dl.pl || dl.pt || dl.gl || dl.gt) {
+                    const add = (k, v) => { if (d[k] !== undefined && d[k] !== null && !isNaN(Number(d[k]))) d[k] = Math.round((Number(d[k]) + v) * 100) / 100; };
+                    add('budget', dl.pl); add('budgetTwd', dl.pt); add('budgetGroup', dl.gl); add('budgetGroupTwd', dl.gt);
+                    add('transportCost', dl.pl); add('transportCostGroup', dl.gl);
+                    d._autoTrans = tot;
+                    changed = true;
+                }
+            });
+            return changed;
+        }
+        const __origSaveStateForTransit = saveState;
+        saveState = function (skipCloud) {
+            try { sgSyncTransitCostItems(getCurrentPlan()); } catch (e) { console.warn('交通費用同步失敗', e); }
+            return __origSaveStateForTransit(skipCloud);
+        };
+        const __origRenderAllForTransit = renderAll;
+        renderAll = function () {
+            try {
+                const p = getCurrentPlan();
+                if (p && sgSyncTransitCostItems(p)) saveState(true);
+            } catch (e) { console.warn('交通費用同步失敗', e); }
+            return __origRenderAllForTransit.apply(this, arguments);
         };
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
