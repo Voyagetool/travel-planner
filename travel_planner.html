@@ -6050,6 +6050,14 @@
         .plan-status-tag.done { background: #e4f4ea; color: #1f6b45; border-color: #bfe3cc; }
         .plan-status-tag.planning { background: #eaf3ff; color: #1d5fb4; border-color: #cfe1f8; }
         .plan-picker-item span.pp-name { flex: 1; min-width: 0; }
+    
+        /* ===== V3.11.0 班機日期選擇 / 依住宿的起程交通 ===== */
+        .flight-day-chip { display: inline-flex; align-items: center; gap: 5px; background: #eef5f9; border: 1px solid #d3e4ec; color: #286678; border-radius: 999px; padding: 1px 4px 1px 9px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+        .flight-day-chip select { border: none; background: #ffffff; color: #1f5f78; border-radius: 999px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 150px; }
+        .flight-day-chip small { font-weight: 500; color: #64748b; font-size: 0.66rem; padding-right: 6px; }
+        .flight-fix-btn { border: 1px dashed #cadfe8; background: #f7fbfd; color: #286678; border-radius: 999px; padding: 1px 9px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+        .tl-from-chip { background: #fff7e8; color: #a05a0a; border: 1px solid #f5d9a8; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 1px 8px; white-space: nowrap; }
+        .tl-leave-chip { background: #e8f6ee; color: #1f6b45; border: 1px solid #bfe3cc; border-radius: 999px; font-size: 0.7rem; font-weight: 800; padding: 1px 8px; white-space: nowrap; }
     </style>
 </head>
 <body class="app-booting" data-boot="載入行程中…">
@@ -6079,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.10.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.11.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6138,6 +6146,9 @@
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
                 <i class="fa-solid fa-map-location-dot"></i> 景點與餐飲攻略
+            </button>
+            <button class="view-tab-btn" id="tabBtn-shopping" onclick="switchView('shopping')">
+                <i class="fa-solid fa-bag-shopping"></i> 購買清單
             </button>
             <button class="view-tab-btn" id="tabBtn-expenses" onclick="switchView('expenses')">
                 <i class="fa-solid fa-chart-pie"></i> 費用與記帳
@@ -6356,6 +6367,41 @@
                         <!-- Populated dynamically -->
                     </div>
                 </div>
+            </div>
+
+            <!-- VIEW 5: 購買清單 -->
+            <div class="view-content-pane" id="view-shopping">
+                <style>
+                    .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:9px;}
+                    .shop-card{background:#fff;border:1px solid #e2e8f0;border-radius:11px;padding:9px 11px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+                    .shop-card.done{background:#f8fafc;opacity:.7;}
+                    .shop-card.done .shop-name{text-decoration:line-through;}
+                    .shop-name{font-weight:800;font-size:0.92rem;color:#0f172a;word-break:break-word;}
+                    .shop-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;font-size:0.74rem;color:#475569;}
+                    .shop-chip{background:#f1f5f9;border-radius:6px;padding:1px 7px;}
+                    .shop-group-h{display:flex;align-items:center;gap:8px;font-weight:800;color:#0369a1;margin:14px 0 7px;font-size:0.92rem;}
+                    .shop-group-h small{color:#64748b;font-weight:600;}
+                    .shop-field{display:flex;flex-direction:column;gap:3px;font-size:0.78rem;font-weight:700;color:#475569;}
+                    .shop-field input,.shop-field select,.shop-field textarea{font-size:0.9rem;font-weight:500;padding:7px 9px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;}
+                </style>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:0.95rem;font-weight:800;color:#0369a1;"><i class="fa-solid fa-bag-shopping" style="color:#0284c7;"></i> 購買清單</span>
+                        <span style="font-size:0.76rem;color:#64748b;">記錄想買的東西、地點、款式與攻略，到當地可快速查看，並可匯出到備忘錄／提醒事項</span>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button type="button" class="n-btn" style="padding:5px 12px;font-size:0.8rem;" onclick="openShoppingExportModal()"><i class="fa-solid fa-share-from-square"></i> 匯出</button>
+                        <button type="button" class="n-btn n-btn-primary" style="padding:5px 12px;font-size:0.8rem;font-weight:700;" onclick="openShoppingModal()"><i class="fa-solid fa-plus"></i> 新增購買項目</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+                    <input type="search" id="shopSearchInput" placeholder="搜尋品名／地點／款式…" oninput="setShopQuery(this.value)" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.85rem;">
+                    <button type="button" class="n-btn" id="shopFilterBtn-all" onclick="setShopFilter('all')" style="padding:3px 10px;font-size:0.76rem;">全部</button>
+                    <button type="button" class="n-btn" id="shopFilterBtn-todo" onclick="setShopFilter('todo')" style="padding:3px 10px;font-size:0.76rem;">待買</button>
+                    <button type="button" class="n-btn" id="shopFilterBtn-done" onclick="setShopFilter('done')" style="padding:3px 10px;font-size:0.76rem;">已買</button>
+                </div>
+                <div id="shopSummary" style="font-size:0.8rem;color:#475569;margin-bottom:4px;"></div>
+                <div id="shopListBody"></div>
             </div>
 
             <!-- 向下相容隱藏錨點 -->
@@ -7157,6 +7203,22 @@
                 <input type="hidden" id="transitDayNum" value="1">
                 <input type="hidden" id="transitEventIdx" value="1">
                 <div class="modal-body">
+                    <div id="transitFirstExtra" style="display:none; background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label class="form-label" style="font-weight:700; color:#0369a1;"><i class="fa-solid fa-hotel"></i> 出發地（可自行修改）</label>
+                            <input type="text" id="transitFromLocInput" class="form-input" placeholder="例如：住宿飯店名稱或地址" oninput="updateFirstTransitPreview()">
+                            <div id="transitLodgingHint" style="font-size:0.74rem; color:#64748b; margin-top:4px; line-height:1.5;"></div>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                            <button type="button" class="n-btn" style="font-size:0.76rem;" onclick="fillFirstTransitFromLodging()"><i class="fa-solid fa-hotel"></i> 依住宿帶入</button>
+                            <button type="button" class="n-btn tl-google-btn" style="font-size:0.76rem;" onclick="googleFillFirstTransit()"><i class="fa-brands fa-google"></i> Google 帶入交通時間</button>
+                            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.76rem; font-weight:700; color:#334155; margin:0;">出門緩衝
+                                <input type="number" id="transitBufferInput" min="0" max="120" value="10" style="width:62px; padding:3px 6px; border:1px solid #cbd5e1; border-radius:8px;" oninput="updateFirstTransitPreview()"> 分鐘
+                            </label>
+                        </div>
+                        <div id="transitLeavePreview" style="font-size:0.84rem; font-weight:700; color:#0f766e; line-height:1.6;"></div>
+                    </div>
+
                     <!-- 起訖兩站摘要資訊卡 -->
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px;">
                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
@@ -8316,6 +8378,59 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 購買清單：新增／編輯 -->
+    <div class="modal-backdrop" id="shoppingModal" onclick="handleBackdropClick(event, 'shoppingModal')">
+        <div class="modal-dialog" style="max-width: 560px;">
+            <div class="modal-header">
+                <div class="modal-title" id="shoppingModalTitle"><i class="fa-solid fa-bag-shopping" style="color:#0284c7;"></i> 新增購買項目</div>
+                <button class="modal-close-btn" onclick="closeModal('shoppingModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;display:grid;gap:11px;">
+                <input type="hidden" id="shopEditId">
+                <label class="shop-field">品名 <span style="color:#ef4444;">*</span><input type="text" id="shopNameInput" placeholder="例如：松本清 防曬乳"></label>
+                <label class="shop-field">購買地點／店家<input type="text" id="shopPlaceInput" list="shopPlaceList" placeholder="例如：淺草 唐吉訶德"><datalist id="shopPlaceList"></datalist></label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 90px;gap:9px;">
+                    <label class="shop-field">單價<input type="number" id="shopPriceInput" min="0" step="any" inputmode="decimal" placeholder="0"></label>
+                    <label class="shop-field">幣別<select id="shopCurrInput"><option value="LOCAL">當地幣</option><option value="TWD">新台幣</option></select></label>
+                    <label class="shop-field">數量<input type="number" id="shopQtyInput" min="1" step="1" value="1" inputmode="numeric"></label>
+                </div>
+                <label class="shop-field">款式／規格／顏色<input type="text" id="shopStyleInput" placeholder="例如：SPF50 / 藍色 / M 號"></label>
+                <label class="shop-field">攻略備註<textarea id="shopNoteInput" rows="3" placeholder="例如：滿 5,500 可退稅、3F 藥妝區、認明綠色包裝"></textarea></label>
+                <label class="shop-field">參考連結（選填）<input type="url" id="shopLinkInput" placeholder="https://"></label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="n-btn" onclick="closeModal('shoppingModal')">取消</button>
+                <button type="button" class="n-btn n-btn-primary" onclick="saveShoppingItem()"><i class="fa-solid fa-check"></i> 儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 購買清單：匯出 -->
+    <div class="modal-backdrop" id="shoppingExportModal" onclick="handleBackdropClick(event, 'shoppingExportModal')">
+        <div class="modal-dialog" style="max-width: 560px;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-share-from-square" style="color:#0284c7;"></i> 匯出購買清單</div>
+                <button class="modal-close-btn" onclick="closeModal('shoppingExportModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;display:grid;gap:10px;">
+                <label class="shop-field">匯出範圍<select id="shopExportScope" onchange="refreshShoppingExportPreview()"><option value="todo">只匯出待買項目</option><option value="all">全部（含已買）</option></select></label>
+                <textarea id="shopExportPreview" rows="9" readonly style="font-size:0.82rem;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;"></textarea>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                    <button type="button" class="n-btn n-btn-primary" onclick="shareShoppingList()"><i class="fa-solid fa-share-nodes"></i> 分享到備忘錄／提醒事項…</button>
+                    <button type="button" class="n-btn" onclick="copyShoppingList()"><i class="fa-regular fa-copy"></i> 複製文字</button>
+                    <button type="button" class="n-btn" onclick="downloadShoppingTxt()"><i class="fa-solid fa-file-lines"></i> 下載 .txt</button>
+                    <button type="button" class="n-btn" onclick="downloadShoppingIcs()"><i class="fa-regular fa-calendar-check"></i> 下載 .ics 待辦</button>
+                </div>
+                <div style="font-size:0.74rem;color:#64748b;line-height:1.6;">
+                    ⓘ 網頁無法直接寫入手機的提醒事項／備忘錄，需經系統「分享」：<br>
+                    • <b>iPhone</b>：按「分享」→ 選「備忘錄」（最適合；選「提醒事項」會建立成一則）。<br>
+                    • <b>Android</b>：按「分享」→ 選 Google Keep／備忘錄類 App；或「複製文字」貼上。<br>
+                    • <b>.ics 待辦</b>：每個項目一則 VTODO，Mac 的「提醒事項」可直接匯入；其他 App 支援度不一。
+                </div>
+            </div>
         </div>
     </div>
 
@@ -10818,6 +10933,7 @@ const firebaseConfig = {
             renderTimelineView();
             renderBookingView();
             renderSpotGuidesView();
+            if (typeof renderShoppingView === 'function') renderShoppingView();
             renderBudgetView();
             if (typeof renderActualExpensesView === 'function') renderActualExpensesView();
             renderPlanSelectDropdown();
@@ -11363,7 +11479,7 @@ const firebaseConfig = {
             }
 
             // 目標天數：去程為 Day 1，回程為最後一天
-            const targetDayNum = isOutbound ? 1 : (plan.days ? plan.days[plan.days.length - 1].dayNum : 1);
+            const targetDayNum = getFlightLegTargetDayNum(plan, legIdx);
             const targetDay = (plan.days || []).find(d => d.dayNum === targetDayNum);
             if (!targetDay) {
                 showToast('error', `找不到 Day ${targetDayNum} 之行程！`);
@@ -11666,7 +11782,7 @@ const firebaseConfig = {
             const mtCount = stats.majorTransportStats ? stats.majorTransportStats.count : 0;
 
             const inlineQuickLogistics = [
-                flightSummary ? `<i class="fa-solid fa-plane-departure" style="color:#568294;"></i> ${escapeHtml(flightSummary)}` : '',
+                flightDayChipsHtml(plan) || (flightSummary ? `<i class="fa-solid fa-plane-departure" style="color:#568294;"></i> ${escapeHtml(flightSummary)}` : ''),
                 hotelShortNames ? `<i class="fa-solid fa-hotel" style="color:#568294;"></i> ${escapeHtml(hotelShortNames)}` : ''
             ].filter(Boolean).join('<span style="color:#cbd5e1; margin:0 6px;">|</span>');
 
@@ -12212,6 +12328,7 @@ const firebaseConfig = {
                 activeDay.events = sortDayEventsByTime(activeDay.events);
             }
             const events = activeDay.events || [];
+            const dayLodging = getDayLodging(plan, activeDay.dayNum);
             const curr = getPlanCurrency(plan);
 
             // 當日起程交通移動接駁條 (首站出發交通，例如專車去機場)
@@ -12225,6 +12342,9 @@ const firebaseConfig = {
                 const fTwdHint = (curr.code !== 'TWD' && fCost > 0) ? ` (≈ NT$ ${fTwd.toLocaleString()})` : '';
                 const fCostHtml = fCost > 0 ? `<span style="color:#0f766e; font-weight:700; font-size:0.74rem; background:#ccfbf1; padding:1px 6px; border-radius:4px; margin-left:4px;" title="起程交通費用"><i class="fa-solid fa-coins"></i> ${curr.symbol}${fCost.toLocaleString()}${fTwdHint}</span>` : '';
                 const fRange = (fTransit.startTimeStr && fTransit.endTimeStr) ? `(${fTransit.startTimeStr} ➔ ${fTransit.endTimeStr})` : '';
+                const fFromChip = (fTransit.fromLoc && fTransit.fromLoc !== '出發地') ? `<span class="tl-from-chip" title="${escapeHtml(fTransit.fromAddr || '')}"><i class="fa-solid fa-hotel"></i> 從 ${escapeHtml(fTransit.fromLoc)}</span>` : '';
+                const fLeaveChip = fTransit.startTimeStr ? `<span class="tl-leave-chip" title="含出門緩衝 ${Number(fTransit.bufferMin || 0)} 分鐘"><i class="fa-regular fa-bell"></i> 建議 ${fTransit.startTimeStr} 離開</span>` : '';
+                const fGoogleChip = fTransit.googleInfo ? `<span class="tl-google-chip"><i class="fa-brands fa-google"></i> ${escapeHtml(fTransit.googleInfo)}</span>` : '';
 
                 firstTransitHtml = `
                     <div class="timeline-transit-row" style="margin-bottom:8px; background:#f3f8fa; border:1px dashed #b9d4df; border-radius:8px; padding:6px 10px;">
@@ -12234,6 +12354,7 @@ const firebaseConfig = {
                             <i class="fa-solid ${fModeInfo.icon}"></i>
                             <span>${fModeInfo.label}約 <strong>${formatDuration(fMinutes)}</strong></span>
                             <span style="font-size:0.68rem; opacity:0.85; margin-left:2px;">${fRange}</span>
+                            ${fFromChip} ${fLeaveChip} ${fGoogleChip}
                             ${fCostHtml}
                             ${fTransit.notes ? `<span style="font-size:0.7rem; color:#64748b; margin-left:4px;" title="${escapeHtml(fTransit.notes)}"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(fTransit.notes.length > 18 ? fTransit.notes.slice(0, 18) + '…' : fTransit.notes)}</span>` : ''}
                             <i class="fa-solid fa-pen-to-square" style="font-size:0.68rem; opacity:0.6; margin-left:4px;"></i>
@@ -12254,6 +12375,7 @@ const firebaseConfig = {
                         <button type="button" class="n-btn" style="font-size:0.72rem; padding:3px 10px; color:#2b6576; background:#f3f8fa; border:1px dashed #b9d4df; border-radius:6px; font-weight:600;" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="設定當日從出發地/飯店前往首站的起程交通接駁">
                             <i class="fa-solid fa-location-arrow"></i> 設定當日起程交通 (專車出發/前往機場/地鐵)
                         </button>
+                        ${dayLodging ? `<button type="button" class="n-btn" style="font-size:0.72rem; padding:3px 10px; margin-left:6px; color:#1f6b45; background:#f1faf5; border:1px dashed #bfe3cc; border-radius:6px; font-weight:700;" onclick="applyLodgingFirstTransit(${activeDay.dayNum})" title="依前一晚的住宿自動設定出發地、交通時間與建議離開時間"><i class="fa-solid fa-hotel"></i> 依住宿「${escapeHtml(dayLodging.name)}」自動設定</button>` : ''}
                     </div>
                 `;
             }
@@ -12268,6 +12390,7 @@ const firebaseConfig = {
                     </div>
                     <button type="button" class="tl-status-link" onclick="markDayDone(${activeDay.dayNum}, ${doneCount === events.length ? 'false' : 'true'})">${doneCount === events.length ? '取消整天完成' : '整天標為已完成'}</button>
                     <button type="button" class="tl-status-link" onclick="markPastDaysDone()" title="依旅程日期，把今天以前的天數全部標為已完成">把今天以前的行程標為已完成</button>
+                    <button type="button" class="tl-status-link" onclick="applyLodgingFirstTransitAll()" title="依各天前一晚的住宿，自動設定出發地、交通時間與建議離開時間"><i class="fa-solid fa-hotel"></i> 全部天數依住宿設定起程交通</button>
                 </div>` : '';
             let eventsHtml = '';
             if (events.length === 0) {
@@ -13234,6 +13357,709 @@ const firebaseConfig = {
             showToast('success', `已把今天以前的 ${dayCnt} 天（共 ${n} 個項目）標為已完成`);
         }
 
+
+        // ===== V3.11.0：班機固定首末日（可手動指定）/ 單日起程交通（依住宿）=====
+        function getFlightLegTargetDayNum(plan, legIdx) {
+            const days = (plan && plan.days) || [];
+            if (!days.length) return 1;
+            const leg = ((plan.flights && plan.flights.legs) || [])[legIdx] || {};
+            const nums = days.map(d => d.dayNum);
+            if (leg.dayNum && nums.includes(Number(leg.dayNum))) return Number(leg.dayNum);
+            const isOut = (legIdx === 0 || leg.type === 'outbound');
+            return isOut ? days[0].dayNum : days[days.length - 1].dayNum;
+        }
+
+        // 讓每個航段的行程項目都位在它該在的那一天（預設：去程＝第一天、回程＝最後一天）
+        function relocateFlightEvents(plan) {
+            if (!plan || !Array.isArray(plan.days) || !plan.days.length) return 0;
+            const legs = (plan.flights && plan.flights.legs) || [];
+            if (!legs.length) return 0;
+            const found = {};
+            plan.days.forEach(d => (d.events || []).forEach(ev => {
+                if (ev.type !== 'flight') return;
+                let idx = (ev.flightLegIndex !== undefined && ev.flightLegIndex !== null) ? Number(ev.flightLegIndex) : -1;
+                if (idx < 0) {
+                    idx = legs.findIndex(l => l && l.flightNo && String(ev.title || '').includes(String(l.flightNo)));
+                }
+                if (idx < 0 || !legs[idx]) return;
+                (found[idx] = found[idx] || []).push({ day: d, ev });
+            }));
+            let moved = 0;
+            const touched = new Set();
+            Object.keys(found).forEach(k => {
+                const idx = Number(k);
+                const target = plan.days.find(d => d.dayNum === getFlightLegTargetDayNum(plan, idx));
+                if (!target) return;
+                const list = found[k];
+                const keep = list.find(x => x.day === target) || list[0];
+                list.forEach(x => {
+                    if (x === keep) return;
+                    const sameThing = x.ev.time === keep.ev.time && x.ev.title === keep.ev.title;
+                    if (sameThing) {
+                        if (Number(x.ev.cost) > 0 && !(Number(keep.ev.cost) > 0)) keep.ev.cost = x.ev.cost;
+                        x.day.events = x.day.events.filter(e => e !== x.ev);
+                        touched.add(x.day);
+                        moved++;
+                    } else if (x.day !== target) {
+                        x.day.events = x.day.events.filter(e => e !== x.ev);
+                        if (!Array.isArray(target.events)) target.events = [];
+                        target.events.push(x.ev);
+                        touched.add(x.day); touched.add(target);
+                        moved++;
+                    }
+                });
+                keep.ev.flightLegIndex = idx;
+                if (keep.day !== target) {
+                    keep.day.events = keep.day.events.filter(e => e !== keep.ev);
+                    if (!Array.isArray(target.events)) target.events = [];
+                    target.events.push(keep.ev);
+                    touched.add(keep.day); touched.add(target);
+                    moved++;
+                }
+            });
+            touched.forEach(d => { d.events = sortDayEventsByTime(d.events); });
+            return moved;
+        }
+
+        function setFlightLegDay(legIdx, val) {
+            const plan = getCurrentPlan();
+            const leg = plan && plan.flights && plan.flights.legs && plan.flights.legs[legIdx];
+            if (!leg) return;
+            if (val) leg.dayNum = Number(val); else delete leg.dayNum;
+            relocateFlightEvents(plan);
+            const target = (plan.days || []).find(d => d.dayNum === getFlightLegTargetDayNum(plan, legIdx));
+            const has = target && (target.events || []).some(e => e.type === 'flight' && Number(e.flightLegIndex) === legIdx);
+            saveState();
+            renderAll();
+            if (!has && (leg.flightNo || leg.depTime)) {
+                syncFlightLegToDaySchedule(legIdx);
+            } else {
+                showToast('success', `已將${legIdx === 0 ? '去程' : '回程'}班機安排在 Day ${getFlightLegTargetDayNum(plan, legIdx)}${val ? '' : '（自動：' + (legIdx === 0 ? '第一天' : '最後一天') + '）'}`);
+            }
+        }
+
+        function fixFlightPlacement() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const n = relocateFlightEvents(plan);
+            saveState();
+            renderAll();
+            showToast(n ? 'success' : 'info', n ? `已校正班機位置（調整 ${n} 筆）` : '班機都已在正確的天數');
+        }
+
+        function flightDayChipsHtml(plan) {
+            const legs = (plan.flights && plan.flights.legs) || [];
+            const days = plan.days || [];
+            const chips = legs.map((l, i) => {
+                if (!l || !(l.flightNo || l.depTime)) return '';
+                const isOut = (i === 0 || l.type === 'outbound');
+                const cur = getFlightLegTargetDayNum(plan, i);
+                const opts = `<option value="">自動（${isOut ? '第一天' : '最後一天'}）</option>` + days.map(d => {
+                    const lb = getDayDateLabel(plan, d);
+                    return `<option value="${d.dayNum}" ${Number(l.dayNum) === d.dayNum ? 'selected' : ''}>Day ${d.dayNum}${lb ? ' · ' + escapeHtml(lb) : ''}</option>`;
+                }).join('');
+                return `<span class="flight-day-chip" onclick="event.stopPropagation()"><i class="fa-solid ${isOut ? 'fa-plane-departure' : 'fa-plane-arrival'}"></i> ${isOut ? '去程' : '回程'} ${escapeHtml(l.flightNo || '')}<select onclick="event.stopPropagation()" onchange="setFlightLegDay(${i}, this.value)" title="選擇這個航班要放在第幾天">${opts}</select><small>Day ${cur}</small></span>`;
+            }).filter(Boolean).join(' ');
+            return chips ? chips + ` <button type="button" class="flight-fix-btn" onclick="event.stopPropagation(); fixFlightPlacement()" title="把班機項目移回正確的天數">↻ 班機歸位</button>` : '';
+        }
+
+        // ---- 單日起程交通：依住宿設定 ----
+        function getDayLodging(plan, dayNum) {
+            if (!plan) return null;
+            const ymd = sgYmdFromDayNum(plan, dayNum);
+            if (!ymd) return null;
+            const hotels = (plan.hotels && plan.hotels.length) ? plan.hotels : (plan.hotel ? [plan.hotel] : []);
+            return hotels.find(h => h && h.checkIn && h.checkOut && h.checkIn < ymd && ymd <= h.checkOut) || null;
+        }
+        function sgFirstEventOfDay(day) {
+            const evs = (day && day.events || []).slice();
+            sortDayEventsByTime(evs);
+            return evs[0] || null;
+        }
+        function finalizeFirstTransit(ft, firstStartMin) {
+            if (firstStartMin !== null && firstStartMin !== undefined && firstStartMin < 9999) {
+                ft.startTimeStr = fmtMinutesToHHMM(Math.max(0, firstStartMin - Number(ft.minutes || 0) - Number(ft.bufferMin || 0)));
+                ft.endTimeStr = fmtMinutesToHHMM(firstStartMin);
+            }
+            return ft;
+        }
+        function buildLodgingFirstTransit(day, hotel) {
+            const first = sgFirstEventOfDay(day);
+            if (!first) return null;
+            const pf = parseTimeString(first.time);
+            if (pf.startMinutes === 9999) return null;
+            const prev = day.firstTransit || {};
+            const keepCustom = !!prev.custom && prev.minutes !== undefined && prev.minutes !== '';
+            const ft = {
+                title: `從${hotel.name}出發前往首站`,
+                mode: (keepCustom && prev.mode) ? prev.mode : 'transit',
+                minutes: keepCustom ? Number(prev.minutes) : 30,
+                cost: prev.cost || 0,
+                notes: prev.notes || '',
+                fromLoc: hotel.name,
+                fromAddr: hotel.addr || '',
+                bufferMin: (prev.bufferMin !== undefined && prev.bufferMin !== '') ? Number(prev.bufferMin) : 10,
+                custom: true,
+                auto: 'lodging'
+            };
+            if (prev.googleInfo) ft.googleInfo = prev.googleInfo;
+            return finalizeFirstTransit(ft, pf.startMinutes);
+        }
+        async function applyLodgingFirstTransit(dayNum, silent) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return false;
+            const hotel = getDayLodging(plan, day.dayNum);
+            if (!hotel) { if (!silent) showToast('warning', `Day ${day.dayNum} 沒有對應的住宿（住宿日期沒有涵蓋前一晚），請手動設定起程交通`); return false; }
+            const ft = buildLodgingFirstTransit(day, hotel);
+            if (!ft) { if (!silent) showToast('warning', '請先替當天第一個行程設定開始時間'); return false; }
+            if (getGoogleMapsKey()) {
+                try {
+                    const first = sgFirstEventOfDay(day);
+                    const info = await fetchGoogleRouteInfo(hotel.addr || hotel.name, first.loc || first.title, ft.mode);
+                    ft.minutes = info.minutes; ft.mode = info.mode;
+                    ft.googleInfo = `約 ${info.minutes} 分` + (info.km !== null ? `・${info.km} km` : '');
+                    finalizeFirstTransit(ft, parseTimeString(first.time).startMinutes);
+                } catch (e) { /* 取不到就用預設 30 分，可再手動調整 */ }
+            }
+            day.firstTransit = ft;
+            if (!silent) {
+                saveState();
+                renderTimelineView();
+                showToast('success', `已依住宿設定：建議 ${ft.startTimeStr} 離開「${hotel.name}」，交通約 ${ft.minutes} 分鐘`);
+            }
+            return true;
+        }
+        async function applyLodgingFirstTransitAll() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            let ok = 0;
+            for (const d of (plan.days || [])) {
+                if (d.firstTransit && d.firstTransit.custom && d.firstTransit.auto !== 'lodging') continue;
+                if (await applyLodgingFirstTransit(d.dayNum, true)) ok++;
+            }
+            saveState();
+            renderTimelineView();
+            showToast(ok ? 'success' : 'warning', ok ? `已依住宿設定 ${ok} 天的起程交通（手動設定過的天數不會被改動）` : '沒有可以自動設定的天數（需要有住宿日期、且當天第一個行程要有時間）');
+        }
+
+        function updateFirstTransitPreview() {
+            const out = document.getElementById('transitLeavePreview');
+            if (!out) return;
+            const plan = getCurrentPlan();
+            const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
+            const day = plan && (plan.days || []).find(d => d.dayNum === dayNum);
+            const first = day && sgFirstEventOfDay(day);
+            const pf = first ? parseTimeString(first.time) : null;
+            const minutes = parseInt(document.getElementById('transitMinutesInput')?.value || '0', 10) || 0;
+            const buffer = parseInt(document.getElementById('transitBufferInput')?.value || '0', 10) || 0;
+            const origin = (document.getElementById('transitFromLocInput')?.value || '').trim() || '出發地';
+            if (!pf || pf.startMinutes === 9999) { out.textContent = '當天第一個行程尚未設定時間，無法推算離開時間'; return; }
+            const leave = fmtMinutesToHHMM(Math.max(0, pf.startMinutes - minutes - buffer));
+            out.innerHTML = `⏰ 建議最晚 <span style="font-size:1rem;">${leave}</span> 離開「${escapeHtml(origin)}」<span style="font-weight:500; color:#64748b;">（出門緩衝 ${buffer} 分 ＋ 交通 ${minutes} 分 → ${pf.startTimeStr} 抵達首站）</span>`;
+            const t1 = document.getElementById('transitFromTitle'); if (t1) t1.innerText = origin;
+            const t2 = document.getElementById('transitFromEndTime'); if (t2) t2.innerText = `預計 ${leave} 離開`;
+            const t3 = document.getElementById('transitFromLoc'); if (t3) t3.innerText = origin;
+        }
+
+        function enhanceTransitModal(dayNum, eventIdx) {
+            const box = document.getElementById('transitFirstExtra');
+            if (!box) return;
+            if (Number(eventIdx) !== 0) { box.style.display = 'none'; return; }
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+            box.style.display = 'block';
+            const hotel = getDayLodging(plan, day.dayNum);
+            const ft = day.firstTransit || {};
+            const originEl = document.getElementById('transitFromLocInput');
+            originEl.value = (ft.fromLoc && ft.fromLoc !== '出發地') ? ft.fromLoc : (hotel ? hotel.name : '');
+            document.getElementById('transitLodgingHint').innerHTML = hotel
+                ? `🏨 前一晚住宿：<strong>${escapeHtml(hotel.name)}</strong>${hotel.addr ? '（' + escapeHtml(hotel.addr) + '）' : ''}`
+                : '這一天沒有對應的住宿（第一天或住宿日期沒有涵蓋前一晚），請自行輸入出發地。';
+            if (!ft.custom && hotel) {
+                document.getElementById('transitMinutesInput').value = 30;
+                const ms = document.getElementById('transitModeSelect'); if (ms) ms.value = 'transit';
+                const ti = document.getElementById('transitTitleInput'); if (ti) ti.value = `從${hotel.name}出發前往首站`;
+            }
+            document.getElementById('transitBufferInput').value = (ft.bufferMin !== undefined && ft.bufferMin !== '') ? ft.bufferMin : 10;
+            if (!box.dataset.bound) {
+                box.dataset.bound = '1';
+                ['transitMinutesInput'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updateFirstTransitPreview); });
+            }
+            updateFirstTransitPreview();
+        }
+        function fillFirstTransitFromLodging() {
+            const plan = getCurrentPlan();
+            const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
+            const hotel = getDayLodging(plan, dayNum);
+            if (!hotel) { showToast('warning', '這一天沒有對應的住宿可以帶入'); return; }
+            document.getElementById('transitFromLocInput').value = hotel.name;
+            const ti = document.getElementById('transitTitleInput'); if (ti) ti.value = `從${hotel.name}出發前往首站`;
+            updateFirstTransitPreview();
+            showToast('success', `已帶入住宿「${hotel.name}」`);
+        }
+        async function googleFillFirstTransit() {
+            const plan = getCurrentPlan();
+            const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
+            const day = plan && (plan.days || []).find(d => d.dayNum === dayNum);
+            const first = day && sgFirstEventOfDay(day);
+            if (!first) return;
+            const hotel = getDayLodging(plan, dayNum);
+            const typed = (document.getElementById('transitFromLocInput')?.value || '').trim();
+            const origin = (hotel && typed === hotel.name) ? (hotel.addr || hotel.name) : typed;
+            if (!origin) { showToast('warning', '請先填寫出發地'); return; }
+            if (!getGoogleMapsKey()) {
+                if (!promptGoogleMapsKey()) {
+                    const url = getMapRouteUrl(origin, first.loc || first.title, 'transit', 'google');
+                    if (url) window.open(url, '_blank');
+                    showToast('warning', '尚未設定 API Key，已改為開啟 Google 地圖路線頁');
+                    return;
+                }
+            }
+            try {
+                const mode = document.getElementById('transitModeSelect')?.value || 'transit';
+                const info = await fetchGoogleRouteInfo(origin, first.loc || first.title, mode);
+                document.getElementById('transitMinutesInput').value = info.minutes;
+                const ms = document.getElementById('transitModeSelect'); if (ms) ms.value = info.mode;
+                box_googleInfo = `約 ${info.minutes} 分` + (info.km !== null ? `・${info.km} km` : '');
+                updateFirstTransitPreview();
+                showToast('success', `已帶入 Google 路線：${box_googleInfo}`);
+            } catch (err) {
+                showToast('error', 'Google 路線查詢失敗：' + (err && err.message ? err.message : '請稍後再試'));
+            }
+        }
+        let box_googleInfo = '';
+
+        const __origOpenTransitSettingsModal = openTransitSettingsModal;
+        openTransitSettingsModal = function (dayNum, eventIdx) {
+            box_googleInfo = '';
+            __origOpenTransitSettingsModal(dayNum, eventIdx);
+            try { enhanceTransitModal(dayNum, eventIdx); } catch (e) { console.warn('起程交通增強失敗', e); }
+        };
+        const __origHandleSaveTransitSubmit = handleSaveTransitSubmit;
+        handleSaveTransitSubmit = function (e) {
+            const idx = Number(document.getElementById('transitEventIdx')?.value || 1);
+            if (idx !== 0) return __origHandleSaveTransitSubmit(e);
+            if (e) {
+                if (typeof e.preventDefault === 'function') e.preventDefault();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            }
+            const plan = getCurrentPlan();
+            const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
+            const day = plan && (plan.days || []).find(d => d.dayNum === dayNum);
+            if (!day || !day.events || !day.events.length) return false;
+            const minutes = parseInt(document.getElementById('transitMinutesInput')?.value || '0', 10) || 0;
+            const mode = document.getElementById('transitModeSelect')?.value || 'car';
+            const cost = parseFloat(document.getElementById('transitCostInput')?.value) || 0;
+            const notes = document.getElementById('transitNotesInput')?.value.trim() || '';
+            const origin = (document.getElementById('transitFromLocInput')?.value || '').trim() || '出發地';
+            const buffer = Math.max(0, parseInt(document.getElementById('transitBufferInput')?.value || '0', 10) || 0);
+            const title = document.getElementById('transitTitleInput')?.value.trim() || (origin !== '出發地' ? `從${origin}出發前往首站` : '專車接送出發前往第一站');
+            const hotel = getDayLodging(plan, dayNum);
+            const prevFt = day.firstTransit || {};
+            const fromAddr = (hotel && origin === hotel.name) ? (hotel.addr || '') : ((prevFt.fromLoc === origin && prevFt.fromAddr) ? prevFt.fromAddr : '');
+            const first = sgFirstEventOfDay(day);
+            const pFirst = parseTimeString(first.time);
+            const ft = { title, mode, minutes, cost, notes, fromLoc: origin, fromAddr, bufferMin: buffer, custom: true };
+            if (box_googleInfo) ft.googleInfo = box_googleInfo;
+            else if (prevFt.googleInfo && prevFt.minutes === minutes) ft.googleInfo = prevFt.googleInfo;
+            finalizeFirstTransit(ft, pFirst.startMinutes);
+            if (!ft.startTimeStr) { ft.startTimeStr = ''; ft.endTimeStr = pFirst.startTimeStr || ''; }
+            day.firstTransit = ft;
+            saveState();
+            renderTimelineView();
+            closeModal('transitSettingsModal');
+            showToast('success', ft.startTimeStr ? `已儲存起程交通：建議 ${ft.startTimeStr} 離開${origin}` : '已儲存起程交通設定');
+            return false;
+        };
+
+        
+        // ===== V3.11.0：景點看板（Kanban）=====
+        const SG_KANBAN_STYLE = `<style>
+            .sg-kb-board{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 12px;align-items:flex-start;scroll-snap-type:x proximity;}
+            .sg-kb-col{flex:0 0 250px;max-width:270px;background:#f1f5f9;border-radius:12px;padding:8px;scroll-snap-align:start;border:1px solid #e2e8f0;}
+            .sg-kb-col.drag-over{background:#e0f2fe;border-color:#7dd3fc;}
+            .sg-kb-col-head{display:flex;align-items:center;gap:6px;font-weight:800;font-size:0.82rem;color:#334155;padding:2px 4px 8px;}
+            .sg-kb-col-head small{font-weight:600;color:#64748b;}
+            .sg-kb-count{margin-left:auto;background:#e2e8f0;color:#475569;border-radius:999px;font-size:0.7rem;padding:0 8px;font-weight:700;}
+            .sg-kb-card{background:#fff;border:1px solid #e2e8f0;border-left:4px solid #38bdf8;border-radius:9px;padding:8px 9px;margin-bottom:7px;box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:grab;}
+            .sg-kb-card.food{border-left-color:#fb923c;}
+            .sg-kb-card.dragging{opacity:.45;}
+            .sg-kb-title{font-weight:800;font-size:0.86rem;color:#0f172a;line-height:1.3;word-break:break-word;}
+            .sg-kb-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;font-size:0.7rem;color:#475569;}
+            .sg-kb-chip{background:#f1f5f9;border-radius:6px;padding:1px 6px;}
+            .sg-kb-act{display:flex;gap:4px;margin-top:7px;align-items:center;flex-wrap:wrap;}
+            .sg-kb-act select{font-size:0.7rem;padding:2px 3px;border:1px solid #cbd5e1;border-radius:6px;max-width:112px;background:#fff;}
+            .sg-kb-empty{text-align:center;color:#94a3b8;font-size:0.74rem;padding:12px 0;border:1px dashed #cbd5e1;border-radius:8px;}
+        </style>`;
+
+        function sgKanbanDayColumns(plan) {
+            const info = (typeof buildPlanDateToDayMap === 'function') ? buildPlanDateToDayMap(plan) : { map: {} };
+            const inv = {};
+            Object.keys(info.map || {}).forEach(ymd => { inv[info.map[ymd]] = ymd; });
+            const wd = ['日', '一', '二', '三', '四', '五', '六'];
+            return (plan.days || []).map(d => {
+                const ymd = inv[d.dayNum] || '';
+                let md = d.date || '';
+                if (ymd) {
+                    const p = ymd.split('-');
+                    const dt = new Date(+p[0], +p[1] - 1, +p[2]);
+                    md = `${+p[1]}/${+p[2]} (${wd[dt.getDay()]})`;
+                }
+                return { dayNum: d.dayNum, ymd, label: md };
+            });
+        }
+
+        function sgDefaultStartTime(item) {
+            if (item.category === 'food') {
+                if (item.mealType === 'lunch') return '12:00';
+                if (item.mealType === 'dinner') return '18:00';
+            }
+            return '10:00';
+        }
+
+        function moveSpotToColumn(idx, key) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            ensureUnifiedSpotGuides(plan);
+            const item = plan.spotTips[idx];
+            if (!item) return;
+            if (key === 'pending') {
+                toggleSpotGuideScheduled(idx, false);
+                return;
+            }
+            const col = sgKanbanDayColumns(plan).find(c => String(c.dayNum) === String(key));
+            if (!col || !col.ymd) {
+                showToast('warning', '此天尚未設定日期，請先在行程設定日期區間');
+                return;
+            }
+            item.visitDate = col.ymd;
+            item.scheduled = true;
+            if (!item.visitStartTime) {
+                item.visitStartTime = sgDefaultStartTime(item);
+                if (!item.visitEndTime) {
+                    const hh = parseInt(item.visitStartTime.slice(0, 2), 10) + 1;
+                    item.visitEndTime = String(Math.min(hh, 23)).padStart(2, '0') + item.visitStartTime.slice(2);
+                }
+            }
+            try { syncSpotGuideToDailySchedule(plan, item); } catch (e) { console.error(e); }
+            try { syncMealsFromSpotGuides(plan); } catch (e) {}
+            saveState();
+            renderAll();
+            showToast('success', `已將「${item.name}」排入第 ${col.dayNum} 天`);
+        }
+
+        let __sgDragIdx = null;
+        function sgKbDragStart(ev, idx) {
+            __sgDragIdx = idx;
+            try { ev.dataTransfer.setData('text/plain', String(idx)); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
+            ev.currentTarget.classList.add('dragging');
+        }
+        function sgKbDragEnd(ev) { ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('.sg-kb-col.drag-over').forEach(c => c.classList.remove('drag-over')); }
+        function sgKbDragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function sgKbDragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        function sgKbDrop(ev, key) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+            const idx = (__sgDragIdx !== null) ? __sgDragIdx : parseInt(ev.dataTransfer.getData('text/plain'), 10);
+            __sgDragIdx = null;
+            if (isNaN(idx)) return;
+            moveSpotToColumn(idx, key);
+        }
+
+        function renderSpotKanban(plan, list, resolvedList, filterBarHtml, container) {
+            const cols = sgKanbanDayColumns(plan);
+            const buckets = { pending: [] };
+            cols.forEach(c => { buckets[c.dayNum] = []; });
+            list.forEach((item, idx) => {
+                const info = resolvedList[idx];
+                const isFood = item.category === 'food';
+                if (spotGuidesFilterMode === 'spot' && isFood) return;
+                if (spotGuidesFilterMode === 'food' && !isFood) return;
+                if (spotGuidesFilterMode === 'pending' && info.isScheduled) return;
+                if (spotGuidesFilterMode === 'scheduled' && !info.isScheduled) return;
+                if (spotGuidesFilterMode === 'booking' && !item.hasBooking) return;
+                const key = (info.isScheduled && info.dayNum && buckets[info.dayNum]) ? info.dayNum : 'pending';
+                buckets[key].push({ item, idx, info });
+            });
+            const timeKey = (o) => (o.info.timeDisplay || o.item.visitStartTime || '99:99').slice(0, 5);
+            cols.forEach(c => buckets[c.dayNum].sort((a, b) => timeKey(a).localeCompare(timeKey(b))));
+
+            const optionsHtml = (cur) => `<option value="">移至…</option><option value="pending"${cur === 'pending' ? ' disabled' : ''}>待安排</option>` +
+                cols.map(c => `<option value="${c.dayNum}"${String(cur) === String(c.dayNum) ? ' disabled' : ''}>Day ${c.dayNum}${c.label ? ' ' + escapeHtml(c.label) : ''}</option>`).join('');
+
+            const cardHtml = (o, curKey) => {
+                const { item, idx, info } = o;
+                const isFood = item.category === 'food';
+                const kids = (Array.isArray(item.children) ? item.children : []).filter(c => c && c.name);
+                const chips = [];
+                if (info.timeDisplay) chips.push(`<span class="sg-kb-chip"><i class="fa-regular fa-clock"></i> ${escapeHtml(info.timeDisplay)}</span>`);
+                if (isFood && item.mealType === 'lunch') chips.push('<span class="sg-kb-chip" style="background:#fff7ed;color:#c2410c;">午餐</span>');
+                if (isFood && item.mealType === 'dinner') chips.push('<span class="sg-kb-chip" style="background:#fef2f2;color:#b91c1c;">晚餐</span>');
+                if (kids.length) chips.push(`<span class="sg-kb-chip"><i class="fa-solid fa-sitemap"></i> ${kids.length} 個細部</span>`);
+                if (item.hasBooking) chips.push(`<span class="sg-kb-chip" style="background:#fef3c7;color:#b45309;"><i class="fa-solid fa-ticket"></i> ${escapeHtml(item.bookingStatus || '需預約')}</span>`);
+                return `<div class="sg-kb-card ${isFood ? 'food' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
+                    <div class="sg-kb-title">${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
+                    ${chips.length ? `<div class="sg-kb-meta">${chips.join('')}</div>` : ''}
+                    <div class="sg-kb-act">
+                        <select onchange="if(this.value){moveSpotToColumn(${idx}, this.value);}" title="移到其他欄位">${optionsHtml(curKey)}</select>
+                        <button type="button" class="n-btn" style="padding:1px 7px;font-size:0.7rem;margin-left:auto;" onclick="openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i></button>
+                        <button type="button" class="n-btn" style="padding:1px 7px;font-size:0.7rem;" onclick="openAddSpotGuideModal(${idx}); openSgMergePicker();" title="整合"><i class="fa-solid fa-object-group"></i></button>
+                        <button type="button" class="n-btn n-btn-danger" style="padding:1px 7px;font-size:0.7rem;" onclick="deleteSpotGuideItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>
+                </div>`;
+            };
+
+            const colHtml = (key, head, arr) => `<div class="sg-kb-col" ondragover="sgKbDragOver(event)" ondragleave="sgKbDragLeave(event)" ondrop="sgKbDrop(event, '${key}')">
+                <div class="sg-kb-col-head">${head}<span class="sg-kb-count">${arr.length}</span></div>
+                ${arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>'}
+            </div>`;
+
+            let html = SG_KANBAN_STYLE + filterBarHtml + '<div class="sg-kb-board">';
+            html += colHtml('pending', '<i class="fa-regular fa-clipboard" style="color:#64748b;"></i> 待安排', buckets.pending);
+            cols.forEach(c => {
+                html += colHtml(String(c.dayNum), `<i class="fa-regular fa-calendar" style="color:#0284c7;"></i> Day ${c.dayNum} <small>${escapeHtml(c.label)}</small>`, buckets[c.dayNum]);
+            });
+            html += '</div><div style="font-size:0.72rem;color:#94a3b8;">提示：電腦可直接拖曳卡片到欄位；手機請用卡片上的「移至…」選單。排入後會自動同步到該天時間軸。</div>';
+            container.innerHTML = html;
+        }
+
+        // ===== V3.11.0：購買清單 =====
+        let shopFilterMode = 'todo';
+        let shopQueryText = '';
+
+        function getShoppingList(plan) {
+            if (!plan) return [];
+            if (!Array.isArray(plan.shopping)) plan.shopping = [];
+            return plan.shopping;
+        }
+        function shopItemTwd(it, plan) {
+            const c = getPlanCurrency(plan);
+            const unit = Number(it.price) || 0;
+            const qty = Number(it.qty) || 1;
+            return Math.round(unit * qty * (it.curr === 'TWD' ? 1 : (c.code === 'TWD' ? 1 : c.rate)));
+        }
+        function shopPriceText(it, plan) {
+            if (it.price === '' || it.price === undefined || it.price === null || isNaN(Number(it.price))) return '';
+            const c = getPlanCurrency(plan);
+            const unit = Number(it.price);
+            if (it.curr === 'TWD' || c.code === 'TWD') return `NT$ ${unit.toLocaleString()}`;
+            return `${c.symbol}${unit.toLocaleString()} (≈NT$ ${Math.round(unit * c.rate).toLocaleString()})`;
+        }
+        function setShopQuery(v) { shopQueryText = String(v || '').trim().toLowerCase(); renderShoppingList(); }
+        function setShopFilter(m) { shopFilterMode = m; renderShoppingList(); }
+
+        function shopFilteredItems(plan, scope) {
+            const mode = scope || shopFilterMode;
+            return getShoppingList(plan).filter(it => {
+                if (mode === 'todo' && it.done) return false;
+                if (mode === 'done' && !it.done) return false;
+                if (!scope && shopQueryText) {
+                    const hay = [it.name, it.place, it.style, it.note].join(' ').toLowerCase();
+                    if (!hay.includes(shopQueryText)) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderShoppingList() {
+            const plan = getCurrentPlan();
+            const body = document.getElementById('shopListBody');
+            const sum = document.getElementById('shopSummary');
+            if (!plan || !body) return;
+            ['all', 'todo', 'done'].forEach(m => {
+                const b = document.getElementById('shopFilterBtn-' + m);
+                if (b) b.classList.toggle('n-btn-primary', m === shopFilterMode);
+            });
+            const all = getShoppingList(plan);
+            const todo = all.filter(i => !i.done);
+            const todoTwd = todo.reduce((s, i) => s + shopItemTwd(i, plan), 0);
+            const c = getPlanCurrency(plan);
+            if (sum) sum.innerHTML = `共 <b>${all.length}</b> 項｜待買 <b>${todo.length}</b>｜已買 <b>${all.length - todo.length}</b>｜待買預估 <b>NT$ ${todoTwd.toLocaleString()}</b>` + (c.code !== 'TWD' ? `（約 ${c.symbol}${Math.round(todoTwd / (c.rate || 1)).toLocaleString()}）` : '');
+            const dl = document.getElementById('shopPlaceList');
+            if (dl) dl.innerHTML = [...new Set(all.map(i => (i.place || '').trim()).filter(Boolean))].map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
+
+            const items = shopFilteredItems(plan);
+            if (!items.length) {
+                body.innerHTML = `<div style="text-align:center;padding:26px 14px;color:#94a3b8;background:#fff;border:1px dashed #cbd5e1;border-radius:10px;font-size:0.86rem;">${all.length ? '沒有符合條件的項目' : '還沒有購買項目，點右上「新增購買項目」開始記錄。'}</div>`;
+                return;
+            }
+            const groups = {};
+            items.forEach(it => { const k = (it.place || '').trim() || '未指定地點'; (groups[k] = groups[k] || []).push(it); });
+            body.innerHTML = Object.keys(groups).map(place => {
+                const arr = groups[place];
+                const subtotal = arr.reduce((s, i) => s + shopItemTwd(i, plan), 0);
+                return `<div class="shop-group-h"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(place)} <small>${arr.length} 項${subtotal ? ` · NT$ ${subtotal.toLocaleString()}` : ''}</small></div>
+                <div class="shop-grid">${arr.map(it => {
+                    const pt = shopPriceText(it, plan);
+                    return `<div class="shop-card ${it.done ? 'done' : ''}">
+                        <div style="display:flex;gap:8px;align-items:flex-start;">
+                            <input type="checkbox" class="n-checkbox" ${it.done ? 'checked' : ''} onchange="toggleShoppingDone('${it.id}')" style="margin-top:3px;" title="標記已買">
+                            <div style="flex:1;min-width:0;">
+                                <div class="shop-name">${escapeHtml(it.name)}</div>
+                                <div class="shop-meta">
+                                    ${it.style ? `<span class="shop-chip">🏷️ ${escapeHtml(it.style)}</span>` : ''}
+                                    <span class="shop-chip">× ${Number(it.qty) || 1}</span>
+                                    ${pt ? `<span class="shop-chip" style="background:#ecfdf5;color:#047857;">${escapeHtml(pt)}</span>` : ''}
+                                </div>
+                                ${it.note ? `<div style="margin-top:6px;font-size:0.78rem;color:#475569;white-space:pre-wrap;word-break:break-word;">${escapeHtml(it.note)}</div>` : ''}
+                                ${it.link ? `<div style="margin-top:4px;font-size:0.75rem;"><a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">🔗 參考連結</a></div>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:5px;justify-content:flex-end;margin-top:6px;">
+                            <button type="button" class="n-btn" style="padding:1px 8px;font-size:0.72rem;" onclick="openShoppingModal('${it.id}')"><i class="fa-solid fa-pen"></i> 編輯</button>
+                            <button type="button" class="n-btn n-btn-danger" style="padding:1px 8px;font-size:0.72rem;" onclick="deleteShoppingItem('${it.id}')"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </div>`;
+                }).join('')}</div>`;
+            }).join('');
+        }
+        function renderShoppingView() { renderShoppingList(); }
+
+        function openShoppingModal(id) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const it = id ? getShoppingList(plan).find(x => x.id === id) : null;
+            const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v; };
+            set('shopEditId', it ? it.id : '');
+            set('shopNameInput', it ? it.name : '');
+            set('shopPlaceInput', it ? (it.place || '') : '');
+            set('shopPriceInput', it && it.price !== undefined && it.price !== null ? it.price : '');
+            set('shopCurrInput', it ? (it.curr || 'LOCAL') : 'LOCAL');
+            set('shopQtyInput', it ? (it.qty || 1) : 1);
+            set('shopStyleInput', it ? (it.style || '') : '');
+            set('shopNoteInput', it ? (it.note || '') : '');
+            set('shopLinkInput', it ? (it.link || '') : '');
+            const t = document.getElementById('shoppingModalTitle');
+            if (t) t.innerHTML = `<i class="fa-solid fa-bag-shopping" style="color:#0284c7;"></i> ${it ? '編輯購買項目' : '新增購買項目'}`;
+            openModal('shoppingModal');
+        }
+        function saveShoppingItem() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const val = k => (document.getElementById(k) || {}).value || '';
+            const name = val('shopNameInput').trim();
+            if (!name) { showToast('warning', '請輸入品名'); return; }
+            const list = getShoppingList(plan);
+            const id = val('shopEditId');
+            const priceRaw = val('shopPriceInput').trim();
+            const data = {
+                name, place: val('shopPlaceInput').trim(),
+                price: priceRaw === '' ? '' : Number(priceRaw),
+                curr: val('shopCurrInput') === 'TWD' ? 'TWD' : 'LOCAL',
+                qty: Math.max(1, parseInt(val('shopQtyInput'), 10) || 1),
+                style: val('shopStyleInput').trim(), note: val('shopNoteInput').trim(), link: val('shopLinkInput').trim()
+            };
+            const old = id ? list.find(x => x.id === id) : null;
+            if (old) Object.assign(old, data);
+            else list.push(Object.assign({ id: 'shop-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), done: false }, data));
+            saveState();
+            closeModal('shoppingModal');
+            renderShoppingList();
+            showToast('success', old ? '已更新購買項目' : '已新增購買項目');
+        }
+        function toggleShoppingDone(id) {
+            const plan = getCurrentPlan();
+            const it = getShoppingList(plan).find(x => x.id === id);
+            if (!it) return;
+            it.done = !it.done;
+            saveState();
+            renderShoppingList();
+        }
+        function deleteShoppingItem(id) {
+            const plan = getCurrentPlan();
+            const list = getShoppingList(plan);
+            const i = list.findIndex(x => x.id === id);
+            if (i < 0) return;
+            if (!confirm(`確定刪除「${list[i].name}」？`)) return;
+            list.splice(i, 1);
+            saveState();
+            renderShoppingList();
+        }
+
+        // ---- 匯出 ----
+        function buildShoppingExportText(scope) {
+            const plan = getCurrentPlan();
+            const items = shopFilteredItems(plan, scope);
+            const c = getPlanCurrency(plan);
+            const groups = {};
+            items.forEach(it => { const k = (it.place || '').trim() || '未指定地點'; (groups[k] = groups[k] || []).push(it); });
+            const lines = [`🛍️ 購買清單｜${plan.title || plan.name || ''}`];
+            Object.keys(groups).forEach(place => {
+                lines.push('', `📍 ${place}`);
+                groups[place].forEach(it => {
+                    let s = `${it.done ? '☑' : '☐'} ${it.name}`;
+                    if (it.style) s += `（${it.style}）`;
+                    if ((Number(it.qty) || 1) > 1) s += ` ×${it.qty}`;
+                    const pt = shopPriceText(it, plan);
+                    if (pt) s += ` ${pt}`;
+                    if (it.note) s += `\n   ↳ ${String(it.note).replace(/\n/g, ' ')}`;
+                    lines.push(s);
+                });
+            });
+            if (!items.length) lines.push('', '（目前沒有項目）');
+            return lines.join('\n');
+        }
+        function shopExportScopeValue() { return (document.getElementById('shopExportScope') || {}).value || 'todo'; }
+        function refreshShoppingExportPreview() {
+            const el = document.getElementById('shopExportPreview');
+            if (el) el.value = buildShoppingExportText(shopExportScopeValue());
+        }
+        function openShoppingExportModal() { refreshShoppingExportPreview(); openModal('shoppingExportModal'); }
+        function copyShoppingList() {
+            const text = buildShoppingExportText(shopExportScopeValue());
+            const done = () => showToast('success', '已複製，可貼到備忘錄／提醒事項');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(() => { fallbackCopyText(text); done(); });
+            } else { fallbackCopyText(text); done(); }
+        }
+        function fallbackCopyText(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+        function shareShoppingList() {
+            const text = buildShoppingExportText(shopExportScopeValue());
+            if (navigator.share) {
+                navigator.share({ title: '購買清單', text }).catch(() => {});
+            } else {
+                copyShoppingList();
+                showToast('info', '此瀏覽器不支援系統分享，已改為複製文字');
+            }
+        }
+        function downloadShoppingBlob(content, filename, mime) {
+            const blob = new Blob([content], { type: mime });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        }
+        function downloadShoppingTxt() {
+            downloadShoppingBlob('\ufeff' + buildShoppingExportText(shopExportScopeValue()), '購買清單.txt', 'text/plain;charset=utf-8');
+        }
+        function buildShoppingIcs(scope) {
+            const plan = getCurrentPlan();
+            const items = shopFilteredItems(plan, scope);
+            const esc = s => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+            const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+            const out = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TravelPlanner//Shopping//ZH', 'CALSCALE:GREGORIAN'];
+            items.forEach(it => {
+                const desc = [it.place ? `地點：${it.place}` : '', it.style ? `款式：${it.style}` : '', shopPriceText(it, plan) ? `價格：${shopPriceText(it, plan)}` : '', (Number(it.qty) || 1) > 1 ? `數量：${it.qty}` : '', it.note ? `攻略：${it.note}` : '', it.link || ''].filter(Boolean).join('\n');
+                out.push('BEGIN:VTODO', `UID:${it.id}@travel-planner`, `DTSTAMP:${stamp}`,
+                    `SUMMARY:${esc((it.place ? '[' + it.place + '] ' : '') + it.name + (it.style ? '（' + it.style + '）' : ''))}`,
+                    `DESCRIPTION:${esc(desc)}`, `STATUS:${it.done ? 'COMPLETED' : 'NEEDS-ACTION'}`, 'END:VTODO');
+            });
+            out.push('END:VCALENDAR');
+            return out.join('\r\n');
+        }
+        function downloadShoppingIcs() {
+            downloadShoppingBlob(buildShoppingIcs(shopExportScopeValue()), '購買清單.ics', 'text/calendar;charset=utf-8');
+            showToast('info', '已下載 .ics：Mac 可直接用「提醒事項」開啟匯入');
+        }
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -13702,10 +14528,10 @@ const firebaseConfig = {
         }
 
         // ===== 景點清單檢視模式：精簡 / 詳細 =====
-        let spotGuidesViewMode = (function () { try { return localStorage.getItem('spot_guide_view_mode') || 'compact'; } catch (e) { return 'compact'; } })();
+        let spotGuidesViewMode = (function () { try { return localStorage.getItem('spot_guide_view_mode') || 'kanban'; } catch (e) { return 'kanban'; } })();
         const spotGuideExpanded = new Set();
         function setSpotGuideViewMode(mode) {
-            spotGuidesViewMode = (mode === 'detail') ? 'detail' : 'compact';
+            spotGuidesViewMode = (mode === 'detail') ? 'detail' : (mode === 'compact' ? 'compact' : 'kanban');
             try { localStorage.setItem('spot_guide_view_mode', spotGuidesViewMode); } catch (e) {}
             renderSpotGuidesView();
         }
@@ -13749,7 +14575,7 @@ const firebaseConfig = {
                 return info;
             });
             const pendingCount = totalCount - scheduledCount;
-            const isCompactMode = (spotGuidesViewMode !== 'detail');
+            const isCompactMode = (spotGuidesViewMode === 'compact');
 
             const filterBarHtml = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #ffffff; padding: 8px 12px; border-radius: 12px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 8px;">
@@ -13771,13 +14597,19 @@ const firebaseConfig = {
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'pending' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('pending')">待安排</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">需預約/訂位</button>
                         <span style="width:1px; height:18px; background:#e2e8f0; margin:0 3px;"></span>
+                        <button type="button" class="n-btn ${spotGuidesViewMode === 'kanban' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('kanban')" title="依天數分欄的看板，可拖曳排程"><i class="fa-solid fa-table-columns"></i> 看板</button>
                         <button type="button" class="n-btn ${isCompactMode ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('compact')" title="每個項目縮成一列，快速瀏覽"><i class="fa-solid fa-list"></i> 精簡</button>
-                        <button type="button" class="n-btn ${!isCompactMode ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('detail')" title="展開所有詳細資訊"><i class="fa-solid fa-table-list"></i> 詳細</button>
+                        <button type="button" class="n-btn ${spotGuidesViewMode === 'detail' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('detail')" title="展開所有詳細資訊"><i class="fa-solid fa-table-list"></i> 詳細</button>
                     </div>
                 </div>
             `;
 
             const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+            if (spotGuidesViewMode === 'kanban') {
+                renderSpotKanban(plan, list, resolvedList, filterBarHtml, container);
+                return;
+            }
 
             const cardsHtml = list.map((item, idx) => {
                 const info = resolvedList[idx];
@@ -17446,7 +18278,7 @@ const firebaseConfig = {
             appState.activeView = viewName;
 
             // 4 大主膠囊標籤按鈕高亮狀態 (總覽與行程 / 交通與住宿 / 景點與搶票 / 費用與記帳)
-            const mainViewNames = ['timeline', 'logistics', 'spots', 'expenses'];
+            const mainViewNames = ['timeline', 'logistics', 'spots', 'shopping', 'expenses'];
             mainViewNames.forEach(name => {
                 const tabBtn = document.getElementById('tabBtn-' + name);
                 if (tabBtn) tabBtn.classList.toggle('active', name === viewName);
@@ -17472,6 +18304,8 @@ const firebaseConfig = {
                 } else {
                     switchSpotsSubtab(currentSpotsSubtab || 'all');
                 }
+            } else if (viewName === 'shopping') {
+                renderShoppingView();
             } else if (viewName === 'expenses') {
                 if (targetSubtab) {
                     switchExpensesSubtab(targetSubtab);
@@ -19615,6 +20449,7 @@ const firebaseConfig = {
                 } else {
                     plan.dateRange = getVal('basePlanDateRange', plan.dateRange || '');
                 }
+                try { relocateFlightEvents(plan); } catch (relErr) { console.warn('班機歸位略過:', relErr); }
 
                 saveState();
                 renderAll();
@@ -21606,6 +22441,7 @@ const firebaseConfig = {
                 const parsedActCost = (rawActCost !== '' && rawActCost !== undefined && actParsed > 0) ? actParsed : null;
 
                 const legsToSave = [outLeg, inLeg];
+                { const __prevLegs = (plan.flights && plan.flights.legs) || []; [0, 1].forEach(i => { if (__prevLegs[i] && __prevLegs[i].dayNum) legsToSave[i].dayNum = __prevLegs[i].dayNum; }); }
 
                 plan.flights = {
                     transportType: transportType,
@@ -21627,7 +22463,7 @@ const firebaseConfig = {
                 if (syncToSchedule && Array.isArray(plan.days)) {
                     try {
                         const outInfo = getFlightLegDetails(outLeg);
-                        const day1 = plan.days.find(d => d.dayNum === 1);
+                        const day1 = plan.days.find(d => d.dayNum === getFlightLegTargetDayNum(plan, 0));
                         if (day1 && Array.isArray(day1.events) && outInfo) {
                             let ev1 = day1.events.find(e => e.flightLegIndex === 0 || e.type === 'flight');
                             if (!ev1) {
@@ -21656,7 +22492,7 @@ const firebaseConfig = {
                         }
 
                         const inInfo = getFlightLegDetails(inLeg);
-                        const lastDay = plan.days[plan.days.length - 1];
+                        const lastDay = plan.days.find(d => d.dayNum === getFlightLegTargetDayNum(plan, 1)) || plan.days[plan.days.length - 1];
                         if (lastDay && Array.isArray(lastDay.events) && lastDay.dayNum > 1 && inInfo && (inLeg.flightNo || inLeg.depTime)) {
                             let evLast = lastDay.events.find(e => e.flightLegIndex === 1);
                             if (!evLast) {
@@ -21684,6 +22520,7 @@ const firebaseConfig = {
                             lastDay.events = sortDayEventsByTime(lastDay.events);
                         }
 
+                        relocateFlightEvents(plan);
                         if (typeof renderTimelineView === 'function') renderTimelineView();
                     } catch (syncErr) {
                         console.warn('同步更新每日行程活動時發生非致命問題:', syncErr);
@@ -23577,12 +24414,13 @@ const firebaseConfig = {
                 budget: 700,
                 events: []
             });
+            const __mvFlights = relocateFlightEvents(plan);
             appState.activeDayTab = newDayNum;
             saveState();
             renderTimelineView();
             renderBudgetWidget();
             renderBudgetView();
-            showToast('success', `已新增 Day ${newDayNum}`);
+            showToast('success', `已新增 Day ${newDayNum}` + (__mvFlights ? '，回程班機已自動移到最後一天' : ''));
         }
 
         function deleteDayFromPlan(dayNum) {
@@ -23595,6 +24433,7 @@ const firebaseConfig = {
             if (confirm(`確定要刪除 Day ${dayNum} 及其所有活動嗎？`)) {
                 plan.days = plan.days.filter(d => d.dayNum !== dayNum);
                 plan.days.forEach((d, idx) => d.dayNum = idx + 1);
+                relocateFlightEvents(plan);
                 appState.activeDayTab = 1;
                 saveState();
                 renderTimelineView();
