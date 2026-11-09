@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.7</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -13442,7 +13442,7 @@ const firebaseConfig = {
                 const cur = plan && (plan.days || []).find(d => d.dayNum === appState.activeDayTab);
                 if (cur && dayDoneState(cur) === 'done') {
                     const next = (plan.days || []).find(d => dayDoneState(d) !== 'done');
-                    if (next) appState.activeDayTab = next.dayNum;
+                    if (next) { appState.activeDayTab = next.dayNum; __tlUserPicked = true; }
                 }
             }
             renderTimelineView();
@@ -15002,10 +15002,38 @@ const firebaseConfig = {
             try { syncMealsFromSpotGuides(plan); } catch (e) {}
             saveState();
             closeModal('moveDayModal');
-            appState.activeDayTab = to;
+            appState.activeDayTab = to; __tlUserPicked = true;
             renderAll();
             showToast('success', swap ? `已把 Day ${from} 與 Day ${to} 對調` : `已把 Day ${from} 移到 Day ${to}`);
         }
+
+        
+        // ===== V3.13.7：重新整理後不再停留在上次選的天數 =====
+        var __tlUserPicked = false;
+        function sgDefaultDayTab(plan) {
+            const days = (plan && plan.days) || [];
+            if (!days.length) return 1;
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const hit = days.find(x => sgYmdFromDayNum(plan, x.dayNum) === today);
+            return hit ? hit.dayNum : days[0].dayNum;
+        }
+        const __origRenderTimelineForTab = renderTimelineView;
+        renderTimelineView = function () {
+            try {
+                // 使用者還沒在這次開啟頁面後手動選過天數：旅程進行中顯示今天，否則顯示第一天
+                if (!__tlUserPicked) {
+                    const p = getCurrentPlan();
+                    if (p && p.days && p.days.length) appState.activeDayTab = sgDefaultDayTab(p);
+                }
+            } catch (e) { console.warn(e); }
+            return __origRenderTimelineForTab.apply(this, arguments);
+        };
+        const __origSelectDayTabForPick = selectDayTab;
+        selectDayTab = function (n) {
+            __tlUserPicked = true;
+            return __origSelectDayTabForPick(n);
+        };
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
@@ -25377,7 +25405,7 @@ const firebaseConfig = {
                 events: []
             });
             const __mvFlights = relocateFlightEvents(plan);
-            appState.activeDayTab = newDayNum;
+            appState.activeDayTab = newDayNum; __tlUserPicked = true;
             saveState();
             renderTimelineView();
             renderBudgetWidget();
