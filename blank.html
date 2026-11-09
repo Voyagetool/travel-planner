@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.5</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.6</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7282,9 +7282,17 @@
                         <input type="text" id="transitTitleInput" class="form-input" placeholder="例如：專車接送出發前往桃園機場、重慶機場專車直達飯店">
                     </div>
 
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-weight:700; color:#334155;">其中步行時間（分鐘，選填；選「捷運＋步行」時顯示在行程上）</label>
-                        <input type="number" id="transitWalkMinutesInput" class="form-input" min="0" placeholder="例如 8（捷運約 12 分＋步行 8 分，總時間請填在下方）">
+                    <div id="transitMixedBlock" style="display:none; margin-bottom:12px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px 12px;">
+                        <div style="font-weight:700; color:#0369a1; font-size:0.84rem; margin-bottom:6px;">🚇🚶 捷運＋步行：分開設定時間（相加即為預估移動時間）</div>
+                        <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:end;">
+                            <label class="form-label" style="margin:0; font-weight:700; color:#334155;">捷運／電車（分鐘）
+                                <input type="number" id="transitRailMinutesInput" class="form-input" min="0" inputmode="numeric" placeholder="例如 12" oninput="sgMixedTotalFromParts()" onkeydown="sgMixedKey(event)">
+                            </label>
+                            <span style="font-weight:800; color:#0369a1; padding-bottom:9px;">＋</span>
+                            <label class="form-label" style="margin:0; font-weight:700; color:#334155;">步行（分鐘）
+                                <input type="number" id="transitWalkMinutesInput" class="form-input" min="0" inputmode="numeric" placeholder="例如 8" oninput="sgMixedTotalFromParts()" onkeydown="sgMixedKey(event)">
+                            </label>
+                        </div>
                     </div>
 
                     <!-- 移動時間與交通方式設定 -->
@@ -11343,6 +11351,7 @@ const firebaseConfig = {
                     mode: info.mode,
                     minutes: info.minutes,
                     walkMin: info.walkMin || 0,
+                    railMin: Math.max(0, info.minutes - (info.walkMin || 0)),
                     googleInfo: `約 ${info.minutes} 分` + (info.km !== null ? `・${info.km} km` : ''),
                     source: 'google'
                 });
@@ -11421,7 +11430,7 @@ const firebaseConfig = {
             const fTransit = activeDay.firstTransit;
             if (fTransit && (fTransit.minutes || fTransit.title || fTransit.cost)) {
                 const fModeInfo = getTransitModeInfo(fTransit.mode || 'car');
-                if ((fTransit.mode === 'mixed') && Number(fTransit.walkMin) > 0) fModeInfo.label = `捷運＋步行（步行 ${fTransit.walkMin} 分）`;
+                if ((fTransit.mode === 'mixed') && (Number(fTransit.walkMin) > 0 || Number(fTransit.railMin) > 0)) fModeInfo.label = `捷運＋步行（${Number(fTransit.railMin) > 0 ? '捷運 ' + fTransit.railMin + ' 分＋' : ''}步行 ${fTransit.walkMin} 分）`;
                 const fMinutes = Number(fTransit.minutes || 0);
                 const fCost = Number(fTransit.cost || 0);
                 const fTwd = Math.round(fCost * curr.rate);
@@ -11522,7 +11531,7 @@ const firebaseConfig = {
                             ((ev.title.includes('漫步') || ev.title.includes('步行') || (ev.notes && ev.notes.includes('步行'))) ? 'walk' : 'car'))
                         );
                         const modeInfo = getTransitModeInfo(transitMode);
-                        if (transitMode === 'mixed' && customTransit && Number(customTransit.walkMin) > 0) modeInfo.label = `捷運＋步行（步行 ${customTransit.walkMin} 分）`;
+                        if (transitMode === 'mixed' && customTransit && (Number(customTransit.walkMin) > 0 || Number(customTransit.railMin) > 0)) modeInfo.label = `捷運＋步行（${Number(customTransit.railMin) > 0 ? '捷運 ' + customTransit.railMin + ' 分＋' : ''}步行 ${customTransit.walkMin} 分）`;
 
                         const customTagHtml = isCustomSet
                             ? `<span style="background:#2563eb; color:#fff; font-size:0.62rem; padding:1px 5px; border-radius:3px; font-weight:700;">自訂</span>`
@@ -12721,7 +12730,7 @@ const firebaseConfig = {
                 showToast('error', 'Google 路線查詢失敗：' + (err && err.message ? err.message : '請稍後再試'));
             }
         }
-        let box_googleInfo = '';
+        var box_googleInfo = '';
 
         const __origOpenTransitSettingsModal = openTransitSettingsModal;
         openTransitSettingsModal = function (dayNum, eventIdx) {
@@ -12768,7 +12777,7 @@ const firebaseConfig = {
 
         
         // ===== V3.11.0：景點看板（Kanban）=====
-        const SG_KANBAN_STYLE = `<style>
+        var SG_KANBAN_STYLE = `<style>
             .sg-kb-board{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 12px;align-items:flex-start;scroll-snap-type:x proximity;}
             .sg-kb-col{flex:0 0 250px;max-width:270px;background:#f1f5f9;border-radius:12px;padding:8px;scroll-snap-align:start;border:1px solid #e2e8f0;}
             .sg-kb-col.drag-over{background:#e0f2fe;border-color:#7dd3fc;}
@@ -12850,7 +12859,7 @@ const firebaseConfig = {
             showToast('success', `已將「${item.name}」排入第 ${col.dayNum} 天`);
         }
 
-        let __sgDragIdx = null;
+        var __sgDragIdx = null;
         function sgKbDragStart(ev, idx) {
             __sgDragIdx = idx;
             try { ev.dataTransfer.setData('text/plain', String(idx)); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
@@ -12899,8 +12908,8 @@ const firebaseConfig = {
                 if (isFood && item.mealType === 'dinner') chips.push('<span class="sg-kb-chip" style="background:#fef2f2;color:#b91c1c;">晚餐</span>');
                 if (kids.length) chips.push(`<span class="sg-kb-chip"><i class="fa-solid fa-sitemap"></i> ${kids.length} 個細部</span>`);
                 if (item.hasBooking) chips.push(`<span class="sg-kb-chip" style="background:#fef3c7;color:#b45309;"><i class="fa-solid fa-ticket"></i> ${escapeHtml(item.bookingStatus || '需預約')}</span>`);
-                return `<div class="sg-kb-card ${isFood ? 'food' : ''} ${sgKbCollapsed.has(item.id) ? 'collapsed' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
-                    <div class="sg-kb-title"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCard('${item.id}')" title="${sgKbCollapsed.has(item.id) ? '展開' : '縮小'}"><i class="fa-solid fa-chevron-${sgKbCollapsed.has(item.id) ? 'right' : 'down'}"></i></button>${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
+                return `<div class="sg-kb-card ${isFood ? 'food' : ''} ${sgKbCollapsedSet().has(item.id) ? 'collapsed' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
+                    <div class="sg-kb-title"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCard('${item.id}')" title="${sgKbCollapsedSet().has(item.id) ? '展開' : '縮小'}"><i class="fa-solid fa-chevron-${sgKbCollapsedSet().has(item.id) ? 'right' : 'down'}"></i></button>${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
                     ${chips.length ? `<div class="sg-kb-meta">${chips.join('')}</div>` : ''}
                     ${sgKbChildrenHtml(plan, item, idx)}
                     <div class="sg-kb-act">
@@ -12917,7 +12926,7 @@ const firebaseConfig = {
                 ${arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>'}
             </div>`;
 
-            let html = SG_KANBAN_STYLE + filterBarHtml + '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;"><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(true)"><i class="fa-solid fa-compress"></i> 全部縮小</button><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(false)"><i class="fa-solid fa-expand"></i> 全部展開</button></div><div class="sg-kb-board">';
+            let html = (typeof SG_KANBAN_STYLE === 'string' ? SG_KANBAN_STYLE : '') + filterBarHtml + '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;"><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(true)"><i class="fa-solid fa-compress"></i> 全部縮小</button><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(false)"><i class="fa-solid fa-expand"></i> 全部展開</button></div><div class="sg-kb-board">';
             html += colHtml('pending', '<i class="fa-regular fa-clipboard" style="color:#64748b;"></i> 待安排', buckets.pending);
             cols.forEach(c => {
                 html += colHtml(String(c.dayNum), `<i class="fa-regular fa-calendar" style="color:#0284c7;"></i> Day ${c.dayNum} <small>${escapeHtml(c.label)}</small>`, buckets[c.dayNum]);
@@ -12927,8 +12936,8 @@ const firebaseConfig = {
         }
 
         // ===== V3.11.0：購買清單 =====
-        let shopFilterMode = 'todo';
-        let shopQueryText = '';
+        var shopFilterMode = 'todo';
+        var shopQueryText = '';
 
         function getShoppingList(plan) {
             if (!plan) return [];
@@ -13313,7 +13322,7 @@ const firebaseConfig = {
         };
 
         // ---- 看板：細部景點逐一調整 ----
-        let sgKbEditKey = null;
+        var sgKbEditKey = null;
         function sgKbToggleChildEdit(pIdx, cIdx) {
             const k = pIdx + '_' + cIdx;
             sgKbEditKey = (sgKbEditKey === k) ? null : k;
@@ -13680,12 +13689,51 @@ const firebaseConfig = {
             return Number(eventIdx) === 0 ? day.firstTransit : (day.events[eventIdx] && day.events[eventIdx].transit);
         }
         const __origOpenTransitForMix = openTransitSettingsModal;
+        function sgMixedBlockSync() {
+            const mode = document.getElementById('transitModeSelect')?.value || '';
+            const blk = document.getElementById('transitMixedBlock');
+            if (blk) blk.style.display = (mode === 'mixed') ? 'block' : 'none';
+        }
+        function sgMixedTotalFromParts() {
+            const mode = document.getElementById('transitModeSelect')?.value || '';
+            if (mode !== 'mixed') return;
+            const rail = parseInt(document.getElementById('transitRailMinutesInput')?.value || '0', 10) || 0;
+            const walk = parseInt(document.getElementById('transitWalkMinutesInput')?.value || '0', 10) || 0;
+            if (rail + walk > 0) {
+                const tot = document.getElementById('transitMinutesInput');
+                if (tot) tot.value = rail + walk;
+                if (typeof updateTransitLivePreview === 'function') updateTransitLivePreview();
+                if (typeof updateFirstTransitPreview === 'function') { try { updateFirstTransitPreview(); } catch (e) {} }
+            }
+        }
+        function sgMixedKey(ev) {
+            if (ev.key === 'Enter') { ev.preventDefault(); sgMixedTotalFromParts(); ev.target.blur(); }
+        }
         openTransitSettingsModal = function (dayNum, eventIdx) {
             __origOpenTransitForMix(dayNum, eventIdx);
             try {
                 const t = sgTransitObjOf(dayNum, eventIdx) || {};
-                const el = document.getElementById('transitWalkMinutesInput');
-                if (el) el.value = (t.mode === 'mixed' && Number(t.walkMin) > 0) ? t.walkMin : '';
+                const rail = document.getElementById('transitRailMinutesInput');
+                const walk = document.getElementById('transitWalkMinutesInput');
+                const isMixed = t.mode === 'mixed';
+                const w = isMixed ? (Number(t.walkMin) || 0) : 0;
+                let r = isMixed ? (Number(t.railMin) || 0) : 0;
+                if (isMixed && !r && w && Number(t.minutes) > w) r = Number(t.minutes) - w;
+                if (rail) rail.value = r || '';
+                if (walk) walk.value = w || '';
+                const sel = document.getElementById('transitModeSelect');
+                if (sel && !sel.dataset.mixBound) {
+                    sel.dataset.mixBound = '1';
+                    sel.addEventListener('change', () => { sgMixedBlockSync(); sgMixedTotalFromParts(); });
+                    const tot = document.getElementById('transitMinutesInput');
+                    if (tot) tot.addEventListener('input', () => {
+                        if (sel.value !== 'mixed') return;
+                        const wv = parseInt(document.getElementById('transitWalkMinutesInput')?.value || '0', 10) || 0;
+                        const tv = parseInt(tot.value || '0', 10) || 0;
+                        if (wv > 0 && tv >= wv) document.getElementById('transitRailMinutesInput').value = tv - wv;
+                    });
+                }
+                sgMixedBlockSync();
             } catch (e) { console.warn(e); }
         };
         const __origSaveTransitForMix = handleSaveTransitSubmit;
@@ -13693,12 +13741,19 @@ const firebaseConfig = {
             const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
             const idx = Number(document.getElementById('transitEventIdx')?.value || 1);
             const mode = document.getElementById('transitModeSelect')?.value || '';
-            const wm = parseInt(document.getElementById('transitWalkMinutesInput')?.value || '0', 10) || 0;
+            sgMixedTotalFromParts();
+            const rail = parseInt(document.getElementById('transitRailMinutesInput')?.value || '0', 10) || 0;
+            const walk = parseInt(document.getElementById('transitWalkMinutesInput')?.value || '0', 10) || 0;
+            // 先記住被編輯的物件：原本的儲存流程會依時間重新排序，事後再用索引找可能找到別的行程
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === dayNum);
+            const ev = day && idx > 0 ? day.events[idx] : null;
             const r = __origSaveTransitForMix(e);
             try {
-                const t = sgTransitObjOf(dayNum, idx);
+                const t = idx === 0 ? (day && day.firstTransit) : (ev && ev.transit);
                 if (t) {
-                    if (mode === 'mixed' && wm > 0) t.walkMin = wm; else delete t.walkMin;
+                    if (mode === 'mixed' && (rail > 0 || walk > 0)) { t.railMin = rail; t.walkMin = walk; }
+                    else { delete t.railMin; delete t.walkMin; }
                     saveState();
                     renderTimelineView();
                 }
@@ -13721,7 +13776,7 @@ const firebaseConfig = {
             if (!starts.length) return null;
             return { ymd, start: starts[0], end: ends.length ? ends[ends.length - 1] : '', dayNum: sched[0].v.dayNum || null, count: sched.length };
         }
-        let sgOpenDerived = null;
+        var sgOpenDerived = null;
         const __origOpenSpotGuideModalForBlock = openAddSpotGuideModal;
         openAddSpotGuideModal = function (editIdx, forceExpandBooking) {
             __origOpenSpotGuideModalForBlock(editIdx === undefined ? null : editIdx, forceExpandBooking);
@@ -13810,21 +13865,24 @@ const firebaseConfig = {
             `;
             document.head.appendChild(st);
         })();
-        let sgKbCollapsed = (function () {
-            try { return new Set(JSON.parse(localStorage.getItem('sg_kb_collapsed') || '[]')); } catch (e) { return new Set(); }
-        })();
+        function sgKbCollapsedSet() {
+            if (!window.__sgKbCollapsedSet) {
+                try { window.__sgKbCollapsedSet = new Set(JSON.parse(localStorage.getItem('sg_kb_collapsed') || '[]')); } catch (e) { window.__sgKbCollapsedSet = new Set(); }
+            }
+            return window.__sgKbCollapsedSet;
+        }
         function sgKbSaveCollapsed() {
-            try { localStorage.setItem('sg_kb_collapsed', JSON.stringify(Array.from(sgKbCollapsed))); } catch (e) {}
+            try { localStorage.setItem('sg_kb_collapsed', JSON.stringify(Array.from(sgKbCollapsedSet()))); } catch (e) {}
         }
         function sgKbToggleCard(id) {
-            if (sgKbCollapsed.has(id)) sgKbCollapsed.delete(id); else sgKbCollapsed.add(id);
+            if (sgKbCollapsedSet().has(id)) sgKbCollapsedSet().delete(id); else sgKbCollapsedSet().add(id);
             sgKbSaveCollapsed();
             renderSpotGuidesView();
         }
         function sgKbCollapseAll(flag) {
             const plan = getCurrentPlan();
             if (!plan) return;
-            (plan.spotTips || []).forEach(s => { if (!s || !s.id) return; if (flag) sgKbCollapsed.add(s.id); else sgKbCollapsed.delete(s.id); });
+            (plan.spotTips || []).forEach(s => { if (!s || !s.id) return; if (flag) sgKbCollapsedSet().add(s.id); else sgKbCollapsedSet().delete(s.id); });
             sgKbSaveCollapsed();
             renderSpotGuidesView();
         }
