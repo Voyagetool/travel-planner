@@ -6101,7 +6101,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.9</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.10</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -14127,6 +14127,161 @@ const firebaseConfig = {
                     🏨 <strong>今晚住宿：</strong>${escapeHtml(hotel.name)}${hotel.addr ? `<div style="font-size:0.8rem;color:#9a3412;margin-top:2px;">📮 ${escapeHtml(hotel.addr)}</div>` : ''}${hotel.phone ? `<div style="font-size:0.8rem;color:#9a3412;">☎ ${escapeHtml(hotel.phone)}</div>` : ''}
                 </div>`;
             } catch (e) { return ''; }
+        }
+
+        
+        // ===== V3.13.10：購買清單改為「依地點分組的勾選清單」=====
+        (function () {
+            if (document.getElementById('shopListStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'shopListStyle';
+            st.textContent = `
+                .shop-place{background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:hidden;}
+                .shop-place-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;background:#f0f9ff;border-bottom:1px solid #e0f2fe;}
+                .shop-place-h .nm{font-weight:800;color:#0369a1;font-size:0.95rem;}
+                .shop-place-h small{color:#64748b;font-weight:600;}
+                .shop-place-prog{margin-left:auto;font-size:0.74rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:999px;padding:1px 9px;}
+                .shop-row{display:flex;gap:9px;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #f1f5f9;}
+                .shop-row:last-of-type{border-bottom:none;}
+                .shop-row .main{flex:1;min-width:0;}
+                .shop-row .nm{font-weight:700;color:#0f172a;font-size:0.9rem;word-break:break-word;}
+                .shop-row.done .nm{text-decoration:line-through;color:#94a3b8;}
+                .shop-row .sub{font-size:0.74rem;color:#64748b;margin-top:1px;white-space:pre-wrap;word-break:break-word;}
+                .shop-row .tag{background:#f1f5f9;border-radius:6px;padding:0 6px;margin-right:4px;font-size:0.72rem;color:#475569;}
+                .shop-row .price{font-size:0.78rem;color:#047857;font-weight:700;white-space:nowrap;}
+                .shop-row .ico{border:none;background:transparent;color:#94a3b8;cursor:pointer;padding:2px 5px;font-size:0.8rem;}
+                .shop-row .ico:hover{color:#0369a1;}
+                .shop-quick{padding:7px 12px;background:#fafafa;border-top:1px dashed #e2e8f0;display:flex;gap:6px;align-items:center;}
+                .shop-quick input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;padding:5px 9px;font-size:0.82rem;}
+            `;
+            document.head.appendChild(st);
+        })();
+        shopFilterMode = 'all';
+
+        function sgShopPlaces(plan) {
+            if (!Array.isArray(plan.shoppingPlaces)) plan.shoppingPlaces = [];
+            return plan.shoppingPlaces;
+        }
+        function shopQuickAdd(ev, el) {
+            if (ev.key !== 'Enter') return;
+            ev.preventDefault();
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const names = String(el.value || '').split(/[、，,;；\n]+/).map(s => s.trim()).filter(Boolean);
+            if (!names.length) return;
+            const place = el.dataset.place || '';
+            const list = getShoppingList(plan);
+            names.forEach(name => list.push({
+                id: 'shop-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                name, place, price: '', curr: 'LOCAL', qty: 1, style: '', note: '', link: '', done: false
+            }));
+            saveState();
+            renderShoppingList();
+            const again = Array.from(document.querySelectorAll('.shop-quick input')).find(i => (i.dataset.place || '') === place);
+            if (again) again.focus();
+        }
+        function shopAddPlace(ev, el) {
+            if (ev.key !== 'Enter') return;
+            ev.preventDefault();
+            const plan = getCurrentPlan();
+            const name = String(el.value || '').trim();
+            if (!plan || !name) return;
+            const places = sgShopPlaces(plan);
+            if (!places.includes(name)) places.push(name);
+            saveState();
+            renderShoppingList();
+            const f = Array.from(document.querySelectorAll('.shop-quick input')).find(i => (i.dataset.place || '') === name);
+            if (f) f.focus();
+        }
+        function shopRemovePlace(name) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            plan.shoppingPlaces = sgShopPlaces(plan).filter(p => p !== name);
+            saveState();
+            renderShoppingList();
+        }
+        function openShoppingModalForPlace(place) {
+            openShoppingModal();
+            const el = document.getElementById('shopPlaceInput');
+            if (el) el.value = place || '';
+        }
+
+        function renderShoppingList() {
+            const plan = getCurrentPlan();
+            const body = document.getElementById('shopListBody');
+            const sum = document.getElementById('shopSummary');
+            if (!plan || !body) return;
+            ['all', 'todo', 'done'].forEach(m => {
+                const b = document.getElementById('shopFilterBtn-' + m);
+                if (b) b.classList.toggle('n-btn-primary', m === shopFilterMode);
+            });
+            const all = getShoppingList(plan);
+            const todo = all.filter(i => !i.done);
+            const todoTwd = todo.reduce((s, i) => s + shopItemTwd(i, plan), 0);
+            const c = getPlanCurrency(plan);
+            if (sum) sum.innerHTML = `共 <b>${all.length}</b> 項｜待買 <b>${todo.length}</b>｜已買 <b>${all.length - todo.length}</b>｜待買預估 <b>NT$ ${todoTwd.toLocaleString()}</b>` + (c.code !== 'TWD' ? `（約 ${c.symbol}${Math.round(todoTwd / (c.rate || 1)).toLocaleString()}）` : '');
+
+            const spotOpts = shopSpotOptions(plan);
+            const spotNames = new Set(spotOpts.map(o => o.name));
+            const savedPlaces = sgShopPlaces(plan);
+            const dl = document.getElementById('shopPlaceList');
+            if (dl) {
+                dl.innerHTML = spotOpts.map(o => `<option value="${escapeHtml(o.name)}" label="${o.cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${o.parentName ? '｜' + escapeHtml(o.parentName) + ' 內' : ''}${o.when ? '｜' + escapeHtml(o.when) : ''}${o.addr ? '｜' + escapeHtml(o.addr) : ''}"></option>`).join('') +
+                    [...new Set(all.map(i => (i.place || '').trim()).concat(savedPlaces).filter(Boolean))].filter(p => !spotNames.has(p)).map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
+            }
+            const spotMap = shopSpotWhenMap(plan);
+
+            // 以地點分組：已建立的地點（含空清單）在前，其餘依品項出現順序
+            const items = shopFilteredItems(plan);
+            const groups = new Map();
+            savedPlaces.forEach(p => groups.set(p, []));
+            items.forEach(it => { const k = (it.place || '').trim(); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(it); });
+            const searching = !!shopQueryText || shopFilterMode !== 'all';
+            let html = '';
+            groups.forEach((arr, place) => {
+                if (!arr.length && searching && !savedPlaces.includes(place)) return;
+                if (!arr.length && searching) return;
+                const label = place || '未指定地點';
+                const everyone = all.filter(i => (i.place || '').trim() === place);
+                const doneCnt = everyone.filter(i => i.done).length;
+                const subtotal = arr.reduce((s, i) => s + shopItemTwd(i, plan), 0);
+                const sp = spotMap[place];
+                html += `<div class="shop-place">
+                    <div class="shop-place-h">
+                        <i class="fa-solid fa-location-dot" style="color:#0284c7;"></i>
+                        <span class="nm">${escapeHtml(label)}</span>
+                        ${sp ? `<small>${sp.cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${sp.parentName ? '｜' + escapeHtml(sp.parentName) + ' 內' : ''}${sp.when ? '｜' + escapeHtml(sp.when) : ''}</small>` : ''}
+                        ${sp && sp.addr ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sp.addr)}" target="_blank" rel="noopener" style="font-size:0.72rem;color:#64748b;">📮 ${escapeHtml(sp.addr)}</a>` : ''}
+                        ${subtotal ? `<small>NT$ ${subtotal.toLocaleString()}</small>` : ''}
+                        <span class="shop-place-prog">${doneCnt} / ${everyone.length} 已買</span>
+                    </div>
+                    ${arr.map(it => {
+                        const pt = shopPriceText(it, plan);
+                        const q = Number(it.qty) || 1;
+                        return `<div class="shop-row ${it.done ? 'done' : ''}">
+                            <input type="checkbox" class="n-checkbox" ${it.done ? 'checked' : ''} onchange="toggleShoppingDone('${it.id}')" style="margin-top:3px;" title="標記已買">
+                            <div class="main">
+                                <div class="nm">${escapeHtml(it.name)}${q > 1 ? ` <span style="color:#64748b;font-weight:600;">×${q}</span>` : ''}</div>
+                                ${(it.style || it.note || it.link) ? `<div class="sub">${it.style ? `<span class="tag">🏷️ ${escapeHtml(it.style)}</span>` : ''}${it.note ? escapeHtml(it.note) : ''}${it.link ? ` <a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">🔗</a>` : ''}</div>` : ''}
+                            </div>
+                            ${pt ? `<span class="price">${escapeHtml(pt)}</span>` : ''}
+                            <button type="button" class="ico" onclick="openShoppingModal('${it.id}')" title="編輯"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" class="ico" onclick="deleteShoppingItem('${it.id}')" title="刪除"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>`;
+                    }).join('')}
+                    ${!arr.length ? '<div style="padding:10px 12px;color:#94a3b8;font-size:0.8rem;">這個地點還沒有品項，在下方輸入即可新增。</div>' : ''}
+                    <div class="shop-quick">
+                        <input type="text" data-place="${escapeHtml(place)}" placeholder="＋ 輸入品名按 Enter 新增（可用「、」一次輸入多項，例如：眼藥水、感冒藥）" onkeydown="shopQuickAdd(event, this)">
+                        <button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="openShoppingModalForPlace(this.parentNode.querySelector('input').dataset.place)" title="用完整表單新增（價格、款式、備註）"><i class="fa-solid fa-sliders"></i> 詳細</button>
+                        ${(!everyone.length && place) ? `<button type="button" class="ico" onclick="shopRemovePlace(this.parentNode.querySelector('input').dataset.place)" title="移除這個地點"><i class="fa-regular fa-trash-can"></i></button>` : ''}
+                    </div>
+                </div>`;
+            });
+            html += `<div class="shop-quick" style="border:1px dashed #cbd5e1;border-radius:12px;margin-top:10px;background:#fff;">
+                <i class="fa-solid fa-location-dot" style="color:#94a3b8;"></i>
+                <input type="text" id="shopNewPlaceInput" placeholder="＋ 新增購買地點（例如：大國藥妝店、唐吉訶德、無印良品）按 Enter" onkeydown="shopAddPlace(event, this)" list="shopPlaceList">
+            </div>`;
+            body.innerHTML = html;
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
