@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.5</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8531,6 +8531,31 @@
                 <button type="button" class="n-btn n-btn-danger" style="margin-right:auto;" onclick="clearLastTransit()">恢復預設</button>
                 <button type="button" class="n-btn" onclick="closeModal('lastTransitModal')">取消</button>
                 <button type="button" class="n-btn n-btn-primary" onclick="saveLastTransit()"><i class="fa-solid fa-check"></i> 儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 整天行程搬移 -->
+    <div class="modal-backdrop" id="moveDayModal" onclick="handleBackdropClick(event, 'moveDayModal')">
+        <div class="modal-dialog" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-right-left" style="color:#0284c7;"></i> 整天行程搬移</div>
+                <button class="modal-close-btn" onclick="closeModal('moveDayModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;display:grid;gap:12px;">
+                <input type="hidden" id="mdFromDay">
+                <div style="font-size:0.84rem;color:#334155;">要搬移：<strong id="mdFromLabel"></strong></div>
+                <label class="shop-field">搬到哪一天<select id="mdTargetDay" onchange="updateMoveDayPreview()"></select></label>
+                <div style="display:grid;gap:6px;font-size:0.84rem;color:#334155;">
+                    <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="mdMode" id="mdModeSwap" checked onchange="updateMoveDayPreview()"> 與該天交換（兩天內容對調）</label>
+                    <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="mdMode" id="mdModeInsert" onchange="updateMoveDayPreview()"> 移到該天（中間的天數順延）</label>
+                </div>
+                <div id="mdPreview" style="font-size:0.78rem;color:#0e7490;background:#ecfeff;border-radius:8px;padding:6px 10px;"></div>
+                <div style="font-size:0.72rem;color:#64748b;line-height:1.6;">日期與 Day 編號留在原位；行程、餐食、交通、預算、備註會整天跟著搬動，景點頁的日期也會同步。住宿、交通票券與預約是依日期記錄的，不會跟著搬，請搬完再確認。含航班的天不能搬動。</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="n-btn" onclick="closeModal('moveDayModal')">取消</button>
+                <button type="button" class="n-btn n-btn-primary" onclick="applyMoveDay()"><i class="fa-solid fa-check"></i> 套用</button>
             </div>
         </div>
     </div>
@@ -11451,6 +11476,7 @@ const firebaseConfig = {
                     </div>
                     <button type="button" class="tl-status-link" onclick="markDayDone(${activeDay.dayNum}, ${doneCount === events.length ? 'false' : 'true'})">${doneCount === events.length ? '取消整天完成' : '整天標為已完成'}</button>
                     <button type="button" class="tl-status-link" onclick="markPastDaysDone()" title="依旅程日期，把今天以前的天數全部標為已完成">把今天以前的行程標為已完成</button>
+                    <button type="button" class="tl-status-link" onclick="openMoveDayModal(${activeDay.dayNum})" title="把這一天的行程整天搬到別天，或與別天交換"><i class="fa-solid fa-right-left"></i> 整天移動</button>
                     <button type="button" class="tl-status-link" onclick="applyLodgingFirstTransitAll()" title="依各天前一晚的住宿，自動設定出發地、交通時間與建議離開時間"><i class="fa-solid fa-hotel"></i> 全部天數依住宿設定起程交通</button>
                     <button type="button" class="tl-status-link" onclick="googleFillAllLastTransit()" title="用 Google 一次估算每天回飯店的交通時間"><i class="fa-brands fa-google"></i> 全部天數估算回飯店時間</button>
                 </div>` : '';
@@ -13410,6 +13436,14 @@ const firebaseConfig = {
                             if ([c.visitDate, c.visitStartTime, c.visitEndTime].join('|') !== before) changed = true;
                         }
                     });
+                    // 主項目自己的日期時間 = 底下細部景點的整體時段（餐別同步、看板分欄都以此為準）
+                    const blk = sgChildrenBlock(plan, s);
+                    if (blk) {
+                        const b0 = [s.visitDate, s.visitStartTime, s.visitEndTime].join('|');
+                        s.visitDate = blk.ymd; s.visitStartTime = blk.start; s.visitEndTime = blk.end || '';
+                        if (s.scheduled !== true) s.scheduled = true;
+                        if ([s.visitDate, s.visitStartTime, s.visitEndTime].join('|') !== b0) changed = true;
+                    }
                     return;
                 }
                 if (!s.id) return;
@@ -13793,6 +13827,95 @@ const firebaseConfig = {
             (plan.spotTips || []).forEach(s => { if (!s || !s.id) return; if (flag) sgKbCollapsed.add(s.id); else sgKbCollapsed.delete(s.id); });
             sgKbSaveCollapsed();
             renderSpotGuidesView();
+        }
+
+        
+        // ===== V3.13.5：整天行程搬移／交換 =====
+        function sgDayHasFlight(day) {
+            return !!(day && (day.events || []).some(ev => ev && (ev.type === 'flight' || ev.flightLegIndex !== undefined)));
+        }
+        function openMoveDayModal(dayNum) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const day = (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+            if (sgDayHasFlight(day)) {
+                showToast('warning', '這天含有航班，航班請在「行程總覽」的班機天數調整；其他天可以整天搬移');
+                return;
+            }
+            document.getElementById('mdFromDay').value = day.dayNum;
+            document.getElementById('mdFromLabel').textContent = `Day ${day.dayNum} ${day.date || ''}｜${String(day.title || '').replace(/^Day\s*\d+\s*/i, '') || '（未命名）'}（${(day.events || []).length} 個行程）`;
+            const sel = document.getElementById('mdTargetDay');
+            sel.innerHTML = plan.days.filter(d => d.dayNum !== day.dayNum).map(d => {
+                const fl = sgDayHasFlight(d);
+                return `<option value="${d.dayNum}"${fl ? ' disabled' : ''}>Day ${d.dayNum} ${escapeHtml(d.date || '')}｜${escapeHtml(String(d.title || '').replace(/^Day\s*\d+\s*/i, '') || '（空白）')}${fl ? '（含航班，不可）' : ''}</option>`;
+            }).join('');
+            const first = Array.from(sel.options).find(o => !o.disabled);
+            if (first) sel.value = first.value;
+            document.getElementById('mdModeSwap').checked = true;
+            updateMoveDayPreview();
+            openModal('moveDayModal');
+        }
+        function updateMoveDayPreview() {
+            const plan = getCurrentPlan();
+            const from = Number(document.getElementById('mdFromDay').value);
+            const to = Number((document.getElementById('mdTargetDay') || {}).value);
+            const swap = document.getElementById('mdModeSwap').checked;
+            const el = document.getElementById('mdPreview');
+            if (!plan || !to) { el.textContent = ''; return; }
+            el.textContent = swap
+                ? `Day ${from} 與 Day ${to} 的整天內容對調，其他天不變。`
+                : `Day ${from} 的內容移到 Day ${to}，中間的各天依序${from < to ? '往前' : '往後'}一天。`;
+        }
+        // 日期與天數留在原位，其他內容（行程、餐食、交通、預算、備註…）整天搬動
+        function moveWholeDay(plan, from, to, swap) {
+            const days = plan.days.slice().sort((a, b) => a.dayNum - b.dayNum);
+            const i = days.findIndex(d => d.dayNum === from), j = days.findIndex(d => d.dayNum === to);
+            if (i < 0 || j < 0 || i === j) return false;
+            const lo = Math.min(i, j), hi = Math.max(i, j);
+            const affected = swap ? [days[i], days[j]] : days.slice(lo, hi + 1);
+            if (affected.some(sgDayHasFlight)) return false;
+            const contents = days.map(d => { const c = Object.assign({}, d); delete c.dayNum; delete c.date; return c; });
+            if (swap) {
+                const t = contents[i]; contents[i] = contents[j]; contents[j] = t;
+            } else {
+                const it = contents.splice(i, 1)[0];
+                contents.splice(j, 0, it);
+            }
+            days.forEach((d, k) => {
+                const keep = { dayNum: d.dayNum, date: d.date };
+                Object.keys(d).forEach(key => delete d[key]);
+                Object.assign(d, contents[k], keep);
+                if (d.title) d.title = String(d.title).replace(/^Day\s*\d+/i, `Day ${d.dayNum}`);
+            });
+            // 依住宿自動設定的起程交通，換天後住宿可能不同，重新套用
+            days.forEach(d => {
+                if (d.firstTransit && d.firstTransit.auto === 'lodging') {
+                    const hotel = getDayLodging(plan, d.dayNum);
+                    if (hotel) { const ft = buildLodgingFirstTransit(d, hotel); if (ft) d.firstTransit = ft; }
+                }
+            });
+            return true;
+        }
+        function applyMoveDay() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const from = Number(document.getElementById('mdFromDay').value);
+            const to = Number(document.getElementById('mdTargetDay').value);
+            const swap = document.getElementById('mdModeSwap').checked;
+            if (!to) { showToast('warning', '請選擇目標天'); return; }
+            if (!moveWholeDay(plan, from, to, swap)) {
+                showToast('warning', '無法搬移：範圍內含有航班，或選擇的天數不正確');
+                return;
+            }
+            try { relocateFlightEvents(plan); } catch (e) {}
+            try { sgReconcileSpotsFromTimeline(plan); } catch (e) {}
+            try { syncMealsFromSpotGuides(plan); } catch (e) {}
+            saveState();
+            closeModal('moveDayModal');
+            appState.activeDayTab = to;
+            renderAll();
+            showToast('success', swap ? `已把 Day ${from} 與 Day ${to} 對調` : `已把 Day ${from} 移到 Day ${to}`);
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
