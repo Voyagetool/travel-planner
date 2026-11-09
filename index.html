@@ -6088,7 +6088,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7287,6 +7287,11 @@
                         <input type="text" id="transitTitleInput" class="form-input" placeholder="例如：專車接送出發前往桃園機場、重慶機場專車直達飯店">
                     </div>
 
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label class="form-label" style="font-weight:700; color:#334155;">其中步行時間（分鐘，選填；選「捷運＋步行」時顯示在行程上）</label>
+                        <input type="number" id="transitWalkMinutesInput" class="form-input" min="0" placeholder="例如 8（捷運約 12 分＋步行 8 分，總時間請填在下方）">
+                    </div>
+
                     <!-- 移動時間與交通方式設定 -->
                     <div class="form-row">
                         <div class="form-group">
@@ -7296,6 +7301,7 @@
                             <select id="transitModeSelect" class="form-input">
                                 <option value="car">🚗 開車 / 計程車 / 專車接送</option>
                                 <option value="transit">🚇 大眾運輸 / 地鐵 / 捷運</option>
+                                <option value="mixed">🚇🚶 捷運＋步行（混合）</option>
                                 <option value="bus">🚌 長途客運 / 巴士 / 公車</option>
                                 <option value="walk">🚶 步行 / 散步</option>
                                 <option value="flight">✈️ 航班 / 航程</option>
@@ -8451,7 +8457,7 @@
             </div>
             <div class="modal-body" style="padding:16px 20px;display:grid;gap:11px;">
                 <input type="hidden" id="ltDayNum">
-                <label class="shop-field">交通方式<select id="ltMode"><option value="transit">大眾運輸／地鐵</option><option value="car">開車／計程車</option><option value="walk">步行</option></select></label>
+                <label class="shop-field">交通方式<select id="ltMode"><option value="transit">大眾運輸／地鐵</option><option value="mixed">捷運＋步行（混合）</option><option value="car">開車／計程車</option><option value="walk">步行</option></select></label>
                 <label class="shop-field">預估交通時間（分鐘）<input type="number" id="ltMinutes" min="0" step="5" inputmode="numeric"></label>
                 <label class="shop-field">備註（選填）<input type="text" id="ltNotes" placeholder="例如：末班車 23:40、建議搭計程車"></label>
             </div>
@@ -12157,14 +12163,45 @@ const firebaseConfig = {
         function initTimelineDnD(container) {
             if (!container || container.__tlDnd) return;
             container.__tlDnd = true;
+            const rowsOf = (day) => Array.from(container.querySelectorAll('.timeline-event-row[data-idx]')).filter(r => Number(r.dataset.day) === day);
             const clearMarks = () => {
                 container.querySelectorAll('.tl-dragging,.tl-drop-before,.tl-drop-after').forEach(el => {
                     el.classList.remove('tl-dragging', 'tl-drop-before', 'tl-drop-after');
                 });
             };
+            // 依游標垂直位置找最近的插入點：不必剛好放在行程列上（放在交通列、空白處也有效）
+            const pickTarget = (day, y) => {
+                const rows = rowsOf(day);
+                if (!rows.length) return null;
+                for (const r of rows) {
+                    const b = r.getBoundingClientRect();
+                    if (y < b.top + b.height / 2) return { row: r, after: false };
+                }
+                return { row: rows[rows.length - 1], after: true };
+            };
+            const mark = (t) => {
+                container.querySelectorAll('.tl-drop-before,.tl-drop-after').forEach(el => el.classList.remove('tl-drop-before', 'tl-drop-after'));
+                if (t) t.row.classList.add(t.after ? 'tl-drop-after' : 'tl-drop-before');
+            };
+            const finish = (st, t) => {
+                clearMarks();
+                if (!st || !t) return;
+                const ins = Number(t.row.dataset.idx) + (t.after ? 1 : 0);
+                const to = ins > st.from ? ins - 1 : ins;
+                reorderDayEvent(st.day, st.from, to);
+            };
+            const autoScroll = (y) => {
+                const m = 80;
+                if (y < m) window.scrollBy(0, -20);
+                else if (y > window.innerHeight - m) window.scrollBy(0, 20);
+            };
+            let touchState = null;
+
+            // 桌機：HTML5 拖放
             container.addEventListener('dragstart', (e) => {
                 const h = e.target && e.target.closest ? e.target.closest('[data-tl-handle]') : null;
                 if (!h) return;
+                if (touchState) { e.preventDefault(); return; }
                 const row = h.closest('.timeline-event-row');
                 if (!row) return;
                 tlDragState = { day: Number(row.dataset.day), from: Number(row.dataset.idx) };
@@ -12174,29 +12211,60 @@ const firebaseConfig = {
             });
             container.addEventListener('dragover', (e) => {
                 if (!tlDragState) return;
-                const row = e.target.closest ? e.target.closest('.timeline-event-row[data-idx]') : null;
-                if (!row) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
-                container.querySelectorAll('.tl-drop-before,.tl-drop-after').forEach(el => el.classList.remove('tl-drop-before', 'tl-drop-after'));
-                const r = row.getBoundingClientRect();
-                row.classList.add(e.clientY > r.top + r.height / 2 ? 'tl-drop-after' : 'tl-drop-before');
+                mark(pickTarget(tlDragState.day, e.clientY));
+                autoScroll(e.clientY);
             });
             container.addEventListener('drop', (e) => {
                 if (!tlDragState) return;
-                const row = e.target.closest ? e.target.closest('.timeline-event-row[data-idx]') : null;
+                e.preventDefault();
                 const st = tlDragState;
                 tlDragState = null;
-                if (!row) { clearMarks(); return; }
-                e.preventDefault();
-                const r = row.getBoundingClientRect();
-                const after = e.clientY > r.top + r.height / 2;
-                const ins = Number(row.dataset.idx) + (after ? 1 : 0);
-                const to = ins > st.from ? ins - 1 : ins;
-                clearMarks();
-                reorderDayEvent(st.day, st.from, to);
+                finish(st, pickTarget(st.day, e.clientY));
             });
             container.addEventListener('dragend', () => { tlDragState = null; clearMarks(); });
+            // 拖到容器外的空白處放開時，也用最後位置嘗試排序
+            document.addEventListener('dragover', (e) => { if (tlDragState) { e.preventDefault(); autoScroll(e.clientY); } });
+            document.addEventListener('drop', (e) => {
+                if (!tlDragState) return;
+                e.preventDefault();
+                const st = tlDragState;
+                tlDragState = null;
+                finish(st, pickTarget(st.day, e.clientY));
+            });
+
+            // 手機／平板：Pointer 事件拖曳（原生拖放在觸控裝置上不穩定）
+            container.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse') return;
+                const h = e.target && e.target.closest ? e.target.closest('[data-tl-handle]') : null;
+                if (!h) return;
+                const row = h.closest('.timeline-event-row');
+                if (!row) return;
+                touchState = { day: Number(row.dataset.day), from: Number(row.dataset.idx), id: e.pointerId, handle: h, y: e.clientY };
+                h.draggable = false;
+                row.classList.add('tl-dragging');
+                try { h.setPointerCapture(e.pointerId); } catch (_) {}
+                e.preventDefault();
+            });
+            container.addEventListener('pointermove', (e) => {
+                if (!touchState || e.pointerId !== touchState.id) return;
+                e.preventDefault();
+                touchState.y = e.clientY;
+                mark(pickTarget(touchState.day, e.clientY));
+                autoScroll(e.clientY);
+            });
+            const endTouch = (e, cancel) => {
+                if (!touchState || e.pointerId !== touchState.id) return;
+                const st = touchState;
+                touchState = null;
+                st.handle.draggable = true;
+                try { st.handle.releasePointerCapture(e.pointerId); } catch (_) {}
+                if (cancel) { clearMarks(); return; }
+                finish(st, pickTarget(st.day, e.clientY));
+            };
+            container.addEventListener('pointerup', (e) => endTouch(e, false));
+            container.addEventListener('pointercancel', (e) => endTouch(e, true));
         }
 
         const GMAPS_KEY_STORAGE = 'travel_planner_gmaps_api_key';
@@ -12220,7 +12288,7 @@ const firebaseConfig = {
         async function fetchGoogleRouteInfo(origin, dest, modeKey) {
             const key = getGoogleMapsKey();
             if (!key) throw new Error('尚未設定 Google Maps API Key');
-            const toG = { transit: 'TRANSIT', train: 'TRANSIT', bus: 'TRANSIT', walk: 'WALK', bike: 'BICYCLE', car: 'DRIVE' };
+            const toG = { mixed: 'TRANSIT', transit: 'TRANSIT', train: 'TRANSIT', bus: 'TRANSIT', walk: 'WALK', bike: 'BICYCLE', car: 'DRIVE' };
             const back = { TRANSIT: 'transit', WALK: 'walk', BICYCLE: 'bike', DRIVE: 'car' };
             const first = toG[modeKey] || 'DRIVE';
             const order = [first].concat(['TRANSIT', 'WALK', 'DRIVE'].filter(m => m !== first));
@@ -12230,7 +12298,7 @@ const firebaseConfig = {
                 if (gm === 'DRIVE') body.routingPreference = 'TRAFFIC_UNAWARE';
                 const resp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters' },
+                    headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.legs.steps.travelMode,routes.legs.steps.staticDuration' },
                     body: JSON.stringify(body)
                 });
                 if (!resp.ok) {
@@ -12247,7 +12315,8 @@ const firebaseConfig = {
                     return {
                         minutes: Math.max(1, Math.round(secs / 60)),
                         km: r.distanceMeters ? Math.round(r.distanceMeters / 100) / 10 : null,
-                        mode: usedKey
+                        mode: usedKey,
+                        walkMin: (gm === 'TRANSIT') ? sgGoogleWalkMinutes(r) : 0
                     };
                 }
                 lastErr = new Error('找不到可用路線');
@@ -12287,6 +12356,7 @@ const firebaseConfig = {
                 cur.transit = Object.assign({}, cur.transit || {}, {
                     mode: info.mode,
                     minutes: info.minutes,
+                    walkMin: info.walkMin || 0,
                     googleInfo: `約 ${info.minutes} 分` + (info.km !== null ? `・${info.km} km` : ''),
                     source: 'google'
                 });
@@ -12365,6 +12435,7 @@ const firebaseConfig = {
             const fTransit = activeDay.firstTransit;
             if (fTransit && (fTransit.minutes || fTransit.title || fTransit.cost)) {
                 const fModeInfo = getTransitModeInfo(fTransit.mode || 'car');
+                if ((fTransit.mode === 'mixed') && Number(fTransit.walkMin) > 0) fModeInfo.label = `捷運＋步行（步行 ${fTransit.walkMin} 分）`;
                 const fMinutes = Number(fTransit.minutes || 0);
                 const fCost = Number(fTransit.cost || 0);
                 const fTwd = Math.round(fCost * curr.rate);
@@ -12464,6 +12535,7 @@ const firebaseConfig = {
                             ((ev.title.includes('漫步') || ev.title.includes('步行') || (ev.notes && ev.notes.includes('步行'))) ? 'walk' : 'car'))
                         );
                         const modeInfo = getTransitModeInfo(transitMode);
+                        if (transitMode === 'mixed' && customTransit && Number(customTransit.walkMin) > 0) modeInfo.label = `捷運＋步行（步行 ${customTransit.walkMin} 分）`;
 
                         const customTagHtml = isCustomSet
                             ? `<span style="background:#2563eb; color:#fff; font-size:0.62rem; padding:1px 5px; border-radius:3px; font-weight:700;">自訂</span>`
@@ -14586,6 +14658,57 @@ const firebaseConfig = {
             if (day) { delete day.lastTransit; saveState(); renderTimelineView(); }
             closeModal('lastTransitModal');
         }
+
+        
+        // ===== V3.13.2：混合交通（捷運＋步行）=====
+        (function () {
+            if (document.getElementById('tlDragTouchStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'tlDragTouchStyle';
+            st.textContent = '.tl-drag-handle{touch-action:none;-webkit-user-select:none;user-select:none;}';
+            document.head.appendChild(st);
+        })();
+        function sgGoogleWalkMinutes(route) {
+            let sec = 0;
+            try {
+                (route.legs || []).forEach(l => (l.steps || []).forEach(s => {
+                    if (s.travelMode === 'WALK' && s.staticDuration) sec += parseInt(String(s.staticDuration), 10) || 0;
+                }));
+            } catch (e) {}
+            return Math.round(sec / 60);
+        }
+        function sgTransitObjOf(dayNum, eventIdx) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day) return null;
+            return Number(eventIdx) === 0 ? day.firstTransit : (day.events[eventIdx] && day.events[eventIdx].transit);
+        }
+        const __origOpenTransitForMix = openTransitSettingsModal;
+        openTransitSettingsModal = function (dayNum, eventIdx) {
+            __origOpenTransitForMix(dayNum, eventIdx);
+            try {
+                const t = sgTransitObjOf(dayNum, eventIdx) || {};
+                const el = document.getElementById('transitWalkMinutesInput');
+                if (el) el.value = (t.mode === 'mixed' && Number(t.walkMin) > 0) ? t.walkMin : '';
+            } catch (e) { console.warn(e); }
+        };
+        const __origSaveTransitForMix = handleSaveTransitSubmit;
+        handleSaveTransitSubmit = function (e) {
+            const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
+            const idx = Number(document.getElementById('transitEventIdx')?.value || 1);
+            const mode = document.getElementById('transitModeSelect')?.value || '';
+            const wm = parseInt(document.getElementById('transitWalkMinutesInput')?.value || '0', 10) || 0;
+            const r = __origSaveTransitForMix(e);
+            try {
+                const t = sgTransitObjOf(dayNum, idx);
+                if (t) {
+                    if (mode === 'mixed' && wm > 0) t.walkMin = wm; else delete t.walkMin;
+                    saveState();
+                    renderTimelineView();
+                }
+            } catch (err) { console.warn(err); }
+            return r;
+        };
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
@@ -23747,6 +23870,7 @@ const firebaseConfig = {
             const map = {
                 'car': { label: '開車/計程車/專車', icon: 'fa-car-side', emoji: '🚗' },
                 'transit': { label: '大眾運輸/地鐵', icon: 'fa-train-subway', emoji: '🚇' },
+                'mixed': { label: '捷運＋步行', icon: 'fa-train-subway', emoji: '🚇🚶' },
                 'bus': { label: '長途客運/公車巴士', icon: 'fa-bus', emoji: '🚌' },
                 'walk': { label: '步行散步', icon: 'fa-person-walking', emoji: '🚶' },
                 'flight': { label: '航班航程', icon: 'fa-plane-departure', emoji: '✈️' },
