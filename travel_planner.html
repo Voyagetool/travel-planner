@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -14301,7 +14301,8 @@ const firebaseConfig = {
             kids.forEach((c, i) => {
                 sgChildInitSchedule(plan, c);
                 if (!c.visitStartTime) {
-                    const base = 9 * 60 + 30 + i * 60;
+                    const pb = sgHhmmToMin(item.visitStartTime);
+                    const base = (pb !== null ? pb : (item.mealType === 'lunch' ? 12 * 60 : item.mealType === 'dinner' ? 18 * 60 : 9 * 60 + 30)) + i * 60;
                     const f = n => String(Math.floor(n / 60) % 24).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
                     c.visitStartTime = f(base);
                     c.visitEndTime = f(base + 60);
@@ -14700,6 +14701,90 @@ const firebaseConfig = {
                 }
             } catch (err) { console.warn(err); }
             return r;
+        };
+
+        
+        // ===== V3.13.3：主項目視窗與外部顯示時間一致（以細部景點排程為準）=====
+        function sgChildrenBlock(plan, item) {
+            const kids = sgKidsOf(item);
+            if (!plan || !kids.length) return null;
+            const sched = kids.map(c => ({ c, v: sgChildSchedView(plan, c) })).filter(x => x.v.ymd && (x.v.fromTimeline || x.c.scheduled === true));
+            if (!sched.length) return null;
+            sched.sort((a, b) => String(a.v.ymd).localeCompare(String(b.v.ymd)) || String(a.v.start || '99').localeCompare(String(b.v.start || '99')));
+            const ymd = sched[0].v.ymd;
+            const same = sched.filter(x => x.v.ymd === ymd);
+            const starts = same.map(x => x.v.start).filter(Boolean).sort();
+            const ends = same.map(x => x.v.end || x.v.start).filter(Boolean).sort();
+            if (!starts.length) return null;
+            return { ymd, start: starts[0], end: ends.length ? ends[ends.length - 1] : '', dayNum: sched[0].v.dayNum || null, count: sched.length };
+        }
+        let sgOpenDerived = null;
+        const __origOpenSpotGuideModalForBlock = openAddSpotGuideModal;
+        openAddSpotGuideModal = function (editIdx, forceExpandBooking) {
+            __origOpenSpotGuideModalForBlock(editIdx === undefined ? null : editIdx, forceExpandBooking);
+            sgOpenDerived = null;
+            const oldHint = document.getElementById('sgChildBlockHint');
+            if (oldHint) oldHint.style.display = 'none';
+            try {
+                if (editIdx === null || editIdx === undefined) return;
+                const plan = getCurrentPlan();
+                const item = plan && plan.spotTips[editIdx];
+                const blk = item && sgChildrenBlock(plan, item);
+                if (!blk) return;
+                setSg24hPairValues('sgVisitStartHour', 'sgVisitStartMin', blk.start, '', '00');
+                setSg24hPairValues('sgVisitEndHour', 'sgVisitEndMin', blk.end || '', '', '00');
+                initSgCalendars(blk.ymd, item.bookingDate || (item.hasBooking ? '即刻' : ''));
+                const chk = document.getElementById('sgScheduledCheck');
+                if (chk) chk.checked = true;
+                onSgVisitTimeChange();
+                sgOpenDerived = { editIdx: Number(editIdx), ymd: blk.ymd, start: blk.start };
+                let hint = document.getElementById('sgChildBlockHint');
+                if (!hint) {
+                    const lbl = document.getElementById('sgVisitDateLabel');
+                    if (lbl && lbl.parentNode) {
+                        hint = document.createElement('div');
+                        hint.id = 'sgChildBlockHint';
+                        hint.style.cssText = 'font-size:0.72rem;color:#0e7490;background:#ecfeff;border-radius:6px;padding:3px 8px;margin:2px 0 6px;';
+                        lbl.parentNode.insertBefore(hint, lbl.nextSibling);
+                    }
+                }
+                if (hint) {
+                    hint.style.display = 'block';
+                    hint.textContent = `這裡顯示的是底下 ${blk.count} 個細部景點的整體時段（與外部看板、總覽一致）。修改日期或開始時間，會把所有已排程的細部景點整組平移；個別時間請在下方細部景點調整。`;
+                }
+            } catch (err) { console.warn('主項目時間對齊失敗', err); }
+        };
+        const __origHandleSaveSpotGuideForBlock = handleSaveSpotGuideSubmit;
+        handleSaveSpotGuideSubmit = function (e) {
+            try {
+                const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
+                if (sgOpenDerived && sgOpenDerived.editIdx === editIdx) {
+                    const newYmd = (document.getElementById('sgVisitDate')?.value || '').trim();
+                    const newStart = getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin');
+                    const a = sgHhmmToMin(sgOpenDerived.start), b = sgHhmmToMin(newStart);
+                    const minDelta = (a !== null && b !== null) ? (b - a) : 0;
+                    let dayDelta = 0;
+                    if (newYmd && sgOpenDerived.ymd && newYmd !== sgOpenDerived.ymd) {
+                        const d1 = bcalParseYMD(sgOpenDerived.ymd), d2 = bcalParseYMD(newYmd);
+                        if (d1 && d2) dayDelta = Math.round((d2 - d1) / 86400000);
+                    }
+                    if (minDelta || dayDelta) {
+                        const oldEnd = sgHhmmToMin(getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin'));
+                        if (oldEnd !== null && minDelta) setSg24hPairValues('sgVisitEndHour', 'sgVisitEndMin', sgMinToHhmm(Math.max(0, Math.min(1439, oldEnd + minDelta))), '', '00');
+                        sgChildrenDraft.forEach(c => {
+                            if (!c || !c.scheduled || !c.visitDate) return;
+                            if (dayDelta) c.visitDate = bcalAddDays(c.visitDate, dayDelta) || c.visitDate;
+                            ['visitStartTime', 'visitEndTime'].forEach(k => {
+                                const m = sgHhmmToMin(c[k]);
+                                if (m !== null) c[k] = sgMinToHhmm(Math.max(0, Math.min(1439, m + minDelta)));
+                            });
+                            c._dirty = true;
+                        });
+                    }
+                }
+            } catch (err) { console.warn('細部景點整組平移失敗', err); }
+            sgOpenDerived = null;
+            return __origHandleSaveSpotGuideForBlock(e);
         };
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
