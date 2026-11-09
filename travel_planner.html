@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8430,6 +8430,27 @@
                     • <b>Android</b>：按「分享」→ 選 Google Keep／備忘錄類 App；或「複製文字」貼上。<br>
                     • <b>.ics 待辦</b>：每個項目一則 VTODO，Mac 的「提醒事項」可直接匯入；其他 App 支援度不一。
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回飯店交通設定 -->
+    <div class="modal-backdrop" id="lastTransitModal" onclick="handleBackdropClick(event, 'lastTransitModal')">
+        <div class="modal-dialog" style="max-width: 460px;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-hotel" style="color:#c2410c;"></i> 回飯店交通設定</div>
+                <button class="modal-close-btn" onclick="closeModal('lastTransitModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;display:grid;gap:11px;">
+                <input type="hidden" id="ltDayNum">
+                <label class="shop-field">交通方式<select id="ltMode"><option value="transit">大眾運輸／地鐵</option><option value="car">開車／計程車</option><option value="walk">步行</option></select></label>
+                <label class="shop-field">預估交通時間（分鐘）<input type="number" id="ltMinutes" min="0" step="5" inputmode="numeric"></label>
+                <label class="shop-field">備註（選填）<input type="text" id="ltNotes" placeholder="例如：末班車 23:40、建議搭計程車"></label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="n-btn n-btn-danger" style="margin-right:auto;" onclick="clearLastTransit()">恢復預設</button>
+                <button type="button" class="n-btn" onclick="closeModal('lastTransitModal')">取消</button>
+                <button type="button" class="n-btn n-btn-primary" onclick="saveLastTransit()"><i class="fa-solid fa-check"></i> 儲存</button>
             </div>
         </div>
     </div>
@@ -12391,6 +12412,7 @@ const firebaseConfig = {
                     <button type="button" class="tl-status-link" onclick="markDayDone(${activeDay.dayNum}, ${doneCount === events.length ? 'false' : 'true'})">${doneCount === events.length ? '取消整天完成' : '整天標為已完成'}</button>
                     <button type="button" class="tl-status-link" onclick="markPastDaysDone()" title="依旅程日期，把今天以前的天數全部標為已完成">把今天以前的行程標為已完成</button>
                     <button type="button" class="tl-status-link" onclick="applyLodgingFirstTransitAll()" title="依各天前一晚的住宿，自動設定出發地、交通時間與建議離開時間"><i class="fa-solid fa-hotel"></i> 全部天數依住宿設定起程交通</button>
+                    <button type="button" class="tl-status-link" onclick="googleFillAllLastTransit()" title="用 Google 一次估算每天回飯店的交通時間"><i class="fa-brands fa-google"></i> 全部天數估算回飯店時間</button>
                 </div>` : '';
             let eventsHtml = '';
             if (events.length === 0) {
@@ -12807,6 +12829,7 @@ const firebaseConfig = {
                         ${statusBarHtml}
                         ${firstTransitHtml}
                         ${eventsHtml}
+                        ${renderLastTransitHtml(plan, activeDay)}
                     </div>
 
                     <div style="margin-top: 18px; text-align: center;">
@@ -14413,6 +14436,147 @@ const firebaseConfig = {
             const q = String(c.address || (c.srcItem && c.srcItem.address) || c.name || '').trim();
             if (!q) { showToast('warning', '請先填寫地址或名稱'); return; }
             window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q), '_blank');
+        }
+
+        
+        // ===== V3.13.1：每天最後顯示「回飯店」資訊（最後一天除外）=====
+        function getNightLodging(plan, dayNum) {
+            if (!plan) return null;
+            const ymd = sgYmdFromDayNum(plan, dayNum);
+            if (!ymd) return null;
+            const hotels = (plan.hotels && plan.hotels.length) ? plan.hotels : (plan.hotel ? [plan.hotel] : []);
+            return hotels.find(h => h && h.checkIn && h.checkOut && h.checkIn <= ymd && ymd < h.checkOut) || null;
+        }
+        function sgLastEventOfDay(day) {
+            const evs = (day && day.events || []).slice();
+            sortDayEventsByTime(evs);
+            return evs[evs.length - 1] || null;
+        }
+        function sgHhmmWrap(n) { return fmtMinutesToHHMM(((Math.round(n) % 1440) + 1440) % 1440); }
+        function renderLastTransitHtml(plan, day) {
+            if (!plan || !day || !Array.isArray(plan.days)) return '';
+            const lastNum = Math.max.apply(null, plan.days.map(d => d.dayNum));
+            if (day.dayNum >= lastNum) return '';
+            if (!(day.events || []).length) return '';
+            const hotel = getNightLodging(plan, day.dayNum);
+            if (!hotel) {
+                return `<div style="margin-top:10px;padding:8px 12px;border:1px dashed #cbd5e1;border-radius:10px;color:#94a3b8;font-size:0.78rem;"><i class="fa-solid fa-hotel"></i> 這晚還沒有對應的住宿。請到「交通與住宿」新增飯店，並讓入住日期涵蓋這一天。</div>`;
+            }
+            const last = sgLastEventOfDay(day);
+            const p = parseTimeString(last.time);
+            const lt = day.lastTransit || {};
+            const saved = lt.minutes !== undefined && lt.minutes !== '' && lt.minutes !== null;
+            const minutes = saved ? Number(lt.minutes) : 30;
+            const modeInfo = getTransitModeInfo(lt.mode || 'transit');
+            const endMin = (p.startMinutes < 9999) ? p.startMinutes + (p.hasEnd ? p.durationMinutes : 0) : null;
+            const lastTxt = endMin !== null ? `${last.title}（${p.hasEnd ? '結束' : '開始'} ${sgHhmmWrap(endMin)}）` : last.title;
+            const arrive = endMin !== null ? sgHhmmWrap(endMin + minutes) : '';
+            const mapQ = encodeURIComponent(hotel.addr || hotel.name);
+            return `<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span style="background:#c2410c;color:#fff;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:4px;"><i class="fa-solid fa-hotel"></i> 今晚住宿</span>
+                    <strong style="font-size:0.92rem;color:#7c2d12;">${escapeHtml(hotel.name)}</strong>
+                    ${arrive ? `<span class="tl-leave-chip" title="最後一個行程結束時間 + 交通時間"><i class="fa-regular fa-clock"></i> 預計 ${arrive} 抵達</span>` : ''}
+                </div>
+                ${hotel.addr ? `<div style="margin-top:3px;font-size:0.76rem;"><a href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener" style="color:#9a3412;">📮 ${escapeHtml(hotel.addr)}</a></div>` : ''}
+                <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:0.8rem;color:#334155;">
+                    <span>最後行程：<strong>${escapeHtml(lastTxt)}</strong></span>
+                    <span>→</span>
+                    <i class="fa-solid ${modeInfo.icon}"></i>
+                    <span>${modeInfo.label}約 <strong>${formatDuration(minutes)}</strong>${saved ? '' : ' <span style="color:#94a3b8;">（預設估算）</span>'}</span>
+                    ${lt.googleInfo ? `<span class="tl-google-chip"><i class="fa-brands fa-google"></i> ${escapeHtml(lt.googleInfo)}</span>` : ''}
+                    ${lt.notes ? `<span style="font-size:0.74rem;color:#64748b;"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(lt.notes)}</span>` : ''}
+                </div>
+                <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="n-btn tl-google-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="googleFillLastTransit(${day.dayNum})"><i class="fa-brands fa-google"></i> Google 估算交通時間</button>
+                    <button type="button" class="n-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="openLastTransitMap(${day.dayNum}, 'transit')"><i class="fa-solid fa-map-location-dot"></i> 地圖路線</button>
+                    <button type="button" class="n-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="openLastTransitModal(${day.dayNum})"><i class="fa-solid fa-gear"></i> 設定</button>
+                </div>
+            </div>`;
+        }
+        function sgLastTransitEndpoints(plan, day) {
+            const hotel = getNightLodging(plan, day.dayNum);
+            const last = sgLastEventOfDay(day);
+            if (!hotel || !last) return null;
+            return { origin: String(last.loc || last.title || '').replace(/➔/g, ' ').trim(), dest: hotel.addr || hotel.name };
+        }
+        function openLastTransitMap(dayNum, mode) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            const ep = day && sgLastTransitEndpoints(plan, day);
+            if (!ep || !ep.origin) { showToast('warning', '缺少最後行程地點或住宿資訊'); return; }
+            const url = getMapRouteUrl(ep.origin, ep.dest, mode || 'transit', 'google');
+            if (url) window.open(url, '_blank'); else showToast('warning', '未能取得足夠的地點資訊');
+        }
+        async function googleFillLastTransit(dayNum, silent) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            const ep = day && sgLastTransitEndpoints(plan, day);
+            if (!ep || !ep.origin) { if (!silent) showToast('warning', '缺少最後行程地點或住宿資訊'); return false; }
+            if (!getGoogleMapsKey()) {
+                if (silent) return false;
+                if (!promptGoogleMapsKey()) {
+                    const url = getMapRouteUrl(ep.origin, ep.dest, 'transit', 'google');
+                    if (url) window.open(url, '_blank');
+                    showToast('warning', '尚未設定 API Key，已改為開啟 Google 地圖路線頁');
+                    return false;
+                }
+            }
+            try {
+                const lt = day.lastTransit || {};
+                const info = await fetchGoogleRouteInfo(ep.origin, ep.dest, lt.mode || 'transit');
+                day.lastTransit = Object.assign({}, lt, { mode: info.mode, minutes: info.minutes, googleInfo: `約 ${info.minutes} 分` + (info.km !== null ? `・${info.km} km` : '') });
+                saveState();
+                renderTimelineView();
+                if (!silent) showToast('success', `已帶入 Google 路線：${day.lastTransit.googleInfo}`);
+                return true;
+            } catch (err) {
+                if (!silent) showToast('error', 'Google 路線查詢失敗：' + (err && err.message ? err.message : '請稍後再試'));
+                return false;
+            }
+        }
+        async function googleFillAllLastTransit() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            if (!getGoogleMapsKey() && !promptGoogleMapsKey()) { showToast('warning', '需要 Google API Key 才能批次估算'); return; }
+            const lastNum = Math.max.apply(null, plan.days.map(d => d.dayNum));
+            let ok = 0, skip = 0;
+            for (const d of plan.days) {
+                if (d.dayNum >= lastNum) continue;
+                if (await googleFillLastTransit(d.dayNum, true)) ok++; else skip++;
+            }
+            showToast(ok ? 'success' : 'warning', `已估算 ${ok} 天回飯店的交通時間${skip ? `，${skip} 天缺少資料而略過` : ''}`);
+        }
+        function openLastTransitModal(dayNum) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+            const lt = day.lastTransit || {};
+            document.getElementById('ltDayNum').value = day.dayNum;
+            document.getElementById('ltMode').value = lt.mode || 'transit';
+            document.getElementById('ltMinutes').value = (lt.minutes !== undefined && lt.minutes !== '') ? lt.minutes : 30;
+            document.getElementById('ltNotes').value = lt.notes || '';
+            openModal('lastTransitModal');
+        }
+        function saveLastTransit() {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(document.getElementById('ltDayNum').value));
+            if (!day) return;
+            const prev = day.lastTransit || {};
+            const minutes = Math.max(0, parseInt(document.getElementById('ltMinutes').value, 10) || 0);
+            const mode = document.getElementById('ltMode').value;
+            day.lastTransit = { mode, minutes, notes: document.getElementById('ltNotes').value.trim() };
+            if (prev.googleInfo && prev.minutes === minutes) day.lastTransit.googleInfo = prev.googleInfo;
+            saveState();
+            closeModal('lastTransitModal');
+            renderTimelineView();
+            showToast('success', '已儲存回飯店交通設定');
+        }
+        function clearLastTransit() {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(document.getElementById('ltDayNum').value));
+            if (day) { delete day.lastTransit; saveState(); renderTimelineView(); }
+            closeModal('lastTransitModal');
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
