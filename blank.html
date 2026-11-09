@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.12.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -12861,7 +12861,7 @@ const firebaseConfig = {
             if (dl) {
                 const spotOpts = shopSpotOptions(plan);
                 const spotNames = new Set(spotOpts.map(o => o.name));
-                dl.innerHTML = spotOpts.map(o => `<option value="${escapeHtml(o.name)}" label="${o.cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${o.when ? '｜' + escapeHtml(o.when) : ''}"></option>`).join('') +
+                dl.innerHTML = spotOpts.map(o => `<option value="${escapeHtml(o.name)}" label="${o.cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${o.parentName ? '｜' + escapeHtml(o.parentName) + ' 內' : ''}${o.when ? '｜' + escapeHtml(o.when) : ''}${o.addr ? '｜' + escapeHtml(o.addr) : ''}"></option>`).join('') +
                     [...new Set(all.map(i => (i.place || '').trim()).filter(Boolean))].filter(p => !spotNames.has(p)).map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
             }
             const spotMap = shopSpotWhenMap(plan);
@@ -12876,7 +12876,7 @@ const firebaseConfig = {
             body.innerHTML = Object.keys(groups).map(place => {
                 const arr = groups[place];
                 const subtotal = arr.reduce((s, i) => s + shopItemTwd(i, plan), 0);
-                return `<div class="shop-group-h"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(place)} <small>${arr.length} 項${subtotal ? ` · NT$ ${subtotal.toLocaleString()}` : ''}</small>${spotMap[place] ? `<span style="font-size:0.7rem;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:1px 8px;">${spotMap[place].cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${spotMap[place].when ? '｜' + escapeHtml(spotMap[place].when) : ''}</span>` : ''}</div>
+                return `<div class="shop-group-h"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(place)} <small>${arr.length} 項${subtotal ? ` · NT$ ${subtotal.toLocaleString()}` : ''}</small>${spotMap[place] ? `<span style="font-size:0.7rem;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:1px 8px;">${spotMap[place].cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${spotMap[place].parentName ? '｜' + escapeHtml(spotMap[place].parentName) + ' 內' : ''}${spotMap[place].when ? '｜' + escapeHtml(spotMap[place].when) : ''}</span>` : ''}${(spotMap[place] && spotMap[place].addr) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spotMap[place].addr)}" target="_blank" rel="noopener" style="font-size:0.7rem;font-weight:500;color:#64748b;">📮 ${escapeHtml(spotMap[place].addr)}</a>` : ''}</div>
                 <div class="shop-grid">${arr.map(it => {
                     const pt = shopPriceText(it, plan);
                     return `<div class="shop-card ${it.done ? 'done' : ''}">
@@ -13217,7 +13217,7 @@ const firebaseConfig = {
                 const v = sgChildSchedView(plan, c);
                 const sched = !!(v.ymd && (v.fromTimeline || c.scheduled === true));
                 const label = sched ? `D${v.dayNum || '?'} ${v.start || ''}${v.end ? '-' + v.end : ''}` : '未排時間';
-                let html = `<div class="sg-kb-child"><span class="n">${escapeHtml(c.name)}</span><span class="t ${sched ? '' : 'off'}">${escapeHtml(label)}</span><button type="button" class="n-btn" style="padding:0 6px;font-size:0.68rem;" onclick="sgKbToggleChildEdit(${idx}, ${ci})" title="調整這個細部景點的日期與時間"><i class="fa-regular fa-clock"></i></button></div>`;
+                let html = `<div class="sg-kb-child"><span class="n">${escapeHtml(c.name)}${(String(c.note||'').trim() && String(c.note).length <= 30) ? ` <span style="color:#64748b;">（${escapeHtml(c.note)}）</span>` : ''}${(c.address || (c.srcItem && c.srcItem.address)) ? `<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address || c.srcItem.address)}" target="_blank" rel="noopener" style="font-size:0.66rem;color:#64748b;">📮 ${escapeHtml(c.address || c.srcItem.address)}</a>` : ''}</span><span class="t ${sched ? '' : 'off'}">${escapeHtml(label)}</span><button type="button" class="n-btn" style="padding:0 6px;font-size:0.68rem;" onclick="sgKbToggleChildEdit(${idx}, ${ci})" title="調整這個細部景點的日期與時間"><i class="fa-regular fa-clock"></i></button></div>`;
                 if (sgKbEditKey === idx + '_' + ci) {
                     const sp = (v.start || '10:00').split(':'), ep = (v.end || '11:00').split(':');
                     const id = `${idx}-${ci}`;
@@ -13341,25 +13341,29 @@ const firebaseConfig = {
         function shopSpotOptions(plan) {
             const out = [];
             const seen = new Set();
-            const add = (name, cat, when) => {
+            const add = (name, cat, when, addr, parentName) => {
                 name = String(name || '').trim();
                 if (!name || seen.has(name)) return;
                 seen.add(name);
-                out.push({ name, cat, when: when || '' });
+                out.push({ name, cat, when: when || '', addr: addr || '', parentName: parentName || '' });
             };
             (plan.spotTips || []).forEach(s => {
                 if (!s) return;
                 const kids = sgKidsOf(s);
                 if (kids.length) {
-                    add(s.name, s.category, '');
-                    kids.forEach(c => add(c.name, (c.srcItem && c.srcItem.category) || s.category, sgChildWhen(c)));
+                    add(s.name, s.category, '', s.address || '', '');
+                    kids.forEach(c => {
+                        const note = String(c.note || '').trim();
+                        const nm = String(c.name).trim() + (note && note.length <= 30 ? `（${note}）` : '');
+                        add(nm, (c.srcItem && c.srcItem.category) || s.category, sgChildWhen(c), c.address || (c.srcItem && c.srcItem.address) || '', s.name);
+                    });
                 } else {
                     let when = '';
                     try {
                         const info = resolveSpotScheduledDayInfo(plan, s);
                         if (info.isScheduled && info.dayNum) when = `Day ${info.dayNum}${info.timeDisplay ? ' ' + info.timeDisplay : ''}`;
                     } catch (e) {}
-                    add(s.name, s.category, when);
+                    add(s.name, s.category, when, s.address || '', '');
                 }
             });
             return out;
@@ -13368,6 +13372,16 @@ const firebaseConfig = {
             const m = {};
             shopSpotOptions(plan).forEach(o => { m[o.name] = o; });
             return m;
+        }
+
+        
+        // 開啟 Google 地圖查詢細部景點的地址（沒有地址就用店名）
+        function openSgChildMap(i) {
+            const c = sgChildrenDraft[i];
+            if (!c) return;
+            const q = String(c.address || (c.srcItem && c.srcItem.address) || c.name || '').trim();
+            if (!q) { showToast('warning', '請先填寫地址或名稱'); return; }
+            window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q), '_blank');
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
@@ -13804,6 +13818,10 @@ const firebaseConfig = {
                         <input type="text" class="form-input" value="${escapeHtml(c.name || '')}" placeholder="細部景點名稱" oninput="updateSgChild(${i}, 'name', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
                         <input type="text" class="form-input" value="${escapeHtml(c.note || '')}" placeholder="備註（如：必拍大佛、約 40 分鐘）" oninput="updateSgChild(${i}, 'note', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSgChild();}">
                         <span style="display:inline-flex; gap:4px;">${sgMergedIds.includes(c.id) ? '' : `<button type="button" class="n-btn" style="padding:2px 8px;" onclick="splitSgChild(${i})" title="拆出成獨立景點"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>`}<button type="button" class="n-btn n-btn-danger" style="padding:2px 9px;" onclick="removeSgChild(${i})" title="移除（整合進來的景點會恢復為獨立景點）"><i class="fa-regular fa-trash-can"></i></button></span>
+                    </div>
+                    <div class="sg-child-row" style="margin-top:5px;">
+                        <input type="text" class="form-input" value="${escapeHtml(c.address || (c.srcItem && c.srcItem.address) || '')}" placeholder="地址（選填，方便之後查詢／導航）" oninput="updateSgChild(${i}, 'address', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+                        <span style="display:inline-flex;"><button type="button" class="n-btn" style="padding:2px 8px;" onclick="openSgChildMap(${i})" title="用 Google 地圖查詢這個地址／店名"><i class="fa-solid fa-map-location-dot"></i></button></span>
                     </div>
                     <div class="sg-child-sched">
                         <label><input type="checkbox" class="n-checkbox" ${c.scheduled ? 'checked' : ''} onchange="setSgChildField(${i}, 'scheduled', this.checked)"> 排入行程</label>
