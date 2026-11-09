@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.12.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.12.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -13085,7 +13085,13 @@ const firebaseConfig = {
         renderAll = function () {
             try {
                 const p = getCurrentPlan();
-                if (p && sgDedupeParentEvents(p)) saveState(true);
+                if (p) {
+                    let ch = false;
+                    ch = sgAbsorbDuplicateStandalones(p) || ch;
+                    ch = sgReconcileSpotsFromTimeline(p) || ch;
+                    ch = sgDedupeParentEvents(p) || ch;
+                    if (ch) saveState(true);
+                }
             } catch (e) { console.warn('主項目去重失敗', e); }
             return __origRenderAllForDedupe.apply(this, arguments);
         };
@@ -13244,6 +13250,84 @@ const firebaseConfig = {
             p.visitDate = p.visitDate || col.ymd;
             sgFinishScheduleChange(plan);
             showToast('success', `「${c.name}」已排入第 ${col.dayNum} 天 ${st}-${en}`);
+        }
+
+        
+        // ===== V3.12.1：景點頁與總覽行程雙向對齊、同名重複項目整併 =====
+        function sgHhmmToMin(s) { const m = String(s || '').match(/^(\d{1,2}):(\d{2})$/); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+        function sgMinToHhmm(n) { n = ((n % 1440) + 1440) % 1440; return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0'); }
+
+        // 景點頁有「獨立項目」與某主項目底下「同名細部景點」時，視為同一個地點：併入細部景點，行程只留一筆
+        function sgAbsorbDuplicateStandalones(plan) {
+            if (!plan || !Array.isArray(plan.spotTips) || !Array.isArray(plan.days)) return false;
+            let changed = false;
+            plan.spotTips.slice().forEach(p => {
+                if (!plan.spotTips.includes(p)) return;
+                sgKidsOf(p).forEach(c => {
+                    const nm = String(c.name).trim();
+                    const k = plan.spotTips.findIndex(s => s && s !== p && s.id !== c.id && !sgKidsOf(s).length && String(s.name || '').trim() === nm);
+                    if (k < 0) return;
+                    const s = plan.spotTips[k];
+                    const oldId = c.id;
+                    plan.days.forEach(d => { if (Array.isArray(d.events)) d.events = d.events.filter(ev => ev.spotGuideId !== oldId); });
+                    let evTime = '';
+                    plan.days.forEach(d => (d.events || []).forEach(ev => { if (ev.spotGuideId === s.id && !evTime) evTime = ev.time || ''; }));
+                    c.id = s.id;
+                    c.srcItem = JSON.parse(JSON.stringify(s));
+                    if (!c.address && s.address) c.address = s.address;
+                    if (!c.note && s.tip) c.note = String(s.tip).slice(0, 80);
+                    if (c.visitDate && c.visitStartTime) {
+                        if (!c.visitEndTime && evTime) {
+                            const t = sgTimeParts(evTime);
+                            const a = sgHhmmToMin(t.start), b = sgHhmmToMin(t.end);
+                            if (a !== null && b !== null && b > a) c.visitEndTime = sgMinToHhmm(sgHhmmToMin(c.visitStartTime) + (b - a));
+                        }
+                        c.scheduled = true;
+                        sgSyncOneChild(plan, p, c);
+                    }
+                    plan.spotTips.splice(k, 1);
+                    changed = true;
+                });
+            });
+            return changed;
+        }
+
+        // 行程事件（總覽）是實際排程：把它的日期／時間回填到景點項目與細部景點，讓景點頁顯示一致
+        function sgReconcileSpotsFromTimeline(plan) {
+            if (!plan || !Array.isArray(plan.spotTips) || !Array.isArray(plan.days)) return false;
+            let changed = false;
+            plan.spotTips.forEach(s => {
+                if (!s) return;
+                const kids = sgKidsOf(s);
+                if (kids.length) {
+                    kids.forEach(c => {
+                        const before = [c.visitDate, c.visitStartTime, c.visitEndTime].join('|');
+                        const v = sgChildSchedView(plan, c);
+                        if (v.fromTimeline) {
+                            sgChildInitSchedule(plan, c);
+                            if ([c.visitDate, c.visitStartTime, c.visitEndTime].join('|') !== before) changed = true;
+                        }
+                    });
+                    return;
+                }
+                if (!s.id) return;
+                let ev = null, dayNum = null;
+                for (const d of plan.days) {
+                    const e = (d.events || []).find(x => x.spotGuideId === s.id);
+                    if (e) { ev = e; dayNum = d.dayNum; break; }
+                }
+                if (!ev) return;
+                const t = sgTimeParts(ev.time || '');
+                if (sgHhmmToMin(t.start) === null) return;
+                const ymd = sgYmdFromDayNum(plan, dayNum);
+                const before = [s.visitDate, s.visitStartTime, s.visitEndTime].join('|');
+                if (ymd) s.visitDate = ymd;
+                s.visitStartTime = t.start;
+                s.visitEndTime = (sgHhmmToMin(t.end) !== null) ? t.end : '';
+                if (s.scheduled !== true) s.scheduled = true;
+                if ([s.visitDate, s.visitStartTime, s.visitEndTime].join('|') !== before) changed = true;
+            });
+            return changed;
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
