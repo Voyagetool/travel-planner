@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.11.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.12.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -12662,6 +12662,14 @@ const firebaseConfig = {
             .sg-kb-chip{background:#f1f5f9;border-radius:6px;padding:1px 6px;}
             .sg-kb-act{display:flex;gap:4px;margin-top:7px;align-items:center;flex-wrap:wrap;}
             .sg-kb-act select{font-size:0.7rem;padding:2px 3px;border:1px solid #cbd5e1;border-radius:6px;max-width:112px;background:#fff;}
+            .sg-kb-children{margin-top:6px;border-top:1px dashed #e2e8f0;padding-top:5px;display:grid;gap:3px;}
+            .sg-kb-child{display:flex;align-items:center;gap:5px;font-size:0.74rem;color:#334155;}
+            .sg-kb-child .n{flex:1;min-width:0;word-break:break-word;}
+            .sg-kb-child .t{background:#ecfeff;color:#0e7490;border-radius:6px;padding:0 6px;font-size:0.68rem;white-space:nowrap;}
+            .sg-kb-child .t.off{background:#f1f5f9;color:#94a3b8;}
+            .sg-kb-child-edit{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px;margin:2px 0 4px;display:grid;gap:5px;}
+            .sg-kb-child-edit select{font-size:0.74rem;padding:2px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;max-width:100%;}
+            .sg-kb-child-edit .r{display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
             .sg-kb-empty{text-align:center;color:#94a3b8;font-size:0.74rem;padding:12px 0;border:1px dashed #cbd5e1;border-radius:8px;}
         </style>`;
 
@@ -12773,6 +12781,7 @@ const firebaseConfig = {
                 return `<div class="sg-kb-card ${isFood ? 'food' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
                     <div class="sg-kb-title">${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
                     ${chips.length ? `<div class="sg-kb-meta">${chips.join('')}</div>` : ''}
+                    ${sgKbChildrenHtml(plan, item, idx)}
                     <div class="sg-kb-act">
                         <select onchange="if(this.value){moveSpotToColumn(${idx}, this.value);}" title="移到其他欄位">${optionsHtml(curKey)}</select>
                         <button type="button" class="n-btn" style="padding:1px 7px;font-size:0.7rem;margin-left:auto;" onclick="openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i></button>
@@ -13029,6 +13038,212 @@ const firebaseConfig = {
         function downloadShoppingIcs() {
             downloadShoppingBlob(buildShoppingIcs(shopExportScopeValue()), '購買清單.ics', 'text/calendar;charset=utf-8');
             showToast('info', '已下載 .ics：Mac 可直接用「提醒事項」開啟匯入');
+        }
+
+        
+        // ===== V3.12.0：主項目與細部景點合併顯示（只顯示細部、可逐一調整時間）=====
+        function sgKidsOf(item) {
+            return (item && Array.isArray(item.children)) ? item.children.filter(c => c && String(c.name || '').trim()) : [];
+        }
+        function sgChildIsScheduled(plan, c) {
+            const v = sgChildSchedView(plan, c);
+            return !!(v.ymd && (v.fromTimeline || c.scheduled === true));
+        }
+        // 主項目只要有任何細部景點已排入，就移除主項目自己的行程事件，避免主項目與細部重複顯示
+        function sgDedupeParentEvents(plan) {
+            if (!plan || !Array.isArray(plan.spotTips) || !Array.isArray(plan.days)) return false;
+            let changed = false;
+            plan.spotTips.forEach(p => {
+                const kids = sgKidsOf(p);
+                if (!kids.length || !p.id) return;
+                if (!kids.some(c => sgChildIsScheduled(plan, c))) return;
+                // 已標記排程、但行程裡還沒有自己事件的細部景點，先補建事件，避免移除主項目後少掉行程
+                kids.forEach(c => {
+                    const v = sgChildSchedView(plan, c);
+                    if (!v.fromTimeline && v.ymd && c.scheduled === true) {
+                        if (!c.visitStartTime) c.visitStartTime = v.start || '10:00';
+                        sgSyncOneChild(plan, p, c);
+                        changed = true;
+                    }
+                });
+                plan.days.forEach(d => {
+                    if (!Array.isArray(d.events)) return;
+                    const before = d.events.length;
+                    d.events = d.events.filter(ev => ev.spotGuideId !== p.id);
+                    if (d.events.length !== before) changed = true;
+                });
+            });
+            return changed;
+        }
+        const __origSyncSpotGuideToDailySchedule = syncSpotGuideToDailySchedule;
+        syncSpotGuideToDailySchedule = function (plan, spotObj) {
+            const r = __origSyncSpotGuideToDailySchedule(plan, spotObj);
+            try { sgDedupeParentEvents(plan); } catch (e) { console.warn(e); }
+            return r;
+        };
+        const __origRenderAllForDedupe = renderAll;
+        renderAll = function () {
+            try {
+                const p = getCurrentPlan();
+                if (p && sgDedupeParentEvents(p)) saveState(true);
+            } catch (e) { console.warn('主項目去重失敗', e); }
+            return __origRenderAllForDedupe.apply(this, arguments);
+        };
+
+        // 主項目的排程資訊改由細部景點推算（最早的日期＋該日最早開始～最晚結束）
+        const __origResolveSpotScheduledDayInfo = resolveSpotScheduledDayInfo;
+        resolveSpotScheduledDayInfo = function (plan, item) {
+            const kids = sgKidsOf(item);
+            if (plan && kids.length) {
+                const sched = kids.map(c => ({ c, v: sgChildSchedView(plan, c) })).filter(x => x.v.ymd && (x.v.fromTimeline || x.c.scheduled === true));
+                if (sched.length) {
+                    sched.sort((a, b) => String(a.v.ymd).localeCompare(String(b.v.ymd)) || String(a.v.start || '99').localeCompare(String(b.v.start || '99')));
+                    const first = sched[0].v;
+                    const sameDay = sched.filter(x => x.v.ymd === first.ymd);
+                    const starts = sameDay.map(x => x.v.start).filter(Boolean).sort();
+                    const ends = sameDay.map(x => x.v.end || x.v.start).filter(Boolean).sort();
+                    const wd = ['日', '一', '二', '三', '四', '五', '六'];
+                    const m = String(first.ymd).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+                    let dateDisplay = '';
+                    if (m) { const dt = new Date(+m[1], +m[2] - 1, +m[3]); dateDisplay = `${+m[2]}/${+m[3]} (${wd[dt.getDay()]})`; }
+                    const timeDisplay = starts.length ? (ends.length && ends[ends.length - 1] !== starts[0] ? `${starts[0]} - ${ends[ends.length - 1]}` : starts[0]) : '';
+                    return { isScheduled: true, dayNum: first.dayNum || null, dateDisplay, timeDisplay, autoDetected: null, fromChildren: true };
+                }
+            }
+            const base = __origResolveSpotScheduledDayInfo(plan, item);
+            // 有細部景點的主項目：沒有對應到實際天數就視為未排入
+            if (plan && kids.length && base.isScheduled && !base.dayNum) return Object.assign({}, base, { isScheduled: false, timeDisplay: '' });
+            return base;
+        };
+
+        function sgSyncOneChild(plan, parent, c) {
+            relinkChildEvents(plan, c);
+            const s = c.srcItem || {};
+            const tipFull = (s.tip && c.note === String(s.tip).slice(0, 80)) ? s.tip : (c.note || '');
+            const obj = Object.assign({}, s, {
+                id: c.id, name: String(c.name).trim(),
+                address: c.address || s.address || '', tip: tipFull,
+                category: s.category || parent.category || 'spot', mealType: s.mealType || '',
+                visitDate: c.visitDate || '', visitStartTime: c.visitStartTime || '', visitEndTime: c.visitEndTime || '',
+                scheduled: !!c.scheduled && !!c.visitDate
+            });
+            return __origSyncSpotGuideToDailySchedule(plan, obj);
+        }
+        function sgUnscheduleChild(plan, c) {
+            relinkChildEvents(plan, c);
+            sgChildInitSchedule(plan, c);
+            (plan.days || []).forEach(d => { if (Array.isArray(d.events)) d.events = d.events.filter(ev => ev.spotGuideId !== c.id); });
+            c.scheduled = false;
+        }
+        function sgFinishScheduleChange(plan) {
+            try { sgDedupeParentEvents(plan); } catch (e) {}
+            try { syncMealsFromSpotGuides(plan); } catch (e) {}
+            saveState();
+            renderAll();
+        }
+
+        const __origMoveSpotToColumn = moveSpotToColumn;
+        moveSpotToColumn = function (idx, key) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            ensureUnifiedSpotGuides(plan);
+            const item = plan.spotTips[idx];
+            const kids = sgKidsOf(item);
+            if (!kids.length) return __origMoveSpotToColumn(idx, key);
+            if (key === 'pending') {
+                kids.forEach(c => sgUnscheduleChild(plan, c));
+                (plan.days || []).forEach(d => { if (Array.isArray(d.events)) d.events = d.events.filter(ev => ev.spotGuideId !== item.id); });
+                item.scheduled = false;
+                sgFinishScheduleChange(plan);
+                showToast('info', `已取消「${item.name}」及細部景點的行程安排`);
+                return;
+            }
+            const col = sgKanbanDayColumns(plan).find(c => String(c.dayNum) === String(key));
+            if (!col || !col.ymd) { showToast('warning', '此天尚未設定日期，請先在行程設定日期區間'); return; }
+            kids.forEach((c, i) => {
+                sgChildInitSchedule(plan, c);
+                if (!c.visitStartTime) {
+                    const base = 9 * 60 + 30 + i * 60;
+                    const f = n => String(Math.floor(n / 60) % 24).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+                    c.visitStartTime = f(base);
+                    c.visitEndTime = f(base + 60);
+                }
+                c.visitDate = col.ymd;
+                c.scheduled = true;
+                sgSyncOneChild(plan, item, c);
+            });
+            item.visitDate = col.ymd;
+            item.scheduled = true;
+            sgFinishScheduleChange(plan);
+            showToast('success', `已將「${item.name}」的 ${kids.length} 個細部景點排入第 ${col.dayNum} 天`);
+        };
+
+        // ---- 看板：細部景點逐一調整 ----
+        let sgKbEditKey = null;
+        function sgKbToggleChildEdit(pIdx, cIdx) {
+            const k = pIdx + '_' + cIdx;
+            sgKbEditKey = (sgKbEditKey === k) ? null : k;
+            renderSpotGuidesView();
+        }
+        function sgKbHourOpts(sel) {
+            let h = '';
+            for (let i = 0; i < 24; i++) { const v = String(i).padStart(2, '0'); h += `<option value="${v}"${v === sel ? ' selected' : ''}>${v}</option>`; }
+            return h;
+        }
+        function sgKbMinOpts(sel) {
+            const vals = [];
+            for (let i = 0; i < 60; i += 5) vals.push(String(i).padStart(2, '0'));
+            if (sel && !vals.includes(sel)) { vals.push(sel); vals.sort(); }
+            return vals.map(v => `<option value="${v}"${v === sel ? ' selected' : ''}>${v}</option>`).join('');
+        }
+        function sgKbChildrenHtml(plan, item, idx) {
+            const kids = Array.isArray(item.children) ? item.children : [];
+            if (!sgKidsOf(item).length) return '';
+            const cols = sgKanbanDayColumns(plan);
+            const rows = kids.map((c, ci) => {
+                if (!c || !String(c.name || '').trim()) return '';
+                const v = sgChildSchedView(plan, c);
+                const sched = !!(v.ymd && (v.fromTimeline || c.scheduled === true));
+                const label = sched ? `D${v.dayNum || '?'} ${v.start || ''}${v.end ? '-' + v.end : ''}` : '未排時間';
+                let html = `<div class="sg-kb-child"><span class="n">${escapeHtml(c.name)}</span><span class="t ${sched ? '' : 'off'}">${escapeHtml(label)}</span><button type="button" class="n-btn" style="padding:0 6px;font-size:0.68rem;" onclick="sgKbToggleChildEdit(${idx}, ${ci})" title="調整這個細部景點的日期與時間"><i class="fa-regular fa-clock"></i></button></div>`;
+                if (sgKbEditKey === idx + '_' + ci) {
+                    const sp = (v.start || '10:00').split(':'), ep = (v.end || '11:00').split(':');
+                    const id = `${idx}-${ci}`;
+                    html += `<div class="sg-kb-child-edit">
+                        <select id="kbc-d-${id}"><option value="">不排入行程</option>${cols.map(col => `<option value="${col.dayNum}"${sched && v.dayNum === col.dayNum ? ' selected' : ''}>Day ${col.dayNum} ${escapeHtml(col.label)}</option>`).join('')}</select>
+                        <div class="r"><select id="kbc-sh-${id}">${sgKbHourOpts(sp[0])}</select>:<select id="kbc-sm-${id}">${sgKbMinOpts(sp[1])}</select><span>~</span><select id="kbc-eh-${id}">${sgKbHourOpts(ep[0])}</select>:<select id="kbc-em-${id}">${sgKbMinOpts(ep[1])}</select></div>
+                        <div class="r"><button type="button" class="n-btn n-btn-primary" style="padding:1px 9px;font-size:0.72rem;" onclick="sgKbChildSave(${idx}, ${ci})">儲存</button><button type="button" class="n-btn" style="padding:1px 9px;font-size:0.72rem;" onclick="sgKbToggleChildEdit(${idx}, ${ci})">取消</button></div>
+                    </div>`;
+                }
+                return html;
+            }).join('');
+            return `<div class="sg-kb-children">${rows}</div>`;
+        }
+        function sgKbChildSave(pIdx, cIdx) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            ensureUnifiedSpotGuides(plan);
+            const p = plan.spotTips[pIdx];
+            const c = p && p.children && p.children[cIdx];
+            if (!c) return;
+            const g = k => (document.getElementById(`kbc-${k}-${pIdx}-${cIdx}`) || {}).value || '';
+            const dayVal = g('d');
+            sgKbEditKey = null;
+            if (!dayVal) {
+                sgUnscheduleChild(plan, c);
+                sgFinishScheduleChange(plan);
+                showToast('info', `已取消「${c.name}」的行程安排`);
+                return;
+            }
+            const st = `${g('sh')}:${g('sm')}`, en = `${g('eh')}:${g('em')}`;
+            if (en <= st) { showToast('warning', '結束時間需晚於開始時間'); sgKbEditKey = pIdx + '_' + cIdx; return; }
+            const col = sgKanbanDayColumns(plan).find(x => String(x.dayNum) === String(dayVal));
+            if (!col || !col.ymd) { showToast('warning', '此天尚未設定日期'); return; }
+            c.visitDate = col.ymd; c.visitStartTime = st; c.visitEndTime = en; c.scheduled = true;
+            sgSyncOneChild(plan, p, c);
+            p.visitDate = p.visitDate || col.ymd;
+            sgFinishScheduleChange(plan);
+            showToast('success', `「${c.name}」已排入第 ${col.dayNum} 天 ${st}-${en}`);
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
