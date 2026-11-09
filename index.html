@@ -6088,7 +6088,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.3</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.4</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -13912,8 +13912,8 @@ const firebaseConfig = {
                 if (isFood && item.mealType === 'dinner') chips.push('<span class="sg-kb-chip" style="background:#fef2f2;color:#b91c1c;">晚餐</span>');
                 if (kids.length) chips.push(`<span class="sg-kb-chip"><i class="fa-solid fa-sitemap"></i> ${kids.length} 個細部</span>`);
                 if (item.hasBooking) chips.push(`<span class="sg-kb-chip" style="background:#fef3c7;color:#b45309;"><i class="fa-solid fa-ticket"></i> ${escapeHtml(item.bookingStatus || '需預約')}</span>`);
-                return `<div class="sg-kb-card ${isFood ? 'food' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
-                    <div class="sg-kb-title">${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
+                return `<div class="sg-kb-card ${isFood ? 'food' : ''} ${sgKbCollapsed.has(item.id) ? 'collapsed' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
+                    <div class="sg-kb-title"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCard('${item.id}')" title="${sgKbCollapsed.has(item.id) ? '展開' : '縮小'}"><i class="fa-solid fa-chevron-${sgKbCollapsed.has(item.id) ? 'right' : 'down'}"></i></button>${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
                     ${chips.length ? `<div class="sg-kb-meta">${chips.join('')}</div>` : ''}
                     ${sgKbChildrenHtml(plan, item, idx)}
                     <div class="sg-kb-act">
@@ -13930,7 +13930,7 @@ const firebaseConfig = {
                 ${arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>'}
             </div>`;
 
-            let html = SG_KANBAN_STYLE + filterBarHtml + '<div class="sg-kb-board">';
+            let html = SG_KANBAN_STYLE + filterBarHtml + '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;"><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(true)"><i class="fa-solid fa-compress"></i> 全部縮小</button><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(false)"><i class="fa-solid fa-expand"></i> 全部展開</button></div><div class="sg-kb-board">';
             html += colHtml('pending', '<i class="fa-regular fa-clipboard" style="color:#64748b;"></i> 待安排', buckets.pending);
             cols.forEach(c => {
                 html += colHtml(String(c.dayNum), `<i class="fa-regular fa-calendar" style="color:#0284c7;"></i> Day ${c.dayNum} <small>${escapeHtml(c.label)}</small>`, buckets[c.dayNum]);
@@ -14749,16 +14749,19 @@ const firebaseConfig = {
                 let hint = document.getElementById('sgChildBlockHint');
                 if (!hint) {
                     const lbl = document.getElementById('sgVisitDateLabel');
-                    if (lbl && lbl.parentNode) {
-                        hint = document.createElement('div');
+                    if (lbl) {
+                        hint = document.createElement('span');
                         hint.id = 'sgChildBlockHint';
-                        hint.style.cssText = 'font-size:0.72rem;color:#0e7490;background:#ecfeff;border-radius:6px;padding:3px 8px;margin:2px 0 6px;';
-                        lbl.parentNode.insertBefore(hint, lbl.nextSibling);
+                        hint.className = 'sg-help';
+                        hint.textContent = '?';
+                        hint.onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); hint.classList.toggle('open'); };
+                        lbl.appendChild(hint);
                     }
                 }
                 if (hint) {
-                    hint.style.display = 'block';
-                    hint.textContent = `這裡顯示的是底下 ${blk.count} 個細部景點的整體時段（與外部看板、總覽一致）。修改日期或開始時間，會把所有已排程的細部景點整組平移；個別時間請在下方細部景點調整。`;
+                    hint.style.display = 'inline-flex';
+                    hint.classList.remove('open');
+                    hint.setAttribute('data-tip', `這裡顯示的是底下 ${blk.count} 個細部景點的整體時段（與外部看板、總覽一致）。修改日期或開始時間，會把所有已排程的細部景點整組平移；個別時間請在下方細部景點調整。`);
                 }
             } catch (err) { console.warn('主項目時間對齊失敗', err); }
         };
@@ -14794,6 +14797,42 @@ const firebaseConfig = {
             sgOpenDerived = null;
             return __origHandleSaveSpotGuideForBlock(e);
         };
+
+        
+        // ===== V3.13.4：說明改為「?」懸停提示、看板卡片可縮小 =====
+        (function () {
+            if (document.getElementById('sgHelpStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgHelpStyle';
+            st.textContent = `
+                .sg-help{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#0e7490;color:#fff;font-size:0.7rem;font-weight:800;margin-left:6px;cursor:help;position:relative;vertical-align:middle;}
+                .sg-help::after{content:attr(data-tip);position:absolute;left:-4px;top:24px;width:min(280px,70vw);background:#0f172a;color:#fff;padding:8px 10px;border-radius:8px;font-size:0.74rem;font-weight:500;line-height:1.55;z-index:99999;display:none;white-space:normal;text-align:left;box-shadow:0 6px 18px rgba(0,0,0,.25);}
+                .sg-help:hover::after,.sg-help.open::after{display:block;}
+                .sg-kb-tog{border:none;background:transparent;color:#64748b;cursor:pointer;padding:0 4px 0 0;font-size:0.72rem;}
+                .sg-kb-card.collapsed{padding-top:6px;padding-bottom:6px;}
+                .sg-kb-card.collapsed .sg-kb-children,.sg-kb-card.collapsed .sg-kb-act{display:none;}
+                .sg-kb-card.collapsed .sg-kb-meta .sg-kb-chip:not(:first-child){display:none;}
+            `;
+            document.head.appendChild(st);
+        })();
+        let sgKbCollapsed = (function () {
+            try { return new Set(JSON.parse(localStorage.getItem('sg_kb_collapsed') || '[]')); } catch (e) { return new Set(); }
+        })();
+        function sgKbSaveCollapsed() {
+            try { localStorage.setItem('sg_kb_collapsed', JSON.stringify(Array.from(sgKbCollapsed))); } catch (e) {}
+        }
+        function sgKbToggleCard(id) {
+            if (sgKbCollapsed.has(id)) sgKbCollapsed.delete(id); else sgKbCollapsed.add(id);
+            sgKbSaveCollapsed();
+            renderSpotGuidesView();
+        }
+        function sgKbCollapseAll(flag) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            (plan.spotTips || []).forEach(s => { if (!s || !s.id) return; if (flag) sgKbCollapsed.add(s.id); else sgKbCollapsed.delete(s.id); });
+            sgKbSaveCollapsed();
+            renderSpotGuidesView();
+        }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
