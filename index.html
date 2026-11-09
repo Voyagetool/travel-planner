@@ -2001,6 +2001,20 @@
             color: #94a3b8;
         }
 
+        /* 每日行程頁：內容較多時允許跨頁，避免被切掉 */
+        .booklet-sheet.booklet-day-sheet { page-break-inside: auto; break-inside: auto; }
+        .booklet-day-row { break-inside: avoid; page-break-inside: avoid; }
+        @media print {
+            .booklet-mode-paged .booklet-sheet.booklet-day-sheet,
+            .booklet-mode-compact .booklet-sheet.booklet-day-sheet {
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+                min-height: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+        }
+
         /* 封面頁 (Cover Sheet) */
         .booklet-cover {
             text-align: center;
@@ -6088,7 +6102,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.8</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.13.9</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -15120,6 +15134,40 @@ const firebaseConfig = {
             return __origRenderAllForTransit.apply(this, arguments);
         };
 
+        
+        // ===== V3.13.9：旅遊小冊每日加入交通與住宿資訊、長的一天可跨頁 =====
+        function bookletTransitLine(t, label) {
+            if (!t) return '';
+            const mins = Number(t.minutes);
+            if (!(mins > 0) && !t.title) return '';
+            const info = getTransitModeInfo(t.mode || 'car');
+            let modeLabel = info.label;
+            if (t.mode === 'mixed' && (Number(t.walkMin) > 0 || Number(t.railMin) > 0)) {
+                modeLabel = `捷運＋步行（${Number(t.railMin) > 0 ? '捷運 ' + t.railMin + ' 分＋' : ''}步行 ${t.walkMin || 0} 分）`;
+            }
+            return `<div class="booklet-day-row" style="display:flex;gap:8px;align-items:center;padding:4px 0 4px 122px;font-size:0.8rem;color:#64748b;border-bottom:1px solid #f1f5f9;">
+                <i class="fa-solid ${info.icon}" style="color:#0284c7;"></i>
+                <span>${label ? escapeHtml(label) + '：' : ''}${escapeHtml(modeLabel)}${mins > 0 ? ' 約 ' + escapeHtml(formatDuration(mins)) : ''}${t.title ? '（' + escapeHtml(t.title) + '）' : ''}${t.startTimeStr ? ' ‧ 建議 ' + escapeHtml(t.startTimeStr) + ' 出發' : ''}</span>
+            </div>`;
+        }
+        function bookletTransitRow(ev, idx, events, d) {
+            if (idx === 0) return bookletTransitLine(d && d.firstTransit, '出門');
+            return bookletTransitLine(ev && ev.transit, '');
+        }
+        function bookletLodgingRow(plan, d) {
+            try {
+                const lastNum = Math.max.apply(null, (plan.days || []).map(x => x.dayNum));
+                if (!d || d.dayNum >= lastNum) return '';
+                const hotel = getNightLodging(plan, d.dayNum);
+                if (!hotel) return '';
+                const lt = d.lastTransit || {};
+                const lastLine = (Number(lt.minutes) > 0) ? bookletTransitLine(lt, '回飯店') : '';
+                return `${lastLine}<div class="booklet-day-row" style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:8px 12px;font-size:0.86rem;color:#7c2d12;">
+                    🏨 <strong>今晚住宿：</strong>${escapeHtml(hotel.name)}${hotel.addr ? `<div style="font-size:0.8rem;color:#9a3412;margin-top:2px;">📮 ${escapeHtml(hotel.addr)}</div>` : ''}${hotel.phone ? `<div style="font-size:0.8rem;color:#9a3412;">☎ ${escapeHtml(hotel.phone)}</div>` : ''}
+                </div>`;
+            } catch (e) { return ''; }
+        }
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -19603,7 +19651,7 @@ const firebaseConfig = {
                             </div>
                             <div style="flex:0 0 auto; text-align:center; padding:0 8px;">
                                 <div style="font-size:0.75rem; color:#64748b; margin-bottom:2px;">${escapeHtml(leg.duration || '直飛/轉機')}</div>
-                                <div style="color:#0284c7; font-size:1.1rem;"><i class="fa-solid fa-plane"></i> ➔</div>
+                                <div style="color:#0284c7; font-size:1.1rem;"><i class="fa-solid fa-plane"></i></div>
                             </div>
                             <div style="flex:1; text-align:right;">
                                 <div style="font-size:1.3rem; font-weight:800; color:#0f172a;">${escapeHtml(leg.isTransfer && leg.arrTime2 ? leg.arrTime2 : arrTime)}</div>
@@ -19642,10 +19690,10 @@ const firebaseConfig = {
             // 每日行程頁面 (純淨無記帳無戳印框)
             const daySheetsHtml = days.map((d, index) => {
                 const events = d.events || [];
-                const eventsHtml = events.map(e => {
+                const eventsHtml = events.map((e, ei) => {
                     const timeStr = e.time ? `<span style="background:#e0f2fe; color:#0369a1; font-weight:700; padding:2px 8px; border-radius:4px; font-size:0.82rem; white-space:nowrap;">${escapeHtml(e.time)}</span>` : '';
-                    return `
-                        <div style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9; align-items:flex-start;">
+                    return `${bookletTransitRow(e, ei, events, d)}
+                        <div class="booklet-day-row" style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9; align-items:flex-start;">
                             <div style="flex:0 0 110px; text-align:left; padding-top:2px;">
                                 ${timeStr}
                             </div>
@@ -19668,7 +19716,7 @@ const firebaseConfig = {
                 ` : '';
 
                 return `
-                    <div class="booklet-sheet">
+                    <div class="booklet-sheet booklet-day-sheet">
                         <div class="booklet-sheet-body">
                             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0284c7; padding-bottom:8px; margin-bottom:14px;">
                                 <div style="font-size:1.15rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
@@ -19682,6 +19730,7 @@ const firebaseConfig = {
 
                             <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px;">
                                 ${eventsHtml}
+                                ${bookletLodgingRow(plan, d)}
                                 ${mealPart}
                             </div>
                         </div>
