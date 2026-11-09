@@ -6087,7 +6087,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.12.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.12.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8465,7 +8465,7 @@
             <div class="modal-body" style="padding:16px 20px;display:grid;gap:11px;">
                 <input type="hidden" id="shopEditId">
                 <label class="shop-field">品名 <span style="color:#ef4444;">*</span><input type="text" id="shopNameInput" placeholder="例如：松本清 防曬乳"></label>
-                <label class="shop-field">購買地點／店家<input type="text" id="shopPlaceInput" list="shopPlaceList" placeholder="例如：淺草 唐吉訶德"><datalist id="shopPlaceList"></datalist></label>
+                <label class="shop-field">購買地點／店家（可從景點選擇，也可自行輸入）<input type="text" id="shopPlaceInput" list="shopPlaceList" placeholder="點一下欄位選景點，或輸入店家"><datalist id="shopPlaceList"></datalist></label>
                 <div style="display:grid;grid-template-columns:1fr 1fr 90px;gap:9px;">
                     <label class="shop-field">單價<input type="number" id="shopPriceInput" min="0" step="any" inputmode="decimal" placeholder="0"></label>
                     <label class="shop-field">幣別<select id="shopCurrInput"><option value="LOCAL">當地幣</option><option value="TWD">新台幣</option></select></label>
@@ -12858,7 +12858,13 @@ const firebaseConfig = {
             const c = getPlanCurrency(plan);
             if (sum) sum.innerHTML = `共 <b>${all.length}</b> 項｜待買 <b>${todo.length}</b>｜已買 <b>${all.length - todo.length}</b>｜待買預估 <b>NT$ ${todoTwd.toLocaleString()}</b>` + (c.code !== 'TWD' ? `（約 ${c.symbol}${Math.round(todoTwd / (c.rate || 1)).toLocaleString()}）` : '');
             const dl = document.getElementById('shopPlaceList');
-            if (dl) dl.innerHTML = [...new Set(all.map(i => (i.place || '').trim()).filter(Boolean))].map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
+            if (dl) {
+                const spotOpts = shopSpotOptions(plan);
+                const spotNames = new Set(spotOpts.map(o => o.name));
+                dl.innerHTML = spotOpts.map(o => `<option value="${escapeHtml(o.name)}" label="${o.cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${o.when ? '｜' + escapeHtml(o.when) : ''}"></option>`).join('') +
+                    [...new Set(all.map(i => (i.place || '').trim()).filter(Boolean))].filter(p => !spotNames.has(p)).map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
+            }
+            const spotMap = shopSpotWhenMap(plan);
 
             const items = shopFilteredItems(plan);
             if (!items.length) {
@@ -12870,7 +12876,7 @@ const firebaseConfig = {
             body.innerHTML = Object.keys(groups).map(place => {
                 const arr = groups[place];
                 const subtotal = arr.reduce((s, i) => s + shopItemTwd(i, plan), 0);
-                return `<div class="shop-group-h"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(place)} <small>${arr.length} 項${subtotal ? ` · NT$ ${subtotal.toLocaleString()}` : ''}</small></div>
+                return `<div class="shop-group-h"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(place)} <small>${arr.length} 項${subtotal ? ` · NT$ ${subtotal.toLocaleString()}` : ''}</small>${spotMap[place] ? `<span style="font-size:0.7rem;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:1px 8px;">${spotMap[place].cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${spotMap[place].when ? '｜' + escapeHtml(spotMap[place].when) : ''}</span>` : ''}</div>
                 <div class="shop-grid">${arr.map(it => {
                     const pt = shopPriceText(it, plan);
                     return `<div class="shop-card ${it.done ? 'done' : ''}">
@@ -13328,6 +13334,40 @@ const firebaseConfig = {
                 if ([s.visitDate, s.visitStartTime, s.visitEndTime].join('|') !== before) changed = true;
             });
             return changed;
+        }
+
+        
+        // ===== V3.13.0：購買清單的購買地點可選景點 =====
+        function shopSpotOptions(plan) {
+            const out = [];
+            const seen = new Set();
+            const add = (name, cat, when) => {
+                name = String(name || '').trim();
+                if (!name || seen.has(name)) return;
+                seen.add(name);
+                out.push({ name, cat, when: when || '' });
+            };
+            (plan.spotTips || []).forEach(s => {
+                if (!s) return;
+                const kids = sgKidsOf(s);
+                if (kids.length) {
+                    add(s.name, s.category, '');
+                    kids.forEach(c => add(c.name, (c.srcItem && c.srcItem.category) || s.category, sgChildWhen(c)));
+                } else {
+                    let when = '';
+                    try {
+                        const info = resolveSpotScheduledDayInfo(plan, s);
+                        if (info.isScheduled && info.dayNum) when = `Day ${info.dayNum}${info.timeDisplay ? ' ' + info.timeDisplay : ''}`;
+                    } catch (e) {}
+                    add(s.name, s.category, when);
+                }
+            });
+            return out;
+        }
+        function shopSpotWhenMap(plan) {
+            const m = {};
+            shopSpotOptions(plan).forEach(o => { m[o.name] = o; });
+            return m;
         }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
