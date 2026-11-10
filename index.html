@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.17.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.17.5</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -12811,7 +12811,7 @@ const firebaseConfig = {
                                     ${catBadgeHtml}
                                     <span class="tl-status-chip ${ev.done ? 'done' : 'plan'}" onclick="event.stopPropagation(); toggleEventDone(${activeDay.dayNum}, ${eIdx})" title="點一下切換「安排中／已完成」">${ev.done ? '<i class="fa-solid fa-check"></i> 已完成' : '安排中'}</span>
                                 </div>
-                                <h4 class="timeline-event-title">${escapeHtml(ev.title)}</h4>
+                                <h4 class="timeline-event-title">${escapeHtml(ev.title)}</h4>${sgChildParentBadgeHtml(plan, ev, activeDay)}
                                 <div class="timeline-event-meta">
                                     ${ev.loc ? `<span><i class="fa-solid fa-location-dot" style="color:#b0654a;"></i> ${escapeHtml(ev.loc)}</span>` : ''}
                                     ${ev.mealType ? `<span style="background:#fff4e0; color:#b45309; border:1px solid #f5d9a8; padding:1px 8px; border-radius:999px; font-weight:700; font-size:0.72rem;" title="已同步到當日餐食預算"><i class="fa-solid fa-utensils"></i> ${sgMealLabels[ev.mealType] || ''} 人均 ${curr.symbol}${Number(ev.mealCostPP || 0).toLocaleString()} <span style="font-weight:500;">(≈ NT$ ${Math.round(Number(ev.mealCostPP || 0) * curr.rate).toLocaleString()})・已計入餐食預算</span></span>` : ''}
@@ -16172,6 +16172,18 @@ const firebaseConfig = {
             const curr = getPlanCurrency(plan);
             const m = Math.max(1, Number(plan.memberCount) || 1);
             let changed = false;
+            // 有細部景點的主項目：門票設定在主項目上，計入細部景點所在的那一天
+            const parentSrcs = {};
+            (plan.spotTips || []).forEach(s => {
+                if (!sgKidsOf(s).length || s.ticketCurr === 'FREE' || !(Number(s.ticketCost) > 0)) return;
+                const blk = sgChildrenBlock(plan, s);
+                const pday = blk ? resolvePlanDayByDate(plan, blk.ymd) : null;
+                if (!pday) return;
+                if (plan.days.some(dd => (dd.events || []).some(ev => ev && ev.spotGuideId === s.id && Number(ev.cost) > 0))) return;
+                let cost = Number(s.ticketCost);
+                if (s.ticketCurr === 'TWD') cost = Math.round(cost / (curr.rate || 1) * 100) / 100;
+                (parentSrcs[pday.dayNum] = parentSrcs[pday.dayNum] || []).push({ key: 'pk-' + s.id, title: `門票：${s.name}`, cost });
+            });
             const cfgs = [
                 { kind: 'spot', arr: 'spots', cost: 'spotCost', costG: 'spotCostGroup', mark: '_autoEvSpot', test: e => e.type === 'spot', title: e => `門票：${e.title}` },
                 { kind: 'trans', arr: 'transports', cost: 'transportCost', costG: 'transportCostGroup', mark: '_autoEvTrans', test: e => e.type === 'trans' && !e.majorTransId, title: e => `交通：${e.title}` }
@@ -16179,8 +16191,9 @@ const firebaseConfig = {
             plan.days.forEach(d => cfgs.forEach(cfg => {
                 const evs = (d.events || []).filter(ev => ev && cfg.test(ev) && Number(ev.cost) > 0);
                 const hasOld = Array.isArray(d[cfg.arr]) && d[cfg.arr].some(t => t && t.autoSrc === 'evcost');
-                if (!evs.length && !hasOld) return;
-                if (!Array.isArray(d[cfg.arr]) && evs.length) {
+                const extra = cfg.kind === 'spot' ? (parentSrcs[d.dayNum] || []) : [];
+                if (!evs.length && !extra.length && !hasOld) return;
+                if (!Array.isArray(d[cfg.arr]) && (evs.length || extra.length)) {
                     if (typeof ensureDayCategoryArrays === 'function') ensureDayCategoryArrays(d);
                     if (!Array.isArray(d[cfg.arr])) d[cfg.arr] = [];
                 }
@@ -16194,6 +16207,11 @@ const firebaseConfig = {
                     // 手動明細已有同名項目時不重複計入
                     if (manual.some(t => t.title && tt && (String(t.title).includes(tt) || tt.includes(String(t.title))))) return;
                     srcs.push({ key: cfg.kind + 'ev-' + ev._eid, title: cfg.title(ev), cost: Number(ev.cost) });
+                });
+                extra.forEach(s => {
+                    const nm = String(s.title).replace(/^門票：/, '');
+                    if (manual.some(t => t.title && (String(t.title).includes(nm) || nm.includes(String(t.title))))) return;
+                    srcs.push(s);
                 });
                 const newAuto = srcs.map(s => {
                     const old = oldAuto.find(t => t.autoKey2 === s.key) || {};
@@ -16224,6 +16242,31 @@ const firebaseConfig = {
             try { c = sgSyncEventCostItems(plan) || c; } catch (e) { console.warn('事件費用同步失敗', e); }
             return c;
         };
+
+        
+        // ===== V3.17.5：主項目（寺廟等）的門票計入當天，並在總覽顯示所屬主項目與門票 =====
+        function sgParentOfChildEvent(plan, ev) {
+            if (!plan || !ev || !ev.spotGuideId) return null;
+            return (plan.spotTips || []).find(p => sgKidsOf(p).some(c => c.id === ev.spotGuideId)) || null;
+        }
+        function sgChildParentBadgeHtml(plan, ev, day) {
+            try {
+                const p = sgParentOfChildEvent(plan, ev);
+                if (!p) return '';
+                const kidIds = sgKidsOf(p).map(c => c.id);
+                const first = (day.events || []).find(e => e && kidIds.includes(e.spotGuideId));
+                const isFirst = first === ev;
+                let chip = '';
+                if (isFirst && p.ticketCurr !== 'FREE' && Number(p.ticketCost) > 0) {
+                    const curr = getPlanCurrency(plan);
+                    const isTwd = p.ticketCurr === 'TWD';
+                    const local = isTwd ? Number(p.ticketCost) / (curr.rate || 1) : Number(p.ticketCost);
+                    const twd = isTwd ? Number(p.ticketCost) : Math.round(local * curr.rate);
+                    chip = ` <span style="background:#ecfdf5;color:#047857;border-radius:6px;padding:0 6px;font-weight:700;">🎫 門票 ${isTwd ? 'NT$ ' + Number(p.ticketCost).toLocaleString() : curr.symbol + Number(p.ticketCost).toLocaleString() + ' (≈ NT$ ' + twd.toLocaleString() + ')'}${p.ticketNote ? '｜' + escapeHtml(p.ticketNote) : ''}</span>`;
+                }
+                return `<div style="font-size:0.72rem;color:#64748b;margin-top:2px;"><i class="fa-solid fa-sitemap"></i> 屬於「${escapeHtml(p.name)}」${chip}</div>`;
+            } catch (e) { return ''; }
+        }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
