@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.17.5</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.18.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6172,58 +6172,102 @@
     <!-- ====================================================
          SECOND BAR: 水平膠囊導覽分頁列 (對齊第三張截圖 Pill Navigation Bar)
          ==================================================== -->
-    <!-- 全站頂部匯率換算列（所有分頁都看得到，可雙向換算） -->
+    <!-- 匯率換算／加總計算：右下角按鈕，需要時才展開 -->
     <style>
-        #globalFxBar{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:7px 14px;background:#f0f9f4;border-bottom:1px solid #d6eadf;font-size:0.8rem;color:#1e293b;}
-        #globalFxBar .fx-title{font-weight:800;color:#2b6b50;display:inline-flex;align-items:center;gap:6px;}
-        #globalFxBar .fx-group{display:inline-flex;align-items:center;gap:6px;}
-        #globalFxBar input{width:96px;padding:3px 7px;border:1px solid #bcd9c9;border-radius:7px;font-size:0.82rem;font-weight:700;text-align:right;background:#fff;}
-        #globalFxBar input.fx-rate{width:78px;}
-        #globalFxBar .fx-unit{font-weight:700;color:#475569;}
-        #globalFxBar .fx-swap{color:#2b6b50;font-weight:800;}
-        #globalFxBar .n-btn{padding:2px 9px;font-size:0.72rem;border-radius:7px;}
-        @media print{#globalFxBar{display:none !important;}}
+        #fxFab{position:fixed;right:16px;bottom:18px;z-index:880;width:48px;height:48px;border-radius:50%;border:none;background:#2b6b50;color:#fff;font-size:1.15rem;box-shadow:0 6px 18px rgba(15,23,42,.28);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+        #fxFab:hover{background:#235a42;}
+        #fxPanel{position:fixed;right:16px;bottom:76px;z-index:890;width:350px;max-width:calc(100vw - 20px);max-height:72vh;overflow:auto;background:#fff;border:1px solid #cfe3d8;border-radius:14px;box-shadow:0 12px 36px rgba(15,23,42,.28);display:none;}
+        #fxPanel.open{display:block;}
+        #fxPanel .fx-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:#f0f9f4;border-bottom:1px solid #d6eadf;border-radius:14px 14px 0 0;position:sticky;top:0;z-index:2;}
+        #fxPanel .fx-head strong{color:#2b6b50;font-size:0.9rem;}
+        #fxPanel .fx-tabs{display:flex;gap:4px;padding:8px 12px 0;}
+        #fxPanel .fx-tab{flex:1;border:1px solid #d6eadf;background:#f8fafc;border-radius:8px;padding:5px 0;font-size:0.8rem;font-weight:700;color:#475569;cursor:pointer;}
+        #fxPanel .fx-tab.active{background:#2b6b50;color:#fff;border-color:#2b6b50;}
+        #fxPanel .fx-body{padding:10px 12px 12px;font-size:0.84rem;color:#1e293b;}
+        #fxPanel input{padding:5px 8px;border:1px solid #bcd9c9;border-radius:7px;font-size:0.9rem;font-weight:700;background:#fff;min-width:0;}
+        #fxPanel .fx-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+        #fxPanel .fx-row input[type=number]{width:104px;text-align:right;}
+        #fxPanel .fx-unit{font-weight:700;color:#475569;}
+        #fxPanel .fx-list-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 58px 24px;gap:5px;align-items:center;margin-bottom:6px;}
+        #fxPanel .fx-list-row input.nm{font-weight:500;width:100%;}
+        #fxPanel .fx-list-row input.am{text-align:right;width:100%;}
+        #fxPanel .fx-cur{border:1px solid #bcd9c9;background:#f0f9f4;border-radius:7px;padding:5px 0;font-size:0.76rem;font-weight:800;color:#2b6b50;cursor:pointer;}
+        #fxPanel .fx-cur.twd{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;}
+        #fxPanel .fx-x{border:none;background:transparent;color:#94a3b8;cursor:pointer;}
+        #fxPanel .fx-total{margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;}
+        #fxPanel .fx-total .big{font-size:1.15rem;font-weight:800;color:#166534;}
+        @media (max-width: 700px){
+            #fxFab{right:12px;bottom:140px;width:46px;height:46px;}
+            #fxPanel{left:8px;right:8px;width:auto;bottom:196px;max-height:62vh;}
+        }
+        @media print{#fxFab,#fxPanel{display:none !important;}}
     </style>
-    <div id="globalFxBar">
-        <span class="fx-title"><i class="fa-solid fa-money-bill-transfer"></i> 匯率換算 <span id="sideCurrCodeTitle">JPY</span> ⇄ TWD</span>
-        <span class="fx-group">
-            <input type="number" id="calcAmountInput" value="100" step="any" inputmode="decimal" oninput="calculateExchange('local')" aria-label="當地幣金額">
-            <span class="fx-unit" id="sideCalcUnitLabel">JPY</span>
-            <span class="fx-swap">⇄</span>
-            <input type="number" id="calcTwdInput" value="" step="any" inputmode="decimal" oninput="calculateExchange('twd')" aria-label="新台幣金額">
-            <span class="fx-unit">TWD</span>
-        </span>
-        <span class="fx-group">
-            <span id="sideCurrLabel" style="font-weight:700;">1 日圓 (JPY) =</span>
-            <input type="number" id="calcRateInput" class="fx-rate" value="4.65" step="any" inputmode="decimal" oninput="calculateExchange(true)">
-            <span class="fx-unit">TWD</span>
-            <button type="button" class="n-btn" onclick="syncOnlineRateToSidebar()" title="從網路同步此幣別最新即時匯率"><i class="fa-solid fa-rotate" id="sideSyncRateSpinner"></i> 即時匯率</button>
-            <button type="button" class="n-btn n-btn-primary" onclick="syncRateToCurrentPlan()" title="將匯率套用儲存至目前旅遊計畫"><i class="fa-solid fa-check"></i> 套用</button>
-        </span>
+    <button id="fxFab" type="button" onclick="fxTogglePanel()" title="匯率換算／加總計算"><i class="fa-solid fa-calculator"></i></button>
+    <div id="fxPanel" role="dialog" aria-label="匯率換算與加總">
+        <div class="fx-head">
+            <strong><i class="fa-solid fa-money-bill-transfer"></i> 匯率 <span id="sideCurrCodeTitle">JPY</span> ⇄ TWD</strong>
+            <button type="button" class="n-btn" style="padding:1px 8px;" onclick="fxTogglePanel(false)" title="關閉"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="fx-tabs">
+            <button type="button" class="fx-tab active" id="fxTabBtn-conv" onclick="fxTab('conv')">換算</button>
+            <button type="button" class="fx-tab" id="fxTabBtn-sum" onclick="fxTab('sum')">加總（這餐／這些商品）</button>
+        </div>
+        <div class="fx-body">
+            <div id="fxPane-conv">
+                <div class="fx-row">
+                    <input type="number" id="calcAmountInput" value="100" step="any" inputmode="decimal" oninput="calculateExchange('local')" aria-label="當地幣金額" style="flex:1;">
+                    <span class="fx-unit" id="sideCalcUnitLabel">JPY</span>
+                </div>
+                <div style="text-align:center;color:#2b6b50;font-weight:800;margin:-2px 0 6px;">⇅</div>
+                <div class="fx-row">
+                    <input type="number" id="calcTwdInput" value="" step="any" inputmode="decimal" oninput="calculateExchange('twd')" aria-label="新台幣金額" style="flex:1;">
+                    <span class="fx-unit">TWD</span>
+                </div>
+                <div class="fx-row" style="margin-top:10px;padding-top:8px;border-top:1px dashed #d6eadf;">
+                    <span id="sideCurrLabel" style="font-weight:700;">1 日圓 (JPY) =</span>
+                    <input type="number" id="calcRateInput" value="4.65" step="any" inputmode="decimal" oninput="calculateExchange(true); fxRecalc()" style="width:84px;text-align:right;">
+                    <span class="fx-unit">TWD</span>
+                </div>
+                <div class="fx-row" style="margin-bottom:0;">
+                    <button type="button" class="n-btn" onclick="syncOnlineRateToSidebar()" title="從網路同步此幣別最新即時匯率"><i class="fa-solid fa-rotate" id="sideSyncRateSpinner"></i> 即時匯率</button>
+                    <button type="button" class="n-btn n-btn-primary" onclick="syncRateToCurrentPlan()" title="將匯率套用儲存至目前旅遊計畫"><i class="fa-solid fa-check"></i> 套用</button>
+                </div>
+            </div>
+            <div id="fxPane-sum" style="display:none;">
+                <div style="font-size:0.74rem;color:#64748b;margin-bottom:6px;">逐筆輸入金額，點幣別按鈕可切換「當地幣／台幣」，下方自動加總並同時顯示兩種幣別。</div>
+                <div id="fxSumRows"></div>
+                <div class="fx-row" style="margin-top:4px;">
+                    <button type="button" class="n-btn" onclick="fxAddRow(true)"><i class="fa-solid fa-plus"></i> 新增一筆</button>
+                    <button type="button" class="n-btn" onclick="fxClearRows()">清空</button>
+                    <button type="button" class="n-btn" onclick="fxCopySum()"><i class="fa-regular fa-copy"></i> 複製結果</button>
+                </div>
+                <div class="fx-total" id="fxSumTotal"></div>
+            </div>
+        </div>
     </div>
 
     <nav class="okr-pill-navbar" id="okrMainPillNavbar">
         <div class="okr-pill-tabs view-tabs-list">
             <button class="view-tab-btn active" id="tabBtn-timeline" onclick="switchView('timeline')">
-                <i class="fa-solid fa-border-all"></i> 總覽與行程
+                <i class="fa-solid fa-border-all"></i><span class="tb-full"> 總覽與行程</span><span class="tb-short">總覽</span>
             </button>
             <button class="view-tab-btn" id="tabBtn-logistics" onclick="switchView('logistics')">
-                <i class="fa-solid fa-plane-up"></i> 交通與住宿
+                <i class="fa-solid fa-plane-up"></i><span class="tb-full"> 交通與住宿</span><span class="tb-short">交通住宿</span>
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
-                <i class="fa-solid fa-map-location-dot"></i> 景點與餐廳清單
+                <i class="fa-solid fa-map-location-dot"></i><span class="tb-full"> 景點與餐廳清單</span><span class="tb-short">景點餐廳</span>
             </button>
             <button class="view-tab-btn" id="tabBtn-shopping" onclick="switchView('shopping')">
-                <i class="fa-solid fa-bag-shopping"></i> 購買清單
+                <i class="fa-solid fa-bag-shopping"></i><span class="tb-full"> 購買清單</span><span class="tb-short">購買</span>
             </button>
             <button class="view-tab-btn" id="tabBtn-expenses" onclick="switchView('expenses')">
-                <i class="fa-solid fa-chart-pie"></i> 費用與記帳
+                <i class="fa-solid fa-chart-pie"></i><span class="tb-full"> 費用與記帳</span><span class="tb-short">費用</span>
             </button>
         </div>
 
         <div class="okr-navbar-right-actions">
             <button class="okr-action-pill primary-solid okr-nav-add-btn" onclick="openAddEventModal()">
-                <i class="fa-solid fa-plus"></i> 新增行程項目
+                <i class="fa-solid fa-plus"></i><span class="nav-add-txt"> 新增行程項目</span>
             </button>
         </div>
     </nav>
@@ -6241,6 +6285,7 @@
                 
                 <!-- 行前準備必備工具 (僅總覽分頁顯示) -->
                 <!-- 行前準備必備工具 (高密度單行膠囊列) -->
+            <div class="tl-split"><aside class="tl-side">
             <div class="notion-callout" id="toolsCalloutBox">
                 <div class="notion-callout-icon" id="toolsCalloutIcon" style="display:none;">💡</div>
                 <div class="notion-callout-content">
@@ -6260,7 +6305,8 @@
                 </div>
             </div>
 
-                <!-- 行程 Summary 總結與 OKR 風格 4 大指標卡 (動態生成) -->
+                <div id="tlSideKpi"></div>
+                </aside><div class="tl-main">
                 <div id="tripSummaryContainer"></div>
 
                 <div class="day-filter-chips" id="dayChipsBar">
@@ -6270,6 +6316,7 @@
                 <div id="dayCardsContainer">
                     <!-- Dynamic rendering of active day card -->
                 </div>
+                </div></div>
             </div>
 
             <!-- VIEW 2 (NEW): TRANSIT & STAY (交通與住宿大項目專屬分頁：連體指標列＋左右雙欄並排) -->
@@ -8610,6 +8657,34 @@
             <div class="modal-footer">
                 <button type="button" class="n-btn" onclick="closeModal('moveDayModal')">取消</button>
                 <button type="button" class="n-btn n-btn-primary" onclick="applyMoveDay()"><i class="fa-solid fa-check"></i> 套用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 行前提醒：新增／編輯 -->
+    <div class="modal-backdrop" id="toolEditModal" onclick="handleBackdropClick(event, 'toolEditModal')">
+        <div class="modal-dialog" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title" id="toolEditTitle"><i class="fa-solid fa-lightbulb" style="color:#d97706;"></i> 新增行前提醒</div>
+                <button class="modal-close-btn" onclick="closeModal('toolEditModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;display:grid;gap:12px;">
+                <input type="hidden" id="toolEditIdx" value="-1">
+                <label class="shop-field">提醒內容 <span style="color:#ef4444;">*</span>
+                    <input type="text" id="toolEditText" placeholder="例如：購買 eSIM、台胞證隨身攜帶、Visit Japan Web 填寫">
+                </label>
+                <div>
+                    <div style="font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:6px;">什麼時候要提醒？（以出發日為基準）</div>
+                    <div id="toolLeadChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                        <button type="button" class="n-btn" id="toolDueBtn" onclick="sgToolPickDate(event)"><i class="fa-regular fa-calendar"></i> <span id="toolDueText">選擇提醒日期</span></button>
+                        <span id="toolDueHint" style="font-size:0.74rem;color:#64748b;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="n-btn" onclick="closeModal('toolEditModal')">取消</button>
+                <button type="button" class="n-btn n-btn-primary" onclick="saveToolEdit()"><i class="fa-solid fa-check"></i> 儲存</button>
             </div>
         </div>
     </div>
@@ -15228,6 +15303,444 @@ const firebaseConfig = {
                 return `<div style="font-size:0.72rem;color:#64748b;margin-top:2px;"><i class="fa-solid fa-sitemap"></i> 屬於「${escapeHtml(p.name)}」${chip}</div>`;
             } catch (e) { return ''; }
         }
+
+        
+        // ===== V3.18.0：匯率換算改為右下角浮動按鈕＋加總計算 =====
+        function fxTogglePanel(force) {
+            const p = document.getElementById('fxPanel');
+            if (!p) return;
+            const open = (force === undefined) ? !p.classList.contains('open') : !!force;
+            p.classList.toggle('open', open);
+            if (open) { try { syncCurrencyBoxWithPlan(); } catch (e) {} fxRenderRows(); }
+        }
+        function fxTab(name) {
+            ['conv', 'sum'].forEach(k => {
+                const pane = document.getElementById('fxPane-' + k), btn = document.getElementById('fxTabBtn-' + k);
+                if (pane) pane.style.display = (k === name) ? 'block' : 'none';
+                if (btn) btn.classList.toggle('active', k === name);
+            });
+            if (name === 'sum') fxRenderRows();
+        }
+        function fxRows() {
+            if (!window.__fxRows) {
+                try { window.__fxRows = JSON.parse(localStorage.getItem('fx_sum_rows_v1') || '[]'); } catch (e) { window.__fxRows = []; }
+                if (!Array.isArray(window.__fxRows) || !window.__fxRows.length) window.__fxRows = [{ n: '', a: '', c: 'LOCAL' }];
+            }
+            return window.__fxRows;
+        }
+        function fxSaveRows() { try { localStorage.setItem('fx_sum_rows_v1', JSON.stringify(fxRows())); } catch (e) {} }
+        function fxRate() {
+            const el = document.getElementById('calcRateInput');
+            const r = el ? parseFloat(el.value) : NaN;
+            return (r > 0) ? r : (getPlanCurrency(getCurrentPlan()).rate || 1);
+        }
+        function fxCode() { return getPlanCurrency(getCurrentPlan()).code || 'JPY'; }
+        function fxFmt(n) { return (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+        function fxRenderRows() {
+            const box = document.getElementById('fxSumRows');
+            if (!box) return;
+            const code = fxCode();
+            box.innerHTML = fxRows().map((r, i) => `<div class="fx-list-row">
+                <input class="nm" type="text" placeholder="品名／這餐（選填）" value="${escapeHtml(r.n)}" oninput="fxSetRow(${i}, 'n', this.value)">
+                <input class="am" type="number" step="any" inputmode="decimal" placeholder="金額" value="${escapeHtml(r.a)}" oninput="fxSetRow(${i}, 'a', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();fxAddRow(true);}">
+                <button type="button" class="fx-cur ${r.c === 'TWD' ? 'twd' : ''}" onclick="fxToggleCur(${i})" title="切換幣別">${r.c === 'TWD' ? 'TWD' : escapeHtml(code)}</button>
+                <button type="button" class="fx-x" onclick="fxDelRow(${i})" title="刪除"><i class="fa-regular fa-trash-can"></i></button>
+            </div>`).join('');
+            fxRecalc();
+        }
+        function fxSetRow(i, k, v) { const r = fxRows()[i]; if (!r) return; r[k] = v; fxSaveRows(); fxRecalc(); }
+        function fxToggleCur(i) { const r = fxRows()[i]; if (!r) return; r.c = (r.c === 'TWD') ? 'LOCAL' : 'TWD'; fxSaveRows(); fxRenderRows(); }
+        function fxAddRow(focus) {
+            fxRows().push({ n: '', a: '', c: (fxRows().slice(-1)[0] || {}).c || 'LOCAL' });
+            fxSaveRows(); fxRenderRows();
+            if (focus) { const inputs = document.querySelectorAll('#fxSumRows .fx-list-row'); const last = inputs[inputs.length - 1]; if (last) last.querySelector('input.nm').focus(); }
+        }
+        function fxDelRow(i) { fxRows().splice(i, 1); if (!fxRows().length) fxRows().push({ n: '', a: '', c: 'LOCAL' }); fxSaveRows(); fxRenderRows(); }
+        function fxClearRows() { window.__fxRows = [{ n: '', a: '', c: 'LOCAL' }]; fxSaveRows(); fxRenderRows(); }
+        function fxTotals() {
+            const rate = fxRate();
+            let local = 0, twd = 0, n = 0;
+            fxRows().forEach(r => {
+                const a = parseFloat(r.a);
+                if (isNaN(a)) return;
+                n++;
+                if (r.c === 'TWD') { twd += a; local += a / rate; } else { local += a; twd += a * rate; }
+            });
+            return { local, twd, n, rate };
+        }
+        function fxRecalc() {
+            const el = document.getElementById('fxSumTotal');
+            if (!el) return;
+            const t = fxTotals(), code = fxCode();
+            el.innerHTML = `<div style="font-size:0.74rem;color:#64748b;">共 ${t.n} 筆 ‧ 匯率 1 ${escapeHtml(code)} = ${t.rate} TWD</div>
+                <div class="big">${escapeHtml(code)} ${fxFmt(t.local)}</div>
+                <div class="big" style="color:#1d4ed8;">NT$ ${fxFmt(t.twd)}</div>`;
+        }
+        function fxCopySum() {
+            const t = fxTotals(), code = fxCode();
+            const lines = fxRows().filter(r => r.a !== '' && !isNaN(parseFloat(r.a))).map(r => `${r.n || '項目'}：${r.c === 'TWD' ? 'NT$ ' : code + ' '}${r.a}`);
+            const text = `${lines.join('\n')}\n合計：${code} ${fxFmt(t.local)}｜NT$ ${fxFmt(t.twd)}（匯率 ${t.rate}）`;
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showToast('success', '已複製加總結果')).catch(() => { fallbackCopyText(text); showToast('success', '已複製加總結果'); });
+            else { fallbackCopyText(text); showToast('success', '已複製加總結果'); }
+        }
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fxTogglePanel(false); });
+
+        
+        // ===== V3.18.1：總覽左右欄（左：提醒＋指標，右：行程大綱）；手機底部分頁列 =====
+        (function () {
+            if (document.getElementById('sgLayoutStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgLayoutStyle';
+            st.textContent = `
+                #view-timeline .tl-main{min-width:0;}
+                #view-timeline .tl-side{display:flex !important;flex-direction:column;gap:10px;}
+                #tlSideKpi{order:-1;}
+                #view-timeline .tl-side .notion-callout{margin:0 !important;}
+                #tlSideKpi .okr-kpi-grid{margin:0 !important;}
+                @media (min-width: 981px){
+                    #view-timeline .tl-split{display:grid;grid-template-columns:minmax(270px,310px) minmax(0,1fr);gap:16px;align-items:start;}
+                    #view-timeline .tl-side{position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto;padding-right:2px;}
+                    #tlSideKpi .okr-kpi-grid{display:grid !important;grid-template-columns:minmax(0,1fr) !important;gap:8px !important;}
+                    #tlSideKpi .okr-kpi-card{padding:10px 12px !important;border-radius:12px !important;gap:8px !important;}
+                    #tlSideKpi .okr-kpi-value{font-size:1.08rem !important;}
+                    #tlSideKpi .okr-kpi-label{font-size:0.72rem !important;margin-bottom:2px !important;}
+                    #tlSideKpi .okr-kpi-sub{font-size:0.7rem !important;}
+                    #tlSideKpi .okr-kpi-icon-box{width:30px !important;height:30px !important;font-size:0.82rem !important;flex-shrink:0;}
+                }
+                @media (max-width: 980px){
+                    #view-timeline .tl-split{display:block;}
+                    #tlSideKpi .okr-kpi-grid{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px !important;margin:8px 0 !important;}
+                    #tlSideKpi .okr-kpi-card{padding:9px 10px !important;border-radius:12px !important;gap:6px !important;}
+                    #tlSideKpi .okr-kpi-value{font-size:1rem !important;}
+                    #tlSideKpi .okr-kpi-label{font-size:0.68rem !important;}
+                    #tlSideKpi .okr-kpi-sub{font-size:0.66rem !important;}
+                    #tlSideKpi .okr-kpi-icon-box{display:none !important;}
+                }
+                .tb-short{display:none;}
+                @media (max-width: 700px){
+                    body{padding-bottom:84px !important;}
+                    #okrMainPillNavbar{position:fixed !important;left:0 !important;right:0 !important;bottom:0 !important;top:auto !important;z-index:870 !important;background:#fff !important;border:none !important;border-top:1px solid #e2e8f0 !important;border-radius:0 !important;margin:0 !important;padding:4px 4px calc(4px + env(safe-area-inset-bottom)) !important;box-shadow:0 -4px 14px rgba(15,23,42,.1) !important;display:block !important;}
+                    #okrMainPillNavbar .okr-pill-tabs{display:grid !important;grid-template-columns:repeat(5,minmax(0,1fr)) !important;gap:2px !important;overflow:visible !important;width:100% !important;flex-wrap:nowrap !important;}
+                    #okrMainPillNavbar .view-tab-btn{display:flex !important;flex-direction:column !important;align-items:center !important;gap:2px !important;padding:5px 1px !important;font-size:0.64rem !important;min-width:0 !important;white-space:normal !important;line-height:1.15 !important;text-align:center !important;border-radius:10px !important;}
+                    #okrMainPillNavbar .view-tab-btn i{font-size:1.05rem !important;margin:0 !important;}
+                    #okrMainPillNavbar .tb-full{display:none !important;}
+                    #okrMainPillNavbar .tb-short{display:inline !important;}
+                    #okrMainPillNavbar .okr-navbar-right-actions{position:fixed !important;right:12px !important;bottom:84px !important;z-index:871 !important;margin:0 !important;}
+                    #okrMainPillNavbar .okr-nav-add-btn{width:46px !important;height:46px !important;padding:0 !important;border-radius:50% !important;justify-content:center !important;box-shadow:0 6px 18px rgba(15,23,42,.28) !important;}
+                    #okrMainPillNavbar .okr-nav-add-btn .nav-add-txt{display:none !important;}
+                    #okrMainPillNavbar .okr-nav-add-btn i{font-size:1.1rem !important;margin:0 !important;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
+        // 4 個指標卡移到左欄（renderTripSummary 每次重繪後再搬一次）
+        const __origRenderTripSummaryForSide = renderTripSummary;
+        renderTripSummary = function () {
+            const r = __origRenderTripSummaryForSide.apply(this, arguments);
+            try {
+                const side = document.getElementById('tlSideKpi');
+                const cont = document.getElementById('tripSummaryContainer');
+                const grid = cont && cont.querySelector('.okr-kpi-grid');
+                if (side && grid) { side.innerHTML = ''; side.appendChild(grid); }
+            } catch (e) { console.warn(e); }
+            return r;
+        };
+
+        
+        // ===== V3.18.2：行前提醒整合景點／交通預約，快捷提前提醒 =====
+        (function () {
+            if (document.getElementById('sgRemStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgRemStyle';
+            st.textContent = `
+                #toolsCalloutBox .tools-compact-bar{display:block !important;}
+                #toolsCalloutBox .tools-compact-left{display:block !important;width:100%;}
+                #toolsCalloutBox #toolsCalloutHeader{padding:0 !important;}
+                #toolsCalloutBox #toolsCalloutList{display:block !important;width:100%;margin-top:6px;}
+                .rem-head{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-bottom:2px;}
+                .rem-sec{font-size:0.7rem;font-weight:800;color:#64748b;margin:8px 0 3px;}
+                .rem-row{display:flex;gap:7px;align-items:flex-start;padding:6px 8px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;margin-bottom:5px;}
+                .rem-row.urgent{background:#fef2f2;border-color:#fca5a5;}
+                .rem-row.warn{background:#fffbeb;border-color:#fde68a;}
+                .rem-row.ok{opacity:.6;}
+                .rem-main{flex:1;min-width:0;}
+                .rem-title{font-weight:700;font-size:0.8rem;word-break:break-word;color:#0f172a;line-height:1.3;}
+                .rem-row.ok .rem-title{text-decoration:line-through;}
+                .rem-sub{font-size:0.7rem;color:#64748b;line-height:1.45;word-break:break-word;}
+                .rem-sub b{color:#334155;}
+                .rem-act{display:flex;gap:1px;flex-shrink:0;}
+                .rem-act button{border:none;background:transparent;color:#94a3b8;cursor:pointer;padding:2px 4px;font-size:0.76rem;}
+                .rem-act button:hover{color:#0369a1;}
+                .rem-lead{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+                .rem-lead button{border:1px solid #cbd5e1;background:#f8fafc;border-radius:999px;padding:1px 8px;font-size:0.68rem;cursor:pointer;color:#475569;}
+                .rem-lead button.on{background:#0284c7;color:#fff;border-color:#0284c7;}
+                .lead-chip{border:1px solid #cbd5e1;background:#f8fafc;border-radius:999px;padding:3px 11px;font-size:0.78rem;cursor:pointer;color:#475569;font-weight:600;}
+                .lead-chip.on{background:#0284c7;color:#fff;border-color:#0284c7;}
+                #sgCalPopup{position:fixed;z-index:99999;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:10px;width:260px;}
+            `;
+            document.head.appendChild(st);
+        })();
+
+        // ---- 共用：點選式日期行事曆（浮動小視窗）----
+        var sgCalCtx = null;
+        function sgPad(n) { return String(n).padStart(2, '0'); }
+        function sgYmd(d) { return `${d.getFullYear()}-${sgPad(d.getMonth() + 1)}-${sgPad(d.getDate())}`; }
+        function sgTodayYmd() { return sgYmd(new Date()); }
+        function sgCalPopup(anchor, cur, cb) {
+            sgCalClose();
+            const base = (cur && bcalParseYMD(cur)) || new Date();
+            sgCalCtx = { y: base.getFullYear(), m: base.getMonth(), cur: cur || '', cb, anchor };
+            const p = document.createElement('div');
+            p.id = 'sgCalPopup';
+            p.onclick = e => e.stopPropagation();
+            document.body.appendChild(p);
+            const r = anchor.getBoundingClientRect();
+            p.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 276)) + 'px';
+            p.style.top = Math.min(r.bottom + 4, window.innerHeight - 330) + 'px';
+            sgCalRender();
+        }
+        function sgCalClose() { const p = document.getElementById('sgCalPopup'); if (p) p.remove(); sgCalCtx = null; }
+        function sgCalNav(d) { const dt = new Date(sgCalCtx.y, sgCalCtx.m + d, 1); sgCalCtx.y = dt.getFullYear(); sgCalCtx.m = dt.getMonth(); sgCalRender(); }
+        function sgCalPick(ymd) { const cb = sgCalCtx && sgCalCtx.cb; sgCalClose(); if (cb) cb(ymd); }
+        function sgCalRender() {
+            const p = document.getElementById('sgCalPopup');
+            if (!p || !sgCalCtx) return;
+            const { y, m, cur } = sgCalCtx;
+            const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(), today = sgTodayYmd();
+            let cells = ['日', '一', '二', '三', '四', '五', '六'].map(w => `<div style="text-align:center;font-size:0.68rem;color:#94a3b8;font-weight:700;">${w}</div>`).join('');
+            for (let i = 0; i < first; i++) cells += '<div></div>';
+            for (let d = 1; d <= days; d++) {
+                const ymd = `${y}-${sgPad(m + 1)}-${sgPad(d)}`;
+                const sel = ymd === cur, isToday = ymd === today;
+                cells += `<button type="button" onclick="sgCalPick('${ymd}')" style="border:${isToday ? '1px solid #0284c7' : 'none'};border-radius:6px;padding:4px 0;font-size:0.8rem;cursor:pointer;background:${sel ? '#0284c7' : '#f8fafc'};color:${sel ? '#fff' : '#334155'};font-weight:${sel ? 800 : 500};">${d}</button>`;
+            }
+            p.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <button type="button" class="n-btn" style="padding:1px 8px;" onclick="sgCalNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <strong style="font-size:0.84rem;">${y} 年 ${m + 1} 月</strong>
+                <button type="button" class="n-btn" style="padding:1px 8px;" onclick="sgCalNav(1)"><i class="fa-solid fa-chevron-right"></i></button></div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${cells}</div>
+                <div style="margin-top:6px;text-align:right;"><button type="button" class="n-btn" style="padding:1px 9px;font-size:0.72rem;" onclick="sgCalPick('')">清除</button></div>`;
+        }
+        document.addEventListener('click', function (e) {
+            if (sgCalCtx && !(e.target.closest && (e.target.closest('#sgCalPopup') || (sgCalCtx.anchor && sgCalCtx.anchor.contains(e.target))))) sgCalClose();
+        });
+
+        // ---- 行前提醒：手動待辦（含提醒日）----
+        var sgToolDraft = { due: '', lead: null, leadLabel: '' };
+        function sgTripStart() { const info = buildPlanDateToDayMap(getCurrentPlan()); return info.startYmd || ''; }
+        function sgShiftMonth(ymd, delta) {
+            const d = bcalParseYMD(ymd);
+            if (!d) return '';
+            const day = d.getDate();
+            const t = new Date(d.getFullYear(), d.getMonth() + delta, 1);
+            const last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+            t.setDate(Math.min(day, last));
+            return sgYmd(t);
+        }
+        const SG_LEADS = [{ n: 1, l: '出發前 1 天' }, { n: 3, l: '出發前 3 天' }, { n: 7, l: '出發前 7 天' }, { n: 14, l: '出發前 14 天' }, { n: 30, l: '出發前 1 個月' }];
+        function sgToolRenderChips() {
+            const box = document.getElementById('toolLeadChips');
+            if (!box) return;
+            box.innerHTML = SG_LEADS.map(x => `<button type="button" class="lead-chip ${sgToolDraft.lead === x.n ? 'on' : ''}" onclick="sgToolLead(${x.n})">${x.l}</button>`).join('') +
+                `<button type="button" class="lead-chip ${(!sgToolDraft.due) ? 'on' : ''}" onclick="sgToolLead(0)">不設定</button>`;
+            const t = document.getElementById('toolDueText'), h = document.getElementById('toolDueHint');
+            if (t) t.textContent = sgToolDraft.due ? `${sgToolDraft.due} (${['日', '一', '二', '三', '四', '五', '六'][bcalParseYMD(sgToolDraft.due).getDay()]})` : '選擇提醒日期';
+            if (h) {
+                const ts = sgTripStart();
+                h.textContent = sgToolDraft.due ? (ts ? `距出發日 ${sgDaysBetweenYmd(sgToolDraft.due, ts)} 天` : '') : '';
+            }
+        }
+        function sgDaysBetweenYmd(a, b) { const d1 = bcalParseYMD(a), d2 = bcalParseYMD(b); return (d1 && d2) ? Math.round((d2 - d1) / 86400000) : 0; }
+        function sgToolLead(n) {
+            if (!n) { sgToolDraft = { due: '', lead: null, leadLabel: '' }; sgToolRenderChips(); return; }
+            const ts = sgTripStart();
+            if (!ts) { showToast('warning', '請先設定旅程日期，才能以出發日計算提醒日'); return; }
+            const x = SG_LEADS.find(v => v.n === n);
+            sgToolDraft = { due: n === 30 ? sgShiftMonth(ts, -1) : bcalAddDays(ts, -n), lead: n, leadLabel: x ? x.l : '' };
+            sgToolRenderChips();
+        }
+        function sgToolPickDate(ev) {
+            if (ev) ev.stopPropagation();
+            sgCalPopup(document.getElementById('toolDueBtn'), sgToolDraft.due, ymd => {
+                sgToolDraft = { due: ymd, lead: null, leadLabel: '' };
+                sgToolRenderChips();
+            });
+        }
+        function openToolModal(idx) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            if (idx === undefined || idx === null) idx = -1;
+            const it = (idx >= 0 && plan.tools && plan.tools[idx]) ? plan.tools[idx] : null;
+            document.getElementById('toolEditIdx').value = idx;
+            document.getElementById('toolEditText').value = it ? it.title : '';
+            document.getElementById('toolEditTitle').innerHTML = `<i class="fa-solid fa-lightbulb" style="color:#d97706;"></i> ${it ? '編輯行前提醒' : '新增行前提醒'}`;
+            sgToolDraft = { due: (it && it.dueDate) || '', lead: (it && it.leadDays) || null, leadLabel: (it && it.leadLabel) || '' };
+            sgToolRenderChips();
+            openModal('toolEditModal');
+        }
+        function saveToolEdit() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const text = document.getElementById('toolEditText').value.trim();
+            if (!text) { showToast('warning', '請輸入提醒內容'); return; }
+            if (!Array.isArray(plan.tools)) plan.tools = [];
+            const idx = parseInt(document.getElementById('toolEditIdx').value, 10);
+            const obj = idx >= 0 && plan.tools[idx] ? plan.tools[idx] : { checked: false };
+            obj.title = text;
+            if (sgToolDraft.due) { obj.dueDate = sgToolDraft.due; obj.leadDays = sgToolDraft.lead; obj.leadLabel = sgToolDraft.leadLabel; }
+            else { delete obj.dueDate; delete obj.leadDays; delete obj.leadLabel; }
+            if (idx >= 0 && plan.tools[idx]) plan.tools[idx] = obj; else plan.tools.push(obj);
+            saveState();
+            closeModal('toolEditModal');
+            renderToolsCallout();
+            if (typeof renderTripSummary === 'function') renderTripSummary();
+            showToast('success', idx >= 0 ? '已更新提醒' : '已加入提醒');
+        }
+        openAddToolModal = function () { openToolModal(-1); };
+        editToolItem = function (idx) { openToolModal(idx); };
+
+        // ---- 預約類提醒（景點、交通）----
+        var sgRemExpanded = null;
+        function sgBookingReminders(plan) {
+            const out = [];
+            const today = sgTodayYmd();
+            const push = (kind, idx, it) => {
+                if (!it || !it.hasBooking) return;
+                const bd = it.bookingDate || '即刻';
+                const done = it.bookingStatus === '已完成';
+                const lead = (it.remindLeadDays === undefined || it.remindLeadDays === null) ? 1 : Number(it.remindLeadDays);
+                let remindDate = '', level = 'info', text = '';
+                const isNow = bd === '即刻';
+                if (!isNow) remindDate = lead >= 0 ? bcalAddDays(bd, -lead) : '';
+                const daysToOpen = isNow ? 0 : sgDaysBetweenYmd(today, bd);
+                if (done) { level = 'ok'; text = '已預約完成'; }
+                else if (isNow) { level = 'warn'; text = '現在就可以預約'; }
+                else if (daysToOpen < 0) { level = 'urgent'; text = `已開放 ${-daysToOpen} 天，尚未預約`; }
+                else if (daysToOpen === 0) { level = 'urgent'; text = '今天開放預約！'; }
+                else if (remindDate && today >= remindDate) { level = 'warn'; text = `再 ${daysToOpen} 天開放預約，該準備了`; }
+                else { level = 'info'; text = `距離開放還有 ${daysToOpen} 天`; }
+                out.push({ kind, idx, title: it.title || it.name, platform: it.bookingPlatform || '', bd, time: it.bookingTime || '', done, lead, remindDate, level, text, daysToOpen: isNow ? -9999 : daysToOpen });
+            };
+            (plan.spotTips || []).forEach((s, i) => push('spot', i, s));
+            (plan.majorTransports || []).forEach((m, i) => push('mt', i, m));
+            return out;
+        }
+        function sgSetBookingLead(kind, idx, days) {
+            const plan = getCurrentPlan();
+            const it = kind === 'spot' ? plan.spotTips[idx] : plan.majorTransports[idx];
+            if (!it) return;
+            it.remindLeadDays = days;
+            saveState();
+            renderToolsCallout();
+        }
+        function sgToggleRemExpand(key) { sgRemExpanded = (sgRemExpanded === key) ? null : key; renderToolsCallout(); }
+        function sgRemToggleBooking(kind, idx) {
+            if (kind === 'spot') { toggleSpotBookingStatus(idx); renderToolsCallout(); }
+            else toggleMajorTransBooking(idx);
+        }
+        function sgRemEdit(kind, idx) {
+            if (kind === 'spot') openAddSpotGuideModal(idx); else openEditMajorTransportModal(idx);
+        }
+        function sgFmtMd(ymd) { const d = bcalParseYMD(ymd); return d ? `${d.getMonth() + 1}/${d.getDate()}(${['日', '一', '二', '三', '四', '五', '六'][d.getDay()]})` : ymd; }
+
+        renderToolsCallout = function () {
+            const plan = getCurrentPlan();
+            const container = document.getElementById('toolsCalloutList');
+            const titleTextEl = document.getElementById('toolsCalloutTitleText');
+            const actionsEl = document.getElementById('toolsCalloutHeaderActions');
+            if (!container || !plan) return;
+            const today = sgTodayYmd();
+            const tools = Array.isArray(plan.tools) ? plan.tools : [];
+            const bookings = sgBookingReminders(plan);
+            const pending = tools.filter(t => !t.checked).length + bookings.filter(b => !b.done).length;
+            const doneCnt = tools.filter(t => t.checked).length + bookings.filter(b => b.done).length;
+            if (titleTextEl) {
+                titleTextEl.className = pending ? 'tools-badge-title' : 'tools-badge-title all-done';
+                titleTextEl.innerHTML = `<i class="fa-solid ${pending ? 'fa-lightbulb' : 'fa-circle-check'}"></i> 行前提醒 (${pending ? pending + ' 待辦' : '全部完成'}${bookings.filter(b => !b.done && (b.level === 'urgent' || b.level === 'warn')).length ? '｜' + bookings.filter(b => !b.done && (b.level === 'urgent' || b.level === 'warn')).length + ' 項需處理' : ''})`;
+            }
+            if (actionsEl) {
+                actionsEl.innerHTML = `${doneCnt ? `<button type="button" class="n-btn" style="padding:2px 7px;font-size:0.72rem;" onclick="toggleShowCompletedTools()"><i class="fa-regular ${showCompletedTools ? 'fa-eye-slash' : 'fa-eye'}"></i> ${showCompletedTools ? '隱藏完成' : '已完成 (' + doneCnt + ')'}</button>` : ''}
+                    <button type="button" class="n-btn" style="padding:2px 7px;font-size:0.72rem;" onclick="openAddToolModal()"><i class="fa-solid fa-plus"></i> 新增</button>`;
+            }
+            const rank = { urgent: 0, warn: 1, info: 2, ok: 3 };
+            const bk = bookings.filter(b => showCompletedTools || !b.done).sort((a, b) => rank[a.level] - rank[b.level] || a.daysToOpen - b.daysToOpen);
+            let html = '';
+            if (bk.length) {
+                html += '<div class="rem-sec">📌 預約提醒（來自景點與交通）</div>';
+                html += bk.map(b => {
+                    const key = b.kind + b.idx;
+                    const leadOpts = [{ n: 1, l: '提前 1 天' }, { n: 3, l: '提前 3 天' }, { n: 7, l: '提前 7 天' }, { n: 30, l: '提前 1 個月' }, { n: -1, l: '不提醒' }];
+                    const bdLabel = b.bd === '即刻' ? '即刻開放' : `${sgFmtMd(b.bd)}${b.time ? ' ' + b.time : ''} 開放`;
+                    const leadTxt = b.lead < 0 ? '不提醒' : (b.lead === 30 ? '提前 1 個月' : `提前 ${b.lead} 天`);
+                    return `<div class="rem-row ${b.level}">
+                        <input type="checkbox" class="n-checkbox" ${b.done ? 'checked' : ''} onchange="sgRemToggleBooking('${b.kind}', ${b.idx})" style="margin-top:3px;" title="標記已預約">
+                        <div class="rem-main">
+                            <div class="rem-title">${b.kind === 'spot' ? '🏛️' : '🚌'} 預約：${escapeHtml(b.title)}</div>
+                            <div class="rem-sub"><b>${escapeHtml(b.text)}</b>｜${escapeHtml(bdLabel)}${b.platform ? '｜' + escapeHtml(sgShortPlatform(b.platform)) : ''}<br>⏰ ${leadTxt}${b.remindDate && b.lead >= 0 ? `（${sgFmtMd(b.remindDate)} 起提醒）` : ''}</div>
+                            ${sgRemExpanded === key ? `<div class="rem-lead">${leadOpts.map(o => `<button type="button" class="${b.lead === o.n ? 'on' : ''}" onclick="sgSetBookingLead('${b.kind}', ${b.idx}, ${o.n})">${o.l}</button>`).join('')}</div>` : ''}
+                        </div>
+                        <div class="rem-act"><button type="button" onclick="sgToggleRemExpand('${key}')" title="設定提前多久提醒"><i class="fa-regular fa-clock"></i></button><button type="button" onclick="sgRemEdit('${b.kind}', ${b.idx})" title="編輯預約資訊"><i class="fa-solid fa-pen"></i></button></div>
+                    </div>`;
+                }).join('');
+            }
+            const tl = tools.map((t, i) => ({ t, i })).filter(x => showCompletedTools || !x.t.checked);
+            if (tl.length) {
+                html += '<div class="rem-sec">📝 行前待辦</div>';
+                html += tl.map(({ t, i }) => {
+                    let level = t.checked ? 'ok' : 'info', sub = '';
+                    if (t.dueDate) {
+                        const dd = sgDaysBetweenYmd(today, t.dueDate);
+                        if (!t.checked) {
+                            if (dd < 0) { level = 'urgent'; sub = `已逾期 ${-dd} 天（${sgFmtMd(t.dueDate)}）`; }
+                            else if (dd === 0) { level = 'urgent'; sub = `今天要完成（${sgFmtMd(t.dueDate)}）`; }
+                            else if (dd <= 3) { level = 'warn'; sub = `${dd} 天後到期（${sgFmtMd(t.dueDate)}）`; }
+                            else sub = `${t.leadLabel ? t.leadLabel + '｜' : ''}${sgFmtMd(t.dueDate)}（還有 ${dd} 天）`;
+                        } else sub = sgFmtMd(t.dueDate);
+                    }
+                    return `<div class="rem-row ${level}">
+                        <input type="checkbox" class="n-checkbox" ${t.checked ? 'checked' : ''} onchange="toggleToolItem(${i})" style="margin-top:3px;">
+                        <div class="rem-main"><div class="rem-title">${escapeHtml(t.title)}</div>${sub ? `<div class="rem-sub"><b>${escapeHtml(sub)}</b></div>` : ''}</div>
+                        <div class="rem-act"><button type="button" onclick="editToolItem(${i})" title="編輯"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="deleteToolItem(${i})" title="刪除"><i class="fa-regular fa-trash-can"></i></button></div>
+                    </div>`;
+                }).join('');
+            }
+            if (!html) html = '<div style="font-size:0.76rem;color:#94a3b8;">目前沒有待辦提醒。在景點或交通設定預約時間後，會自動出現在這裡。</div>';
+            container.innerHTML = html;
+            const small = window.innerWidth <= 980;
+            const collapsed = small && !window.__remOpen;
+            container.style.setProperty('display', collapsed ? 'none' : 'block', 'important');
+            if (actionsEl && small) actionsEl.insertAdjacentHTML('afterbegin', `<button type="button" class="n-btn" style="padding:2px 8px;font-size:0.72rem;" onclick="sgToggleRemOpen()"><i class="fa-solid ${collapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i> ${collapsed ? '展開' : '收合'}</button>`);
+        };
+
+        
+        function sgShortPlatform(p) {
+            const s = String(p || '').trim();
+            if (/^https?:\/\//i.test(s)) { try { return new URL(s).hostname.replace(/^www\./, ''); } catch (e) {} }
+            return s.length > 24 ? s.slice(0, 24) + '…' : s;
+        }
+
+        
+        // ===== V3.18.3：手機版版面修正、行前提醒在手機預設收合 =====
+        (function () {
+            if (document.getElementById('sgMobileFixStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMobileFixStyle';
+            st.textContent = `
+                @media (max-width: 700px){
+                    .timeline-transit-row{flex-wrap:wrap !important;gap:4px 6px !important;}
+                    .timeline-transit-badge{display:flex !important;flex-wrap:wrap !important;gap:3px 6px !important;max-width:100% !important;white-space:normal !important;align-items:center !important;}
+                    .timeline-transit-badge > *{min-width:0 !important;}
+                    .timeline-transit-actions{margin-left:0 !important;flex-wrap:wrap !important;}
+                    .timeline-event-row, .timeline-event-row *{overflow-wrap:anywhere;}
+                    .tl-leave-chip,.tl-from-chip,.tl-google-chip{white-space:normal !important;}
+                    .okr-header-actions{flex-wrap:wrap !important;overflow:visible !important;gap:6px !important;width:100% !important;}
+                    .okr-header-actions > *{flex:0 1 auto;}
+                    #view-timeline .n-btn{max-width:100%;white-space:normal;text-align:left;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
+        function sgToggleRemOpen() { window.__remOpen = !window.__remOpen; renderToolsCallout(); }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
