@@ -4360,6 +4360,25 @@
         }
 
 
+        /* V3.15.2：交通與住宿版面平衡（交通在左加寬、住宿在右固定窄欄；長網址不再超出卡片） */
+        .major-trans-card, .flight-side-card, .hotel-side-card { min-width: 0; overflow-wrap: anywhere; }
+        @media (min-width: 1101px) {
+            #view-logistics #logisticsSplitGrid.logistics-split-grid:not(.single-col) {
+                grid-template-columns: minmax(0, 2.1fr) minmax(300px, 1fr) !important;
+                gap: 16px !important;
+            }
+            #view-logistics .logistics-split-grid:not(.single-col) #sideFlightCardsContainer {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+            }
+            #view-logistics .logistics-split-grid:not(.single-col) #majorTransportCardsContainer {
+                grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important;
+            }
+            #view-logistics .logistics-split-grid:not(.single-col) #logisticsColRight {
+                position: sticky;
+                top: 78px;
+            }
+        }
+
         /* 10. 瀏覽器縮放比例穩定保護 (Zoom-Resilient Layout)：縮放改變時仍維持單排 4 欄與雙欄並排 */
         @media (min-width: 641px) {
             .okr-kpi-grid {
@@ -6101,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.15.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.15.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6269,9 +6288,6 @@
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-hotel" onclick="switchLogisticsSubtab('hotel')">
                             <i class="fa-solid fa-hotel"></i> 僅看住宿飯店
-                        </button>
-                        <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-currency" onclick="switchLogisticsSubtab('currency')">
-                            <i class="fa-solid fa-coins"></i> 匯率換算
                         </button>
                     </div>
                     <div style="font-size: 0.74rem; color: #64748b;">
@@ -14632,6 +14648,18 @@ const firebaseConfig = {
             return r;
         };
 
+        
+        // ===== V3.15.2：車行／平台欄位若為網址，改成可點的縮短連結 =====
+        function sgProviderHtml(text) {
+            const s = String(text || '').trim();
+            if (/^https?:\/\//i.test(s)) {
+                let host = s;
+                try { host = new URL(s).hostname.replace(/^www\./, ''); } catch (e) {}
+                return `<a href="${escapeHtml(s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${escapeHtml(s)}" style="display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;color:#1d5fb4;font-weight:700;">🔗 ${escapeHtml(host)}</a>`;
+            }
+            return `<strong style="overflow-wrap:anywhere;">${escapeHtml(s)}</strong>`;
+        }
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -18529,7 +18557,7 @@ const firebaseConfig = {
 
                             ${(item.provider || item.bookingNo || item.notes) ? `
                             <div style="font-size:0.72rem; color:#64748b; margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;">
-                                ${item.provider ? `<span>車行/平台：<strong>${escapeHtml(item.provider)}</strong></span>` : ''}
+                                ${item.provider ? `<span style="min-width:0;max-width:100%;">車行/平台：${sgProviderHtml(item.provider)}</span>` : ''}
                                 ${item.bookingNo ? `<span style="color:#966420; background:#faf3e6; padding:0 5px; border-radius:4px; font-weight:700;">單號：${escapeHtml(item.bookingNo)}</span>` : ''}
                                 ${item.notes ? `<span>💡 ${escapeHtml(item.notes)}</span>` : ''}
                             </div>` : ''}
