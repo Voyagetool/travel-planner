@@ -6102,7 +6102,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.14.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.15.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7285,7 +7285,6 @@
                             <button type="button" class="n-btn" style="background:#fff; border-color:#7dd3fc; color:#0369a1; font-size:0.76rem; padding:4px 8px;" onclick="openTransitExternalMap('walking', 'google')">
                                 <i class="fa-solid fa-person-walking"></i> Google 步行
                             </button>
-                            <button type="button" id="transitGoogleFillBtn" class="n-btn tl-google-btn" style="display:none; font-size:0.76rem; padding:4px 8px; font-weight:700;" onclick="googleFillFirstTransit()"><i class="fa-brands fa-google"></i> Google 自動帶入交通時間</button>
                             <button type="button" class="n-btn" style="background:#fff; border-color:#fed7aa; color:#c2410c; font-size:0.76rem; padding:4px 8px;" onclick="openTransitExternalMap('driving', 'amap')">
                                 <i class="fa-solid fa-map-pin"></i> 高德地圖規劃 (港澳大陸)
                             </button>
@@ -8262,7 +8261,23 @@
                                     <select id="sgOpenEndMin" onchange="onSgOpenHoursChange()"></select>
                                 </div>
                             </div>
+                            <div class="sg-24h-row sg-open-extra-row" id="sgOpenRow2" style="margin-bottom:6px; display:none;">
+                                <span style="font-size:0.72rem; color:#64748b; font-weight:700;">第 2 時段</span>
+                                <div class="sg-24h-unit"><select id="sgOpen2StartHour" onchange="sgOpenExtraChange()"></select><span class="sg-24h-sep">:</span><select id="sgOpen2StartMin" onchange="sgOpenExtraChange()"></select></div>
+                                <span style="color:#94a3b8; font-size:0.78rem; font-weight:700;">~</span>
+                                <div class="sg-24h-unit"><select id="sgOpen2EndHour" onchange="sgOpenExtraChange()"></select><span class="sg-24h-sep">:</span><select id="sgOpen2EndMin" onchange="sgOpenExtraChange()"></select></div>
+                                <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.72rem;" onclick="sgRemoveOpenRange(2)" title="移除這個時段"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="sg-24h-row sg-open-extra-row" id="sgOpenRow3" style="margin-bottom:6px; display:none;">
+                                <span style="font-size:0.72rem; color:#64748b; font-weight:700;">第 3 時段</span>
+                                <div class="sg-24h-unit"><select id="sgOpen3StartHour" onchange="sgOpenExtraChange()"></select><span class="sg-24h-sep">:</span><select id="sgOpen3StartMin" onchange="sgOpenExtraChange()"></select></div>
+                                <span style="color:#94a3b8; font-size:0.78rem; font-weight:700;">~</span>
+                                <div class="sg-24h-unit"><select id="sgOpen3EndHour" onchange="sgOpenExtraChange()"></select><span class="sg-24h-sep">:</span><select id="sgOpen3EndMin" onchange="sgOpenExtraChange()"></select></div>
+                                <button type="button" class="n-btn" style="padding:1px 7px; font-size:0.72rem;" onclick="sgRemoveOpenRange(3)" title="移除這個時段"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div style="margin-bottom:6px;"><button type="button" class="n-btn" id="sgOpenAddRangeBtn" style="padding:2px 9px; font-size:0.72rem;" onclick="sgAddOpenRange()"><i class="fa-solid fa-plus"></i> 新增營業時段（午休／分段營業）</button></div>
                             <input type="text" id="sgOpenNote" class="form-input" style="font-size:0.78rem; padding:5px 9px;" placeholder="營業備註 (選填，如：週一公休 / 最後入場 17:00)">
+                            <div id="sgOpenFitHint" style="display:none; margin-top:6px; font-size:0.74rem; color:#b45309; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:4px 8px;"></div>
                         </div>
                     </div>
 
@@ -12316,7 +12331,7 @@ const firebaseConfig = {
 
         const GMAPS_KEY_STORAGE = 'travel_planner_gmaps_api_key';
         function getGoogleMapsKey() {
-            try { return (localStorage.getItem(GMAPS_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
+            return ''; // Google API 功能已停用
         }
         function promptGoogleMapsKey() {
             const cur = getGoogleMapsKey();
@@ -12540,7 +12555,6 @@ const firebaseConfig = {
                     <button type="button" class="tl-status-link" onclick="markPastDaysDone()" title="依旅程日期，把今天以前的天數全部標為已完成">把今天以前的行程標為已完成</button>
                     <button type="button" class="tl-status-link" onclick="openMoveDayModal(${activeDay.dayNum})" title="把這一天的行程整天搬到別天，或與別天交換"><i class="fa-solid fa-right-left"></i> 整天移動</button>
                     <button type="button" class="tl-status-link" onclick="applyLodgingFirstTransitAll()" title="依各天前一晚的住宿，自動設定出發地、交通時間與建議離開時間"><i class="fa-solid fa-hotel"></i> 全部天數依住宿設定起程交通</button>
-                    <button type="button" class="tl-status-link" onclick="googleFillAllLastTransit()" title="用 Google 一次估算每天回飯店的交通時間"><i class="fa-brands fa-google"></i> 全部天數估算回飯店時間</button>
                 </div>` : '';
             let eventsHtml = '';
             if (events.length === 0) {
@@ -12681,9 +12695,6 @@ const firebaseConfig = {
                                 ${staleChipHtml}
                                 ${googleChipHtml}
                                 <div class="timeline-transit-actions">
-                                    <button type="button" class="n-btn transit-action-btn tl-google-btn ${ev.transitStale ? 'attn' : ''}" onclick="event.stopPropagation(); autoFillTransitFromGoogle(${activeDay.dayNum}, ${eIdx})" title="自動帶入 Google 地圖的移動時間與距離（需 API Key）">
-                                        <i class="fa-brands fa-google"></i> Google 帶入
-                                    </button>
                                     <button type="button" class="n-btn transit-action-btn map-btn" onclick="openTransitExternalMapQuick(${activeDay.dayNum}, ${eIdx})" title="在 Google 地圖上開啟兩站間的路線規劃與交通時間">
                                         <i class="fa-solid fa-map-location-dot"></i> 地圖路線
                                     </button>
@@ -14627,7 +14638,6 @@ const firebaseConfig = {
                     ${lt.notes ? `<span style="font-size:0.74rem;color:#64748b;"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(lt.notes)}</span>` : ''}
                 </div>
                 <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" class="n-btn tl-google-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="googleFillLastTransit(${day.dayNum})"><i class="fa-brands fa-google"></i> Google 估算交通時間</button>
                     <button type="button" class="n-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="openLastTransitMap(${day.dayNum}, 'transit')"><i class="fa-solid fa-map-location-dot"></i> 地圖路線</button>
                     <button type="button" class="n-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="openLastTransitModal(${day.dayNum})"><i class="fa-solid fa-gear"></i> 設定</button>
                 </div>
@@ -15375,6 +15385,195 @@ const firebaseConfig = {
             } catch (e) { console.warn(e); }
             return __origRenderAllForMealTime.apply(this, arguments);
         };
+
+        
+        // ===== V3.15.0：營業時間支援分段（午休）、造訪時間檢查；停用 Google API 功能 =====
+        function sgOpenRangesOf(item) {
+            const out = [];
+            if (!item || item.openStartTime === '24H') return out;
+            const list = (Array.isArray(item.openRanges) && item.openRanges.length) ? item.openRanges : [{ start: item.openStartTime, end: item.openEndTime }];
+            list.forEach(r => {
+                const s = sgHhmmToMin(r && r.start);
+                if (s === null) return;
+                const e = sgHhmmToMin(r.end);
+                out.push({ s, e: e !== null ? e : 1440, start: r.start, end: r.end || '' });
+            });
+            return out.sort((a, b) => a.s - b.s);
+        }
+        function sgOpenGapsText(rs) {
+            const g = [];
+            for (let i = 1; i < rs.length; i++) {
+                if (rs[i - 1].e < rs[i].s) g.push(`${sgMinToHhmm(rs[i - 1].e)}-${sgMinToHhmm(rs[i].s)}`);
+            }
+            return g.join('、');
+        }
+        function formatSpotOpeningText(item) {
+            if (!item) return '';
+            let timePart = '';
+            const notes = [];
+            if (item.openStartTime === '24H') {
+                timePart = '全天開放 (24H)';
+            } else if (Array.isArray(item.openRanges) && item.openRanges.length > 1) {
+                const rs = sgOpenRangesOf(item);
+                timePart = rs.map(r => r.end ? `${r.start} - ${r.end}` : `${r.start} 起`).join('、');
+                const gaps = sgOpenGapsText(rs);
+                if (gaps) notes.push(`休息 ${gaps}`);
+            } else if (item.openStartTime && item.openEndTime) {
+                timePart = `${item.openStartTime} - ${item.openEndTime}`;
+            } else if (item.openStartTime) {
+                timePart = `${item.openStartTime} 起`;
+            } else if (item.openEndTime) {
+                timePart = `至 ${item.openEndTime}`;
+            }
+            const n = (item.openNote || '').trim();
+            if (n) notes.push(n);
+            const notePart = notes.join('；');
+            if (timePart && notePart) return `${timePart}（${notePart}）`;
+            return timePart || notePart;
+        }
+        // 預設造訪時間：盡量落在營業時段內（避開午休）
+        function sgDefaultStartTime(item) {
+            let t = '10:00';
+            if (item.category === 'food') {
+                if (item.mealType === 'lunch') t = '12:00';
+                else if (item.mealType === 'dinner') t = '18:00';
+            }
+            const rs = sgOpenRangesOf(item);
+            if (!rs.length) return t;
+            const m = sgHhmmToMin(t);
+            if (rs.some(r => m >= r.s && m < r.e)) return t;
+            const next = rs.find(r => r.s >= m);
+            return sgMinToHhmm((next || rs[0]).s);
+        }
+
+        function sgFillOpenExtraSelects() {
+            [2, 3].forEach(n => ['Start', 'End'].forEach(k => {
+                const h = document.getElementById(`sgOpen${n}${k}Hour`), m = document.getElementById(`sgOpen${n}${k}Min`);
+                if (h && h.dataset.populated !== '1') {
+                    let html = '<option value="">-- 時</option>';
+                    for (let i = 0; i < 24; i++) { const v = String(i).padStart(2, '0'); html += `<option value="${v}">${v} 時</option>`; }
+                    h.innerHTML = html; h.dataset.populated = '1';
+                }
+                if (m && m.dataset.populated !== '1') {
+                    let html = '';
+                    for (let i = 0; i < 60; i++) { const v = String(i).padStart(2, '0'); html += `<option value="${v}">${v} 分</option>`; }
+                    m.innerHTML = html; m.dataset.populated = '1';
+                }
+            }));
+        }
+        function sgOpenExtraChange() {
+            [2, 3].forEach(n => ['Start', 'End'].forEach(k => {
+                const h = document.getElementById(`sgOpen${n}${k}Hour`), m = document.getElementById(`sgOpen${n}${k}Min`);
+                if (h && m) { m.disabled = !h.value; m.style.opacity = h.value ? '1' : '0.45'; }
+            }));
+            sgCheckOpenFit();
+        }
+        function sgSetOpenRow(n, r) {
+            const row = document.getElementById('sgOpenRow' + n);
+            if (!row) return;
+            if (r && r.start) {
+                row.style.display = 'flex';
+                setSg24hPairValues(`sgOpen${n}StartHour`, `sgOpen${n}StartMin`, r.start, '', '00');
+                setSg24hPairValues(`sgOpen${n}EndHour`, `sgOpen${n}EndMin`, r.end || '', '', '00');
+            } else {
+                row.style.display = 'none';
+                setSg24hPairValues(`sgOpen${n}StartHour`, `sgOpen${n}StartMin`, '', '', '00');
+                setSg24hPairValues(`sgOpen${n}EndHour`, `sgOpen${n}EndMin`, '', '', '00');
+            }
+        }
+        function sgInitOpenExtra(item) {
+            sgFillOpenExtraSelects();
+            const list = (item && Array.isArray(item.openRanges)) ? item.openRanges : [];
+            sgSetOpenRow(2, list[1]);
+            sgSetOpenRow(3, list[2]);
+            sgOpenExtraChange();
+        }
+        function sgAddOpenRange() {
+            sgFillOpenExtraSelects();
+            const n = [2, 3].find(i => document.getElementById('sgOpenRow' + i).style.display === 'none');
+            if (!n) { showToast('info', '最多可設定 3 個營業時段'); return; }
+            const firstEnd = getSg24hPairTimeString('sgOpenEndHour', 'sgOpenEndMin');
+            const e = sgHhmmToMin(firstEnd);
+            const start = (e !== null && e < 22 * 60) ? sgMinToHhmm(e + 120) : '17:00';
+            const sm = sgHhmmToMin(start);
+            sgSetOpenRow(n, { start, end: sgMinToHhmm(Math.min(sm + 240, 1439)) });
+            sgOpenExtraChange();
+        }
+        function sgRemoveOpenRange(n) { sgSetOpenRow(n, null); sgOpenExtraChange(); }
+        function sgOpenCollectRanges() {
+            const first = getSg24hPairTimeString('sgOpenStartHour', 'sgOpenStartMin');
+            if (first === '24H') return [{ start: '24H', end: '' }];
+            const out = [];
+            if (first) out.push({ start: first, end: getSg24hPairTimeString('sgOpenEndHour', 'sgOpenEndMin') });
+            [2, 3].forEach(n => {
+                const row = document.getElementById('sgOpenRow' + n);
+                if (!row || row.style.display === 'none') return;
+                const s = getSg24hPairTimeString(`sgOpen${n}StartHour`, `sgOpen${n}StartMin`);
+                if (s) out.push({ start: s, end: getSg24hPairTimeString(`sgOpen${n}EndHour`, `sgOpen${n}EndMin`) });
+            });
+            return out;
+        }
+        // 預計造訪時間若不在營業時段（含午休空檔）內，在視窗內提醒
+        function sgCheckOpenFit() {
+            const hint = document.getElementById('sgOpenFitHint');
+            if (!hint) return;
+            hint.style.display = 'none';
+            const ranges = sgOpenCollectRanges();
+            if (!ranges.length || ranges[0].start === '24H') return;
+            const rs = sgOpenRangesOf({ openRanges: ranges, openStartTime: ranges[0].start, openEndTime: ranges[0].end });
+            if (!rs.length) return;
+            const vs = sgHhmmToMin(getSg24hPairTimeString('sgVisitStartHour', 'sgVisitStartMin'));
+            if (vs === null) return;
+            let ve = sgHhmmToMin(getSg24hPairTimeString('sgVisitEndHour', 'sgVisitEndMin'));
+            if (ve === null || ve < vs) ve = vs;
+            if (rs.some(r => vs >= r.s && ve <= r.e)) return;
+            const gaps = sgOpenGapsText(rs);
+            hint.textContent = `⚠️ 預計造訪 ${sgMinToHhmm(vs)}${ve > vs ? '–' + sgMinToHhmm(ve) : ''} 不在營業時段內（營業：${rs.map(r => r.start + '–' + (r.end || '結束')).join('、')}${gaps ? '；休息：' + gaps : ''}）`;
+            hint.style.display = 'block';
+        }
+        const __origOnSgOpenHoursChangeForFit = onSgOpenHoursChange;
+        onSgOpenHoursChange = function () { __origOnSgOpenHoursChangeForFit.apply(this, arguments); try { sgCheckOpenFit(); } catch (e) {} };
+        const __origOnSgVisitTimeChangeForFit = onSgVisitTimeChange;
+        onSgVisitTimeChange = function () { __origOnSgVisitTimeChangeForFit.apply(this, arguments); try { sgCheckOpenFit(); } catch (e) {} };
+        const __origOpenSGForRanges = openAddSpotGuideModal;
+        openAddSpotGuideModal = function (editIdx, forceExpandBooking) {
+            __origOpenSGForRanges(editIdx === undefined ? null : editIdx, forceExpandBooking);
+            try {
+                const plan = getCurrentPlan();
+                const item = (editIdx !== null && editIdx !== undefined && plan) ? plan.spotTips[editIdx] : null;
+                sgInitOpenExtra(item || {});
+                sgCheckOpenFit();
+            } catch (e) { console.warn('營業時段初始化失敗', e); }
+        };
+        const __origSaveSGForRanges = handleSaveSpotGuideSubmit;
+        handleSaveSpotGuideSubmit = function (e) {
+            let ranges = [];
+            let editId = null;
+            try {
+                ranges = sgOpenCollectRanges();
+                const plan = getCurrentPlan();
+                const editIdx = parseInt(document.getElementById('sgEditIndex')?.value || '-1', 10);
+                if (editIdx >= 0 && plan && plan.spotTips[editIdx]) editId = plan.spotTips[editIdx].id;
+            } catch (err) {}
+            const before = (getCurrentPlan() || {}).spotTips ? getCurrentPlan().spotTips.length : 0;
+            const r = __origSaveSGForRanges(e);
+            try {
+                const plan = getCurrentPlan();
+                let item = null;
+                if (editId) item = plan.spotTips.find(s => s.id === editId);
+                else if (plan.spotTips.length > before) item = plan.spotTips[plan.spotTips.length - 1];
+                if (item) {
+                    if (ranges.length > 1) item.openRanges = ranges.map(x => ({ start: x.start, end: x.end || '' }));
+                    else delete item.openRanges;
+                    saveState();
+                    renderAll();
+                }
+            } catch (err) { console.warn('儲存營業時段失敗', err); }
+            return r;
+        };
+
+        // 停用需要 Google API 金鑰的功能，只保留開啟 Google 地圖網頁自行確認
+        function getGoogleMapsKey() { return ''; }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
