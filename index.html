@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.17.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.17.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7313,7 +7313,7 @@
                         <label class="form-label" style="font-weight:700; color:#334155;">
                             移動接駁名稱 / 說明 (選填)
                         </label>
-                        <input type="text" id="transitTitleInput" class="form-input" placeholder="例如：專車接送出發前往桃園機場、重慶機場專車直達飯店">
+                        <input type="text" id="transitTitleInput" class="form-input" placeholder="例如：專車接送出發前往機場、機場專車直達飯店">
                     </div>
 
                     <div id="transitMixedBlock" style="display:none; margin-bottom:12px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px 12px;">
@@ -8109,12 +8109,12 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">飯店名稱</label>
-                        <input type="text" id="hName" class="form-input" placeholder="例如：重慶解放碑 Moxy 酒店 或 重慶來福士洲際酒店">
+                        <input type="text" id="hName" class="form-input" placeholder="例如：東京新宿 APA 飯店 或 淺草東武飯店">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">所在城市 / 商圈地區</label>
-                            <input type="text" id="hCity" class="form-input" placeholder="例如：重慶 ‧ 解放碑商圈">
+                            <input type="text" id="hCity" class="form-input" placeholder="例如：東京 ‧ 新宿商圈">
                         </div>
                         <div class="form-group">
                             <label class="form-label">階段標籤 (選填)</label>
@@ -8178,7 +8178,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label"><i class="fa-solid fa-location-dot" style="color: #b0654a;"></i> 中文詳細地址 (司機導航、叫車與步行指引)</label>
-                        <input type="text" id="hAddr" class="form-input" placeholder="例如：重慶市渝中區青年路77號 (解放碑國泰優活城市廣場旁)">
+                        <input type="text" id="hAddr" class="form-input" placeholder="例如：東京都新宿區歌舞伎町 1-20-2">
                     </div>
                     <div class="form-group">
                         <label class="form-label">飯店聯絡電話 (選填)</label>
@@ -16144,6 +16144,20 @@ const firebaseConfig = {
             if (p && p.style.display === 'block') p.style.display = 'none';
         });
 
+        
+        // ===== V3.17.1：預算頁的交通／景點說明改依實際資料顯示（不再寫死重慶文字）=====
+        function sgBudgetNames(plan, kind) {
+            const set = new Set();
+            const add = s => { s = String(s || '').trim(); if (s && !/^(當日交通安排|當日景點門票安排|交通支出|景點門票)$/.test(s)) set.add(s.replace(/^(行程交通|起程交通)：/, '')); };
+            (plan.days || []).forEach(d => {
+                (kind === 'trans' ? (d.transports || []) : (d.spots || [])).forEach(t => add(t && t.title));
+            });
+            if (kind === 'trans') (plan.majorTransports || []).forEach(m => add(m && m.title));
+            const arr = Array.from(set);
+            if (!arr.length) return kind === 'trans' ? '依每日交通安排與其他交通項目加總' : '依每日景點門票安排加總';
+            return arr.slice(0, 4).join('、') + (arr.length > 4 ? ` 等 ${arr.length} 項` : '');
+        }
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -17447,14 +17461,14 @@ const firebaseConfig = {
                         <span style="font-size:1.05rem; font-weight:800; color:#0284c7;">${curr.symbol} ${stats.transTotal.toLocaleString()}</span> <span style="font-size:0.75rem; color:#64748b;">/ 人</span>
                         <div style="font-size:0.8rem; color:#0369a1; font-weight:700; margin-top:2px;">≈ NT$ ${stats.twdTransTotal.toLocaleString()}</div>
                         <div style="font-size:0.74rem; color:#0284c7; margin-top:2px;">全團 (${stats.memberCount}人): ${curr.symbol} ${stats.groupTransTotal.toLocaleString()} (≈ NT$ ${stats.twdGroupTransTotal.toLocaleString()})</div>
-                        <div style="font-size:0.72rem; color:#0369a1; margin-top:2px;">機場專車、武隆包車、索道、打車</div>
+                        <div style="font-size:0.72rem; color:#0369a1; margin-top:2px;">${escapeHtml(sgBudgetNames(plan, 'trans'))}</div>
                     </div>
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 12px; border-radius:6px; font-size:0.82rem;">
                         <strong style="color:#15803d;">🎫 景點與門票體驗：</strong><br>
                         <span style="font-size:1.05rem; font-weight:800; color:#16a34a;">${curr.symbol} ${stats.spotTotal.toLocaleString()}</span> <span style="font-size:0.75rem; color:#64748b;">/ 人</span>
                         <div style="font-size:0.8rem; color:#15803d; font-weight:700; margin-top:2px;">≈ NT$ ${stats.twdSpotTotal.toLocaleString()}</div>
                         <div style="font-size:0.74rem; color:#16a34a; margin-top:2px;">全團 (${stats.memberCount}人): ${curr.symbol} ${stats.groupSpotTotal.toLocaleString()} (≈ NT$ ${stats.twdGroupSpotTotal.toLocaleString()})</div>
-                        <div style="font-size:0.72rem; color:#15803d; margin-top:2px;">天生三橋景區電梯、羅漢寺門票等</div>
+                        <div style="font-size:0.72rem; color:#15803d; margin-top:2px;">${escapeHtml(sgBudgetNames(plan, 'spot'))}</div>
                     </div>
                     <div style="background:#fafaf9; border:1px solid #e2e8f0; padding:10px 12px; border-radius:6px; font-size:0.82rem;">
                         <strong style="color:#334155;">👥 全團總支出估算：</strong><br>
@@ -26613,7 +26627,7 @@ const firebaseConfig = {
 
             row.innerHTML = `
                 <div style="flex:1; min-width:140px;">
-                    <input type="text" class="form-input extra-cost-title" placeholder="項目名稱 (例如：伴手禮購物 / 漢服體驗 / 索道加價)" value="${safeTitle}" oninput="updateModalMealPreview()" style="font-size:0.82rem; height:32px;">
+                    <input type="text" class="form-input extra-cost-title" placeholder="項目名稱 (例如：伴手禮購物 / 和服體驗 / 寄放行李)" value="${safeTitle}" oninput="updateModalMealPreview()" style="font-size:0.82rem; height:32px;">
                 </div>
                 <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
                     <input type="number" class="form-input extra-cost-val" placeholder="0" min="0" step="10" value="${safeCost}" oninput="updateModalMealPreview()" style="font-weight:700; color:#ea580c; font-size:0.85rem; height:32px; width:82px; text-align:right;">
@@ -26705,7 +26719,7 @@ const firebaseConfig = {
 
             row.innerHTML = `
                 <div style="flex:1; min-width:140px;">
-                    <input type="text" class="form-input transport-cost-title" placeholder="交通安排 (例如：長江索道單程門票 / 行李打車 / 地鐵)" value="${safeTitle}" oninput="updateModalMealPreview()" style="font-size:0.82rem; height:32px;">
+                    <input type="text" class="form-input transport-cost-title" placeholder="交通安排 (例如：地鐵一日券 / 機場巴士 / 行李打車)" value="${safeTitle}" oninput="updateModalMealPreview()" style="font-size:0.82rem; height:32px;">
                 </div>
                 <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
                     <input type="number" class="form-input transport-cost-val" placeholder="0" min="0" step="10" value="${safeCost}" oninput="updateModalMealPreview()" style="font-weight:700; color:#0284c7; font-size:0.85rem; height:32px; width:82px; text-align:right;">
@@ -26797,7 +26811,7 @@ const firebaseConfig = {
 
             row.innerHTML = `
                 <div style="flex:1; min-width:140px;">
-                    <input type="text" class="form-input spot-cost-title" placeholder="景點門票安排 (例如：武隆天生三橋門票+電梯 / 羅漢寺香花券)" value="${safeTitle}" oninput="updateModalMealPreview()" style="font-size:0.82rem; height:32px;">
+                    <input type="text" class="form-input spot-cost-title" placeholder="景點門票安排 (例如：晴空塔展望台門票 / 江之島電扶梯套票)" value="${safeTitle}" oninput="updateModalMealPreview()" style="font-size:0.82rem; height:32px;">
                 </div>
                 <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
                     <input type="number" class="form-input spot-cost-val" placeholder="0" min="0" step="10" value="${safeCost}" oninput="updateModalMealPreview()" style="font-weight:700; color:#16a34a; font-size:0.85rem; height:32px; width:82px; text-align:right;">
