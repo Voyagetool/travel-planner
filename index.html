@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.15.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.16.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6343,6 +6343,8 @@
                                     <button type="button" class="ltm-pill" id="btnTransportBus" onclick="selectOtherTransportType('bus')">🚌 長途巴士 / 客運</button>
                                     <button type="button" class="ltm-pill" id="btnTransportCruise" onclick="selectOtherTransportType('cruise')">🚢 遊輪 / 輪渡</button>
                                     <button type="button" class="ltm-pill active" id="btnTransportCar" onclick="selectOtherTransportType('car')">🚗 專車 / 包車接送</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportPass" onclick="selectOtherTransportType('pass')">🎫 交通 Pass</button>
+                                    <button type="button" class="ltm-pill" id="btnTransportSim" onclick="selectOtherTransportType('sim')">📶 網路卡</button>
                                 </div>
                             </div>
                             <div id="majorTransportCardsContainer">
@@ -8734,6 +8736,8 @@ const firebaseConfig = {
                                 <option value="ferry">⛴️ 船票 / 渡輪 / 遊輪</option>
                                 <option value="bus">🚌 機場巴士 / 長途客運</option>
                                 <option value="domestic_flight">✈️ 國內線航班</option>
+                                <option value="pass">🎫 交通 Pass / 周遊券 (JR Pass、地鐵券…)</option>
+                                <option value="sim">📶 網路卡 / eSIM</option>
                                 <option value="other">🚕 其他交通</option>
                             </select>
                             <input type="text" id="majorTransTitle" class="form-input" placeholder="填寫項目內容（如：桃園機場 T2 送機專車 / 成田機場接機）">
@@ -8774,6 +8778,28 @@ const firebaseConfig = {
                                     <select id="mtEndMin" onchange="onMajorTrans24hTimeChange()"></select>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="mtFlexValidBox" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:9px; padding:10px 12px; margin-bottom:12px;">
+                        <label style="display:flex; gap:6px; align-items:center; font-size:0.82rem; font-weight:700; color:#0369a1; cursor:pointer;">
+                            <input type="checkbox" id="majorTransNoFixedTime" onchange="sgMtSyncUi()"> 不固定開始時間（只指定使用日期，當天彈性使用，不排進時間軸）
+                        </label>
+                        <div id="mtValidBlock" style="display:none; margin-top:8px;">
+                            <div class="form-row" style="margin-bottom:6px;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">有效期間計算方式</label>
+                                    <select id="majorTransValidMode" class="form-input" onchange="sgMtSyncUi()">
+                                        <option value="calendar">連續日曆天（用到第 N 天 23:59）</option>
+                                        <option value="hours">自首次使用起算 N × 24 小時</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">有效天數</label>
+                                    <input type="number" id="majorTransValidDays" class="form-input" min="1" max="60" inputmode="numeric" placeholder="例如 3" oninput="sgMtSyncUi()">
+                                </div>
+                            </div>
+                            <div id="mtValidPreview" style="font-size:0.8rem; font-weight:700; color:#0f766e;"></div>
                         </div>
                     </div>
 
@@ -12982,6 +13008,7 @@ const firebaseConfig = {
 
                     <div class="timeline-events-list">
                         ${statusBarHtml}
+                        ${renderDayPassBannerHtml(plan, activeDay)}
                         ${firstTransitHtml}
                         ${eventsHtml}
                         ${renderLastTransitHtml(plan, activeDay)}
@@ -15698,6 +15725,177 @@ const firebaseConfig = {
             }
             return `<strong style="overflow-wrap:anywhere;">${escapeHtml(s)}</strong>`;
         }
+
+        
+        // ===== V3.16.0：交通 Pass／網路卡、不固定開始時間、有效期間計算 =====
+        function sgMtMd(ymd) {
+            const dt = bcalParseYMD(ymd);
+            if (!dt) return ymd || '';
+            return `${dt.getMonth() + 1}/${dt.getDate()} (${['日', '一', '二', '三', '四', '五', '六'][dt.getDay()]})`;
+        }
+        function sgMtDaysBetween(a, b) {
+            const d1 = bcalParseYMD(a), d2 = bcalParseYMD(b);
+            return (d1 && d2) ? Math.round((d2 - d1) / 86400000) : 0;
+        }
+        // 計算票券／網路卡的有效期間
+        function sgMtValidity(item, plan) {
+            const n = parseInt(item && item.validDays, 10);
+            if (!item || !item.useDate || !(n > 0)) return null;
+            const mode = item.validMode === 'hours' ? 'hours' : 'calendar';
+            let endYmd, endClock, startClock = '';
+            if (mode === 'calendar') {
+                endYmd = bcalAddDays(item.useDate, n - 1);
+                endClock = '23:59';
+            } else {
+                const sm = sgHhmmToMin(item.useTime);
+                startClock = sm !== null ? item.useTime : '';
+                const endAbs = (sm !== null ? sm : 0) + n * 24 * 60;
+                endYmd = bcalAddDays(item.useDate, Math.floor(endAbs / 1440));
+                endClock = sgMinToHhmm(endAbs % 1440);
+            }
+            const sDay = plan ? resolvePlanDayByDate(plan, item.useDate) : null;
+            const eDay = plan ? resolvePlanDayByDate(plan, endYmd) : null;
+            const info = plan ? buildPlanDateToDayMap(plan) : { endYmd: '' };
+            const beyond = !!(info.endYmd && endYmd > info.endYmd);
+            return { mode, n, startYmd: item.useDate, startClock, endYmd, endClock, sDay, eDay, beyond };
+        }
+        function sgMtValidityText(v) {
+            if (!v) return '';
+            const range = `${sgMtMd(v.startYmd)}${v.startClock ? ' ' + v.startClock : ''} 起 → ${sgMtMd(v.endYmd)} ${v.endClock}`;
+            const days = (v.sDay || v.eDay) ? `（${v.sDay ? 'Day ' + v.sDay.dayNum : '行程前'}${v.eDay ? ' – Day ' + v.eDay.dayNum : v.beyond ? ' – 行程結束後' : ''}）` : '';
+            const hint = (v.mode === 'hours' && !v.startClock) ? '；未填開始時間，以當天 00:00 起算，實際請依首次使用時間' : '';
+            return `共 ${v.n} 天：${range}${days}${v.beyond ? ' ⚠️ 已超出行程最後一天' : ''}${hint}`;
+        }
+        function sgMtValidityHtml(item, plan) {
+            const v = sgMtValidity(item, plan);
+            if (!v) return '';
+            return `<div style="margin-top:6px;font-size:0.74rem;font-weight:700;color:#0f766e;background:#f0fdfa;border:1px solid #99f6e4;border-radius:6px;padding:3px 8px;line-height:1.5;">⏳ 有效期間｜${escapeHtml(sgMtValidityText(v))}</div>`;
+        }
+
+        // ---- 時間軸：當天使用的彈性交通與票券橫幅 ----
+        function renderDayPassBannerHtml(plan, day) {
+            if (!plan || !day || !Array.isArray(plan.majorTransports) || !plan.majorTransports.length) return '';
+            const ymd = sgYmdFromDayNum(plan, day.dayNum);
+            if (!ymd) return '';
+            const rows = [];
+            plan.majorTransports.forEach(it => {
+                if (!it || !it.useDate) return;
+                const cat = MAJOR_TRANS_CATEGORIES[it.category] || MAJOR_TRANS_CATEGORIES.other;
+                const v = sgMtValidity(it, plan);
+                const onDay = it.noFixedTime && it.useDate === ymd;
+                const inValid = v && ymd >= v.startYmd && ymd <= v.endYmd;
+                if (!onDay && !inValid) return;
+                const parts = [];
+                if (onDay) parts.push('今天使用（時間彈性）');
+                if (inValid) {
+                    const k = sgMtDaysBetween(v.startYmd, ymd) + 1;
+                    parts.push(v.mode === 'calendar' ? `使用中：第 ${k} / ${v.n} 天，有效至 ${sgMtMd(v.endYmd)} 23:59` : `使用中：有效至 ${sgMtMd(v.endYmd)} ${v.endClock}`);
+                }
+                rows.push(`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:0.8rem;padding:4px 10px;background:${cat.bg};border:1px solid ${cat.border};color:${cat.text};border-radius:8px;">
+                    <i class="fa-solid ${cat.icon}"></i><strong>${escapeHtml(it.title || cat.label)}</strong><span>${escapeHtml(parts.join('｜'))}</span></div>`);
+            });
+            return rows.length ? `<div style="display:grid;gap:5px;margin-bottom:10px;">${rows.join('')}</div>` : '';
+        }
+
+        // ---- 編輯視窗 ----
+        function sgMtSyncUi() {
+            const cat = (document.getElementById('majorTransCategory') || {}).value || '';
+            const noFixed = !!(document.getElementById('majorTransNoFixedTime') || {}).checked;
+            const block = document.getElementById('mtValidBlock');
+            if (block) block.style.display = (cat === 'pass' || cat === 'sim') ? 'block' : 'none';
+            const row = document.getElementById('mtStartHour') && document.getElementById('mtStartHour').closest('.sg-24h-row');
+            if (row) { row.style.opacity = noFixed ? '0.4' : '1'; row.style.pointerEvents = noFixed ? 'none' : ''; }
+            const prev = document.getElementById('mtValidPreview');
+            if (prev) {
+                const days = parseInt((document.getElementById('majorTransValidDays') || {}).value, 10);
+                const useDate = (document.getElementById('majorTransDate') || {}).value || '';
+                if ((cat === 'pass' || cat === 'sim') && days > 0 && useDate) {
+                    const v = sgMtValidity({
+                        useDate, validDays: days,
+                        validMode: (document.getElementById('majorTransValidMode') || {}).value,
+                        useTime: noFixed ? '' : (getMajorTrans24hTime('mtStart') || '')
+                    }, getCurrentPlan());
+                    prev.textContent = '⏳ ' + sgMtValidityText(v);
+                } else if (cat === 'pass' || cat === 'sim') {
+                    prev.textContent = '選好使用日期並填入有效天數，就會算出可使用到什麼時候';
+                } else prev.textContent = '';
+            }
+        }
+        (function () {
+            const w = () => {
+                const el = document.getElementById('mtCalDateDisplay');
+                if (!el || el.dataset.mtObs) return;
+                el.dataset.mtObs = '1';
+                new MutationObserver(() => { try { sgMtSyncUi(); } catch (e) {} }).observe(el, { childList: true, characterData: true, subtree: true });
+            };
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', w); else w();
+        })();
+        const __origOnMajorTransCategoryChange = onMajorTransCategoryChange;
+        onMajorTransCategoryChange = function () {
+            __origOnMajorTransCategoryChange.apply(this, arguments);
+            try {
+                const cat = document.getElementById('majorTransCategory').value;
+                const isNew = parseInt(document.getElementById('majorTransEditIndex').value, 10) < 0;
+                if (isNew && (cat === 'pass' || cat === 'sim')) {
+                    document.getElementById('majorTransMode').value = 'single';
+                    document.getElementById('majorTransNoFixedTime').checked = true;
+                    const syncCb = document.getElementById('majorTransSyncSchedule'); if (syncCb) syncCb.checked = false;
+                }
+                sgMtSyncUi();
+            } catch (e) { console.warn(e); }
+        };
+        const __origOnMajorTrans24hTimeChange = onMajorTrans24hTimeChange;
+        onMajorTrans24hTimeChange = function () { __origOnMajorTrans24hTimeChange.apply(this, arguments); try { sgMtSyncUi(); } catch (e) {} };
+        const __origOpenEditMajorTransportModal = openEditMajorTransportModal;
+        openEditMajorTransportModal = function (idx) {
+            if (idx === undefined) idx = -1;
+            __origOpenEditMajorTransportModal(idx);
+            try {
+                const plan = getCurrentPlan();
+                const it = (idx >= 0 && plan.majorTransports[idx]) ? plan.majorTransports[idx] : null;
+                document.getElementById('majorTransNoFixedTime').checked = !!(it && it.noFixedTime);
+                document.getElementById('majorTransValidDays').value = (it && it.validDays) ? it.validDays : '';
+                document.getElementById('majorTransValidMode').value = (it && it.validMode === 'hours') ? 'hours' : 'calendar';
+                if (!it) onMajorTransCategoryChange();
+                sgMtSyncUi();
+            } catch (e) { console.warn(e); }
+        };
+        const __origHandleSaveMajorTransport = handleSaveMajorTransportSubmit;
+        handleSaveMajorTransportSubmit = function (e) {
+            const get = id => document.getElementById(id);
+            const idx = parseInt(get('majorTransEditIndex').value, 10);
+            const noFixed = !!get('majorTransNoFixedTime').checked;
+            const cat = get('majorTransCategory').value;
+            const vDays = (cat === 'pass' || cat === 'sim') ? (parseInt(get('majorTransValidDays').value, 10) || 0) : 0;
+            const vMode = get('majorTransValidMode').value === 'hours' ? 'hours' : 'calendar';
+            const r = __origHandleSaveMajorTransport(e);
+            try {
+                const plan = getCurrentPlan();
+                const item = idx >= 0 ? plan.majorTransports[idx] : plan.majorTransports[plan.majorTransports.length - 1];
+                if (item) {
+                    item.noFixedTime = noFixed;
+                    if (noFixed) {
+                        item.useTime = ''; item.useEndTime = '';
+                        const md = item.useDate ? resolvePlanDayByDate(plan, item.useDate) : null;
+                        item.date = [item.useDate, md ? `Day ${md.dayNum}` : '', '時間彈性'].filter(Boolean).join(' ');
+                    }
+                    if (vDays > 0) { item.validDays = vDays; item.validMode = vMode; } else { delete item.validDays; delete item.validMode; }
+                    syncMajorTransportToDailySchedule(plan, item);
+                    saveState();
+                    renderAll();
+                }
+            } catch (err) { console.warn('交通項目附加設定失敗', err); }
+            return r;
+        };
+        const __origSyncMajorTransportToDailySchedule = syncMajorTransportToDailySchedule;
+        syncMajorTransportToDailySchedule = function (plan, itemObj) {
+            if (itemObj && itemObj.noFixedTime) {
+                (plan.days || []).forEach(d => { if (Array.isArray(d.events)) d.events = d.events.filter(ev => ev.majorTransId !== itemObj.id); });
+                const day = itemObj.useDate ? resolvePlanDayByDate(plan, itemObj.useDate) : null;
+                return { synced: false, dayNum: day ? day.dayNum : null };
+            }
+            return __origSyncMajorTransportToDailySchedule(plan, itemObj);
+        };
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
@@ -19054,6 +19252,8 @@ const firebaseConfig = {
             ferry: { label: '船票 / 渡輪 / 遊輪', shortLabel: '船票/渡輪', icon: 'fa-ship', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：宮島聯絡船往返船票）' },
             bus: { label: '機場巴士 / 長途客運', shortLabel: '巴士/客運', icon: 'fa-bus', bg: '#faf3e6', text: '#966420', border: '#ead9bc', placeholder: '填寫項目內容（如：利木津巴士 成田機場 ➔ 新宿）' },
             domestic_flight: { label: '國內線航班', shortLabel: '國內航段', icon: 'fa-plane', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：東京羽田 ➔ 札幌新千歲國內線）' },
+            pass: { label: '交通 Pass / 周遊券', shortLabel: '交通Pass', icon: 'fa-ticket', bg: '#fdf4ff', text: '#86198f', border: '#f5d0fe', placeholder: '填寫項目內容（如：JR 東日本 3 日券 / 江之島鎌倉周遊券 / 東京地鐵 72 小時券）' },
+            sim: { label: '網路卡 / eSIM', shortLabel: '網路卡', icon: 'fa-sim-card', bg: '#ecfeff', text: '#0e7490', border: '#a5f3fc', placeholder: '填寫項目內容（如：日本 7 天吃到飽 eSIM / 實體網卡）' },
             other: { label: '其他交通', shortLabel: '其他交通', icon: 'fa-taxi', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：市區計程車 / 區間接駁 / 租車自駕）' }
         };
 
@@ -19067,7 +19267,7 @@ const firebaseConfig = {
             const activeBtn = document.getElementById(`btnTransport${selectedOtherTransportMode.charAt(0).toUpperCase() + selectedOtherTransportMode.slice(1)}`);
             if (activeBtn) activeBtn.classList.add('active');
 
-            const modeToName = { train: '高鐵 / 火車', bus: '長途巴士 / 客運', cruise: '遊輪 / 輪渡', car: '專車 / 包車接送' };
+            const modeToName = { train: '高鐵 / 火車', bus: '長途巴士 / 客運', cruise: '遊輪 / 輪渡', car: '專車 / 包車接送', pass: '交通 Pass', sim: '網路卡' };
             showToast('info', `已選擇「${modeToName[selectedOtherTransportMode] || '其他交通'}」，點擊「＋ 新增交通」將自動帶入此類別`);
         }
 
@@ -19551,7 +19751,7 @@ const firebaseConfig = {
                 const actBrk = hasAct ? calcCostItemBreakdown(item.actualCost, cType, mode, m, curr, curr.rate) : null;
                 const isPaid = !!(item.paid || hasAct);
                 const matchedDay = item.useDate ? resolvePlanDayByDate(plan, item.useDate) : null;
-                const dateBadgeTxt = item.date || [
+                const dateBadgeTxt = (item.noFixedTime && item.useDate) ? (item.useDate + (matchedDay ? ` (Day ${matchedDay.dayNum})` : '') + ' ・時間彈性') : item.date || [
                     item.useDate || '',
                     matchedDay ? `(Day ${matchedDay.dayNum})` : '',
                     item.useTime ? (item.useEndTime ? `${item.useTime}-${item.useEndTime}` : item.useTime) : ''
@@ -19587,6 +19787,7 @@ const firebaseConfig = {
                             </div>` : ''}
                         </div>
 
+                        ${sgMtValidityHtml(item, plan)}
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; background:#f8fafc; border:1px solid #e5edf3; border-radius:6px; padding:4px 8px; margin-top:6px; font-size:0.74rem;">
                             <span style="color:#334155; font-weight:600;">
                                 每人 <strong>NT$ ${brk.personTwd.toLocaleString()}</strong>
@@ -19743,7 +19944,7 @@ const firebaseConfig = {
                 if (syncCb) syncCb.checked = (it.syncToSchedule !== false);
             } else {
                 if (titleEl) titleEl.innerText = '🚐 新增交通';
-                const modeToCat = { train: 'rail', bus: 'bus', cruise: 'ferry', car: 'transfer' };
+                const modeToCat = { train: 'rail', bus: 'bus', cruise: 'ferry', car: 'transfer', pass: 'pass', sim: 'sim' };
                 const defaultCat = modeToCat[selectedOtherTransportMode] || 'transfer';
                 document.getElementById('majorTransCategory').value = defaultCat;
                 onMajorTransCategoryChange();
