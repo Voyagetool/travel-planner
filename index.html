@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.17.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.17.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -17462,6 +17462,10 @@ const firebaseConfig = {
                         <div style="font-size:0.8rem; color:#0369a1; font-weight:700; margin-top:2px;">≈ NT$ ${stats.twdTransTotal.toLocaleString()}</div>
                         <div style="font-size:0.74rem; color:#0284c7; margin-top:2px;">全團 (${stats.memberCount}人): ${curr.symbol} ${stats.groupTransTotal.toLocaleString()} (≈ NT$ ${stats.twdGroupTransTotal.toLocaleString()})</div>
                         <div style="font-size:0.72rem; color:#0369a1; margin-top:2px;">${escapeHtml(sgBudgetNames(plan, 'trans'))}</div>
+                        <div style="font-size:0.72rem; color:#475569; margin-top:6px; padding-top:5px; border-top:1px dashed #bae6fd; line-height:1.55;">
+                            ＋「交通與住宿」頁另計（未含在上方）：<br>
+                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人
+                        </div>
                     </div>
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 12px; border-radius:6px; font-size:0.82rem;">
                         <strong style="color:#15803d;">🎫 景點與門票體驗：</strong><br>
@@ -17476,6 +17480,7 @@ const firebaseConfig = {
                         <div style="font-size:0.8rem; color:#ea580c; font-weight:700; margin-top:2px;">≈ NT$ ${stats.twdGroupTotalBudget.toLocaleString()}</div>
                         <div style="font-size:0.74rem; color:#334155; margin-top:2px;">每人平均 ${curr.symbol} ${stats.totalBudget.toLocaleString()} (≈ NT$ ${stats.twdTotalBudget.toLocaleString()})</div>
                         <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">全團每日約 NT$ ${stats.twdGroupAvgBudget.toLocaleString()}</div>
+                        <div style="font-size:0.74rem; color:#0f766e; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1;">全程總計（含機票、其他交通、住宿）：每人 NT$ ${Math.round(stats.grandTwdTotalBudget).toLocaleString()} ｜ 全團 NT$ ${Math.round(stats.grandTwdGroupTotalBudget).toLocaleString()}</div>
                     </div>
                 </div>
 
