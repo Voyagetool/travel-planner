@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.17.3</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.17.4</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -15126,6 +15126,66 @@ const firebaseConfig = {
             return calcPlanMajorTransportStats(Object.assign({}, plan, { majorTransports: sims }), true);
         }
 
+        
+        // ===== V3.17.4：行程事件上設定的景點門票／交通費用，一律計入每日明細與預算 =====
+        function sgSyncEventCostItems(plan) {
+            if (!plan || !Array.isArray(plan.days)) return false;
+            const curr = getPlanCurrency(plan);
+            const m = Math.max(1, Number(plan.memberCount) || 1);
+            let changed = false;
+            const cfgs = [
+                { kind: 'spot', arr: 'spots', cost: 'spotCost', costG: 'spotCostGroup', mark: '_autoEvSpot', test: e => e.type === 'spot', title: e => `門票：${e.title}` },
+                { kind: 'trans', arr: 'transports', cost: 'transportCost', costG: 'transportCostGroup', mark: '_autoEvTrans', test: e => e.type === 'trans' && !e.majorTransId, title: e => `交通：${e.title}` }
+            ];
+            plan.days.forEach(d => cfgs.forEach(cfg => {
+                const evs = (d.events || []).filter(ev => ev && cfg.test(ev) && Number(ev.cost) > 0);
+                const hasOld = Array.isArray(d[cfg.arr]) && d[cfg.arr].some(t => t && t.autoSrc === 'evcost');
+                if (!evs.length && !hasOld) return;
+                if (!Array.isArray(d[cfg.arr]) && evs.length) {
+                    if (typeof ensureDayCategoryArrays === 'function') ensureDayCategoryArrays(d);
+                    if (!Array.isArray(d[cfg.arr])) d[cfg.arr] = [];
+                }
+                const arr = Array.isArray(d[cfg.arr]) ? d[cfg.arr] : [];
+                const manual = arr.filter(t => t && t.autoSrc !== 'evcost');
+                const oldAuto = arr.filter(t => t && t.autoSrc === 'evcost');
+                const srcs = [];
+                evs.forEach(ev => {
+                    if (!ev._eid) { ev._eid = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); changed = true; }
+                    const tt = String(ev.title || '');
+                    // 手動明細已有同名項目時不重複計入
+                    if (manual.some(t => t.title && tt && (String(t.title).includes(tt) || tt.includes(String(t.title))))) return;
+                    srcs.push({ key: cfg.kind + 'ev-' + ev._eid, title: cfg.title(ev), cost: Number(ev.cost) });
+                });
+                const newAuto = srcs.map(s => {
+                    const old = oldAuto.find(t => t.autoKey2 === s.key) || {};
+                    return Object.assign({}, old, { title: s.title, cost: s.cost, curr: 'LOCAL', mode: 'single', autoSrc: 'evcost', autoKey2: s.key });
+                });
+                const sig = a => JSON.stringify(a.map(t => [t.autoKey2, t.title, t.cost]));
+                if (sig(oldAuto) !== sig(newAuto)) { d[cfg.arr] = manual.concat(newAuto); changed = true; }
+                const tot = { pl: 0, pt: 0, gl: 0, gt: 0 };
+                newAuto.forEach(t => {
+                    const c = calcCostItemBreakdown(t.cost, 'LOCAL', 'single', m, curr, curr.rate);
+                    tot.pl += c.personLocal; tot.pt += c.personTwd; tot.gl += c.groupLocal; tot.gt += c.groupTwd;
+                });
+                const prev = d[cfg.mark] || { pl: 0, pt: 0, gl: 0, gt: 0 };
+                const dl = { pl: tot.pl - prev.pl, pt: tot.pt - prev.pt, gl: tot.gl - prev.gl, gt: tot.gt - prev.gt };
+                if (dl.pl || dl.pt || dl.gl || dl.gt) {
+                    const add = (k, v) => { if (d[k] !== undefined && d[k] !== null && !isNaN(Number(d[k]))) d[k] = Math.round((Number(d[k]) + v) * 100) / 100; };
+                    add('budget', dl.pl); add('budgetTwd', dl.pt); add('budgetGroup', dl.gl); add('budgetGroupTwd', dl.gt);
+                    add(cfg.cost, dl.pl); add(cfg.costG, dl.gl);
+                    d[cfg.mark] = tot;
+                    changed = true;
+                }
+            }));
+            return changed;
+        }
+        const __origSyncTransitCostItemsForEv = sgSyncTransitCostItems;
+        sgSyncTransitCostItems = function (plan) {
+            let c = __origSyncTransitCostItemsForEv(plan);
+            try { c = sgSyncEventCostItems(plan) || c; } catch (e) { console.warn('事件費用同步失敗', e); }
+            return c;
+        };
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -16434,7 +16494,7 @@ const firebaseConfig = {
                         <div style="font-size:0.72rem; color:#0369a1; margin-top:2px;">${escapeHtml(sgBudgetNames(plan, 'trans'))}</div>
                         <div style="font-size:0.72rem; color:#475569; margin-top:6px; padding-top:5px; border-top:1px dashed #bae6fd; line-height:1.55;">
                             ＋「交通與住宿」頁另計（未含在上方）：<br>
-                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人${stats.simStats && stats.simStats.count ? ` ‧ 📶 網路卡（不算交通）NT$ ${Math.round(stats.simStats.personTwd).toLocaleString()}／人` : ''}
+                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人${stats.simStats && stats.simStats.count ? ` ‧ 📶 網路卡 NT$ ${Math.round(stats.simStats.personTwd).toLocaleString()}／人` : ''}
                         </div>
                     </div>
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 12px; border-radius:6px; font-size:0.82rem;">
@@ -16450,7 +16510,7 @@ const firebaseConfig = {
                         <div style="font-size:0.8rem; color:#ea580c; font-weight:700; margin-top:2px;">≈ NT$ ${stats.twdGroupTotalBudget.toLocaleString()}</div>
                         <div style="font-size:0.74rem; color:#334155; margin-top:2px;">每人平均 ${curr.symbol} ${stats.totalBudget.toLocaleString()} (≈ NT$ ${stats.twdTotalBudget.toLocaleString()})</div>
                         <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">全團每日約 NT$ ${stats.twdGroupAvgBudget.toLocaleString()}</div>
-                        <div style="font-size:0.74rem; color:#0f766e; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1;">全程總計（含機票、其他交通、住宿、網路卡）：每人 NT$ ${Math.round(stats.grandTwdTotalBudget).toLocaleString()} ｜ 全團 NT$ ${Math.round(stats.grandTwdGroupTotalBudget).toLocaleString()}</div>
+                        <div style="font-size:0.74rem; color:#0f766e; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1;">全程總計：每人 NT$ ${Math.round(stats.grandTwdTotalBudget).toLocaleString()} ｜ 全團 NT$ ${Math.round(stats.grandTwdGroupTotalBudget).toLocaleString()}</div>
                     </div>
                 </div>
 
