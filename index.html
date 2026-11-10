@@ -6102,7 +6102,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.15.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.15.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6190,7 +6190,7 @@
                 <i class="fa-solid fa-plane-up"></i> 交通與住宿
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
-                <i class="fa-solid fa-map-location-dot"></i> 景點與餐飲攻略
+                <i class="fa-solid fa-map-location-dot"></i> 景點與餐廳清單
             </button>
             <button class="view-tab-btn" id="tabBtn-shopping" onclick="switchView('shopping')">
                 <i class="fa-solid fa-bag-shopping"></i> 購買清單
@@ -6365,9 +6365,8 @@
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span style="font-size: 0.95rem; font-weight: 800; color: #0369a1; display: inline-flex; align-items: center; gap: 6px;">
                             <i class="fa-solid fa-map-location-dot" style="color: #0284c7;"></i>
-                            <span>景點與餐飲攻略</span>
+                            <span>景點與餐廳清單</span>
                         </span>
-                        <span style="font-size: 0.76rem; font-weight: 500; color: #64748b;">彙整熱門景點與特色餐飲防雷避坑、預約搶票/訂位排隊時程，並依造訪日期時間自動串聯至每日行程</span>
                     </div>
                     <div style="display: flex; gap: 6px; align-items: center;">
                         <button type="button" class="n-btn n-btn-primary" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700;" onclick="openAddSpotGuideModal()">
@@ -13985,13 +13984,17 @@ const firebaseConfig = {
                 </div>`;
             };
 
-            const colHtml = (key, head, arr) => `<div class="sg-kb-col" ondragover="sgKbDragOver(event)" ondragleave="sgKbDragLeave(event)" ondrop="sgKbDrop(event, '${key}')">
-                <div class="sg-kb-col-head">${head}<span class="sg-kb-count">${arr.length}</span></div>
-                ${arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>'}
-            </div>`;
+            const colHtml = (key, head, arr) => {
+                if (sgKbHiddenCols().has(String(key))) return '';
+                const collapsed = sgKbColCollapsedSet().has(String(key));
+                return `<div class="sg-kb-col ${collapsed ? 'collapsed' : ''}" ondragover="sgKbDragOver(event)" ondragleave="sgKbDragLeave(event)" ondrop="sgKbDrop(event, '${key}')">
+                    <div class="sg-kb-col-head"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCol('${key}')" title="${collapsed ? '展開此欄' : '縮小此欄'}"><i class="fa-solid fa-chevron-${collapsed ? 'right' : 'down'}"></i></button>${head}<span class="sg-kb-count">${arr.length}</span></div>
+                    ${collapsed ? '' : (arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>')}
+                </div>`;
+            };
 
-            let html = (typeof SG_KANBAN_STYLE === 'string' ? SG_KANBAN_STYLE : '') + filterBarHtml + '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;"><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(true)"><i class="fa-solid fa-compress"></i> 全部縮小</button><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(false)"><i class="fa-solid fa-expand"></i> 全部展開</button></div><div class="sg-kb-board">';
-            html += colHtml('pending', '<i class="fa-regular fa-clipboard" style="color:#64748b;"></i> 待安排', buckets.pending);
+            let html = (typeof SG_KANBAN_STYLE === 'string' ? SG_KANBAN_STYLE : '') + filterBarHtml + '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;"><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(true)"><i class="fa-solid fa-compress"></i> 全部縮小</button><button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbCollapseAll(false)"><i class="fa-solid fa-expand"></i> 全部展開</button>' + sgKbColControlsHtml(cols, buckets) + '</div><div class="sg-kb-board">';
+            if (spotGuidesFilterMode !== 'scheduled') html += colHtml('pending', '<i class="fa-regular fa-clipboard" style="color:#64748b;"></i> 待安排', buckets.pending);
             cols.forEach(c => {
                 html += colHtml(String(c.dayNum), `<i class="fa-regular fa-calendar" style="color:#0284c7;"></i> Day ${c.dayNum} <small>${escapeHtml(c.label)}</small>`, buckets[c.dayNum]);
             });
@@ -15574,6 +15577,99 @@ const firebaseConfig = {
 
         // 停用需要 Google API 金鑰的功能，只保留開啟 Google 地圖網頁自行確認
         function getGoogleMapsKey() { return ''; }
+
+        
+        // ===== V3.15.1：看板欄位收合／隱藏、已安排時不顯示待安排欄、更新後維持捲動位置 =====
+        (function () {
+            if (document.getElementById('sgKbColStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgKbColStyle';
+            st.textContent = `
+                .sg-kb-col.collapsed{flex:0 0 150px;}
+                .sg-kb-col.collapsed .sg-kb-col-head{padding-bottom:2px;}
+                .sg-kb-colmenu{position:relative;display:inline-block;}
+                .sg-kb-colmenu-pop{position:absolute;right:0;top:30px;z-index:60;min-width:210px;max-height:60vh;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:8px 10px;text-align:left;}
+                .sg-kb-colmenu-pop label{display:flex;align-items:center;gap:6px;font-size:0.78rem;padding:3px 0;cursor:pointer;color:#334155;}
+                .sg-kb-colmenu-pop .hd{font-size:0.72rem;font-weight:800;color:#64748b;margin-bottom:4px;}
+            `;
+            document.head.appendChild(st);
+        })();
+        function sgLsSet(key) {
+            const w = '__sgSet_' + key;
+            if (!window[w]) { try { window[w] = new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch (e) { window[w] = new Set(); } }
+            return window[w];
+        }
+        function sgLsSave(key) { try { localStorage.setItem(key, JSON.stringify(Array.from(sgLsSet(key)))); } catch (e) {} }
+        function sgKbHiddenCols() { return sgLsSet('sg_kb_hidden_cols'); }
+        function sgKbColCollapsedSet() { return sgLsSet('sg_kb_col_collapsed'); }
+        var sgKbMenuOpen = false;
+        function sgKbToggleCol(key) {
+            const s = sgKbColCollapsedSet();
+            if (s.has(String(key))) s.delete(String(key)); else s.add(String(key));
+            sgLsSave('sg_kb_col_collapsed');
+            renderSpotGuidesView();
+        }
+        function sgKbColsAll(collapse) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const s = sgKbColCollapsedSet();
+            ['pending'].concat((plan.days || []).map(d => String(d.dayNum))).forEach(k => { if (collapse) s.add(k); else s.delete(k); });
+            sgLsSave('sg_kb_col_collapsed');
+            renderSpotGuidesView();
+        }
+        function sgKbToggleColMenu(ev) {
+            if (ev) ev.stopPropagation();
+            sgKbMenuOpen = !sgKbMenuOpen;
+            renderSpotGuidesView();
+        }
+        function sgKbSetColVisible(key, visible) {
+            const s = sgKbHiddenCols();
+            if (visible) s.delete(String(key)); else s.add(String(key));
+            sgLsSave('sg_kb_hidden_cols');
+            renderSpotGuidesView();
+        }
+        function sgKbShowAllCols() {
+            sgKbHiddenCols().clear();
+            sgLsSave('sg_kb_hidden_cols');
+            renderSpotGuidesView();
+        }
+        document.addEventListener('click', function (e) {
+            if (sgKbMenuOpen && !(e.target.closest && e.target.closest('.sg-kb-colmenu'))) {
+                sgKbMenuOpen = false;
+                try { renderSpotGuidesView(); } catch (err) {}
+            }
+        });
+        function sgKbColControlsHtml(cols, buckets) {
+            const hidden = sgKbHiddenCols();
+            const hideCount = hidden.size;
+            const rows = [{ key: 'pending', label: '待安排', n: buckets.pending.length }].concat(cols.map(c => ({ key: String(c.dayNum), label: `Day ${c.dayNum} ${c.label || ''}`, n: (buckets[c.dayNum] || []).length })));
+            const pop = sgKbMenuOpen ? `<div class="sg-kb-colmenu-pop" onclick="event.stopPropagation()">
+                <div class="hd">勾選要顯示的欄位</div>
+                ${rows.map(r => `<label><input type="checkbox" ${hidden.has(r.key) ? '' : 'checked'} onchange="sgKbSetColVisible('${r.key}', this.checked)"> ${escapeHtml(r.label)} <span style="color:#94a3b8;">(${r.n})</span></label>`).join('')}
+                <div style="margin-top:6px;"><button type="button" class="n-btn" style="padding:1px 8px;font-size:0.72rem;" onclick="sgKbShowAllCols()">全部顯示</button></div>
+            </div>` : '';
+            return `<button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbColsAll(true)" title="每一欄只留標題"><i class="fa-solid fa-angles-left"></i> 欄位全部收合</button>
+                <button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbColsAll(false)"><i class="fa-solid fa-angles-right"></i> 欄位全部展開</button>
+                <span class="sg-kb-colmenu"><button type="button" class="n-btn ${hideCount ? 'n-btn-primary' : ''}" style="padding:2px 9px;font-size:0.72rem;" onclick="sgKbToggleColMenu(event)"><i class="fa-regular fa-eye-slash"></i> 顯示欄位${hideCount ? `（隱藏 ${hideCount}）` : ''}</button>${pop}</span>`;
+        }
+
+        // 更新後維持目前的捲動位置（頁面與看板橫向）
+        const __origRenderSpotGuidesViewForScroll = renderSpotGuidesView;
+        renderSpotGuidesView = function () {
+            const container = document.getElementById('spotGuidesContainer');
+            const x = window.scrollX, y = window.scrollY;
+            const boardOld = container ? container.querySelector('.sg-kb-board') : null;
+            const bl = boardOld ? boardOld.scrollLeft : 0;
+            const r = __origRenderSpotGuidesViewForScroll.apply(this, arguments);
+            const restore = () => {
+                const b = container ? container.querySelector('.sg-kb-board') : null;
+                if (b && bl) b.scrollLeft = bl;
+                if (window.scrollY !== y || window.scrollX !== x) window.scrollTo(x, y);
+            };
+            restore();
+            requestAnimationFrame(() => { restore(); requestAnimationFrame(restore); });
+            return r;
+        };
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
