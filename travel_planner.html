@@ -6101,7 +6101,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.13.10</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.14.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6150,6 +6150,36 @@
     <!-- ====================================================
          SECOND BAR: 水平膠囊導覽分頁列 (對齊第三張截圖 Pill Navigation Bar)
          ==================================================== -->
+    <!-- 全站頂部匯率換算列（所有分頁都看得到，可雙向換算） -->
+    <style>
+        #globalFxBar{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:7px 14px;background:#f0f9f4;border-bottom:1px solid #d6eadf;font-size:0.8rem;color:#1e293b;}
+        #globalFxBar .fx-title{font-weight:800;color:#2b6b50;display:inline-flex;align-items:center;gap:6px;}
+        #globalFxBar .fx-group{display:inline-flex;align-items:center;gap:6px;}
+        #globalFxBar input{width:96px;padding:3px 7px;border:1px solid #bcd9c9;border-radius:7px;font-size:0.82rem;font-weight:700;text-align:right;background:#fff;}
+        #globalFxBar input.fx-rate{width:78px;}
+        #globalFxBar .fx-unit{font-weight:700;color:#475569;}
+        #globalFxBar .fx-swap{color:#2b6b50;font-weight:800;}
+        #globalFxBar .n-btn{padding:2px 9px;font-size:0.72rem;border-radius:7px;}
+        @media print{#globalFxBar{display:none !important;}}
+    </style>
+    <div id="globalFxBar">
+        <span class="fx-title"><i class="fa-solid fa-money-bill-transfer"></i> 匯率換算 <span id="sideCurrCodeTitle">JPY</span> ⇄ TWD</span>
+        <span class="fx-group">
+            <input type="number" id="calcAmountInput" value="100" step="any" inputmode="decimal" oninput="calculateExchange('local')" aria-label="當地幣金額">
+            <span class="fx-unit" id="sideCalcUnitLabel">JPY</span>
+            <span class="fx-swap">⇄</span>
+            <input type="number" id="calcTwdInput" value="" step="any" inputmode="decimal" oninput="calculateExchange('twd')" aria-label="新台幣金額">
+            <span class="fx-unit">TWD</span>
+        </span>
+        <span class="fx-group">
+            <span id="sideCurrLabel" style="font-weight:700;">1 日圓 (JPY) =</span>
+            <input type="number" id="calcRateInput" class="fx-rate" value="4.65" step="any" inputmode="decimal" oninput="calculateExchange(true)">
+            <span class="fx-unit">TWD</span>
+            <button type="button" class="n-btn" onclick="syncOnlineRateToSidebar()" title="從網路同步此幣別最新即時匯率"><i class="fa-solid fa-rotate" id="sideSyncRateSpinner"></i> 即時匯率</button>
+            <button type="button" class="n-btn n-btn-primary" onclick="syncRateToCurrentPlan()" title="將匯率套用儲存至目前旅遊計畫"><i class="fa-solid fa-check"></i> 套用</button>
+        </span>
+    </div>
+
     <nav class="okr-pill-navbar" id="okrMainPillNavbar">
         <div class="okr-pill-tabs view-tabs-list">
             <button class="view-tab-btn active" id="tabBtn-timeline" onclick="switchView('timeline')">
@@ -6324,38 +6354,7 @@
                             </div>
                         </div>
 
-                        <!-- 子區塊 2B: 當地幣別與即時匯率換算器 -->
-                        <div class="logistics-sub-block logistics-sub-divider" id="logistics-currency-section">
-                            <span id="currToggleArrow" style="display:none;"></span>
-                            <div class="logistics-clean-head" style="margin-bottom:8px;">
-                                <h3 class="logistics-clean-title" id="sideCurrTitle" style="font-size:0.9rem;">
-                                    <i class="fa-solid fa-money-bill-transfer" style="color:#2b6b50; font-size:0.85rem;"></i>
-                                    匯率換算 (<span id="sideCurrCodeTitle">CNY</span> ➔ TWD)
-                                </h3>
-                                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                                    <button type="button" class="n-btn" style="border-radius:7px; padding:3px 8px; font-size:0.72rem; color:#286678; border-color:#c6dce6; background:#f2f8fa;" onclick="syncOnlineRateToSidebar()" title="從網路同步此幣別最新即時匯率">
-                                        <i class="fa-solid fa-rotate" id="sideSyncRateSpinner"></i> 同步即時匯率
-                                    </button>
-                                    <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:3px 9px; font-size:0.72rem;" onclick="syncRateToCurrentPlan()" title="將調整後的匯率直接套用儲存至當前旅遊計畫">
-                                        <i class="fa-solid fa-check"></i> 套用匯率
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="currToggleContent" style="display:flex !important; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:#f8fafc; border:1px solid #e5edf3; border-radius:8px; padding:7px 11px;">
-                                <div class="currency-input-row" style="margin:0; font-size:0.78rem;">
-                                    <span id="sideCurrLabel" style="font-weight:700; color:#334155;">1 人民幣 (CNY) = </span>
-                                    <input type="number" id="calcRateInput" class="currency-input" value="4.65" step="any" oninput="calculateExchange(true)" style="width:76px; padding:2px 6px; font-size:0.78rem; font-weight:700;">
-                                    <span style="font-weight:600; color:#64748b;">TWD</span>
-                                </div>
-                                <div class="currency-input-row" style="margin:0; font-size:0.78rem;">
-                                    <span style="font-weight:700; color:#334155;">試算：</span>
-                                    <input type="number" id="calcAmountInput" class="currency-input" value="100" placeholder="當地幣" oninput="calculateExchange()" style="width:80px; padding:2px 6px; font-size:0.78rem; font-weight:700;">
-                                    <span id="sideCalcUnitLabel" style="font-weight:600; color:#64748b;">CNY ➔ </span>
-                                    <strong id="calcResultDisplay" style="color: #286678; font-size: 0.9rem; font-weight:800;">NT$ 465</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                            </div>
                 </div>
             </div>
 
@@ -15315,6 +15314,60 @@ const firebaseConfig = {
             body.innerHTML = html;
         }
 
+        
+        // ===== V3.14.0：頂部雙向匯率換算、已排餐點不顯示時間 =====
+        function syncCurrencyBoxWithPlan() {
+            const plan = getCurrentPlan();
+            const curr = getPlanCurrency(plan);
+            const rateInput = document.getElementById('calcRateInput');
+            const currLabel = document.getElementById('sideCurrLabel');
+            const unitLabel = document.getElementById('sideCalcUnitLabel');
+            const codeTitle = document.getElementById('sideCurrCodeTitle');
+            if (rateInput && document.activeElement !== rateInput) rateInput.value = curr.rate;
+            if (currLabel) currLabel.innerText = `1 ${curr.name} (${curr.code}) =`;
+            if (unitLabel) unitLabel.innerText = curr.code;
+            if (codeTitle) codeTitle.innerText = curr.code;
+            calculateExchange(true);
+        }
+        function sgFxFmt(n) {
+            if (!isFinite(n)) return '';
+            return String(Math.round(n * 100) / 100);
+        }
+        // 參數：'local'＝由當地幣算新台幣；'twd'＝由新台幣反算當地幣；true／其他＝匯率變動，以當地幣為準重算
+        function calculateExchange(src) {
+            const rateInput = document.getElementById('calcRateInput');
+            const localInput = document.getElementById('calcAmountInput');
+            const twdInput = document.getElementById('calcTwdInput');
+            if (!rateInput || !localInput || !twdInput) return;
+            const rate = parseFloat(rateInput.value) || 1.0;
+            if (src === 'twd') {
+                const twd = parseFloat(twdInput.value);
+                localInput.value = isNaN(twd) ? '' : sgFxFmt(twd / rate);
+            } else {
+                const local = parseFloat(localInput.value);
+                twdInput.value = isNaN(local) ? '' : sgFxFmt(local * rate);
+            }
+        }
+
+        // 已排餐點只顯示店名，不附時間（舊資料一併清掉）
+        const __origRenderAllForMealTime = renderAll;
+        renderAll = function () {
+            try {
+                const p = getCurrentPlan();
+                let ch = false;
+                if (p && Array.isArray(p.days)) {
+                    p.days.forEach(d => ['breakfast', 'lunch', 'dinner', 'snack'].forEach(k => {
+                        if (typeof d[k] === 'string' && /（\d{1,2}:\d{2}）/.test(d[k])) {
+                            d[k] = d[k].replace(/（\d{1,2}:\d{2}）/g, '');
+                            ch = true;
+                        }
+                    }));
+                }
+                if (ch) saveState(true);
+            } catch (e) { console.warn(e); }
+            return __origRenderAllForMealTime.apply(this, arguments);
+        };
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -15557,7 +15610,7 @@ const firebaseConfig = {
                             if (day[k + 'Mode'] !== undefined) o.mode = day[k + 'Mode'];
                             day._mealOrig[k] = o;
                         }
-                        day[k] = g.map(e => e.name + (e.time ? `（${e.time}）` : '')).join(' / ');
+                        day[k] = g.map(e => e.name).join(' / ');
                         day[k + 'Cost'] = Math.round(g.reduce((a, e) => a + e.cost, 0) * 100) / 100;
                         day[k + 'Curr'] = 'LOCAL';
                         day[k + 'Mode'] = 'single';
@@ -20831,7 +20884,7 @@ const firebaseConfig = {
             }
         }
 
-        function syncCurrencyBoxWithPlan() {
+        function __legacySyncCurrencyBoxWithPlan() {
             const plan = getCurrentPlan();
             const curr = getPlanCurrency(plan);
             const rateInput = document.getElementById('calcRateInput');
@@ -20845,7 +20898,7 @@ const firebaseConfig = {
             calculateExchange();
         }
 
-        function calculateExchange(fromManualRate = false) {
+        function __legacyCalculateExchange(fromManualRate = false) {
             const rateInput = document.getElementById('calcRateInput');
             const amountInput = document.getElementById('calcAmountInput');
             const resultDisplay = document.getElementById('calcResultDisplay');
