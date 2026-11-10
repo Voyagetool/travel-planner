@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.17.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.17.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -16150,6 +16150,13 @@ const firebaseConfig = {
             return arr.slice(0, 4).join('、') + (arr.length > 4 ? ` 等 ${arr.length} 項` : '');
         }
 
+        
+        // ===== V3.17.3：網路卡 (eSIM) 不計入「交通」統計，另列為「通訊」費用 =====
+        function sgCalcSimStats(plan) {
+            const sims = (plan && Array.isArray(plan.majorTransports)) ? plan.majorTransports.filter(x => x && x.category === 'sim') : [];
+            return calcPlanMajorTransportStats(Object.assign({}, plan, { majorTransports: sims }), true);
+        }
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -17124,16 +17131,18 @@ const firebaseConfig = {
             const hotelStats = calcPlanHotelStats(plan);
 
             // 全程旅行總開銷（包含每日當地支出 + 往返機票 + 包車/接送大項目 + 住宿飯店）
-            const grandTotalBudget = totalBudget + flightStats.personLocal + majorTransportStats.personLocal + hotelStats.totalPersonLocal;
-            const grandGroupTotalBudget = groupTotalBudget + flightStats.groupLocal + majorTransportStats.groupLocal + hotelStats.totalGroupLocal;
-            const grandTwdTotalBudget = twdTotalBudget + flightStats.personTwd + majorTransportStats.personTwd + hotelStats.totalPersonTwd;
-            const grandTwdGroupTotalBudget = twdGroupTotalBudget + flightStats.groupTwd + majorTransportStats.groupTwd + hotelStats.totalGroupTwd;
+            const simStats = sgCalcSimStats(plan);
+            const grandTotalBudget = totalBudget + flightStats.personLocal + majorTransportStats.personLocal + simStats.personLocal + hotelStats.totalPersonLocal;
+            const grandGroupTotalBudget = groupTotalBudget + flightStats.groupLocal + majorTransportStats.groupLocal + simStats.groupLocal + hotelStats.totalGroupLocal;
+            const grandTwdTotalBudget = twdTotalBudget + flightStats.personTwd + majorTransportStats.personTwd + simStats.personTwd + hotelStats.totalPersonTwd;
+            const grandTwdGroupTotalBudget = twdGroupTotalBudget + flightStats.groupTwd + majorTransportStats.groupTwd + simStats.groupTwd + hotelStats.totalGroupTwd;
 
             return { 
                 curr,
                 memberCount,
                 flightStats,
                 majorTransportStats,
+                simStats,
                 hotelStats,
                 grandTotalBudget,
                 grandGroupTotalBudget,
@@ -17456,7 +17465,7 @@ const firebaseConfig = {
                         <div style="font-size:0.72rem; color:#0369a1; margin-top:2px;">${escapeHtml(sgBudgetNames(plan, 'trans'))}</div>
                         <div style="font-size:0.72rem; color:#475569; margin-top:6px; padding-top:5px; border-top:1px dashed #bae6fd; line-height:1.55;">
                             ＋「交通與住宿」頁另計（未含在上方）：<br>
-                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人
+                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人${stats.simStats && stats.simStats.count ? ` ‧ 📶 網路卡（不算交通）NT$ ${Math.round(stats.simStats.personTwd).toLocaleString()}／人` : ''}
                         </div>
                     </div>
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 12px; border-radius:6px; font-size:0.82rem;">
@@ -17472,7 +17481,7 @@ const firebaseConfig = {
                         <div style="font-size:0.8rem; color:#ea580c; font-weight:700; margin-top:2px;">≈ NT$ ${stats.twdGroupTotalBudget.toLocaleString()}</div>
                         <div style="font-size:0.74rem; color:#334155; margin-top:2px;">每人平均 ${curr.symbol} ${stats.totalBudget.toLocaleString()} (≈ NT$ ${stats.twdTotalBudget.toLocaleString()})</div>
                         <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">全團每日約 NT$ ${stats.twdGroupAvgBudget.toLocaleString()}</div>
-                        <div style="font-size:0.74rem; color:#0f766e; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1;">全程總計（含機票、其他交通、住宿）：每人 NT$ ${Math.round(stats.grandTwdTotalBudget).toLocaleString()} ｜ 全團 NT$ ${Math.round(stats.grandTwdGroupTotalBudget).toLocaleString()}</div>
+                        <div style="font-size:0.74rem; color:#0f766e; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1;">全程總計（含機票、其他交通、住宿、網路卡）：每人 NT$ ${Math.round(stats.grandTwdTotalBudget).toLocaleString()} ｜ 全團 NT$ ${Math.round(stats.grandTwdGroupTotalBudget).toLocaleString()}</div>
                     </div>
                 </div>
 
@@ -18350,7 +18359,7 @@ const firebaseConfig = {
 
             // 包車 / 機場接送 / 其他大項目交通 實付與預估
             const majorTransStats = (typeof calcPlanMajorTransportStats === 'function')
-                ? calcPlanMajorTransportStats(plan)
+                ? calcPlanMajorTransportStats(plan, true)
                 : { count: 0, isSet: false, groupLocal: 0, groupTwd: 0, personTwd: 0, hasActual: false, actualGroupLocal: 0, actualGroupTwd: 0, actualPersonTwd: 0, paidGroupLocal: 0 };
             const mtEstGroup = majorTransStats.groupLocal;
             const mtActGroup = majorTransStats.actualGroupLocal;
@@ -19833,10 +19842,10 @@ const firebaseConfig = {
             return { synced: true, dayNum: targetDay.dayNum };
         }
 
-        function calcPlanMajorTransportStats(plan) {
+        function calcPlanMajorTransportStats(plan, includeSim) {
             const curr = getPlanCurrency(plan);
             const m = Math.max(1, Number(plan?.memberCount) || 1);
-            const list = Array.isArray(plan?.majorTransports) ? plan.majorTransports : [];
+            const list = (Array.isArray(plan?.majorTransports) ? plan.majorTransports : []).filter(x => includeSim || !x || x.category !== 'sim');
 
             let personLocal = 0, personTwd = 0, groupLocal = 0, groupTwd = 0;
             let actualPersonLocal = 0, actualPersonTwd = 0, actualGroupLocal = 0, actualGroupTwd = 0;
