@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.16.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.17.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8822,6 +8822,59 @@ const firebaseConfig = {
                         <div class="form-group">
                             <label class="form-label">訂單編號 / 聯絡電話</label>
                             <input type="text" id="majorTransBookingNo" class="form-input" placeholder="例如：#KK20260508 或司機電話">
+                        </div>
+                    </div>
+
+                    <!-- 預約／搶票提醒設定（與景點的預約設定相同） -->
+                    <div id="mtBookingBox" style="background:#fffbeb; border:1px solid #fde68a; border-radius:9px; padding:10px 14px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <label style="display:inline-flex; align-items:center; gap:7px; font-size:0.84rem; font-weight:800; color:#b45309; cursor:pointer; margin:0; user-select:none;">
+                                <input type="checkbox" id="majorTransHasBooking" class="n-checkbox" onchange="sgMtBookingToggle()">
+                                <span><i class="fa-solid fa-ticket"></i> 需提前預約／搶票時程設定</span>
+                            </label>
+                            <span style="font-size:0.72rem; color:#92400e;">勾選後可設定開放預約日期、24 小時制時間與預約狀態，並顯示預約提醒</span>
+                        </div>
+                        <div id="mtBookingFields" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #fcd34d;">
+                            <div class="mt-date-time-row" style="margin-bottom:10px;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.76rem;">開放／搶票日期（點選行事曆）</label>
+                                    <input type="hidden" id="majorTransBookingDate">
+                                    <div style="position:relative;">
+                                        <div class="mt-single-cal-trigger" onclick="sgBkCalToggle(event)">
+                                            <div class="bcal-slot-value" id="mtBkCalDisplay" style="font-size:0.86rem;">--</div>
+                                            <i class="fa-solid fa-calendar-days" style="color:#d97706; font-size:0.82rem;"></i>
+                                        </div>
+                                        <div id="mtBkCalPanel" onclick="event.stopPropagation()" style="display:none; position:absolute; z-index:70; left:0; top:100%; margin-top:4px; background:#fff; border:1px solid #cbd5e1; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.16); padding:10px; width:260px;"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.76rem;">開放時間（24 小時制，時與分分開設定）</label>
+                                    <div class="sg-24h-row">
+                                        <div class="sg-24h-unit"><select id="mtBkHour" onchange="sgMtBookingToggle()"></select><span class="sg-24h-sep">:</span><select id="mtBkMin"></select></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:0;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.76rem;">預約平台／管道</label>
+                                    <input type="text" id="majorTransBookingPlatform" class="form-input" placeholder="例如：官方網站 / Klook / 車站售票機">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.76rem;">難易程度 ＆ 預約狀態</label>
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                        <select id="majorTransBookingDifficulty" class="form-input" style="padding:6px 8px;">
+                                            <option value="手速關鍵">🔥 手速關鍵</option>
+                                            <option value="極難搶">⚡ 極難搶</option>
+                                            <option value="優先預約">🌟 優先預約</option>
+                                            <option value="一般預約">📌 一般預約</option>
+                                        </select>
+                                        <select id="majorTransBookingStatus" class="form-input" style="padding:6px 8px;">
+                                            <option value="待開放">⏳ 待預約</option>
+                                            <option value="已完成">✅ 已完成</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -15897,6 +15950,200 @@ const firebaseConfig = {
             return __origSyncMajorTransportToDailySchedule(plan, itemObj);
         };
 
+        
+        // ===== V3.17.0：交通項目的預約／搶票提醒 =====
+        var sgBkCal = { y: 2026, m: 0 };
+        function sgMtBkFill() {
+            const h = document.getElementById('mtBkHour'), m = document.getElementById('mtBkMin');
+            if (h && h.dataset.populated !== '1') {
+                let html = '<option value="">-- 時</option>';
+                for (let i = 0; i < 24; i++) { const v = String(i).padStart(2, '0'); html += `<option value="${v}">${v} 時</option>`; }
+                h.innerHTML = html; h.dataset.populated = '1';
+            }
+            if (m && m.dataset.populated !== '1') {
+                let html = '';
+                for (let i = 0; i < 60; i++) { const v = String(i).padStart(2, '0'); html += `<option value="${v}">${v} 分</option>`; }
+                m.innerHTML = html; m.dataset.populated = '1';
+            }
+        }
+        function sgMtBookingToggle() {
+            const on = !!document.getElementById('majorTransHasBooking').checked;
+            const f = document.getElementById('mtBookingFields');
+            if (f) f.style.display = on ? 'block' : 'none';
+            const h = document.getElementById('mtBkHour'), m = document.getElementById('mtBkMin');
+            if (h && m) { m.disabled = !h.value; m.style.opacity = h.value ? '1' : '0.45'; }
+            if (on && !document.getElementById('majorTransBookingDate').value) sgBkCalSet('即刻');
+        }
+        function sgBkCalSet(val) {
+            document.getElementById('majorTransBookingDate').value = val || '';
+            const disp = document.getElementById('mtBkCalDisplay');
+            if (!disp) return;
+            if (!val) disp.textContent = '--';
+            else if (val === '即刻') disp.textContent = '即刻（現在就可預約）';
+            else disp.textContent = sgMtMd(val).replace(/^(\d+)\/(\d+)/, (a, mo, d) => `${val.slice(0, 4)}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+        }
+        function sgBkCalToggle(ev) {
+            if (ev) ev.stopPropagation();
+            const p = document.getElementById('mtBkCalPanel');
+            if (!p) return;
+            if (p.style.display === 'block') { p.style.display = 'none'; return; }
+            const cur = document.getElementById('majorTransBookingDate').value;
+            const base = (cur && cur !== '即刻' && bcalParseYMD(cur)) || new Date();
+            sgBkCal = { y: base.getFullYear(), m: base.getMonth() };
+            sgBkCalRender();
+            p.style.display = 'block';
+        }
+        function sgBkCalNav(d) {
+            const dt = new Date(sgBkCal.y, sgBkCal.m + d, 1);
+            sgBkCal = { y: dt.getFullYear(), m: dt.getMonth() };
+            sgBkCalRender();
+        }
+        function sgBkCalPick(ymd) {
+            sgBkCalSet(ymd);
+            document.getElementById('mtBkCalPanel').style.display = 'none';
+        }
+        function sgBkCalRender() {
+            const p = document.getElementById('mtBkCalPanel');
+            const { y, m } = sgBkCal;
+            const first = new Date(y, m, 1).getDay();
+            const days = new Date(y, m + 1, 0).getDate();
+            const cur = document.getElementById('majorTransBookingDate').value;
+            let cells = ['日', '一', '二', '三', '四', '五', '六'].map(w => `<div style="text-align:center;font-size:0.68rem;color:#94a3b8;font-weight:700;">${w}</div>`).join('');
+            for (let i = 0; i < first; i++) cells += '<div></div>';
+            for (let d = 1; d <= days; d++) {
+                const ymd = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const sel = ymd === cur;
+                cells += `<button type="button" onclick="sgBkCalPick('${ymd}')" style="border:none;border-radius:6px;padding:4px 0;font-size:0.8rem;cursor:pointer;background:${sel ? '#d97706' : '#f8fafc'};color:${sel ? '#fff' : '#334155'};font-weight:${sel ? 800 : 500};">${d}</button>`;
+            }
+            p.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <button type="button" class="n-btn" style="padding:1px 8px;" onclick="sgBkCalNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <strong style="font-size:0.84rem;color:#92400e;">${y} 年 ${m + 1} 月</strong>
+                <button type="button" class="n-btn" style="padding:1px 8px;" onclick="sgBkCalNav(1)"><i class="fa-solid fa-chevron-right"></i></button></div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${cells}</div>
+                <div style="margin-top:6px;text-align:right;"><button type="button" class="n-btn" style="padding:1px 9px;font-size:0.72rem;" onclick="sgBkCalPick('即刻')">即刻開放</button></div>`;
+        }
+
+        const __origOpenMTForBooking = openEditMajorTransportModal;
+        openEditMajorTransportModal = function (idx) {
+            if (idx === undefined) idx = -1;
+            __origOpenMTForBooking(idx);
+            try {
+                sgMtBkFill();
+                const plan = getCurrentPlan();
+                const it = (idx >= 0 && plan.majorTransports[idx]) ? plan.majorTransports[idx] : null;
+                const $ = id => document.getElementById(id);
+                $('majorTransHasBooking').checked = !!(it && it.hasBooking);
+                sgBkCalSet(it && it.hasBooking ? (it.bookingDate || '即刻') : '');
+                const bt = (it && it.bookingTime && it.bookingTime !== '-') ? it.bookingTime.split(':') : ['', '00'];
+                $('mtBkHour').value = bt[0] || '';
+                $('mtBkMin').value = bt[1] || '00';
+                $('majorTransBookingPlatform').value = (it && it.bookingPlatform) || '';
+                $('majorTransBookingDifficulty').value = (it && it.bookingDifficulty) || '手速關鍵';
+                $('majorTransBookingStatus').value = (it && it.bookingStatus) || '待開放';
+                $('mtBkCalPanel').style.display = 'none';
+                sgMtBookingToggle();
+            } catch (e) { console.warn('預約欄位初始化失敗', e); }
+        };
+        const __origSaveMTForBooking = handleSaveMajorTransportSubmit;
+        handleSaveMajorTransportSubmit = function (e) {
+            const $ = id => document.getElementById(id);
+            const idx = parseInt($('majorTransEditIndex').value, 10);
+            const has = !!$('majorTransHasBooking').checked;
+            const b = {
+                bookingDate: ($('majorTransBookingDate').value || '即刻'),
+                bookingTime: $('mtBkHour').value ? `${$('mtBkHour').value}:${$('mtBkMin').value || '00'}` : '',
+                bookingPlatform: $('majorTransBookingPlatform').value.trim(),
+                bookingDifficulty: $('majorTransBookingDifficulty').value,
+                bookingStatus: $('majorTransBookingStatus').value
+            };
+            const r = __origSaveMTForBooking(e);
+            try {
+                const plan = getCurrentPlan();
+                const item = idx >= 0 ? plan.majorTransports[idx] : plan.majorTransports[plan.majorTransports.length - 1];
+                if (item) {
+                    if (has) { item.hasBooking = true; Object.assign(item, b); }
+                    else { ['hasBooking', 'bookingDate', 'bookingTime', 'bookingPlatform', 'bookingDifficulty', 'bookingStatus'].forEach(k => delete item[k]); }
+                    saveState();
+                    renderAll();
+                }
+            } catch (err) { console.warn('儲存預約設定失敗', err); }
+            return r;
+        };
+
+        // ---- 預約提醒文字（以今天為基準）----
+        function sgMtBookingReminder(item) {
+            if (!item || !item.hasBooking) return null;
+            if (item.bookingStatus === '已完成') return { done: true, text: '✅ 已預約完成', level: 'ok' };
+            const d = item.bookingDate || '即刻';
+            if (d === '即刻') return { done: false, text: '現在就可以預約，請盡快處理', level: 'warn' };
+            const dt = bcalParseYMD(d);
+            if (!dt) return { done: false, text: '尚未預約', level: 'warn' };
+            const t = new Date(); t.setHours(0, 0, 0, 0);
+            const diff = Math.round((dt - t) / 86400000);
+            if (diff > 0) return { done: false, text: `距離開放預約還有 ${diff} 天`, level: diff <= 3 ? 'warn' : 'info', diff };
+            if (diff === 0) return { done: false, text: `今天開放預約${item.bookingTime ? '（' + item.bookingTime + '）' : ''}！`, level: 'urgent', diff };
+            return { done: false, text: `已開放 ${-diff} 天，尚未預約`, level: 'urgent', diff };
+        }
+        function sgMtBookingHtml(item, idx) {
+            if (!item || !item.hasBooking) return '';
+            const rem = sgMtBookingReminder(item);
+            const diffTxt = item.bookingDifficulty || '一般預約';
+            const icon = { '極難搶': '⚡', '手速關鍵': '🔥', '優先預約': '🌟' }[diffTxt] || '📌';
+            let dLabel = item.bookingDate || '即刻';
+            const dt = dLabel !== '即刻' ? bcalParseYMD(dLabel) : null;
+            if (dt) dLabel = `${dLabel} (${['日', '一', '二', '三', '四', '五', '六'][dt.getDay()]})`;
+            const colors = { ok: ['#f0fdf4', '#86efac', '#15803d'], info: ['#eff6ff', '#bfdbfe', '#1d4ed8'], warn: ['#fffbeb', '#fcd34d', '#b45309'], urgent: ['#fef2f2', '#fca5a5', '#b91c1c'] }[rem.level];
+            return `<div onclick="event.stopPropagation()" style="margin-top:6px;font-size:0.74rem;background:${colors[0]};border:1px solid ${colors[1]};color:${colors[2]};border-radius:6px;padding:4px 8px;line-height:1.6;">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                    <strong><i class="fa-solid fa-ticket"></i> 預約／搶票：${escapeHtml(dLabel)}${item.bookingTime ? ' ' + escapeHtml(item.bookingTime) : ''}</strong>
+                    ${item.bookingPlatform ? `<span style="color:#475569;background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:0 6px;">🌐 ${escapeHtml(item.bookingPlatform)}</span>` : ''}
+                    <span>${icon} ${escapeHtml(diffTxt)}</span>
+                    <button type="button" class="n-btn" style="margin-left:auto;padding:0 8px;font-size:0.7rem;" onclick="event.stopPropagation(); toggleMajorTransBooking(${idx})">${rem.done ? '改回待預約' : '標記已預約'}</button>
+                </div>
+                <div style="font-weight:700;">⏰ ${escapeHtml(rem.text)}</div></div>`;
+        }
+        function toggleMajorTransBooking(idx) {
+            const plan = getCurrentPlan();
+            const it = plan && plan.majorTransports[idx];
+            if (!it) return;
+            it.bookingStatus = (it.bookingStatus === '已完成') ? '待開放' : '已完成';
+            saveState();
+            renderAll();
+            showToast('success', `「${it.title}」預約狀態：${it.bookingStatus === '已完成' ? '已預約' : '待預約'}`);
+        }
+        // 其他交通區塊最上方：待預約提醒彙整
+        const __origRenderMajorForBooking = renderMajorTransportsSection;
+        renderMajorTransportsSection = function () {
+            __origRenderMajorForBooking.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                const c = document.getElementById('majorTransportCardsContainer');
+                if (!plan || !c || !c.innerHTML) return;
+                const pend = (plan.majorTransports || []).map(it => ({ it, r: sgMtBookingReminder(it) })).filter(x => x.r && !x.r.done);
+                if (!pend.length) return;
+                pend.sort((a, b) => (a.r.diff === undefined ? -1 : a.r.diff) - (b.r.diff === undefined ? -1 : b.r.diff));
+                c.insertAdjacentHTML('afterbegin', `<div style="grid-column:1/-1;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:7px 12px;font-size:0.8rem;color:#92400e;">
+                    <strong>⏰ 預約提醒（${pend.length} 項待預約）</strong>
+                    ${pend.slice(0, 4).map(x => `<div>• ${escapeHtml(x.it.title)}：${escapeHtml(x.r.text)}</div>`).join('')}</div>`);
+            } catch (e) { console.warn(e); }
+        };
+        // 時間軸：使用當天仍未預約的交通提醒
+        const __origDayBannerForBooking = renderDayPassBannerHtml;
+        renderDayPassBannerHtml = function (plan, day) {
+            let html = __origDayBannerForBooking(plan, day);
+            try {
+                const ymd = sgYmdFromDayNum(plan, day.dayNum);
+                const rows = (plan.majorTransports || []).filter(it => it && it.hasBooking && it.bookingStatus !== '已完成' && it.useDate === ymd)
+                    .map(it => `<div style="font-size:0.8rem;padding:4px 10px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:8px;">⚠️ <strong>${escapeHtml(it.title)}</strong> 需要預約，目前尚未預約完成（${escapeHtml(sgMtBookingReminder(it).text)}）</div>`);
+                if (rows.length) html += `<div style="display:grid;gap:5px;margin-bottom:10px;">${rows.join('')}</div>`;
+            } catch (e) {}
+            return html;
+        };
+        document.addEventListener('click', function () {
+            const p = document.getElementById('mtBkCalPanel');
+            if (p && p.style.display === 'block') p.style.display = 'none';
+        });
+
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
         const SG_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -19787,7 +20034,7 @@ const firebaseConfig = {
                             </div>` : ''}
                         </div>
 
-                        ${sgMtValidityHtml(item, plan)}
+                        ${sgMtValidityHtml(item, plan)}${sgMtBookingHtml(item, idx)}
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; background:#f8fafc; border:1px solid #e5edf3; border-radius:6px; padding:4px 8px; margin-top:6px; font-size:0.74rem;">
                             <span style="color:#334155; font-weight:600;">
                                 每人 <strong>NT$ ${brk.personTwd.toLocaleString()}</strong>
