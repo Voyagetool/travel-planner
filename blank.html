@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -11677,13 +11677,6 @@ const firebaseConfig = {
             const doneCount = events.filter(e => e.done).length;
             const statusBarHtml = events.length ? `
                 <div class="tl-status-bar">
-                    <div class="tl-status-seg">
-                        <button type="button" class="${tlStatusFilter === 'all' ? 'on' : ''}" onclick="setTlStatusFilter('all')">全部 ${events.length}</button>
-                        <button type="button" class="${tlStatusFilter === 'planning' ? 'on' : ''}" onclick="setTlStatusFilter('planning')">安排中 ${events.length - doneCount}</button>
-                        <button type="button" class="${tlStatusFilter === 'done' ? 'on' : ''}" onclick="setTlStatusFilter('done')">已完成 ${doneCount}</button>
-                    </div>
-                    <button type="button" class="tl-status-link" onclick="markDayDone(${activeDay.dayNum}, ${doneCount === events.length ? 'false' : 'true'})">${doneCount === events.length ? '取消整天完成' : '整天標為已完成'}</button>
-                    <button type="button" class="tl-status-link" onclick="markPastDaysDone()" title="依旅程日期，把今天以前的天數全部標為已完成">把今天以前的行程標為已完成</button>
                     <button type="button" class="tl-status-link" onclick="openMoveDayModal(${activeDay.dayNum})" title="把這一天的行程整天搬到別天，或與別天交換"><i class="fa-solid fa-right-left"></i> 整天移動</button>
                     <button type="button" class="tl-status-link" onclick="applyLodgingFirstTransitAll()" title="依各天前一晚的住宿，自動設定出發地、交通時間與建議離開時間"><i class="fa-solid fa-hotel"></i> 全部天數依住宿設定起程交通</button>
                 </div>` : '';
@@ -15839,6 +15832,47 @@ const firebaseConfig = {
             per.remove();
             grid.dataset.merged = '1';
         }
+
+        
+        // ===== V3.19.1：手機 Day 分頁去星期、分頁列選取區加大、餐食縮小更精簡、移除狀態列按鈕 =====
+        (function () {
+            if (document.getElementById('sgPolish2Style')) return;
+            const st = document.createElement('style');
+            st.id = 'sgPolish2Style';
+            st.textContent = `
+                .meals-compact{padding:6px 10px !important;}
+                .meals-compact .meals-three-cols{display:block !important;line-height:1.55;}
+                .meals-compact .meal-col-item{display:inline-block !important;margin:0 14px 0 0 !important;padding:0 !important;font-size:0.8rem;vertical-align:top;}
+                .meals-compact .meal-col-head{display:inline !important;margin:0 4px 0 0 !important;}
+                .meals-compact .meal-col-head strong{font-size:0.78rem;}
+                .meals-compact .meal-compact-row{float:right;margin:0 0 0 6px;}
+                .meals-compact .meal-compact-btn{padding:0 8px;font-size:0.68rem;}
+                @media (max-width: 700px){
+                    #dayChipsBar .day-chip{padding:4px 2px !important;font-size:0.72rem !important;line-height:1.2 !important;}
+                    #dayChipsBar.day-filter-chips{gap:5px !important;}
+                    #okrMainPillNavbar .okr-pill-tabs{align-items:stretch !important;}
+                    #okrMainPillNavbar .view-tab-btn{min-height:54px !important;justify-content:center !important;border:none !important;border-radius:12px !important;padding:6px 2px !important;}
+                    #okrMainPillNavbar .view-tab-btn::after{display:none !important;}
+                    #okrMainPillNavbar .view-tab-btn.active{background:#dbe9ef !important;color:#1f5f78 !important;box-shadow:none !important;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
+        function sgStripChipWeekday() {
+            if (window.innerWidth > 700) return;
+            document.querySelectorAll('#dayChipsBar .day-chip').forEach(ch => {
+                const w = document.createTreeWalker(ch, NodeFilter.SHOW_TEXT);
+                let n;
+                while ((n = w.nextNode())) n.nodeValue = n.nodeValue.replace(/\s*\([日一二三四五六]\)/g, '');
+            });
+        }
+        const __origRenderTimelineForChips = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineForChips.apply(this, arguments);
+            try { sgStripChipWeekday(); } catch (e) { console.warn(e); }
+            return r;
+        };
+        try { tlStatusFilter = 'all'; } catch (e) {}
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
