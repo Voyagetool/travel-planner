@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.18.3</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -12043,7 +12043,8 @@ const firebaseConfig = {
             const totalEventsCount = days.reduce((acc, d) => acc + ((d.events || []).length), 0);
             const toolsArr = plan.tools || [];
             const doneTools = toolsArr.filter(t => t.checked).length;
-            const prepPct = toolsArr.length > 0 ? Math.round((doneTools / toolsArr.length) * 100) : 100;
+            const prepInfo = sgPrepStats(plan);
+            const prepPct = prepInfo.pct;
             const hasBigItems = (stats.flightStats.isSet || stats.hotelStats.isSet || (stats.majorTransportStats && stats.majorTransportStats.isSet));
             const mtCount = stats.majorTransportStats ? stats.majorTransportStats.count : 0;
 
@@ -12055,14 +12056,14 @@ const firebaseConfig = {
             container.innerHTML = `
                 <!-- 緊湊版 4 欄核心指標卡 -->
                 <div class="okr-kpi-grid">
-                    <div class="okr-kpi-card clickable" onclick="openEditPlanBaseModal()" title="點擊調整旅行天數、日期與人數">
+                    <div class="okr-kpi-card clickable" onclick="openEditPlanBaseModal()" title="點擊調整旅行天數、日期與人數｜準備進度＝行前提醒（待辦＋景點／交通預約）已完成的比例">
                         <div class="okr-kpi-info">
                             <div class="okr-kpi-label">行程規模與準備進度</div>
                             <div class="okr-kpi-value">${days.length} 天 ‧ ${plan.memberCount || 1} 人</div>
                             <div class="okr-kpi-progress">
                                 <div class="okr-kpi-progress-bar" style="width:${prepPct}%;"></div>
                             </div>
-                            <div class="okr-kpi-sub">共 <strong>${totalEventsCount}</strong> 個行程點 ‧ 準備 ${prepPct}%</div>
+                            <div class="okr-kpi-sub">共 <strong>${totalEventsCount}</strong> 個行程點 ‧ 準備 ${prepPct}%（${prepInfo.done}/${prepInfo.total}）</div>
                         </div>
                         <div class="okr-kpi-icon-box blue"><i class="fa-solid fa-calendar-check"></i></div>
                     </div>
@@ -16480,6 +16481,7 @@ const firebaseConfig = {
                 const side = document.getElementById('tlSideKpi');
                 const cont = document.getElementById('tripSummaryContainer');
                 const grid = cont && cont.querySelector('.okr-kpi-grid');
+                if (grid) sgMergeBudgetKpi(grid);
                 if (side && grid) { side.innerHTML = ''; side.appendChild(grid); }
             } catch (e) { console.warn(e); }
             return r;
@@ -16705,8 +16707,8 @@ const firebaseConfig = {
             const bk = bookings.filter(b => showCompletedTools || !b.done).sort((a, b) => rank[a.level] - rank[b.level] || a.daysToOpen - b.daysToOpen);
             let html = '';
             if (bk.length) {
-                html += '<div class="rem-sec">📌 預約提醒（來自景點與交通）</div>';
-                html += bk.map(b => {
+                html += sgRemSecHead('book', '📌 預約提醒（來自景點與交通）', bk.length);
+                html += (sgRemSecClosed('book') ? [] : bk).map(b => {
                     const key = b.kind + b.idx;
                     const leadOpts = [{ n: 1, l: '提前 1 天' }, { n: 3, l: '提前 3 天' }, { n: 7, l: '提前 7 天' }, { n: 30, l: '提前 1 個月' }, { n: -1, l: '不提醒' }];
                     const bdLabel = b.bd === '即刻' ? '即刻開放' : `${sgFmtMd(b.bd)}${b.time ? ' ' + b.time : ''} 開放`;
@@ -16724,8 +16726,8 @@ const firebaseConfig = {
             }
             const tl = tools.map((t, i) => ({ t, i })).filter(x => showCompletedTools || !x.t.checked);
             if (tl.length) {
-                html += '<div class="rem-sec">📝 行前待辦</div>';
-                html += tl.map(({ t, i }) => {
+                html += sgRemSecHead('todo', '📝 行前待辦', tl.length);
+                html += (sgRemSecClosed('todo') ? [] : tl).map(({ t, i }) => {
                     let level = t.checked ? 'ok' : 'info', sub = '';
                     if (t.dueDate) {
                         const dd = sgDaysBetweenYmd(today, t.dueDate);
@@ -16745,8 +16747,8 @@ const firebaseConfig = {
             }
             if (!html) html = '<div style="font-size:0.76rem;color:#94a3b8;">目前沒有待辦提醒。在景點或交通設定預約時間後，會自動出現在這裡。</div>';
             container.innerHTML = html;
-            const small = window.innerWidth <= 980;
-            const collapsed = small && !window.__remOpen;
+            const small = true;
+            const collapsed = !sgRemIsOpen();
             container.style.setProperty('display', collapsed ? 'none' : 'block', 'important');
             if (actionsEl && small) actionsEl.insertAdjacentHTML('afterbegin', `<button type="button" class="n-btn" style="padding:2px 8px;font-size:0.72rem;" onclick="sgToggleRemOpen()"><i class="fa-solid ${collapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i> ${collapsed ? '展開' : '收合'}</button>`);
         };
@@ -16779,7 +16781,103 @@ const firebaseConfig = {
             `;
             document.head.appendChild(st);
         })();
-        function sgToggleRemOpen() { window.__remOpen = !window.__remOpen; renderToolsCallout(); }
+        
+        
+        // ===== V3.19.0：日期分頁換行、餐食可縮小、提醒可收合、預估合併、準備進度說明 =====
+        (function () {
+            if (document.getElementById('sgPolishStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgPolishStyle';
+            st.textContent = `
+                #dayChipsBar.day-filter-chips{display:flex !important;flex-wrap:wrap !important;overflow:visible !important;gap:6px !important;}
+                #dayChipsBar .day-chip{flex:0 0 auto !important;white-space:nowrap;}
+                .okr-kpi-card.kpi-merged{grid-column:1 / -1;}
+                .kpi-merged .okr-kpi-sub{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;line-height:1.5;}
+                .meal-compact-row{display:flex;justify-content:flex-end;margin-bottom:4px;}
+                .meal-compact-btn{border:1px solid #d6e2ea;background:#f8fafc;border-radius:999px;padding:1px 10px;font-size:0.72rem;color:#475569;cursor:pointer;}
+                .meals-compact .meal-cost-badge,.meals-compact .day-subtotals-strip{display:none !important;}
+                .meals-compact .meal-col-item{padding-top:4px !important;padding-bottom:4px !important;}
+                @media (max-width: 700px){
+                    #dayChipsBar .day-chip{flex:1 1 calc(25% - 6px) !important;min-width:0 !important;text-align:center;white-space:normal !important;padding:5px 3px !important;font-size:0.74rem !important;line-height:1.25;}
+                    #okrMainPillNavbar{overflow:visible !important;}
+                    #okrMainPillNavbar::after{content:'';position:absolute;left:0;right:0;top:100%;height:140px;background:#fff;}
+                    html{background:#fff;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
+
+        // 每餐安排：縮小只留餐廳名稱，隱藏價格
+        function sgMealsCompactOn() { try { return localStorage.getItem('tl_meals_compact') === '1'; } catch (e) { return false; } }
+        function sgApplyMealsCompact() {
+            const bar = document.querySelector('.day-meals-bar');
+            if (!bar) return;
+            const on = sgMealsCompactOn();
+            bar.classList.toggle('meals-compact', on);
+            let row = bar.querySelector('.meal-compact-row');
+            if (!row) {
+                bar.insertAdjacentHTML('afterbegin', '<div class="meal-compact-row"><button type="button" class="meal-compact-btn" onclick="sgToggleMealsCompact()"></button></div>');
+                row = bar.querySelector('.meal-compact-row');
+            }
+            const btn = row.querySelector('button');
+            btn.innerHTML = on ? '<i class="fa-solid fa-expand"></i> 展開價格' : '<i class="fa-solid fa-compress"></i> 縮小（只看餐廳）';
+        }
+        function sgToggleMealsCompact() {
+            try { localStorage.setItem('tl_meals_compact', sgMealsCompactOn() ? '0' : '1'); } catch (e) {}
+            sgApplyMealsCompact();
+        }
+        const __origRenderTimelineForMeals = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineForMeals.apply(this, arguments);
+            try { sgApplyMealsCompact(); } catch (e) { console.warn(e); }
+            return r;
+        };
+
+        // 行前提醒：整區與各分段都能收合（電腦預設展開、手機預設收合，記住使用者選擇）
+        function sgRemIsOpen() {
+            let pref = null;
+            try { pref = localStorage.getItem('sg_rem_open'); } catch (e) {}
+            return pref === null ? (window.innerWidth > 980) : pref === '1';
+        }
+        function sgToggleRemOpen() {
+            try { localStorage.setItem('sg_rem_open', sgRemIsOpen() ? '0' : '1'); } catch (e) {}
+            renderToolsCallout();
+        }
+        function sgRemSecClosed(k) { try { return localStorage.getItem('sg_rem_sec_' + k) === '1'; } catch (e) { return false; } }
+        function sgToggleRemSec(k) { try { localStorage.setItem('sg_rem_sec_' + k, sgRemSecClosed(k) ? '0' : '1'); } catch (e) {} renderToolsCallout(); }
+        function sgRemSecHead(k, label, n) {
+            const c = sgRemSecClosed(k);
+            return `<div class="rem-sec" onclick="sgToggleRemSec('${k}')" style="cursor:pointer;user-select:none;"><i class="fa-solid fa-chevron-${c ? 'right' : 'down'}" style="font-size:0.62rem;"></i> ${label}（${n}）</div>`;
+        }
+
+        // 準備進度＝行前提醒（待辦＋景點／交通預約）已完成的比例
+        function sgPrepStats(plan) {
+            const tools = Array.isArray(plan.tools) ? plan.tools : [];
+            const bookings = (typeof sgBookingReminders === 'function') ? sgBookingReminders(plan) : [];
+            const total = tools.length + bookings.length;
+            const done = tools.filter(t => t.checked).length + bookings.filter(b => b.done).length;
+            return { done, total, pct: total > 0 ? Math.round(done / total * 100) : 100 };
+        }
+
+        // 單人與全團預估合併成一張卡
+        function sgMergeBudgetKpi(grid) {
+            const cards = grid.querySelectorAll('.okr-kpi-card');
+            if (cards.length < 4 || grid.dataset.merged === '1') return;
+            const per = cards[2], grp = cards[3];
+            const perLabel = (per.querySelector('.okr-kpi-label') || {}).textContent || '';
+            const perVal = (per.querySelector('.okr-kpi-value') || {}).textContent || '';
+            const perSub = (per.querySelector('.okr-kpi-sub') || {}).textContent.replace(/\s+/g, ' ').trim();
+            const grpLabel = (grp.querySelector('.okr-kpi-label') || {}).textContent || '';
+            const grpSub = (grp.querySelector('.okr-kpi-sub') || {}).textContent.replace(/\s+/g, ' ').trim().replace(/‧\s*點擊核銷記帳/, '');
+            const n = (grpLabel.match(/(\d+)\s*人/) || [])[1] || '';
+            grp.querySelector('.okr-kpi-label').textContent = `全程預估${perLabel.includes('含機酒') ? '（含機酒）' : '（當地）'}${n ? ' ‧ ' + n + ' 人合計' : ''}`;
+            grp.querySelector('.okr-kpi-sub').innerHTML = `每人 <strong style="color:#334155;">${escapeHtml(perVal)}</strong> ‧ ${escapeHtml(perSub)}<br>${escapeHtml(grpSub)}`;
+            grp.setAttribute('onclick', "switchView('expenses'); switchExpensesSubtab('budget');");
+            grp.setAttribute('title', '點擊查看預算統計分析（每人與全團）');
+            grp.classList.add('kpi-merged');
+            per.remove();
+            grid.dataset.merged = '1';
+        }
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
