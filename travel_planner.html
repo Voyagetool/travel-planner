@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -16904,6 +16904,24 @@ const firebaseConfig = {
             return r;
         };
         try { tlStatusFilter = 'all'; } catch (e) {}
+
+        
+        // ===== V3.19.2：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        (function () {
+            if (document.getElementById('sgMobile3Style')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMobile3Style';
+            st.textContent = `
+                @media (max-width: 700px){
+                    #view-timeline .timeline-event-row{flex-wrap:wrap !important;}
+                    #view-timeline .timeline-event-row > div[style*="flex:1"]{flex:1 1 calc(100% - 22px) !important;min-width:0 !important;}
+                    #view-timeline .timeline-event-row > div[style*="flex-shrink:0"]{flex:1 1 100% !important;justify-content:flex-end !important;flex-wrap:wrap !important;margin-top:2px;padding-top:4px;border-top:1px dashed #eef2f6;}
+                    #view-timeline .timeline-event-title{word-break:normal;overflow-wrap:anywhere;}
+                    #view-timeline .timeline-event-meta{flex-wrap:wrap;gap:4px 10px;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
         const sgMealLabels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '點心' };
