@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -15875,7 +15875,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.19.2：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.19.3：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -15890,6 +15890,34 @@ const firebaseConfig = {
                 }
             `;
             document.head.appendChild(st);
+        })();
+
+        // ===== V3.19.3：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        (function () {
+            if (document.getElementById('sgStickyDayStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgStickyDayStyle';
+            st.textContent = `
+                #view-timeline #dayChipsBar{position:sticky !important;top:var(--sg-day-top,0px);z-index:900;background:rgba(255,255,255,0.97);backdrop-filter:blur(4px);padding:6px 4px !important;margin-bottom:8px;border-bottom:1px solid #e6edf3;box-shadow:0 3px 6px -4px rgba(15,23,42,0.18);}
+                @media (max-width: 700px){
+                    #view-timeline #dayChipsBar{padding:4px 2px !important;}
+                }
+            `;
+            document.head.appendChild(st);
+            // 依目前實際固定在頂端的標題列高度，動態推算 Day 列的 top 位置
+            function calcTop() {
+                let top = 0;
+                document.querySelectorAll('.okr-top-header,.okr-pill-navbar').forEach(el => {
+                    const cs = getComputedStyle(el);
+                    if (cs.position !== 'sticky' && cs.position !== 'fixed') return;
+                    const r = el.getBoundingClientRect();
+                    if (r.height > 0 && r.top <= 2 && r.bottom > top) top = r.bottom;
+                });
+                document.documentElement.style.setProperty('--sg-day-top', Math.round(top) + 'px');
+            }
+            window.addEventListener('scroll', calcTop, { passive: true });
+            window.addEventListener('resize', calcTop);
+            setTimeout(calcTop, 300);
         })();
 
         // ===== V3.8.0：日期標籤 / 細部景點排程 / 餐別同步每日餐食 =====
