@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.7</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -16914,7 +16914,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.19.6：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.19.7：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16941,7 +16941,7 @@ const firebaseConfig = {
             return __origRenderSpotGuidesViewForSync.apply(this, arguments);
         };
 
-        // ===== V3.19.6：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.19.7：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -16962,7 +16962,7 @@ const firebaseConfig = {
                     const cs = getComputedStyle(el);
                     if (cs.position !== 'sticky' && cs.position !== 'fixed') return;
                     const r = el.getBoundingClientRect();
-                    if (r.height > 0 && r.top <= 2 && r.bottom > top) top = r.bottom;
+                    if (r.height > 0 && r.bottom > 0 && r.top < 200 && r.bottom > top) top = r.bottom;
                 });
                 document.documentElement.style.setProperty('--sg-day-top', Math.round(top) + 'px');
             }
@@ -27296,7 +27296,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.19.6：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.19.7：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
