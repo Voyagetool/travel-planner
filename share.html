@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.5</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.6</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -15875,7 +15875,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.19.5：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.19.6：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -15892,7 +15892,17 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.19.5：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
+        const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
+        renderSpotGuidesView = function () {
+            try {
+                const p = getCurrentPlan();
+                if (p && sgReconcileSpotsFromTimeline(p)) saveState(true);
+            } catch (e) { console.warn('景點時間回填失敗', e); }
+            return __origRenderSpotGuidesViewForSync.apply(this, arguments);
+        };
+
+        // ===== V3.19.6：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -26267,7 +26277,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.19.5：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.19.6：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
