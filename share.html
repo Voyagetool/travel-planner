@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.4</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.19.5</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -15875,7 +15875,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.19.4：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.19.5：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -15892,7 +15892,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.19.4：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.19.5：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -26265,7 +26265,26 @@ const firebaseConfig = {
             const day = (plan.days || []).find(d => d.dayNum === dayNum);
             if (!day || !day.events) return;
             if (confirm('確定要刪除此行程活動嗎？')) {
+                const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
+                // V3.19.5：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                try {
+                    if (__delEv) {
+                        const sid = __delEv.spotGuideId || '';
+                        const ttl = String(__delEv.title || '').trim();
+                        const clr = (o) => { o.scheduled = false; o.visitDate = ''; o.visitStartTime = ''; o.visitEndTime = ''; };
+                        (plan.spotTips || []).forEach(p => {
+                            if (!p) return;
+                            const kids = Array.isArray(p.children) ? p.children : [];
+                            kids.forEach(c => {
+                                if (!c) return;
+                                if ((sid && c.id === sid) || (!sid && ttl && String(c.name || '').trim() === ttl)) clr(c);
+                            });
+                            if ((sid && p.id === sid) || (!sid && !kids.length && ttl && String(p.name || '').trim() === ttl)) clr(p);
+                            if (kids.length && !kids.some(c => c && c.scheduled === true)) p.scheduled = false;
+                        });
+                    }
+                } catch (e) { console.warn('取消景點排程失敗', e); }
 
                 // 自動連動重算當日總預算
                 let evTrans = 0;
