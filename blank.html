@@ -4364,7 +4364,7 @@
         .major-trans-card, .flight-side-card, .hotel-side-card { min-width: 0; overflow-wrap: anywhere; }
         @media (min-width: 1101px) {
             #view-logistics #logisticsSplitGrid.logistics-split-grid:not(.single-col) {
-                grid-template-columns: minmax(0, 2.1fr) minmax(300px, 1fr) !important;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
                 gap: 16px !important;
             }
             #view-logistics .logistics-split-grid:not(.single-col) #sideFlightCardsContainer {
@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.19.9</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.20.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7767,6 +7767,19 @@
                 <div class="modal-body">
                     <input type="hidden" id="fTransportType" value="flight">
 
+                    <!-- 標籤與訂位代號置頂 -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">航線標籤</label>
+                            <input type="text" id="fCategoryTag" class="form-input" value="International">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">訂位代號 (PNR)</label>
+                            <input type="text" id="fPnr" class="form-input" placeholder="例如：EJ3HIM / CX8888">
+                        </div>
+                    </div>
+
+
                     <!-- 網路航空公司同步與轉機設定列 -->
                     <div id="airlineOnlineSyncBar" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 7px; padding: 6px 11px; margin-bottom: 10px; font-size: 0.74rem; color: #0369a1;">
                         <span id="airlineOnlineSyncBadge"><i class="fa-solid fa-plane-circle-check"></i> 常用航空置頂（華航/長榮/國泰/虎航/樂桃）‧ 輸入班機數字自動帶入最新時刻與航廈</span>
@@ -7787,6 +7800,7 @@
                         </div>
                     </div>
 
+                    <div class="flight-two-col">
                     <!-- 去程航班 -->
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
@@ -8046,16 +8060,6 @@
                             <input type="text" id="fInDuration" class="form-input" placeholder="自動依航班計算或手動備註" oninput="this.dataset.autoCalc=''">
                         </div>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">航線標籤</label>
-                            <input type="text" id="fCategoryTag" class="form-input" value="International">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">訂位代號 (PNR)</label>
-                            <input type="text" id="fPnr" class="form-input" placeholder="例如：EJ3HIM / CX8888">
-                        </div>
                     </div>
 
                     <!-- 💰 交通費用計算設定區塊 -->
@@ -13057,9 +13061,41 @@ const firebaseConfig = {
         function sgKbDragEnd(ev) { ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('.sg-kb-col.drag-over').forEach(c => c.classList.remove('drag-over')); }
         function sgKbDragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
         function sgKbDragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        // ---- 整天移動：拖曳日期欄標題到另一天，內容整天移過去、中間各天順延，日期維持原位 ----
+        var __sgDayDrag = null;
+        function sgKbDayDragStart(ev, dayNum) {
+            __sgDayDrag = Number(dayNum);
+            __sgDragIdx = null;
+            try { ev.dataTransfer.setData('text/plain', 'day-' + dayNum); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
+            ev.stopPropagation();
+        }
+        function sgKbDayDragEnd() {
+            __sgDayDrag = null;
+            document.querySelectorAll('.sg-kb-col.drag-over').forEach(c => c.classList.remove('drag-over'));
+        }
+        function sgKbMoveDayByDrop(from, to) {
+            const plan = getCurrentPlan();
+            if (!plan || !from || !to || from === to) return;
+            if (!moveWholeDay(plan, from, to, false)) {
+                showToast('warning', '無法搬移：範圍內含有航班（航班請在總覽調整班機天數），或選擇的天數不正確');
+                return;
+            }
+            try { relocateFlightEvents(plan); } catch (e) {}
+            try { sgReconcileSpotsFromTimeline(plan); } catch (e) {}
+            try { syncMealsFromSpotGuides(plan); } catch (e) {}
+            saveState();
+            renderAll();
+            showToast('success', `已把 Day ${from} 整天移到 Day ${to}，後續天數自動順延`);
+        }
         function sgKbDrop(ev, key) {
             ev.preventDefault();
             ev.currentTarget.classList.remove('drag-over');
+            if (__sgDayDrag !== null) {
+                const from = __sgDayDrag;
+                __sgDayDrag = null;
+                if (key !== 'pending') sgKbMoveDayByDrop(from, Number(key));
+                return;
+            }
             const idx = (__sgDragIdx !== null) ? __sgDragIdx : parseInt(ev.dataTransfer.getData('text/plain'), 10);
             __sgDragIdx = null;
             if (isNaN(idx)) return;
@@ -13114,7 +13150,7 @@ const firebaseConfig = {
                 if (sgKbHiddenCols().has(String(key))) return '';
                 const collapsed = sgKbColCollapsedSet().has(String(key));
                 return `<div class="sg-kb-col ${collapsed ? 'collapsed' : ''}" ondragover="sgKbDragOver(event)" ondragleave="sgKbDragLeave(event)" ondrop="sgKbDrop(event, '${key}')">
-                    <div class="sg-kb-col-head"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCol('${key}')" title="${collapsed ? '展開此欄' : '縮小此欄'}"><i class="fa-solid fa-chevron-${collapsed ? 'right' : 'down'}"></i></button>${head}<span class="sg-kb-count">${arr.length}</span></div>
+                    <div class="sg-kb-col-head"${key !== 'pending' ? ` draggable="true" ondragstart="sgKbDayDragStart(event, '${key}')" ondragend="sgKbDayDragEnd()" style="cursor:grab;" title="按住拖曳到另一天，可整天移動"` : ''}><button type="button" class="sg-kb-tog" onclick="sgKbToggleCol('${key}')" title="${collapsed ? '展開此欄' : '縮小此欄'}"><i class="fa-solid fa-chevron-${collapsed ? 'right' : 'down'}"></i></button>${head}<span class="sg-kb-count">${arr.length}</span>${key !== 'pending' ? `<button type="button" class="sg-kb-tog" style="margin-left:2px;" onclick="openMoveDayModal(${key})" title="整天移動（選擇要移到哪一天）"><i class="fa-solid fa-right-left"></i></button>` : ''}</div>
                     ${collapsed ? '' : (arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>')}
                 </div>`;
             };
@@ -13200,7 +13236,7 @@ const firebaseConfig = {
                 const arr = groups[place];
                 const subtotal = arr.reduce((s, i) => s + shopItemTwd(i, plan), 0);
                 return `<div class="shop-group-h"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(place)} <small>${arr.length} 項${subtotal ? ` · NT$ ${subtotal.toLocaleString()}` : ''}</small>${spotMap[place] ? `<span style="font-size:0.7rem;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:1px 8px;">${spotMap[place].cat === 'food' ? '🍽️ 餐飲' : '📍 景點'}${spotMap[place].parentName ? '｜' + escapeHtml(spotMap[place].parentName) + ' 內' : ''}${spotMap[place].when ? '｜' + escapeHtml(spotMap[place].when) : ''}</span>` : ''}${(spotMap[place] && spotMap[place].addr) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spotMap[place].addr)}" target="_blank" rel="noopener" style="font-size:0.7rem;font-weight:500;color:#64748b;">📮 ${escapeHtml(spotMap[place].addr)}</a>` : ''}</div>
-                <div class="shop-grid">${arr.map(it => {
+                <div class="shop-grid"><div class="shop-tiles">${arr.map(it => {
                     const pt = shopPriceText(it, plan);
                     return `<div class="shop-card ${it.done ? 'done' : ''}">
                         <div style="display:flex;gap:8px;align-items:flex-start;">
@@ -14140,6 +14176,16 @@ const firebaseConfig = {
                 Object.assign(d, contents[k], keep);
                 if (d.title) d.title = String(d.title).replace(/^Day\s*\d+/i, `Day ${d.dayNum}`);
             });
+            // 景點頁已設定的造訪日期跟著整天一起換到新的日期（沒有對應行程事件的景點也能一致）
+            try {
+                const ymdAt = k => sgYmdFromDayNum(plan, days[k].dayNum);
+                const newIdx = k => swap ? (k === i ? j : (k === j ? i : k))
+                    : (k === i ? j : ((i < j && k > i && k <= j) ? k - 1 : ((i > j && k >= j && k < i) ? k + 1 : k)));
+                const dateMap = {};
+                days.forEach((d, k) => { const a = ymdAt(k), b = ymdAt(newIdx(k)); if (a && b) dateMap[a] = b; });
+                const remap = o => { if (o && o.visitDate && dateMap[o.visitDate]) o.visitDate = dateMap[o.visitDate]; };
+                (plan.spotTips || []).forEach(s => { remap(s); (Array.isArray(s.children) ? s.children : []).forEach(remap); });
+            } catch (e) { console.warn('景點日期重算失敗', e); }
             // 依住宿自動設定的起程交通，換天後住宿可能不同，重新套用
             days.forEach(d => {
                 if (d.firstTransit && d.firstTransit.auto === 'lodging') {
@@ -14432,10 +14478,10 @@ const firebaseConfig = {
                         ${subtotal ? `<small>NT$ ${subtotal.toLocaleString()}</small>` : ''}
                         <span class="shop-place-prog">${doneCnt} / ${everyone.length} 已買</span>
                     </div>
-                    ${arr.map(it => {
+                    <div class="shop-tiles">${arr.map(it => {
                         const pt = shopPriceText(it, plan);
                         const q = Number(it.qty) || 1;
-                        return `<div class="shop-row ${it.done ? 'done' : ''}">
+                        return `<div class="shop-row ${it.done ? 'done' : ''}" onclick="sgShopTileToggle(event, this)" title="點一下方框查看／收合詳細資訊">
                             <input type="checkbox" class="n-checkbox" ${it.done ? 'checked' : ''} onchange="toggleShoppingDone('${it.id}')" style="margin-top:3px;" title="標記已買">
                             <div class="main">
                                 <div class="nm">${escapeHtml(it.name)}${q > 1 ? ` <span style="color:#64748b;font-weight:600;">×${q}</span>` : ''}</div>
@@ -14445,7 +14491,7 @@ const firebaseConfig = {
                             <button type="button" class="ico" onclick="openShoppingModal('${it.id}')" title="編輯"><i class="fa-solid fa-pen"></i></button>
                             <button type="button" class="ico" onclick="deleteShoppingItem('${it.id}')" title="刪除"><i class="fa-regular fa-trash-can"></i></button>
                         </div>`;
-                    }).join('')}
+                    }).join('')}</div>
                     ${!arr.length ? '<div style="padding:10px 12px;color:#94a3b8;font-size:0.8rem;">這個地點還沒有品項，在下方輸入即可新增。</div>' : ''}
                     <div class="shop-quick">
                         <input type="text" data-place="${escapeHtml(place)}" placeholder="＋ 輸入品名按 Enter 新增（可用「、」一次輸入多項，例如：眼藥水、感冒藥）" onkeydown="shopQuickAdd(event, this)">
@@ -15879,7 +15925,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.19.9：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.20.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -15896,6 +15942,64 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
+        // ===== V3.20.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        (function () {
+            if (document.getElementById('sgTileStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgTileStyle';
+            st.textContent = `
+                /* 航班編輯：去程／回程左右並排、彈窗加寬、間距縮小 */
+                #editFlightModal .modal-dialog{max-width:1180px !important;width:96vw;}
+                #editFlightModal .modal-body{padding:10px 14px !important;}
+                #editFlightModal .flight-two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;margin-bottom:8px;}
+                #editFlightModal .flight-two-col > div{margin-bottom:0 !important;padding:10px !important;min-width:0;}
+                #editFlightModal .flight-two-col .form-row-4{grid-template-columns:1fr 1fr !important;gap:4px 8px !important;}
+                #editFlightModal .form-group{margin-bottom:6px !important;}
+                #editFlightModal .form-row{gap:8px !important;}
+                #editFlightModal .flight-online-row{margin-bottom:6px !important;}
+                @media (max-width: 900px){ #editFlightModal .flight-two-col{grid-template-columns:minmax(0,1fr);} }
+
+                /* 景點精簡／詳細：小方框，點方框看詳細 */
+                #spotGuidesContainer.sg-tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;align-items:start;}
+                #spotGuidesContainer.sg-tile-grid > div:not(.spot-guide-card){grid-column:1 / -1;}
+                #spotGuidesContainer.sg-tile-grid .spot-guide-card{margin-bottom:0 !important;cursor:pointer;min-width:0;}
+                #spotGuidesContainer.sg-tile-grid .sg-tile.open{grid-column:1 / -1;}
+                #spotGuidesContainer.sg-tile-grid .spot-guide-card [style*="margin-left:auto"]{flex-wrap:wrap;flex-shrink:1 !important;margin-left:0 !important;}
+                #spotGuidesContainer.sg-tile-detail{grid-template-columns:repeat(auto-fill,minmax(420px,1fr));}
+                #spotGuidesContainer.sg-tile-detail .sg-tile.open{grid-column:auto;}
+                @media (max-width: 700px){
+                    #spotGuidesContainer.sg-tile-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+                    #spotGuidesContainer.sg-tile-detail{grid-template-columns:minmax(0,1fr);}
+                }
+
+                /* 購買清單：品項改小方框，點方框展開款式／備註／連結 */
+                .shop-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;padding:8px 10px;}
+                .shop-tiles .shop-row{border:1px solid #e2e8f0 !important;border-radius:10px;padding:8px 9px;background:#fff;cursor:pointer;flex-wrap:wrap;align-content:flex-start;min-width:0;}
+                .shop-tiles .shop-row.done{background:#f8fafc;}
+                .shop-tiles .shop-row .sub{display:none;flex-basis:100%;order:9;margin-top:4px;padding-top:4px;border-top:1px dashed #e2e8f0;}
+                .shop-tiles .shop-row.open{grid-column:1 / -1;}
+                .shop-tiles .shop-row.open .sub{display:block;}
+                .shop-tiles .shop-row .price{order:5;}
+                @media (max-width: 700px){ .shop-tiles{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 6px;gap:6px;} }
+
+                /* 手機：編輯視窗內容不再超出右側 */
+                @media (max-width: 700px){
+                    .modal-dialog{max-width:100vw !important;}
+                    .modal-body{overflow-x:hidden !important;}
+                    .modal-body *{max-width:100%;box-sizing:border-box;}
+                    .modal-body [style*="nowrap"]{white-space:normal !important;}
+                    html body .modal-backdrop .modal-dialog .modal-body div[style*="grid-template-columns"]:not([style*="repeat("]){grid-template-columns:minmax(0,1fr) !important;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
+        function sgTileIgnore(ev) { return !!(ev && ev.target && ev.target.closest && ev.target.closest('button,input,a,label,select,textarea')); }
+        function sgShopTileToggle(ev, el) { if (sgTileIgnore(ev)) return; el.classList.toggle('open'); }
+        function sgTileClick(ev, id) {
+            if (sgTileIgnore(ev)) return;
+            if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
+        }
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -15903,10 +16007,15 @@ const firebaseConfig = {
                 const p = getCurrentPlan();
                 if (p && sgReconcileSpotsFromTimeline(p)) saveState(true);
             } catch (e) { console.warn('景點時間回填失敗', e); }
-            return __origRenderSpotGuidesViewForSync.apply(this, arguments);
+            const __r = __origRenderSpotGuidesViewForSync.apply(this, arguments);
+            try {
+                const ct = document.getElementById('spotGuidesContainer');
+                if (ct) { ct.classList.toggle('sg-tile-grid', spotGuidesViewMode !== 'kanban'); ct.classList.toggle('sg-tile-detail', spotGuidesViewMode === 'detail'); }
+            } catch (e) {}
+            return __r;
         };
 
-        // ===== V3.19.9：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.20.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -16605,7 +16714,7 @@ const firebaseConfig = {
                 const mealChipHtml = (isFood && item.mealType && sgMealLabels[item.mealType]) ? `<span class="sg-booking-mini" style="background:#fff4e0;"><i class="fa-solid fa-bell-concierge"></i> ${sgMealLabels[item.mealType]}</span>` : '';
                 const pad = isCompactMode ? '8px 12px' : '11px 14px';
                 return `
-                    <div class="spot-guide-card" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#bfe3cc' : '#e2e8f0'}; border-radius:14px; padding:${pad}; margin-bottom:${isCompactMode ? '7px' : '10px'}; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
+                    <div class="spot-guide-card sg-tile ${isOpen ? 'open' : ''}" onclick="sgTileClick(event, '${item.id}')" title="點一下方框查看／收合詳細資訊" style="background:${isScheduled ? '#fcfdfc' : '#ffffff'}; border:1px solid ${isScheduled ? '#bfe3cc' : '#e2e8f0'}; border-radius:14px; padding:${pad}; margin-bottom:${isCompactMode ? '7px' : '10px'}; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease;">
                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <input type="checkbox" class="n-checkbox" id="spotGuideCheck_${idx}" ${isScheduled ? 'checked' : ''} onchange="toggleSpotGuideScheduled(${idx}, this.checked)" title="勾選設定是否已排入行程">
                             ${catBadgeHtml}
@@ -26281,7 +26390,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.19.9：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.20.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
