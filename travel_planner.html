@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.20.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.21.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -14172,6 +14172,7 @@ const firebaseConfig = {
                         <select onchange="if(this.value){moveSpotToColumn(${idx}, this.value);}" title="移到其他欄位">${optionsHtml(curKey)}</select>
                         <button type="button" class="n-btn" style="padding:1px 7px;font-size:0.7rem;margin-left:auto;" onclick="openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i></button>
                         <button type="button" class="n-btn" style="padding:1px 7px;font-size:0.7rem;" onclick="openAddSpotGuideModal(${idx}); openSgMergePicker();" title="整合"><i class="fa-solid fa-object-group"></i></button>
+                        <button type="button" class="n-btn" style="padding:1px 7px;font-size:0.7rem;color:#0f766e;" onclick="sgArchiveSpot(${idx})" title="封存（這次不去，留給下次使用）"><i class="fa-solid fa-box-archive"></i></button>
                         <button type="button" class="n-btn n-btn-danger" style="padding:1px 7px;font-size:0.7rem;" onclick="deleteSpotGuideItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
                     </div>
                 </div>`;
@@ -14181,7 +14182,7 @@ const firebaseConfig = {
                 if (sgKbHiddenCols().has(String(key))) return '';
                 const collapsed = sgKbColCollapsedSet().has(String(key));
                 return `<div class="sg-kb-col ${collapsed ? 'collapsed' : ''}" ondragover="sgKbDragOver(event)" ondragleave="sgKbDragLeave(event)" ondrop="sgKbDrop(event, '${key}')">
-                    <div class="sg-kb-col-head"${key !== 'pending' ? ` draggable="true" ondragstart="sgKbDayDragStart(event, '${key}')" ondragend="sgKbDayDragEnd()" style="cursor:grab;" title="按住拖曳到另一天，可整天移動"` : ''}><button type="button" class="sg-kb-tog" onclick="sgKbToggleCol('${key}')" title="${collapsed ? '展開此欄' : '縮小此欄'}"><i class="fa-solid fa-chevron-${collapsed ? 'right' : 'down'}"></i></button>${head}<span class="sg-kb-count">${arr.length}</span>${key !== 'pending' ? `<button type="button" class="sg-kb-tog" style="margin-left:2px;" onclick="openMoveDayModal(${key})" title="整天移動（選擇要移到哪一天）"><i class="fa-solid fa-right-left"></i></button>` : ''}</div>
+                    <div class="sg-kb-col-head"${key !== 'pending' ? ` draggable="true" ondragstart="sgKbDayDragStart(event, '${key}')" ondragend="sgKbDayDragEnd()" style="cursor:grab;" title="按住拖曳到另一天，可整天移動"` : ''}><button type="button" class="sg-kb-tog" onclick="sgKbToggleCol('${key}')" title="${collapsed ? '展開此欄' : '縮小此欄'}"><i class="fa-solid fa-chevron-${collapsed ? 'right' : 'down'}"></i></button>${head}<span class="sg-kb-count">${arr.length}</span>${key === 'pending' && arr.length ? `<button type="button" class="sg-kb-tog" style="margin-left:2px;color:#0f766e;" onclick="sgArchivePending()" title="把待安排的項目全部封存"><i class="fa-solid fa-box-archive"></i></button>` : ''}${key !== 'pending' ? `<button type="button" class="sg-kb-tog" style="margin-left:2px;" onclick="openMoveDayModal(${key})" title="整天移動（選擇要移到哪一天）"><i class="fa-solid fa-right-left"></i></button>` : ''}</div>
                     ${collapsed ? '' : (arr.length ? arr.map(o => cardHtml(o, key)).join('') : '<div class="sg-kb-empty">拖曳卡片到此</div>')}
                 </div>`;
             };
@@ -16956,7 +16957,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.20.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.21.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16973,7 +16974,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.20.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.21.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -17031,6 +17032,188 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
+        // ===== V3.21.0：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        function sgArchiveList() {
+            if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
+            return appState.spotLibrary;
+        }
+        var __sgArchSel = new Set();
+        var __sgArchQuery = '';
+        function sgNewId(p) { return p + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); }
+        // 封存時清掉這次旅程專屬的排程／預約日期，保留名稱、地址、攻略、細部景點、門票、營業時間
+        function sgCleanSpotForLibrary(item) {
+            const o = JSON.parse(JSON.stringify(item));
+            const clr = x => { x.scheduled = false; x.visitDate = ''; x.visitStartTime = ''; x.visitEndTime = ''; delete x._dirty; delete x.picked; };
+            clr(o);
+            if (o.hasBooking) { o.bookingDate = ''; o.bookingTime = ''; o.bookingStatus = ''; }
+            (Array.isArray(o.children) ? o.children : []).forEach(c => {
+                clr(c);
+                if (c.srcItem) { clr(c.srcItem); if (c.srcItem.hasBooking) { c.srcItem.bookingDate = ''; c.srcItem.bookingStatus = ''; } }
+            });
+            return o;
+        }
+        function sgRemoveSpotFromPlan(plan, target) {
+            const kidIds = (Array.isArray(target.children) ? target.children : []).map(c => c && c.id).filter(Boolean);
+            (plan.days || []).forEach(d => {
+                if (Array.isArray(d.events)) d.events = d.events.filter(ev => ev.spotGuideId !== target.id && !kidIds.includes(ev.spotGuideId));
+            });
+            plan.spotTips = plan.spotTips.filter(s => s !== target);
+        }
+        function sgArchiveEntryOf(plan, item) {
+            return {
+                id: sgNewId('arch_'),
+                archivedAt: new Date().toISOString().slice(0, 10),
+                fromPlan: plan.title || plan.name || '未命名計畫',
+                destination: plan.destination || '',
+                item: sgCleanSpotForLibrary(item)
+            };
+        }
+        function sgArchiveSpot(idx) {
+            const plan = getCurrentPlan();
+            if (!plan || !plan.spotTips || !plan.spotTips[idx]) return;
+            const target = plan.spotTips[idx];
+            const info = (typeof resolveSpotScheduledDayInfo === 'function') ? resolveSpotScheduledDayInfo(plan, target) : { isScheduled: false };
+            const warn = info.isScheduled ? '\n\n注意：它目前已排入行程，封存後會從每日行程中移除。' : '';
+            if (!confirm(`要把「${target.name}」封存嗎？\n封存後會從這次的景點清單移除，之後可以在「封存庫」還原到任何計畫。${warn}`)) return;
+            sgArchiveList().push(sgArchiveEntryOf(plan, target));
+            sgRemoveSpotFromPlan(plan, target);
+            try { syncMealsFromSpotGuides(plan); } catch (e) {}
+            saveState();
+            renderAll();
+            showToast('success', `已封存「${target.name}」（封存庫共 ${sgArchiveList().length} 項）`);
+        }
+        function sgArchivePending() {
+            const plan = getCurrentPlan();
+            if (!plan || !Array.isArray(plan.spotTips)) return;
+            const pend = plan.spotTips.filter(s => s && s.name && !resolveSpotScheduledDayInfo(plan, s).isScheduled);
+            if (!pend.length) { showToast('info', '目前沒有待安排的項目'); return; }
+            if (!confirm(`要把「待安排」的 ${pend.length} 個項目全部封存嗎？\n之後可以在「封存庫」挑選還原。`)) return;
+            pend.forEach(s => { sgArchiveList().push(sgArchiveEntryOf(plan, s)); sgRemoveSpotFromPlan(plan, s); });
+            saveState();
+            renderAll();
+            showToast('success', `已封存 ${pend.length} 個待安排項目`);
+        }
+        function sgEnsureArchiveModal() {
+            if (document.getElementById('sgArchiveModal')) return;
+            const el = document.createElement('div');
+            el.className = 'modal-backdrop';
+            el.id = 'sgArchiveModal';
+            el.setAttribute('onclick', "handleBackdropClick(event, 'sgArchiveModal')");
+            el.innerHTML = `<div class="modal-dialog" style="max-width:780px;" onclick="event.stopPropagation();">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fa-solid fa-box-archive" style="color:#0f766e;"></i> 景點封存庫</div>
+                    <button type="button" class="modal-close-btn" onclick="closeModal('sgArchiveModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div style="font-size:0.78rem;color:#64748b;margin-bottom:8px;">這裡收藏以前封存的景點與餐廳（含細部景點與攻略）。勾選後「還原到目前計畫」會放進待安排；封存庫保留原件，可重複使用於不同旅程。</div>
+                    <input type="text" id="sgArchiveSearch" class="form-input" placeholder="搜尋名稱、地址或備註…" oninput="__sgArchQuery=this.value;sgRenderArchive()" style="margin-bottom:8px;">
+                    <div id="sgArchiveBody"></div>
+                </div>
+                <div class="modal-footer" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button type="button" class="n-btn" onclick="sgArchiveSelectAll(true)">全選</button>
+                        <button type="button" class="n-btn" onclick="sgArchiveSelectAll(false)">取消全選</button>
+                        <button type="button" class="n-btn n-btn-danger" onclick="sgArchiveDeleteSelected()"><i class="fa-regular fa-trash-can"></i> 從封存庫刪除</button>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button type="button" class="n-btn" onclick="closeModal('sgArchiveModal')">關閉</button>
+                        <button type="button" class="n-btn n-btn-primary" onclick="sgArchiveRestore()"><i class="fa-solid fa-rotate-left"></i> 還原到目前計畫</button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.appendChild(el);
+        }
+        function sgOpenArchive() {
+            sgEnsureArchiveModal();
+            __sgArchSel = new Set();
+            __sgArchQuery = '';
+            const s = document.getElementById('sgArchiveSearch'); if (s) s.value = '';
+            sgRenderArchive();
+            openModal('sgArchiveModal');
+        }
+        function sgRenderArchive() {
+            const body = document.getElementById('sgArchiveBody');
+            if (!body) return;
+            const q = String(__sgArchQuery || '').trim().toLowerCase();
+            const all = sgArchiveList();
+            const list = all.filter(e => {
+                if (!q) return true;
+                const it = e.item || {};
+                const kids = (Array.isArray(it.children) ? it.children : []).map(c => c.name).join(' ');
+                return [it.name, it.address, it.tip, kids, e.fromPlan].join(' ').toLowerCase().includes(q);
+            });
+            if (!list.length) {
+                body.innerHTML = `<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.85rem;">${all.length ? '沒有符合搜尋的項目' : '封存庫還是空的。在景點看板的卡片按 <i class="fa-solid fa-box-archive"></i> 就能封存這次不去的景點。'}</div>`;
+                return;
+            }
+            const groups = new Map();
+            list.forEach(e => { const k = e.fromPlan || '未命名計畫'; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(e); });
+            let html = '';
+            groups.forEach((arr, plan) => {
+                html += `<div style="font-weight:800;font-size:0.82rem;color:#0f766e;margin:10px 0 5px;"><i class="fa-solid fa-suitcase-rolling"></i> 來自「${escapeHtml(plan)}」<span style="color:#94a3b8;font-weight:600;"> ・ ${arr.length} 項</span></div>`;
+                html += arr.map(e => {
+                    const it = e.item || {};
+                    const isFood = it.category === 'food';
+                    const kids = (Array.isArray(it.children) ? it.children : []).filter(c => c && c.name);
+                    return `<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:6px;background:#fff;cursor:pointer;">
+                        <input type="checkbox" class="n-checkbox" ${__sgArchSel.has(e.id) ? 'checked' : ''} onchange="sgArchiveToggle('${e.id}', this.checked)" style="margin-top:3px;">
+                        <div style="min-width:0;flex:1;">
+                            <div style="font-weight:800;font-size:0.9rem;">${isFood ? '🍽️' : '📍'} ${escapeHtml(it.name || '')}${kids.length ? ` <span style="font-size:0.72rem;color:#0369a1;font-weight:700;">・${kids.length} 個細部</span>` : ''}<span style="font-size:0.68rem;color:#94a3b8;font-weight:500;"> 封存於 ${escapeHtml(e.archivedAt || '')}</span></div>
+                            ${it.address ? `<div style="font-size:0.74rem;color:#64748b;">📮 ${escapeHtml(it.address)}</div>` : ''}
+                            ${kids.length ? `<div style="font-size:0.74rem;color:#475569;margin-top:2px;">${kids.map(c => escapeHtml(c.name)).join('、')}</div>` : ''}
+                            ${it.tip ? `<div style="font-size:0.74rem;color:#64748b;margin-top:2px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(String(it.tip).slice(0, 120))}${String(it.tip).length > 120 ? '…' : ''}</div>` : ''}
+                        </div>
+                    </label>`;
+                }).join('');
+            });
+            body.innerHTML = html;
+        }
+        function sgArchiveToggle(id, on) { if (on) __sgArchSel.add(id); else __sgArchSel.delete(id); }
+        function sgArchiveSelectAll(on) {
+            const q = String(__sgArchQuery || '').trim().toLowerCase();
+            sgArchiveList().forEach(e => {
+                const it = e.item || {};
+                const hit = !q || [it.name, it.address, it.tip, e.fromPlan].join(' ').toLowerCase().includes(q);
+                if (hit) { if (on) __sgArchSel.add(e.id); else __sgArchSel.delete(e.id); }
+            });
+            sgRenderArchive();
+        }
+        function sgArchiveDeleteSelected() {
+            if (!__sgArchSel.size) { showToast('warning', '請先勾選要刪除的項目'); return; }
+            if (!confirm(`確定從封存庫永久刪除 ${__sgArchSel.size} 個項目嗎？此動作無法復原。`)) return;
+            appState.spotLibrary = sgArchiveList().filter(e => !__sgArchSel.has(e.id));
+            __sgArchSel = new Set();
+            saveState();
+            sgRenderArchive();
+            try { renderSpotGuidesView(); } catch (e) {}
+            showToast('success', '已從封存庫刪除');
+        }
+        function sgArchiveRestore() {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            if (!__sgArchSel.size) { showToast('warning', '請先勾選要還原的項目'); return; }
+            if (!Array.isArray(plan.spotTips)) plan.spotTips = [];
+            const names = new Set(plan.spotTips.map(s => String(s.name || '').trim()));
+            let added = 0, skipped = 0;
+            sgArchiveList().filter(e => __sgArchSel.has(e.id)).forEach(e => {
+                const it = JSON.parse(JSON.stringify(e.item || {}));
+                if (names.has(String(it.name || '').trim())) { skipped++; return; }
+                it.id = sgNewId('sg_');
+                (Array.isArray(it.children) ? it.children : []).forEach(c => {
+                    c.id = sgNewId('sgc_');
+                    if (c.srcItem) c.srcItem.id = c.id;
+                });
+                plan.spotTips.push(it);
+                names.add(String(it.name || '').trim());
+                added++;
+            });
+            saveState();
+            renderAll();
+            __sgArchSel = new Set();
+            sgRenderArchive();
+            showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
+        }
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -17046,7 +17229,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.20.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.21.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -17620,6 +17803,7 @@ const firebaseConfig = {
                         <button type="button" class="n-btn ${spotGuidesViewMode === 'kanban' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('kanban')" title="依天數分欄的看板，可拖曳排程"><i class="fa-solid fa-table-columns"></i> 看板</button>
                         <button type="button" class="n-btn ${isCompactMode ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('compact')" title="每個項目縮成一列，快速瀏覽"><i class="fa-solid fa-list"></i> 精簡</button>
                         <button type="button" class="n-btn ${spotGuidesViewMode === 'detail' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideViewMode('detail')" title="展開所有詳細資訊"><i class="fa-solid fa-table-list"></i> 詳細</button>
+                        <button type="button" class="n-btn" style="padding: 3px 9px; font-size: 0.74rem; color:#0f766e; border-color:#99f6e4; background:#f0fdfa;" onclick="sgOpenArchive()" title="這次確定不去的景點可封存，下次排行程時還原使用"><i class="fa-solid fa-box-archive"></i> 封存庫 (${(appState.spotLibrary || []).length})</button>
                     </div>
                 </div>
             `;
@@ -17758,6 +17942,7 @@ const firebaseConfig = {
                                 ${isCompactMode ? `<button type="button" class="n-btn" style="padding:2px 8px; font-size:0.73rem;" onclick="toggleSpotGuideExpand('${item.id}')" title="${isOpen ? '收合詳細' : '展開詳細'}"><i class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'}"></i></button>` : ''}
                                 <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx}); openSgMergePicker();" title="把其他景點整合進這個項目"><i class="fa-solid fa-object-group"></i> 整合</button>
                                 <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem;" onclick="openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i> 編輯</button>
+                                <button type="button" class="n-btn" style="padding: 2px 8px; font-size: 0.73rem; color:#0f766e;" onclick="sgArchiveSpot(${idx})" title="封存（這次不去，留給下次使用）"><i class="fa-solid fa-box-archive"></i></button>
                                 <button type="button" class="n-btn n-btn-danger" style="padding: 2px 8px; font-size: 0.73rem;" onclick="deleteSpotGuideItem(${idx})"><i class="fa-regular fa-trash-can"></i></button>
                             </div>
                         </div>
@@ -27406,7 +27591,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.20.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.21.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
