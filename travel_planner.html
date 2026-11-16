@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.23.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.23.7</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8529,6 +8529,24 @@
                 </div>
                 <label class="shop-field">款式／規格／顏色<input type="text" id="shopStyleInput" placeholder="例如：SPF50 / 藍色 / M 號"></label>
                 <label class="shop-field">攻略備註<textarea id="shopNoteInput" rows="3" placeholder="例如：滿 5,500 可退稅、3F 藥妝區、認明綠色包裝"></textarea></label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                    <label class="shop-field">類別<select id="shopCatInput" onchange="sgShopCatChange()">
+                        <option value="">（自動判斷／未分類）</option>
+                        <option value="med">💊 藥品與保健食品</option>
+                        <option value="beauty">💄 美妝與個人保養</option>
+                        <option value="fashion">👗 服飾、鞋包與飾品</option>
+                        <option value="food">🍪 食品、零食與伴手禮</option>
+                        <option value="home">🏠 居家生活與日用品</option>
+                        <option value="tech">🔌 3C 數位與小家電</option>
+                        <option value="souvenir">🎎 文具與在地紀念品</option>
+                    </select></label>
+                    <label class="shop-field">細項<select id="shopSubInput"></select></label>
+                </div>
+                <div id="shopCatNote" style="font-size:0.78rem;color:#b45309;margin-top:-4px;"></div>
+                <div style="display:grid;grid-template-columns:1fr auto;gap:9px;align-items:end;">
+                    <label class="shop-field">親友代購（選填：幫誰買）<input type="text" id="shopForInput" list="shopForList" placeholder="例如：媽媽 / 小美"><datalist id="shopForList"></datalist></label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;font-weight:700;padding-bottom:8px;"><input type="checkbox" id="shopPaidInput" class="n-checkbox"> 已收款</label>
+                </div>
                 <div class="shop-field">照片（買的時候拿來對照，每項最多 3 張）
                     <div id="shopPhotoPreviewWrap" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0;"></div>
                     <label id="shopPhotoAddLabel" class="n-btn" for="shopPhotoFile" style="display:inline-flex;align-items:center;gap:6px;width:fit-content;cursor:pointer;"><i class="fa-solid fa-camera"></i> 拍照／選擇照片</label>
@@ -17008,7 +17026,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.23.6：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.23.7：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -17025,7 +17043,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.6：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.23.7：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -17083,7 +17101,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.23.6：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.23.7：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -17265,7 +17283,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.23.6：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.23.7：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -17322,7 +17340,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.23.6：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.23.7：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -17525,7 +17543,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.6：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.23.7：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -17597,7 +17615,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.6：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.23.7：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -17611,7 +17629,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.6：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.23.7：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -17642,7 +17660,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.23.6：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.23.7：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -17789,6 +17807,269 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
+        // ===== V3.23.7：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        var SG_SHOP_CATS = [
+            { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
+              kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
+              subs: [['常備成藥', '腸胃藥、止痛藥、感冒藥'], ['眼藥水', ''], ['痠痛貼布', ''], ['維他命／益生菌', '等保健食品']] },
+            { k: 'beauty', icon: '💄', label: '美妝與個人保養', bg: '#fdf2f8', bd: '#f0b3d4', tx: '#be185d', note: '液體超過 100ml 需託運',
+              kw: /防曬|面膜|彩妝|口紅|粉底|保養|乳液|精華|香水|髮|洗髮|護髮|化妝|卸妝|唇|肌膚|乳霜|洗面|美白/,
+              subs: [['彩妝', ''], ['護膚保養品', ''], ['防曬', ''], ['面膜', ''], ['髮品', ''], ['香水', '']] },
+            { k: 'fashion', icon: '👗', label: '服飾、鞋包與飾品', bg: '#eff6ff', bd: '#9ec5f0', tx: '#1d4ed8', note: '',
+              kw: /衣|褲|裙|外套|鞋|包|帽|圍巾|項鍊|耳環|戒指|手錶|飾品|襪|內衣|珠寶/,
+              subs: [['上衣／褲裙', ''], ['外套', ''], ['貼身衣物', ''], ['鞋類', ''], ['包款', ''], ['帽子／圍巾', ''], ['珠寶與飾品配件', '']] },
+            { k: 'food', icon: '🍪', label: '食品、零食與伴手禮', bg: '#fff7ed', bd: '#f5c08f', tx: '#c2410c', note: '留意肉類與生鮮檢疫規定',
+              kw: /餅乾|糖|巧克力|茶|咖啡|伴手禮|醬|零食|點心|仙貝|抹茶|泡麵|米果|蛋糕|海苔/,
+              subs: [['餅乾／糖果／巧克力', ''], ['茶包／咖啡豆', ''], ['地方特產', ''], ['調味醬料', '']] },
+            { k: 'home', icon: '🏠', label: '居家生活與日用品', bg: '#f0fdf4', bd: '#9ccbb3', tx: '#15803d', note: '',
+              kw: /香氛|蠟燭|餐具|杯|碗|盤|鍋|清潔|毛巾|收納|雜貨|牙刷|衛浴/,
+              subs: [['香氛／蠟燭', ''], ['餐廚具', ''], ['衛浴小物', ''], ['清潔用品', ''], ['設計雜貨', '']] },
+            { k: 'tech', icon: '🔌', label: '3C 數位與小家電', bg: '#ecfeff', bd: '#8fdce9', tx: '#0e7490', note: '含鋰電池物品須手提上機',
+              kw: /耳機|相機|充電|吹風機|電動|美容儀|遊戲|switch|Switch|手機殼|音響|3C|電池|行動電源|直捲|離子夾/,
+              subs: [['美容家電', ''], ['耳機／音響', ''], ['手機周邊', ''], ['遊戲軟硬體', '']] },
+            { k: 'souvenir', icon: '🎎', label: '文具與在地紀念品', bg: '#fefce8', bd: '#ecd77f', tx: '#a16207', note: '',
+              kw: /明信片|磁鐵|扭蛋|書|文具|筆|紀念|周邊|貼紙|膠帶/,
+              subs: [['明信片', ''], ['磁鐵', ''], ['扭蛋', ''], ['景點限定周邊', ''], ['書籍', '']] }
+        ];
+        var SG_SHOP_PROXY = { icon: '🤝', label: '親友代購專區', bg: '#faf5ff', bd: '#d8b4fe', tx: '#7e22ce' };
+        var sgShopView = (function () { try { return localStorage.getItem('sg_shop_view_v1') || 'cat'; } catch (e) { return 'cat'; } })();
+        function sgShopCatMeta(k) { return SG_SHOP_CATS.find(c => c.k === k) || null; }
+        function sgShopCatOf(it) {
+            if (it.cat && sgShopCatMeta(it.cat)) return it.cat;
+            const s = String(it.name || '') + ' ' + String(it.style || '');
+            for (const c of SG_SHOP_CATS) if (c.kw.test(s)) return c.k;
+            return '';
+        }
+        function sgSetShopView(v) {
+            sgShopView = v === 'place' ? 'place' : 'cat';
+            try { localStorage.setItem('sg_shop_view_v1', sgShopView); } catch (e) {}
+            renderShoppingList();
+        }
+        function sgShopIsProxy(it) { return !!String(it.forWho || '').trim(); }
+        function sgShopRowHtml(it, plan) {
+            const pt = shopPriceText(it, plan);
+            const q = Number(it.qty) || 1;
+            const pay = sgShopIsProxy(it) ? `<div style="flex-basis:100%;order:8;display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">
+                <span style="font-size:0.72rem;color:#7e22ce;font-weight:700;">👤 ${escapeHtml(it.forWho)}</span>
+                <button type="button" class="sg-pay ${it.proxyPaid ? 'on' : ''}" onclick="sgShopTogglePaid('${it.id}', event)">${it.proxyPaid ? '✓ 已收款' : '待收款'}</button></div>` : '';
+            return `<div class="shop-row ${it.done ? 'done' : ''}" onclick="sgShopTileToggle(event, this)" title="點一下方框查看／收合詳細資訊">
+                <input type="checkbox" class="n-checkbox" ${it.done ? 'checked' : ''} onchange="toggleShoppingDone('${it.id}')" style="margin-top:3px;" title="標記已買">${sgShopThumbHtml(it)}
+                <div class="main">
+                    <div class="nm">${escapeHtml(it.name)}${q > 1 ? ` <span style="color:#64748b;font-weight:600;">×${q}</span>` : ''}</div>
+                    ${it.place ? `<div style="font-size:0.7rem;color:#64748b;">📍 ${escapeHtml(it.place)}</div>` : ''}
+                    ${(it.style || it.note || it.link) ? `<div class="sub">${it.style ? `<span class="tag">🏷️ ${escapeHtml(it.style)}</span>` : ''}${it.note ? escapeHtml(it.note) : ''}${it.link ? ` <a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">🔗</a>` : ''}</div>` : ''}
+                </div>
+                ${pt ? `<span class="price">${escapeHtml(pt)}</span>` : ''}
+                <button type="button" class="ico" onclick="openShoppingModal('${it.id}')" title="編輯"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" class="ico" onclick="deleteShoppingItem('${it.id}')" title="刪除"><i class="fa-regular fa-trash-can"></i></button>
+                ${pay}
+            </div>`;
+        }
+        function sgShopBoxHtml(meta, title, countTxt, innerHtml, quickAttrs, extraHead) {
+            return `<div class="sg-sc-box" style="--cb:${meta.bd};--cbg:${meta.bg};--ct:${meta.tx};">
+                <div class="sg-sc-head"><span>${meta.icon} ${title}</span><em>${countTxt}</em>${extraHead || ''}</div>
+                ${meta.note ? `<div class="sg-sc-note">⚠️ ${escapeHtml(meta.note)}</div>` : ''}
+                ${innerHtml}
+                ${quickAttrs ? `<div class="shop-quick" style="margin-top:6px;border:1px dashed var(--cb);border-radius:10px;background:#fff;">
+                    <input type="text" ${quickAttrs.attrs} placeholder="${escapeHtml(quickAttrs.ph)}" onkeydown="sgShopQuickAddCat(event, this)">
+                    <button type="button" class="n-btn" style="padding:2px 9px;font-size:0.72rem;" onclick="${quickAttrs.detail}"><i class="fa-solid fa-sliders"></i> 詳細</button>
+                </div>` : ''}
+            </div>`;
+        }
+        function sgShopCatHtml(plan) {
+            const items = shopFilteredItems(plan);
+            const everyone = getShoppingList(plan);
+            const searching = !!shopQueryText || shopFilterMode !== 'all';
+            let html = '';
+            const keys = SG_SHOP_CATS.map(c => c.k).concat(['uncat']);
+            keys.forEach(k => {
+                const meta = k === 'uncat' ? { icon: '📦', label: '未分類', bg: '#f8fafc', bd: '#cbd5e1', tx: '#475569', note: '', subs: [] } : sgShopCatMeta(k);
+                const inCat = it => !sgShopIsProxy(it) && ((sgShopCatOf(it) || 'uncat') === k);
+                const arr = items.filter(inCat);
+                if (!arr.length && (searching || k === 'uncat')) return;
+                const all = everyone.filter(inCat);
+                const done = all.filter(i => i.done).length;
+                const sum = arr.reduce((s, i) => s + shopItemTwd(i, plan), 0);
+                const subNames = (meta.subs || []).map(s => s[0]);
+                const groups = [];
+                subNames.forEach(sn => { const g = arr.filter(i => i.sub === sn); if (g.length) groups.push({ t: sn, arr: g }); });
+                const rest = arr.filter(i => !subNames.includes(i.sub));
+                if (rest.length) groups.push({ t: groups.length ? '其他' : '', arr: rest });
+                const inner = arr.length
+                    ? groups.map(g => `${g.t ? `<div class="sg-sc-sub">${escapeHtml(g.t)} <span>${g.arr.length}</span></div>` : ''}<div class="shop-tiles">${g.arr.map(i => sgShopRowHtml(i, plan)).join('')}</div>`).join('')
+                    : '<div style="padding:8px 4px;color:#94a3b8;font-size:0.78rem;">這個類別還沒有品項，在下方輸入即可新增。</div>';
+                const q = k === 'uncat' ? null : { attrs: `data-cat="${k}"`, ph: `＋ 輸入品名按 Enter 新增到「${meta.label}」（可用「、」一次輸入多項）`, detail: `openShoppingModalForCat('${k}')` };
+                html += sgShopBoxHtml(meta, escapeHtml(meta.label), `${done} / ${all.length} 已買${sum ? `・NT$ ${sum.toLocaleString()}` : ''}`, inner, q);
+            });
+            // 親友代購專區（依人名分組，可標示是否已收款）
+            const proxyAll = everyone.filter(sgShopIsProxy);
+            const proxyItems = items.filter(sgShopIsProxy);
+            const names = [];
+            (Array.isArray(plan.shopProxyPeople) ? plan.shopProxyPeople : []).forEach(n => { if (n && !names.includes(n)) names.push(n); });
+            proxyAll.forEach(i => { const n = String(i.forWho).trim(); if (!names.includes(n)) names.push(n); });
+            const paidAll = proxyAll.filter(i => i.proxyPaid).length;
+            let pin = names.map(n => {
+                const arr = proxyItems.filter(i => String(i.forWho).trim() === n);
+                const all = proxyAll.filter(i => String(i.forWho).trim() === n);
+                if (!arr.length && searching && all.length) return '';
+                const paid = all.filter(i => i.proxyPaid).length;
+                const owe = all.filter(i => !i.proxyPaid).reduce((s, i) => s + shopItemTwd(i, plan), 0);
+                return `<div class="sg-sc-sub" style="color:#7e22ce;">👤 ${escapeHtml(n)} <span>${paid} / ${all.length} 已收款</span>${owe ? `<span style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">待收 NT$ ${owe.toLocaleString()}</span>` : ''}</div>
+                    ${arr.length ? `<div class="shop-tiles">${arr.map(i => sgShopRowHtml(i, plan)).join('')}</div>` : '<div style="padding:4px;color:#94a3b8;font-size:0.76rem;">還沒有代購品項</div>'}
+                    <div class="shop-quick" style="margin:4px 0 8px;border:1px dashed #d8b4fe;border-radius:10px;background:#fff;"><input type="text" data-cat="" data-for="${escapeHtml(n)}" placeholder="＋ 幫「${escapeHtml(n)}」新增代購品名按 Enter" onkeydown="sgShopQuickAddCat(event, this)"></div>`;
+            }).join('');
+            pin += `<div class="shop-quick" style="border:1px dashed #d8b4fe;border-radius:10px;background:#fff;"><input type="text" placeholder="＋ 新增代購人名（例如：媽媽、小美）按 Enter" onkeydown="sgShopAddProxyPerson(event, this)"></div>`;
+            html += sgShopBoxHtml(SG_SHOP_PROXY, SG_SHOP_PROXY.label, `${paidAll} / ${proxyAll.length} 已收款`, pin, null);
+            return html;
+        }
+        function sgShopAddProxyPerson(ev, el) {
+            if (ev.key !== 'Enter') return;
+            ev.preventDefault();
+            const plan = getCurrentPlan();
+            const n = String(el.value || '').trim();
+            if (!plan || !n) return;
+            if (!Array.isArray(plan.shopProxyPeople)) plan.shopProxyPeople = [];
+            if (!plan.shopProxyPeople.includes(n)) plan.shopProxyPeople.push(n);
+            saveState();
+            renderShoppingList();
+        }
+        function sgShopTogglePaid(id, ev) {
+            if (ev) ev.stopPropagation();
+            const plan = getCurrentPlan();
+            const it = getShoppingList(plan).find(x => x.id === id);
+            if (!it) return;
+            it.proxyPaid = !it.proxyPaid;
+            saveState();
+            renderShoppingList();
+        }
+        function sgShopQuickAddCat(ev, el) {
+            if (ev.key !== 'Enter') return;
+            ev.preventDefault();
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const names = String(el.value || '').split(/[、，,;；\n]+/).map(s => s.trim()).filter(Boolean);
+            if (!names.length) return;
+            el.value = '';
+            const cat = el.dataset.cat || '';
+            const forWho = el.dataset.for || '';
+            const list = getShoppingList(plan);
+            names.forEach(name => list.push({
+                id: 'shop-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                name, place: '', price: '', curr: 'LOCAL', qty: 1, style: '', note: '', link: '', done: false,
+                cat: cat || undefined, forWho: forWho || undefined, proxyPaid: false
+            }));
+            saveState();
+            renderShoppingList();
+            if (!window.__shopNoRefocus) {
+                const again = Array.from(document.querySelectorAll('.shop-quick input')).find(i => (i.dataset.cat || '') === cat && (i.dataset.for || '') === forWho && i.hasAttribute('data-cat'));
+                if (again) again.focus();
+            }
+        }
+        function openShoppingModalForCat(k) {
+            openShoppingModal();
+            const el = document.getElementById('shopCatInput');
+            if (el) { el.value = k || ''; sgShopCatChange(); }
+        }
+        function sgShopCatChange(keepSub) {
+            const k = (document.getElementById('shopCatInput') || {}).value || '';
+            const meta = sgShopCatMeta(k);
+            const sub = document.getElementById('shopSubInput');
+            if (sub) {
+                const cur = keepSub || '';
+                sub.innerHTML = '<option value="">（不指定細項）</option>' + (meta ? meta.subs.map(s => `<option value="${escapeHtml(s[0])}"${cur === s[0] ? ' selected' : ''}>${escapeHtml(s[0])}${s[1] ? '（' + escapeHtml(s[1]) + '）' : ''}</option>`).join('') : '');
+                sub.disabled = !meta;
+            }
+            const note = document.getElementById('shopCatNote');
+            if (note) note.textContent = meta && meta.note ? '⚠️ ' + meta.note : '';
+        }
+        const __origRenderShoppingListV237 = renderShoppingList;
+        renderShoppingList = function () {
+            __origRenderShoppingListV237.apply(this, arguments);
+            try {
+                const body = document.getElementById('shopListBody');
+                const plan = getCurrentPlan();
+                if (!body || !plan) return;
+                const bar = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;"><span style="font-size:0.78rem;color:#64748b;font-weight:700;">分組方式</span>
+                    <button type="button" class="n-btn ${sgShopView === 'cat' ? 'n-btn-primary' : ''}" style="padding:3px 11px;font-size:0.78rem;" onclick="sgSetShopView('cat')">依類別</button>
+                    <button type="button" class="n-btn ${sgShopView === 'place' ? 'n-btn-primary' : ''}" style="padding:3px 11px;font-size:0.78rem;" onclick="sgSetShopView('place')">依購買地點</button></div>`;
+                if (sgShopView === 'place') { body.insertAdjacentHTML('afterbegin', bar); return; }
+                body.innerHTML = bar + sgShopCatHtml(plan);
+                const dl = document.getElementById('shopForList');
+                if (dl) {
+                    const ns = new Set((plan.shopProxyPeople || []).concat(getShoppingList(plan).map(i => String(i.forWho || '').trim()).filter(Boolean)));
+                    dl.innerHTML = Array.from(ns).map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+                }
+            } catch (e) { console.warn('購買清單類別顯示失敗', e); }
+        };
+        const __origOpenShoppingModalV237 = openShoppingModal;
+        openShoppingModal = function (id) {
+            const r = __origOpenShoppingModalV237.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                const it = id ? getShoppingList(plan).find(x => x.id === id) : null;
+                const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v; };
+                set('shopCatInput', it ? (sgShopCatOf(it) || '') : '');
+                sgShopCatChange(it ? it.sub : '');
+                set('shopForInput', it ? (it.forWho || '') : '');
+                const pd = document.getElementById('shopPaidInput'); if (pd) pd.checked = !!(it && it.proxyPaid);
+                const dl = document.getElementById('shopForList');
+                if (dl) {
+                    const ns = new Set((plan.shopProxyPeople || []).concat(getShoppingList(plan).map(i => String(i.forWho || '').trim()).filter(Boolean)));
+                    dl.innerHTML = Array.from(ns).map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+                }
+            } catch (e) { console.warn(e); }
+            return r;
+        };
+        const __origSaveShoppingItemV237 = saveShoppingItem;
+        saveShoppingItem = function () {
+            const plan = getCurrentPlan();
+            const nameOk = !!String((document.getElementById('shopNameInput') || {}).value || '').trim();
+            if (!plan || !nameOk) return __origSaveShoppingItemV237.apply(this, arguments);
+            const v = k => String((document.getElementById(k) || {}).value || '').trim();
+            const cat = v('shopCatInput'), sub = v('shopSubInput'), forWho = v('shopForInput');
+            const paid = !!(document.getElementById('shopPaidInput') || {}).checked;
+            const list = getShoppingList(plan);
+            const before = list.length;
+            const id = v('shopEditId');
+            const r = __origSaveShoppingItemV237.apply(this, arguments);
+            try {
+                const it = id ? list.find(x => x.id === id) : (list.length > before ? list[list.length - 1] : null);
+                if (it) {
+                    if (cat) it.cat = cat; else delete it.cat;
+                    if (sub && cat) it.sub = sub; else delete it.sub;
+                    if (forWho) { it.forWho = forWho; it.proxyPaid = paid; } else { delete it.forWho; delete it.proxyPaid; }
+                    saveState();
+                    renderShoppingList();
+                }
+            } catch (e) { console.warn('類別儲存失敗', e); }
+            return r;
+        };
+        // 手機鍵盤「完成」也能新增（類別版輸入框）
+        document.addEventListener('focusout', function (e) {
+            const el = e.target;
+            if (!el || !el.matches || !el.matches('.shop-quick input[data-cat]')) return;
+            if (!String(el.value || '').trim()) return;
+            window.__shopNoRefocus = true;
+            try { sgShopQuickAddCat({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
+        });
+        (function () {
+            if (document.getElementById('sgShopCatStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgShopCatStyle';
+            st.textContent = `
+                .sg-sc-box{border:1.5px solid var(--cb);background:var(--cbg);border-radius:14px;padding:8px 10px 10px;margin-bottom:12px;}
+                .sg-sc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;font-size:0.95rem;color:var(--ct);padding:2px 2px 4px;}
+                .sg-sc-head em{font-style:normal;margin-left:auto;font-size:0.74rem;font-weight:700;background:#fff;border:1px solid var(--cb);border-radius:999px;padding:0 9px;color:var(--ct);}
+                .sg-sc-note{font-size:0.76rem;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:3px 9px;margin:2px 0 6px;display:inline-block;}
+                .sg-sc-sub{font-weight:800;font-size:0.8rem;color:var(--ct);margin:8px 2px 2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+                .sg-sc-sub span{font-size:0.68rem;font-weight:700;background:#fff;border:1px solid var(--cb);border-radius:999px;padding:0 7px;}
+                .sg-sc-box .shop-tiles{padding:4px 0 2px;}
+                .sg-pay{cursor:pointer;font-size:0.72rem;font-weight:800;border-radius:999px;padding:1px 10px;border:1px solid #fed7aa;background:#fff7ed;color:#c2410c;}
+                .sg-pay.on{border-color:#a7f3d0;background:#ecfdf5;color:#047857;}
+            `;
+            document.head.appendChild(st);
+        })();
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -17804,7 +18085,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.23.6：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.23.7：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -28179,7 +28460,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.23.6：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.23.7：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
