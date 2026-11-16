@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.23.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.23.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -15972,7 +15972,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.23.1：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.23.2：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -15989,7 +15989,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.1：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.23.2：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -16047,7 +16047,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.23.1：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.23.2：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -16229,7 +16229,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.23.1：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.23.2：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -16286,7 +16286,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.23.1：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.23.2：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -16489,7 +16489,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.1：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.23.2：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -16561,6 +16561,89 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
+        // ===== V3.23.2：機酒與行前預訂改為 Kanban（每個類別一欄，可橫向捲動） =====
+        var SG_LK_COLS = [
+            { k: 'flight', label: '往返機票', icon: 'fa-plane-departure', bg: '#eff6ff', border: '#9ec5f0', text: '#1d4ed8', modes: ['all', 'transit'], wide: true },
+            { k: 'hotel', label: '住宿飯店', icon: 'fa-hotel', bg: '#fffaf0', border: '#e6c98a', text: '#966420', modes: ['all', 'hotel'], wide: true },
+            { k: 'transfer', modes: ['all', 'transit'] },
+            { k: 'rail', modes: ['all', 'transit'] },
+            { k: 'pass', modes: ['all', 'transit'] },
+            { k: 'ticket', modes: ['all', 'tickets'] },
+            { k: 'tour', modes: ['all', 'tickets'] },
+            { k: 'sim', modes: ['all', 'tickets'] },
+            { k: 'misc', modes: ['all', 'tickets'] }
+        ];
+        function sgLkReminderHtml(plan) {
+            try {
+                const pend = (plan.majorTransports || []).map(it => ({ it, r: sgMtBookingReminder(it) })).filter(x => x.r && !x.r.done);
+                if (!pend.length) return '';
+                pend.sort((a, b) => (a.r.diff === undefined ? -1 : a.r.diff) - (b.r.diff === undefined ? -1 : b.r.diff));
+                return `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:7px 12px;font-size:0.8rem;color:#92400e;margin-bottom:10px;">
+                    <strong>⏰ 預約提醒（${pend.length} 項待預約）</strong>
+                    ${pend.slice(0, 4).map(x => `<div>• ${escapeHtml(x.it.title)}：${escapeHtml(x.r.text)}</div>`).join('')}</div>`;
+            } catch (e) { return ''; }
+        }
+        function renderLogisticsKanban() {
+            const plan = getCurrentPlan();
+            const split = document.getElementById('logisticsSplitGrid');
+            if (!plan || !split) return;
+            let wrap = document.getElementById('logisticsKanbanWrap');
+            if (!wrap) {
+                wrap = document.createElement('div');
+                wrap.id = 'logisticsKanbanWrap';
+                split.parentNode.insertBefore(wrap, split);
+            }
+            const mode = currentLogisticsSubtab || 'all';
+            const items = (Array.isArray(plan.majorTransports) ? plan.majorTransports : []).map((it, idx) => ({ it, idx })).filter(o => o && o.it);
+            const known = ['transfer', 'rail', 'pass', 'ticket', 'tour', 'sim', 'misc'];
+            const flightHtml = (document.getElementById('sideFlightCardsContainer') || {}).innerHTML || '';
+            const hotelHtml = (document.getElementById('sideHotelCardsContainer') || {}).innerHTML || '';
+            const legs = ((plan.flights && plan.flights.legs) || []).length;
+            const hotels = (plan.hotels && plan.hotels.length) ? plan.hotels.length : (plan.hotel ? 1 : 0);
+            const cols = SG_LK_COLS.filter(c => c.modes.indexOf(mode) >= 0).map(c => {
+                let meta = c, cards = '', n = 0;
+                if (c.k === 'flight') { cards = flightHtml.trim(); n = legs; }
+                else if (c.k === 'hotel') { cards = hotelHtml.trim(); n = hotels; }
+                else {
+                    meta = Object.assign({}, MAJOR_TRANS_CATEGORIES[c.k]);
+                    const arr = items.filter(o => o.it.category === c.k || (c.k === 'misc' && known.indexOf(o.it.category) < 0));
+                    n = arr.length;
+                    cards = arr.map(o => sgMtCardHtml(o.it, o.idx, plan)).join('');
+                }
+                const hint = { flight: '尚未設定航班，從右上「＋ 新增預訂」設定', hotel: '尚未新增住宿，從右上「＋ 新增預訂」新增' }[c.k] || '尚無項目';
+                return `<div class="sg-lk-col ${c.wide ? 'wide' : ''}" style="--cb:${meta.border};--cbg:${meta.bg};--ct:${meta.text};">
+                    <div class="sg-lk-head"><i class="fa-solid ${meta.icon}"></i> ${escapeHtml(meta.label)} <span>${n}</span></div>
+                    <div class="sg-lk-body">${n ? cards : `<div class="sg-lk-empty">${hint}</div>`}</div>
+                </div>`;
+            }).join('');
+            wrap.innerHTML = sgLkReminderHtml(plan) + `<div id="logisticsKanban">${cols}</div>`;
+        }
+        const __origRenderLogisticsViewV232 = renderLogisticsView;
+        renderLogisticsView = function () {
+            const r = __origRenderLogisticsViewV232.apply(this, arguments);
+            try { renderLogisticsKanban(); } catch (e) { console.warn('Kanban 顯示失敗', e); }
+            return r;
+        };
+        (function () {
+            if (document.getElementById('sgLkStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgLkStyle';
+            st.textContent = `
+                #view-logistics #logisticsSplitGrid{display:none !important;}
+                #logisticsKanban{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding:2px 2px 14px;scroll-snap-type:x proximity;}
+                .sg-lk-col{flex:0 0 300px;min-width:0;border:1.5px solid var(--cb);background:var(--cbg);border-radius:14px;padding:8px 8px 10px;scroll-snap-align:start;}
+                .sg-lk-col.wide{flex-basis:360px;}
+                .sg-lk-head{display:flex;align-items:center;gap:6px;font-weight:800;font-size:0.88rem;color:var(--ct);padding:2px 4px 8px;}
+                .sg-lk-head span{margin-left:auto;font-size:0.72rem;background:#fff;border:1px solid var(--cb);border-radius:999px;padding:0 8px;}
+                .sg-lk-body{display:flex;flex-direction:column;gap:8px;min-width:0;}
+                .sg-lk-body > *{min-width:0;}
+                .sg-lk-body .major-trans-card{background:#fff;}
+                .sg-lk-empty{border:1.5px dashed var(--cb);border-radius:10px;padding:14px 8px;text-align:center;font-size:0.76rem;color:#94a3b8;background:rgba(255,255,255,.6);}
+                @media (max-width:700px){ .sg-lk-col,.sg-lk-col.wide{flex-basis:86vw;} }
+            `;
+            document.head.appendChild(st);
+        })();
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -16576,7 +16659,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.23.1：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.23.2：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -26966,7 +27049,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.23.1：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.23.2：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
