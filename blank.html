@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.23.7</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.23.8</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7398,16 +7398,13 @@
                                 交通移動方式
                             </label>
                             <select id="transitModeSelect" class="form-input">
-                                <option value="car">🚗 開車 / 計程車 / 專車接送</option>
-                                <option value="transit">🚇 大眾運輸 / 地鐵 / 捷運</option>
-                                <option value="mixed">🚇🚶 捷運＋步行（混合）</option>
-                                <option value="bus">🚌 長途客運 / 巴士 / 公車</option>
-                                <option value="walk">🚶 步行 / 散步</option>
-                                <option value="flight">✈️ 航班 / 航程</option>
-                                <option value="train">🚄 高鐵 / 火車 / 動車</option>
-                                <option value="ship">🚢 遊輪 / 渡輪 / 船班</option>
-                                <option value="bike">🚲 自行車 / 騎行</option>
-                                <option value="other">📌 其他交通方式</option>
+                                <option value="walk">🚶 步行</option>
+                                <option value="transit">🚇 捷運・地鐵</option>
+                                <option value="bus">🚌 公車・客運</option>
+                                <option value="car">🚗 開車・計程車</option>
+                                <option value="train">🚄 高鐵・火車</option>
+                                <option value="flight">✈️ 飛機</option>
+                                <option value="ship">⛴️ 船班</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -7431,6 +7428,23 @@
                             <button type="button" class="day-chip" style="padding:2px 8px; font-size:0.74rem;" onclick="setTransitMinutesPreset(90)">1.5 小時</button>
                             <button type="button" class="day-chip" style="padding:2px 8px; font-size:0.74rem;" onclick="setTransitMinutesPreset(120)">2 小時</button>
                         </div>
+                    </div>
+
+                    <!-- 步行負擔：標籤或直接填分鐘 -->
+                    <div id="transitWalkBlock" style="margin-bottom:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px 12px;">
+                        <div style="font-weight:700; color:#15803d; font-size:0.84rem; margin-bottom:6px;">🚶 步行負擔（轉乘或站內步行）</div>
+                        <div id="transitWalkLevelBtns" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+                            <button type="button" data-lv="low" onclick="sgWalkSetLevel('low')" style="cursor:pointer;border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:3px 11px;font-size:0.78rem;">🟢 幾乎不用走（&lt; 5 分鐘）</button>
+                            <button type="button" data-lv="mid" onclick="sgWalkSetLevel('mid')" style="cursor:pointer;border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:3px 11px;font-size:0.78rem;">🟡 適中步行（5–15 分鐘）</button>
+                            <button type="button" data-lv="high" onclick="sgWalkSetLevel('high')" style="cursor:pointer;border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:3px 11px;font-size:0.78rem;">🔴 大量步行（&gt; 15 分鐘）</button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <label style="font-size:0.8rem; font-weight:700; color:#334155; margin:0;">或直接填預估步行分鐘</label>
+                            <input type="number" id="transitWalkInput" class="form-input" min="0" inputmode="numeric" placeholder="例如 8" style="width:96px;" oninput="sgWalkInputChange()">
+                            <span style="font-size:0.8rem; color:#475569;">分鐘</span>
+                        </div>
+                        <input type="hidden" id="transitWalkLevel">
+                        <div id="transitWalkHint" style="font-size:0.74rem; color:#64748b; margin-top:5px;"></div>
                     </div>
 
                     <!-- 交通費用與備註 -->
@@ -11718,7 +11732,7 @@ const firebaseConfig = {
                             <span style="background:#3b7386; color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:3px; font-weight:700; margin-right:4px;"><i class="fa-solid fa-location-arrow"></i> 起程接駁</span>
                             ${fTransit.title ? `<strong style="color:#0369a1; font-size:0.76rem; margin-right:4px;"><i class="fa-solid fa-diamond-turn-right" style="font-size:0.68rem;"></i> ${escapeHtml(fTransit.title)}</strong>` : ''}
                             <i class="fa-solid ${fModeInfo.icon}"></i>
-                            <span>${fModeInfo.label}約 <strong>${formatDuration(fMinutes)}</strong></span>
+                            <span>${fModeInfo.label}約 <strong>${formatDuration(fMinutes)}</strong></span>${sgWalkBadgeHtml(fTransit, fTransit.mode || 'car', fMinutes)}
                             <span style="font-size:0.68rem; opacity:0.85; margin-left:2px;">${fRange}</span>
                             ${fFromChip} ${fLeaveChip} ${fGoogleChip}
                             ${fCostHtml}
@@ -11850,7 +11864,7 @@ const firebaseConfig = {
                             badgeInnerHtml = `
                                 ${titleTagHtml}
                                 <i class="fa-solid ${modeInfo.icon}"></i>
-                                <span>${modeInfo.label}約 <strong>${formatDuration(displayMinutes)}</strong></span>
+                                <span>${modeInfo.label}約 <strong>${formatDuration(displayMinutes)}</strong></span>${sgWalkBadgeHtml(customTransit, transitMode, displayMinutes)}
                                 ${customTagHtml}
                                 <span style="font-size:0.68rem; opacity:0.85; margin-left:2px;">${rangeDisplay}</span>
                                 ${costDisplayHtml}
@@ -15995,7 +16009,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.23.7：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.23.8：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16012,7 +16026,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.7：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.23.8：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -16070,7 +16084,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.23.7：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.23.8：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -16252,7 +16266,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.23.7：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.23.8：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -16309,7 +16323,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.23.7：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.23.8：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -16512,7 +16526,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.7：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.23.8：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -16584,7 +16598,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.7：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.23.8：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -16598,7 +16612,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.7：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.23.8：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -16629,7 +16643,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.23.7：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.23.8：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -16776,7 +16790,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.7：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.23.8：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -17039,6 +17053,137 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
+        // ===== V3.23.8：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        var SG_WALK_LEVELS = {
+            low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
+            mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
+            high: { emoji: '🔴', text: '大量步行', range: '> 15 分鐘', bg: '#fef2f2', fg: '#b91c1c', bd: '#fecaca', rep: 20 }
+        };
+        var SG_MODE_CANON = { mixed: 'transit', bike: 'walk', other: 'car' };
+        function sgWalkLevelOfMin(m) { return m < 5 ? 'low' : (m <= 15 ? 'mid' : 'high'); }
+        // 單段移動的步行資訊：步行模式整段算步行；其他模式用填寫的步行分鐘，只選標籤則以代表值估算
+        function sgWalkInfo(t, mode, minutes) {
+            if (!t) return null;
+            const m = mode || t.mode || 'car';
+            if (m === 'walk') { const v = Number(minutes !== undefined ? minutes : t.minutes) || 0; return v > 0 ? { min: v, est: false, level: sgWalkLevelOfMin(v), whole: true } : null; }
+            const w = Number(t.walkMin) || 0;
+            if (w > 0) return { min: w, est: false, level: sgWalkLevelOfMin(w), whole: false };
+            if (t.walkLevel && SG_WALK_LEVELS[t.walkLevel]) return { min: SG_WALK_LEVELS[t.walkLevel].rep, est: true, level: t.walkLevel, whole: false };
+            return null;
+        }
+        function sgWalkBadgeHtml(t, mode, minutes) {
+            const info = sgWalkInfo(t, mode, minutes);
+            if (!info || info.whole) return '';
+            const L = SG_WALK_LEVELS[info.level];
+            return `<span title="步行負擔：${L.text}（${L.range}）" style="font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:999px;border:1px solid ${L.bd};background:${L.bg};color:${L.fg};margin-left:4px;white-space:nowrap;">${L.emoji} 步行${info.est ? '約 ' : ' '}${info.min} 分</span>`;
+        }
+        function sgDayWalkTotal(day) {
+            let total = 0, est = false, n = 0;
+            const add = (t, mode, minutes) => { const i = sgWalkInfo(t, mode, minutes); if (i) { total += i.min; if (i.est) est = true; n++; } };
+            if (day.firstTransit) add(day.firstTransit, day.firstTransit.mode, day.firstTransit.minutes);
+            (day.events || []).forEach((ev, i) => { if (i > 0 && ev.transit) add(ev.transit, ev.transit.mode, ev.transit.minutes); });
+            if (day.lastTransit && Number(day.lastTransit.minutes) > 0) add(day.lastTransit, day.lastTransit.mode, day.lastTransit.minutes);
+            return { total, est, n };
+        }
+        // ---- 編輯視窗：步行負擔 ----
+        function sgWalkRenderBtns() {
+            const cur = (document.getElementById('transitWalkLevel') || {}).value || '';
+            document.querySelectorAll('#transitWalkLevelBtns button').forEach(b => {
+                const L = SG_WALK_LEVELS[b.dataset.lv];
+                const on = b.dataset.lv === cur;
+                b.style.background = on ? L.bg : '#fff';
+                b.style.borderColor = on ? L.fg : '#cbd5e1';
+                b.style.color = on ? L.fg : '#475569';
+                b.style.fontWeight = on ? '800' : '600';
+            });
+        }
+        function sgWalkSetLevel(lv) {
+            const h = document.getElementById('transitWalkLevel');
+            if (!h) return;
+            h.value = (h.value === lv) ? '' : lv;
+            const inp = document.getElementById('transitWalkInput');
+            if (inp && inp.value !== '' && h.value) inp.value = '';
+            sgWalkRenderBtns();
+        }
+        function sgWalkInputChange() {
+            const inp = document.getElementById('transitWalkInput');
+            const h = document.getElementById('transitWalkLevel');
+            const v = parseInt(inp && inp.value || '0', 10) || 0;
+            if (h) h.value = v > 0 ? sgWalkLevelOfMin(v) : '';
+            sgWalkRenderBtns();
+        }
+        function sgWalkBlockSync() {
+            const mode = (document.getElementById('transitModeSelect') || {}).value || '';
+            const blk = document.getElementById('transitWalkBlock');
+            const hint = document.getElementById('transitWalkHint');
+            if (!blk) return;
+            const isWalk = mode === 'walk';
+            blk.querySelectorAll('button,input[type=number]').forEach(el => { el.disabled = isWalk; });
+            blk.style.opacity = isWalk ? '0.55' : '1';
+            if (hint) hint.textContent = isWalk ? '步行移動：整段時間都算步行，會自動加進當日步行加總。' : '填分鐘數會自動判斷等級；只選標籤的話，加總時以代表值估算（約 3／10／20 分）。';
+        }
+        const __origOpenTransitV238 = openTransitSettingsModal;
+        openTransitSettingsModal = function (dayNum, eventIdx) {
+            const r = __origOpenTransitV238.apply(this, arguments);
+            try {
+                const t = sgTransitObjOf(dayNum, eventIdx) || {};
+                const sel = document.getElementById('transitModeSelect');
+                if (sel && SG_MODE_CANON[sel.value]) sel.value = SG_MODE_CANON[sel.value];
+                const inp = document.getElementById('transitWalkInput');
+                const h = document.getElementById('transitWalkLevel');
+                if (inp) inp.value = Number(t.walkMin) > 0 ? Number(t.walkMin) : '';
+                if (h) h.value = Number(t.walkMin) > 0 ? sgWalkLevelOfMin(Number(t.walkMin)) : (SG_WALK_LEVELS[t.walkLevel] ? t.walkLevel : '');
+                if (sel && !sel.dataset.walkBound) { sel.dataset.walkBound = '1'; sel.addEventListener('change', sgWalkBlockSync); }
+                sgWalkRenderBtns();
+                sgWalkBlockSync();
+            } catch (e) { console.warn(e); }
+            return r;
+        };
+        const __origSaveTransitV238 = handleSaveTransitSubmit;
+        handleSaveTransitSubmit = function (e) {
+            const dayNum = Number(document.getElementById('transitDayNum')?.value || 1);
+            const idx = Number(document.getElementById('transitEventIdx')?.value || 1);
+            const mode = (document.getElementById('transitModeSelect') || {}).value || 'car';
+            const wv = parseInt((document.getElementById('transitWalkInput') || {}).value || '0', 10) || 0;
+            const lv = (document.getElementById('transitWalkLevel') || {}).value || '';
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === dayNum);
+            const ev = day && idx > 0 ? day.events[idx] : null;
+            const r = __origSaveTransitV238.apply(this, arguments);
+            try {
+                const t = idx === 0 ? (day && day.firstTransit) : (ev && ev.transit);
+                if (t) {
+                    delete t.railMin; delete t.walkMin; delete t.walkLevel;
+                    if (mode !== 'walk') {
+                        if (wv > 0) { t.walkMin = wv; t.walkLevel = sgWalkLevelOfMin(wv); }
+                        else if (lv) t.walkLevel = lv;
+                    }
+                    saveState();
+                    renderTimelineView();
+                }
+            } catch (err) { console.warn(err); }
+            return r;
+        };
+        // 當日步行加總：顯示在每天標題旁
+        const __origRenderTimelineViewV238 = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineViewV238.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                const day = plan && (plan.days || []).find(d => d.dayNum === appState.activeDayTab);
+                const row = document.querySelector('#dayCardsContainer .day-card-title-group > div');
+                if (day && row && !row.querySelector('.sg-walk-total')) {
+                    const s = sgDayWalkTotal(day);
+                    if (s.total > 0) {
+                        const lv = s.total <= 30 ? 'low' : (s.total <= 90 ? 'mid' : 'high');
+                        const L = SG_WALK_LEVELS[lv];
+                        row.insertAdjacentHTML('beforeend', `<span class="sg-walk-total" title="把當天各段移動的步行時間加總${s.est ? '（部分以標籤估算）' : ''}" style="font-size:0.74rem;font-weight:800;padding:2px 9px;border-radius:999px;border:1px solid ${L.bd};background:${L.bg};color:${L.fg};">🚶 今日步行${s.est ? '約 ' : ' '}${s.total >= 60 ? Math.floor(s.total / 60) + ' 小時 ' + (s.total % 60 ? (s.total % 60) + ' 分' : '') : s.total + ' 分'}</span>`);
+                    }
+                }
+            } catch (e) { console.warn('步行加總顯示失敗', e); }
+            return r;
+        };
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -17054,7 +17199,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.23.7：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.23.8：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -26288,14 +26433,14 @@ const firebaseConfig = {
         // ==========================================
         function getTransitModeInfo(mode) {
             const map = {
-                'car': { label: '開車/計程車/專車', icon: 'fa-car-side', emoji: '🚗' },
-                'transit': { label: '大眾運輸/地鐵', icon: 'fa-train-subway', emoji: '🚇' },
+                'car': { label: '開車・計程車', icon: 'fa-car-side', emoji: '🚗' },
+                'transit': { label: '捷運・地鐵', icon: 'fa-train-subway', emoji: '🚇' },
                 'mixed': { label: '捷運＋步行', icon: 'fa-train-subway', emoji: '🚇🚶' },
-                'bus': { label: '長途客運/公車巴士', icon: 'fa-bus', emoji: '🚌' },
-                'walk': { label: '步行散步', icon: 'fa-person-walking', emoji: '🚶' },
-                'flight': { label: '航班航程', icon: 'fa-plane-departure', emoji: '✈️' },
-                'train': { label: '高鐵火車', icon: 'fa-train', emoji: '🚄' },
-                'ship': { label: '遊輪/渡輪/船班', icon: 'fa-ship', emoji: '🚢' },
+                'bus': { label: '公車・客運', icon: 'fa-bus', emoji: '🚌' },
+                'walk': { label: '步行', icon: 'fa-person-walking', emoji: '🚶' },
+                'flight': { label: '飛機', icon: 'fa-plane-departure', emoji: '✈️' },
+                'train': { label: '高鐵・火車', icon: 'fa-train', emoji: '🚄' },
+                'ship': { label: '船班', icon: 'fa-ship', emoji: '⛴️' },
                 'bike': { label: '自行車騎行', icon: 'fa-bicycle', emoji: '🚲' },
                 'other': { label: '接駁移動', icon: 'fa-diamond-turn-right', emoji: '🚙' }
             };
@@ -27444,7 +27589,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.23.7：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.23.8：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
