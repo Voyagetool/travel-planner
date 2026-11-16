@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.22.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.23.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6249,7 +6249,7 @@
                 <i class="fa-solid fa-border-all"></i><span class="tb-full"> 總覽與行程</span><span class="tb-short">總覽</span>
             </button>
             <button class="view-tab-btn" id="tabBtn-logistics" onclick="switchView('logistics')">
-                <i class="fa-solid fa-plane-up"></i><span class="tb-full"> 交通與住宿</span><span class="tb-short">交通住宿</span>
+                <i class="fa-solid fa-plane-up"></i><span class="tb-full"> 機酒與行前預訂</span><span class="tb-short">行前預訂</span>
             </button>
             <button class="view-tab-btn" id="tabBtn-spots" onclick="switchView('spots')">
                 <i class="fa-solid fa-map-location-dot"></i><span class="tb-full"> 景點與餐廳清單</span><span class="tb-short">景點餐廳</span>
@@ -6325,13 +6325,16 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
                     <div class="expenses-subtabs-bar">
                         <button type="button" class="expenses-subtab-btn active" id="logisticsSubtabBtn-all" onclick="switchLogisticsSubtab('all')">
-                            <i class="fa-solid fa-table-columns"></i> 左右雙欄總覽
+                            <i class="fa-solid fa-table-columns"></i> 全部總覽
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-transit" onclick="switchLogisticsSubtab('transit')">
-                            <i class="fa-solid fa-plane-departure"></i> 僅看交通 (機票/其他交通)
+                            <i class="fa-solid fa-plane-departure"></i> 機票與交通
                         </button>
                         <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-hotel" onclick="switchLogisticsSubtab('hotel')">
-                            <i class="fa-solid fa-hotel"></i> 僅看住宿飯店
+                            <i class="fa-solid fa-hotel"></i> 住宿飯店
+                        </button>
+                        <button type="button" class="expenses-subtab-btn" id="logisticsSubtabBtn-tickets" onclick="switchLogisticsSubtab('tickets')">
+                            <i class="fa-solid fa-ticket"></i> 票券與預約
                         </button>
                     </div>
                     <div style="font-size: 0.74rem; color: #64748b;">
@@ -6368,7 +6371,7 @@
                                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                                     <h3 class="logistics-clean-title">
                                         <i class="fa-solid fa-van-shuttle" style="color:#4a5785; font-size:0.88rem;"></i>
-                                        其他交通
+                                        其他交通與接送
                                     </h3>
                                     <span id="majorTransEmptyHint" style="font-size:0.74rem; color:#94a3b8; font-weight:500;"></span>
                                 </div>
@@ -6417,6 +6420,24 @@
                             <div id="sideHotelCardsContainer">
                                 <!-- Populated dynamically by renderSidebarHotel() -->
                             </div>
+                        </div>
+
+                        <!-- 子區塊 D: 票券、體驗與通訊（一日遊、門票、eSIM、餐廳訂位、保險） -->
+                        <div class="logistics-sub-block logistics-sub-divider" id="ticket-service-section">
+                            <div class="logistics-clean-head">
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <h3 class="logistics-clean-title">
+                                        <i class="fa-solid fa-ticket" style="color:#0e7490; font-size:0.88rem;"></i>
+                                        票券、體驗與通訊
+                                    </h3>
+                                    <span id="ticketServiceHint" style="font-size:0.74rem; color:#94a3b8; font-weight:500;"></span>
+                                </div>
+                                <button type="button" class="n-btn n-btn-primary" style="border-radius:7px; padding:4px 10px; font-size:0.75rem;" onclick="sgNewMt('service')">
+                                    <i class="fa-solid fa-plus"></i> 新增票券／預訂
+                                </button>
+                            </div>
+                            <div id="ticketTagBar"></div>
+                            <div id="ticketServiceCardsContainer"></div>
                         </div>
 
                                             </div>
@@ -8808,7 +8829,12 @@ const firebaseConfig = {
                                 <option value="bus">🚌 機場巴士 / 長途客運</option>
                                 <option value="domestic_flight">✈️ 國內線航班</option>
                                 <option value="pass">🎫 交通 Pass / 周遊券 (JR Pass、地鐵券…)</option>
+                                <option value="ic">💳 IC卡 / 地鐵券</option>
                                 <option value="sim">📶 網路卡 / eSIM</option>
+                                <option value="tour">🧭 一日遊 / 當地團</option>
+                                <option value="ticket">🎟️ 景點 / 樂園門票</option>
+                                <option value="restaurant">🍽️ 餐廳訂位</option>
+                                <option value="insurance">🛡️ 旅遊保險</option>
                                 <option value="other">🚕 其他交通</option>
                             </select>
                             <input type="text" id="majorTransTitle" class="form-input" placeholder="填寫項目內容（如：桃園機場 T2 送機專車 / 成田機場接機）">
@@ -8893,6 +8919,33 @@ const firebaseConfig = {
                         <div class="form-group">
                             <label class="form-label">訂單編號 / 聯絡電話</label>
                             <input type="text" id="majorTransBookingNo" class="form-input" placeholder="例如：#KK20260508 或司機電話">
+                        </div>
+                    </div>
+
+                    <!-- 憑證資訊：核銷方式、憑證連結、狀態（在當地免翻 Email） -->
+                    <div class="form-row" style="grid-template-columns: 1fr 1.4fr 1fr;">
+                        <div class="form-group">
+                            <label class="form-label">核銷方式</label>
+                            <select id="majorTransRedeem" class="form-input">
+                                <option value="">（未設定）</option>
+                                <option value="QR Code">QR Code</option>
+                                <option value="實體兌換券">實體兌換券</option>
+                                <option value="憑護照/訂單號">憑護照／訂單號</option>
+                                <option value="Email 憑證">Email 憑證</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">憑證連結（QR Code／電子票）</label>
+                            <input type="url" id="majorTransVoucherUrl" class="form-input" placeholder="https://…（Klook / KKday / 官方電子票）">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">狀態</label>
+                            <select id="majorTransVoucherStatus" class="form-input">
+                                <option value="">（未設定）</option>
+                                <option value="尚未付款">尚未付款</option>
+                                <option value="已付款待出發">已付款待出發</option>
+                                <option value="已兌換完畢">已兌換完畢</option>
+                            </select>
                         </div>
                     </div>
 
@@ -12066,7 +12119,7 @@ const firebaseConfig = {
 
                     <div class="okr-kpi-card clickable" onclick="switchView('logistics')" title="點擊切換至「交通與住宿」分頁管理機票、包車接送與飯店">
                         <div class="okr-kpi-info">
-                            <div class="okr-kpi-label">交通與住宿大項目</div>
+                            <div class="okr-kpi-label">機酒與行前預訂</div>
                             <div class="okr-kpi-value">${legs.length} 航段 ‧ ${hotelList.length} 飯店</div>
                             <div class="okr-kpi-sub">
                                 ${mtCount > 0 ? `<span style="color:#334155; font-weight:700;">含 ${mtCount} 筆包車/接送</span> ‧ ` : ''}<span style="color:#286678; font-weight:600;">管理機酒與接送 ➔</span>
@@ -16274,7 +16327,7 @@ const firebaseConfig = {
         
         // ===== V3.17.3：網路卡 (eSIM) 不計入「交通」統計，另列為「通訊」費用 =====
         function sgCalcSimStats(plan) {
-            const sims = (plan && Array.isArray(plan.majorTransports)) ? plan.majorTransports.filter(x => x && x.category === 'sim') : [];
+            const sims = (plan && Array.isArray(plan.majorTransports)) ? plan.majorTransports.filter(x => x && sgMtIsService(x.category)) : [];
             return calcPlanMajorTransportStats(Object.assign({}, plan, { majorTransports: sims }), true);
         }
 
@@ -16958,7 +17011,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.22.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.23.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16975,7 +17028,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.22.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.23.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -17033,7 +17086,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.22.0：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.23.0：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -17215,7 +17268,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.22.0：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.23.0：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -17272,6 +17325,209 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
+        // ===== V3.23.0：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'restaurant', 'insurance'].indexOf(c) >= 0; }
+        var sgTicketTag = 'all';
+        var SG_TICKET_TAGS = [
+            { k: 'all', t: '全部' }, { k: 'tour', t: '一日遊／當地團' }, { k: 'ticket', t: '景點／樂園門票' },
+            { k: 'sim', t: 'eSIM／網卡' }, { k: 'restaurant', t: '餐廳訂位' }, { k: 'insurance', t: '旅遊保險' }
+        ];
+        var SG_VOUCHER_STATUS = {
+            '尚未付款': { bg: '#f1f5f9', fg: '#64748b', bd: '#cbd5e1' },
+            '已付款待出發': { bg: '#fffbeb', fg: '#b45309', bd: '#fde68a' },
+            '已兌換完畢': { bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0' }
+        };
+        function sgNewMt(group) {
+            window.__mtNewGroup = group;
+            try { openEditMajorTransportModal(-1); } finally { window.__mtNewGroup = null; }
+        }
+        function sgSetTicketTag(k) { sgTicketTag = k; renderTicketServicesSection(); }
+        function sgMtSafeUrl(u) { u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
+        function sgMtVoucherHtml(item, idx) {
+            const svc = sgMtIsService(item.category);
+            if (!svc && !(item.redeem || item.voucherUrl || item.voucherStatus)) return '';
+            const st = item.voucherStatus || '';
+            const sc = SG_VOUCHER_STATUS[st] || null;
+            const url = sgMtSafeUrl(item.voucherUrl);
+            const parts = [];
+            if (item.redeem) parts.push(`<span style="font-size:0.72rem;font-weight:800;color:#0e7490;background:#ecfeff;border:1px solid #a5f3fc;border-radius:6px;padding:1px 7px;">[${escapeHtml(item.redeem)}]</span>`);
+            parts.push(`<button type="button" onclick="sgMtCycleVoucherStatus(${idx}, event)" title="點一下切換狀態" style="cursor:pointer;font-size:0.72rem;font-weight:800;border-radius:999px;padding:1px 9px;border:1px solid ${sc ? sc.bd : '#cbd5e1'};background:${sc ? sc.bg : '#fff'};color:${sc ? sc.fg : '#94a3b8'};">${st ? escapeHtml(st) : '＋ 設定狀態'}</button>`);
+            if (item.bookingNo) parts.push(`<button type="button" class="n-btn" style="padding:1px 8px;font-size:0.72rem;" onclick="sgMtCopyNo(${idx}, event)" title="複製訂單編號"><i class="fa-regular fa-copy"></i> 複製單號</button>`);
+            if (url) parts.push(`<a class="n-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:1px 8px;font-size:0.72rem;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟憑證</a>`);
+            return `<div onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;padding:5px 8px;border:1px dashed #cbd5e1;border-radius:8px;background:#fcfdfd;">${parts.join('')}</div>`;
+        }
+        function sgMtCycleVoucherStatus(idx, ev) {
+            if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+            const plan = getCurrentPlan();
+            const it = plan && plan.majorTransports && plan.majorTransports[idx];
+            if (!it) return;
+            const order = ['', '尚未付款', '已付款待出發', '已兌換完畢'];
+            it.voucherStatus = order[(order.indexOf(it.voucherStatus || '') + 1) % order.length];
+            saveState();
+            renderLogisticsView();
+        }
+        function sgMtCopyNo(idx, ev) {
+            if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+            const plan = getCurrentPlan();
+            const it = plan && plan.majorTransports && plan.majorTransports[idx];
+            if (!it || !it.bookingNo) return;
+            const txt = String(it.bookingNo);
+            const done = () => showToast('success', `已複製單號：${txt}`);
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => sgMtCopyFallback(txt, done));
+            else sgMtCopyFallback(txt, done);
+        }
+        function sgMtCopyFallback(txt, done) {
+            const ta = document.createElement('textarea');
+            ta.value = txt; ta.style.cssText = 'position:fixed;left:-9999px;';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); done(); } catch (e) { showToast('warning', '無法自動複製，請手動長按複製'); }
+            document.body.removeChild(ta);
+        }
+
+        function renderTicketServicesSection() {
+            const container = document.getElementById('ticketServiceCardsContainer');
+            const bar = document.getElementById('ticketTagBar');
+            const hint = document.getElementById('ticketServiceHint');
+            const plan = getCurrentPlan();
+            if (!container || !plan) return;
+            const all = (Array.isArray(plan.majorTransports) ? plan.majorTransports : []).map((it, idx) => ({ it, idx })).filter(o => o.it && sgMtIsService(o.it.category));
+            if (hint) hint.textContent = all.length ? `共 ${all.length} 筆` : '尚未新增項目';
+            if (bar) {
+                bar.innerHTML = all.length ? SG_TICKET_TAGS.map(g => {
+                    const n = g.k === 'all' ? all.length : all.filter(o => o.it.category === g.k).length;
+                    if (g.k !== 'all' && !n && sgTicketTag !== g.k) return '';
+                    const on = sgTicketTag === g.k;
+                    return `<button type="button" onclick="sgSetTicketTag('${g.k}')" style="cursor:pointer;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid ${on ? '#0e7490' : '#cbd5e1'};background:${on ? '#0e7490' : '#fff'};color:${on ? '#fff' : '#475569'};">${g.t} ${n}</button>`;
+                }).join('') : '';
+            }
+            const show = all.filter(o => sgTicketTag === 'all' || o.it.category === sgTicketTag);
+            if (!show.length) {
+                container.innerHTML = `<div style="padding:12px;border:1px dashed #cbd5e1;border-radius:10px;color:#94a3b8;font-size:0.8rem;text-align:center;">${all.length ? '這個分類沒有項目' : '一日遊、景點門票、eSIM、餐廳訂位、旅遊保險等預訂都放這裡，按右上「＋ 新增票券／預訂」建立。'}</div>`;
+                return;
+            }
+            container.innerHTML = show.map(o => sgMtCardHtml(o.it, o.idx, plan)).join('');
+        }
+
+        // ---- 5 格統計卡片 ----
+        renderLogisticsKpis = function () {
+            const container = document.getElementById('logisticsKpiGrid');
+            const plan = getCurrentPlan();
+            if (!container || !plan) return;
+            const m = Math.max(1, Number(plan.memberCount) || 1);
+            const fStats = calcPlanFlightStats(plan);
+            const mtStats = calcPlanMajorTransportStats(plan);
+            const svcStats = sgCalcSimStats(plan);
+            const hStats = calcPlanHotelStats(plan);
+            const legsCount = (plan.flights && plan.flights.legs || []).length;
+            const hotelsList = (plan.hotels && plan.hotels.length > 0) ? plan.hotels : (plan.hotel ? [plan.hotel] : []);
+            const totalNights = hotelsList.reduce((acc, h) => acc + (Number(h.nights) || 0), 0);
+            const totalGroupTwd = fStats.groupTwd + mtStats.groupTwd + svcStats.groupTwd + hStats.totalGroupTwd;
+            const totalPersonTwd = Math.round(totalGroupTwd / m);
+            let paidTwd = 0;
+            if (fStats.hasActual) paidTwd += fStats.actualGroupTwd;
+            paidTwd += mtStats.paidGroupTwd + svcStats.paidGroupTwd;
+            if (hStats.hasActual) paidTwd += hStats.totalActualGroupTwd;
+            const paidPct = totalGroupTwd > 0 ? Math.min(100, Math.round((paidTwd / totalGroupTwd) * 100)) : 0;
+            const cell = (click, title, label, val, sub, cls) => `<div class="logistics-seg-cell" onclick="${click}" title="${title}"><div class="logistics-seg-label">${label}</div><div class="logistics-seg-val ${cls || ''}">${val}</div><div class="logistics-seg-sub">${sub}</div></div>`;
+            container.innerHTML = `<div class="logistics-segmented-strip">
+                ${cell('openEditFlightModal()', '點擊設定往返機票或跨城主交通', '往返機票 / 主交通',
+                    fStats.isSet ? `NT$ ${fStats.personTwd.toLocaleString()}` : `${legsCount} 航段`,
+                    fStats.isSet ? `每人票價 ‧ 全團 NT$ ${fStats.groupTwd.toLocaleString()}` : '點擊設定航班與票價')}
+                ${cell('openEditHotelModal()', '點擊管理入住飯店與房費', `住宿飯店 (${hotelsList.length} 間)`,
+                    hStats.isSet ? `NT$ ${hStats.totalPersonTwd.toLocaleString()}` : (totalNights > 0 ? `${totalNights} 晚` : `${hotelsList.length} 間`),
+                    hStats.isSet ? `每人房費 (${totalNights || '-'}晚) ‧ 全團 NT$ ${hStats.totalGroupTwd.toLocaleString()}` : (hotelsList[0] && hotelsList[0].name ? escapeHtml(hotelsList[0].name) : '點擊新增入住飯店'))}
+                ${cell("sgNewMt('transport')", '點擊新增交通票券／接送', '交通票券 / 接送',
+                    mtStats.count > 0 ? `${mtStats.count} 項` : '0',
+                    mtStats.count > 0 ? `每人 NT$ ${mtStats.personTwd.toLocaleString()} ‧ 全團 NT$ ${mtStats.groupTwd.toLocaleString()}` : '尚未新增，點擊建立', mtStats.count === 0 ? 'accent-amber' : '')}
+                ${cell("sgNewMt('service')", '點擊新增門票／體驗／網卡', '門票 / 體驗 / 網卡',
+                    svcStats.count > 0 ? `${svcStats.count} 項` : '0',
+                    svcStats.count > 0 ? `每人 NT$ ${svcStats.personTwd.toLocaleString()} ‧ 全團 NT$ ${svcStats.groupTwd.toLocaleString()}` : '尚未新增，點擊建立', svcStats.count === 0 ? 'accent-amber' : '')}
+                ${cell("switchView('expenses'); switchExpensesSubtab('actual-expenses');", '點擊前往實際費用核銷中心查看明細', '行前預訂總計 (每人)',
+                    `NT$ ${totalPersonTwd.toLocaleString()}`, `全團 NT$ ${totalGroupTwd.toLocaleString()} ‧ 已核銷 ${paidPct}%`, 'accent-teal')}
+            </div>`;
+        };
+
+        // ---- 四顆篩選鈕：全部總覽／機票與交通／住宿飯店／票券與預約 ----
+        switchLogisticsSubtab = function (mode) {
+            mode = ['all', 'transit', 'hotel', 'tickets'].indexOf(mode) >= 0 ? mode : 'all';
+            currentLogisticsSubtab = mode;
+            ['all', 'transit', 'hotel', 'tickets'].forEach(k => {
+                const btn = document.getElementById('logisticsSubtabBtn-' + k);
+                if (btn) btn.classList.toggle('active', k === mode);
+            });
+            const isAll = mode === 'all';
+            const g = id => document.getElementById(id);
+            if (g('logisticsSplitGrid')) g('logisticsSplitGrid').classList.toggle('single-col', !isAll);
+            if (g('logisticsColLeft')) g('logisticsColLeft').style.display = (isAll || mode === 'transit') ? 'flex' : 'none';
+            if (g('logisticsColRight')) g('logisticsColRight').style.display = (isAll || mode === 'hotel' || mode === 'tickets') ? 'flex' : 'none';
+            if (g('side-transport-section')) g('side-transport-section').style.display = (isAll || mode === 'transit') ? 'block' : 'none';
+            if (g('major-transport-section')) g('major-transport-section').style.display = (isAll || mode === 'transit') ? 'block' : 'none';
+            if (g('side-hotel-section')) g('side-hotel-section').style.display = (isAll || mode === 'hotel') ? 'block' : 'none';
+            if (g('ticket-service-section')) {
+                g('ticket-service-section').style.display = (isAll || mode === 'tickets') ? 'block' : 'none';
+                g('ticket-service-section').classList.toggle('logistics-sub-divider', isAll);
+            }
+            renderLogisticsView();
+        };
+        const __origRenderLogisticsViewV23 = renderLogisticsView;
+        renderLogisticsView = function () {
+            const r = __origRenderLogisticsViewV23.apply(this, arguments);
+            try { renderTicketServicesSection(); } catch (e) { console.warn('票券區塊顯示失敗', e); }
+            return r;
+        };
+
+        // ---- 編輯視窗：核銷方式／憑證連結／狀態 ----
+        const __origOpenEditMajorTransportModalV23 = openEditMajorTransportModal;
+        openEditMajorTransportModal = function (idx) {
+            const grp = window.__mtNewGroup;
+            const r = __origOpenEditMajorTransportModalV23.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                const it = (idx >= 0 && plan && plan.majorTransports) ? plan.majorTransports[idx] : null;
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+                set('majorTransRedeem', it && it.redeem);
+                set('majorTransVoucherUrl', it && it.voucherUrl);
+                set('majorTransVoucherStatus', it && it.voucherStatus);
+                if (!it && grp === 'service') {
+                    set('majorTransCategory', 'ticket');
+                    onMajorTransCategoryChange();
+                    const cb = document.getElementById('majorTransSyncSchedule'); if (cb) cb.checked = false;
+                    const t = document.getElementById('majorTransportModalTitle'); if (t) t.innerText = '🎟️ 新增票券／預訂';
+                } else if (it && sgMtIsService(it.category)) {
+                    const t = document.getElementById('majorTransportModalTitle'); if (t) t.innerText = '🎟️ 編輯票券／預訂';
+                }
+            } catch (e) { console.warn(e); }
+            return r;
+        };
+        const __origSaveMajorTransportV23 = handleSaveMajorTransportSubmit;
+        handleSaveMajorTransportSubmit = function (e) {
+            window.__mtSaving = true;
+            try { return __origSaveMajorTransportV23.apply(this, arguments); } finally { window.__mtSaving = false; }
+        };
+        const __origSyncMajorTransV23 = syncMajorTransportToDailySchedule;
+        syncMajorTransportToDailySchedule = function (plan, item) {
+            if (window.__mtSaving && item) {
+                const v = id => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
+                item.redeem = v('majorTransRedeem');
+                item.voucherUrl = v('majorTransVoucherUrl');
+                item.voucherStatus = v('majorTransVoucherStatus');
+            }
+            return __origSyncMajorTransV23.apply(this, arguments);
+        };
+        (function () {
+            if (document.getElementById('sgBookingStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgBookingStyle';
+            st.textContent = `
+                #view-logistics .logistics-split-grid:not(.single-col) #ticketServiceCardsContainer{display:grid !important;grid-template-columns:minmax(0,1fr) !important;gap:10px !important;}
+                #view-logistics .logistics-split-grid.single-col #ticketServiceCardsContainer{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(360px,1fr)) !important;gap:12px !important;}
+                #ticketTagBar{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px;}
+                #ticketServiceCardsContainer .major-trans-card{min-width:0;}
+                @media (max-width:700px){ #view-logistics .logistics-split-grid.single-col #ticketServiceCardsContainer{grid-template-columns:minmax(0,1fr) !important;} }
+            `;
+            document.head.appendChild(st);
+        })();
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -17287,7 +17543,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.22.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.23.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -18626,8 +18882,8 @@ const firebaseConfig = {
                         <div style="font-size:0.74rem; color:#0284c7; margin-top:2px;">全團 (${stats.memberCount}人): ${curr.symbol} ${stats.groupTransTotal.toLocaleString()} (≈ NT$ ${stats.twdGroupTransTotal.toLocaleString()})</div>
                         <div style="font-size:0.72rem; color:#0369a1; margin-top:2px;">${escapeHtml(sgBudgetNames(plan, 'trans'))}</div>
                         <div style="font-size:0.72rem; color:#475569; margin-top:6px; padding-top:5px; border-top:1px dashed #bae6fd; line-height:1.55;">
-                            ＋「交通與住宿」頁另計（未含在上方）：<br>
-                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人${stats.simStats && stats.simStats.count ? ` ‧ 📶 網路卡 NT$ ${Math.round(stats.simStats.personTwd).toLocaleString()}／人` : ''}
+                            ＋「機酒與行前預訂」頁另計（未含在上方）：<br>
+                            ✈️ 機票 NT$ ${Math.round(stats.flightStats.personTwd).toLocaleString()}／人 ‧ 🚌 其他交通（${stats.majorTransportStats.count} 項）NT$ ${Math.round(stats.majorTransportStats.personTwd).toLocaleString()}／人 ‧ 🏨 住宿 NT$ ${Math.round(stats.hotelStats.totalPersonTwd).toLocaleString()}／人${stats.simStats && stats.simStats.count ? ` ‧ 🎟️ 票券・網卡 NT$ ${Math.round(stats.simStats.personTwd).toLocaleString()}／人` : ''}
                         </div>
                     </div>
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 12px; border-radius:6px; font-size:0.82rem;">
@@ -20683,6 +20939,11 @@ const firebaseConfig = {
             domestic_flight: { label: '國內線航班', shortLabel: '國內航段', icon: 'fa-plane', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：東京羽田 ➔ 札幌新千歲國內線）' },
             pass: { label: '交通 Pass / 周遊券', shortLabel: '交通Pass', icon: 'fa-ticket', bg: '#fdf4ff', text: '#86198f', border: '#f5d0fe', placeholder: '填寫項目內容（如：JR 東日本 3 日券 / 江之島鎌倉周遊券 / 東京地鐵 72 小時券）' },
             sim: { label: '網路卡 / eSIM', shortLabel: '網路卡', icon: 'fa-sim-card', bg: '#ecfeff', text: '#0e7490', border: '#a5f3fc', placeholder: '填寫項目內容（如：日本 7 天吃到飽 eSIM / 實體網卡）' },
+            ic: { label: 'IC卡 / 地鐵券', shortLabel: 'IC卡/地鐵券', icon: 'fa-credit-card', bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', placeholder: '填寫項目內容（如：Suica / PASMO 儲值 / 東京地鐵 24 小時券）' },
+            tour: { label: '一日遊 / 當地團', shortLabel: '一日遊/當地團', icon: 'fa-flag', bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', placeholder: '填寫項目內容（如：富士山河口湖一日遊 / 鎌倉江之島半日團）' },
+            ticket: { label: '景點 / 樂園門票', shortLabel: '景點/樂園門票', icon: 'fa-ticket-simple', bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', placeholder: '填寫項目內容（如：東京迪士尼海洋 1 日券 / 晴空塔展望台）' },
+            restaurant: { label: '餐廳訂位', shortLabel: '餐廳訂位', icon: 'fa-utensils', bg: '#fefce8', text: '#a16207', border: '#fde68a', placeholder: '填寫項目內容（如：Peter Luger 牛排館 12/22 12:00 訂位）' },
+            insurance: { label: '旅遊保險', shortLabel: '旅遊保險', icon: 'fa-shield-heart', bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0', placeholder: '填寫項目內容（如：旅平險 + 不便險 / 保單號碼）' },
             other: { label: '其他交通', shortLabel: '其他交通', icon: 'fa-taxi', bg: '#f8fafc', text: '#334155', border: '#e2e8f0', placeholder: '填寫項目內容（如：市區計程車 / 區間接駁 / 租車自駕）' }
         };
 
@@ -21007,7 +21268,7 @@ const firebaseConfig = {
         function calcPlanMajorTransportStats(plan, includeSim) {
             const curr = getPlanCurrency(plan);
             const m = Math.max(1, Number(plan?.memberCount) || 1);
-            const list = (Array.isArray(plan?.majorTransports) ? plan.majorTransports : []).filter(x => includeSim || !x || x.category !== 'sim');
+            const list = (Array.isArray(plan?.majorTransports) ? plan.majorTransports : []).filter(x => includeSim || !x || !sgMtIsService(x.category));
 
             let personLocal = 0, personTwd = 0, groupLocal = 0, groupTwd = 0;
             let actualPersonLocal = 0, actualPersonTwd = 0, actualGroupLocal = 0, actualGroupTwd = 0;
@@ -21158,7 +21419,8 @@ const firebaseConfig = {
             const curr = getPlanCurrency(plan);
             const m = Math.max(1, Number(plan.memberCount) || 1);
 
-            if (list.length === 0) {
+            const __tl = list.filter(x => !sgMtIsService(x && x.category));
+            if (__tl.length === 0) {
                 if (headRow) headRow.classList.add('compact-empty');
                 if (hintEl) hintEl.textContent = '尚未新增項目';
                 container.style.display = 'none';
@@ -21167,10 +21429,15 @@ const firebaseConfig = {
             }
 
             if (headRow) headRow.classList.remove('compact-empty');
-            if (hintEl) hintEl.textContent = `共 ${list.length} 筆`;
+            if (hintEl) hintEl.textContent = `共 ${__tl.length} 筆`;
             container.style.display = '';
 
-            container.innerHTML = list.map((item, idx) => {
+            container.innerHTML = list.map((item, idx) => sgMtIsService(item.category) ? '' : sgMtCardHtml(item, idx, plan)).join('');
+        }
+        function sgMtCardHtml(item, idx, plan) {
+            const curr = getPlanCurrency(plan);
+            const m = Math.max(1, Number(plan.memberCount) || 1);
+            {
                 const cat = MAJOR_TRANS_CATEGORIES[item.category] || MAJOR_TRANS_CATEGORIES.other;
                 const mode = item.mode || 'group';
                 const cType = item.curr || 'LOCAL';
@@ -21216,7 +21483,7 @@ const firebaseConfig = {
                             </div>` : ''}
                         </div>
 
-                        ${sgMtValidityHtml(item, plan)}${sgMtBookingHtml(item, idx)}
+                        ${sgMtValidityHtml(item, plan)}${sgMtBookingHtml(item, idx)}${sgMtVoucherHtml(item, idx)}
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; background:#f8fafc; border:1px solid #e5edf3; border-radius:6px; padding:4px 8px; margin-top:6px; font-size:0.74rem;">
                             <span style="color:#334155; font-weight:600;">
                                 每人 <strong>NT$ ${brk.personTwd.toLocaleString()}</strong>
@@ -21229,7 +21496,7 @@ const firebaseConfig = {
                         </div>
                     </div>
                 `;
-            }).join('');
+            }
         }
 
         function renderLogisticsView() {
@@ -27649,7 +27916,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.22.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.23.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
