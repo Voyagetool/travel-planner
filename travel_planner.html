@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.23.12</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.23.13</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -14814,6 +14814,18 @@ const firebaseConfig = {
                     const e = (d.events || []).find(x => x.spotGuideId === s.id);
                     if (e) { ev = e; dayNum = d.dayNum; break; }
                 }
+                if (!ev) {
+                    // 行程裡同名但沒綁定的事件（手動新增或舊資料）：自動綁定，之後兩邊改時間都會互相串聯
+                    const nm = String(s.name || '').trim();
+                    if (nm.length >= 2) {
+                        outer: for (const d of plan.days) {
+                            for (const x of (d.events || [])) {
+                                if (!x || x.spotGuideId || x.type === 'flight' || x.majorTransId || !x.title) continue;
+                                if (x.title === nm || (nm.length >= 3 && x.title.includes(nm))) { x.spotGuideId = s.id; ev = x; dayNum = d.dayNum; changed = true; break outer; }
+                            }
+                        }
+                    }
+                }
                 if (!ev) return;
                 const t = sgTimeParts(ev.time || '');
                 if (sgHhmmToMin(t.start) === null) return;
@@ -17049,7 +17061,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.23.12：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.23.13：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -17066,7 +17078,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.12：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.23.13：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -17124,7 +17136,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.23.12：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.23.13：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -17306,7 +17318,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.23.12：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.23.13：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -17363,7 +17375,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.23.12：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.23.13：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -17566,7 +17578,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.12：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.23.13：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -17638,7 +17650,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.12：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.23.13：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -17652,7 +17664,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.12：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.23.13：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -17683,7 +17695,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.23.12：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.23.13：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -17830,7 +17842,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.12：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.23.13：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -18093,7 +18105,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.12：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        // ===== V3.23.13：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
         var SG_WALK_LEVELS = {
             low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
             mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
@@ -18224,7 +18236,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.12：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
+        // ===== V3.23.13：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
         function sgSavedDay(plan) {
             try {
                 const o = JSON.parse(localStorage.getItem('sg_last_day_v1') || 'null');
@@ -18244,7 +18256,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.12：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
+        // ===== V3.23.13：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
         function sgPlatformShortHtml(text) {
             const s = String(text || '').trim();
             if (/^https?:\/\//i.test(s)) {
@@ -18255,7 +18267,7 @@ const firebaseConfig = {
             return escapeHtml(s);
         }
 
-        // ===== V3.23.12：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
+        // ===== V3.23.13：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
         const __origOpenMtV2311 = openEditMajorTransportModal;
         openEditMajorTransportModal = function (idx) {
             const r = __origOpenMtV2311.apply(this, arguments);
@@ -18283,7 +18295,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.12：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
+        // ===== V3.23.13：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
         var sgHotelArchOpen = false;
         function sgHotelAutoLabel(plan, ht, active) {
             const tripNights = Math.max(1, ((plan.days || []).length || 2) - 1);
@@ -18417,6 +18429,20 @@ const firebaseConfig = {
             return r;
         };
 
+        // ===== V3.23.13：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
+        (function () {
+            if (document.getElementById('sgMobileSelStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMobileSelStyle';
+            st.textContent = `
+                @media (max-width: 700px){
+                    .cost-curr-select, .cost-mode-select, .modal-body select{height:auto !important;min-height:34px;line-height:1.35 !important;padding-top:4px !important;padding-bottom:4px !important;box-sizing:border-box;}
+                    .cost-curr-select, .cost-mode-select{min-height:32px;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -18432,7 +18458,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.23.12：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.23.13：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -28807,7 +28833,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.23.12：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.23.13：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
