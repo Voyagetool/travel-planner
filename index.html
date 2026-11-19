@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.24.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.24.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -8313,7 +8313,13 @@
                 <input type="hidden" id="sgEditIndex" value="-1">
                 <div class="modal-body" style="max-height: 76vh; overflow-y: auto;">
                     <!-- 攻略類別切換：景點參觀 VS 美食餐飲 -->
-                    <div style="margin-bottom: 12px; background: #f1f5f9; padding: 4px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                    <div style="margin-bottom: 12px; background: #f1f5f9; padding: 4px; border-radius: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                        <button type="button" class="sg-type-pill" id="sgKindBtn-sight" onclick="sgSetKind('sight')" style="padding: 6px 4px; font-size: 0.8rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer;">📍 景點</button>
+                        <button type="button" class="sg-type-pill" id="sgKindBtn-food" onclick="sgSetKind('food')" style="padding: 6px 4px; font-size: 0.8rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer;">🍽️ 餐廳</button>
+                        <button type="button" class="sg-type-pill" id="sgKindBtn-dept" onclick="sgSetKind('dept')" style="padding: 6px 4px; font-size: 0.8rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer;">🛍️ 百貨購物</button>
+                        <button type="button" class="sg-type-pill" id="sgKindBtn-drug" onclick="sgSetKind('drug')" style="padding: 6px 4px; font-size: 0.8rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer;">💊 藥妝</button>
+                    </div>
+                    <div style="display:none;">
                         <button type="button" class="sg-type-pill active" id="sgTypeBtn-spot" onclick="setSpotGuideCategory('spot')" style="padding: 6px 12px; font-size: 0.82rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: #ffffff; color: #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
                             <i class="fa-solid fa-landmark-dome"></i> 🏛️ 景點參觀
                         </button>
@@ -8321,7 +8327,7 @@
                             <i class="fa-solid fa-utensils"></i> 🍽️ 美食餐飲
                         </button>
                     </div>
-                    <input type="hidden" id="sgCategory" value="spot">
+                    <input type="hidden" id="sgCategory" value="spot"><input type="hidden" id="sgSpotKind" value="sight">
                     <div id="sgMealRow" style="display:none; margin-bottom: 12px; padding: 8px 10px; background: #fffaf0; border: 1px solid #fde8c4; border-radius: 12px;">
                         <label class="form-label" style="margin-bottom:6px;"><i class="fa-solid fa-bell-concierge" style="color:#d97706;"></i> 餐別（同步到每日餐食與預算）</label>
                         <div class="sg-meal-pills">
@@ -11813,7 +11819,7 @@ const firebaseConfig = {
                                     <span class="compact-flight-loc" title="${escapeHtml(leg.depLoc || '出發地')}">${escapeHtml(leg.depLoc || '出發地')}</span>
                                 </div>
                                 <div class="compact-flight-mid">
-                                    <span><i class="fa-regular fa-clock"></i> ${escapeHtml(leg.duration || '直達')}</span>
+                                    <span title="${escapeHtml(leg.duration || '')}"><i class="fa-regular fa-clock"></i> ${escapeHtml(sgShortDur(leg.duration) || '直達')}</span>
                                     <div class="compact-flight-line"></div>
                                     ${leg.categoryTag ? `<span style="font-size:0.65rem; color:#94a3b8;">${escapeHtml(leg.categoryTag)}</span>` : ''}
                                 </div>
@@ -14244,10 +14250,11 @@ const firebaseConfig = {
             list.forEach((item, idx) => {
                 const info = resolvedList[idx];
                 const isFood = item.category === 'food';
-                if (spotGuidesFilterMode === 'spot' && isFood) return;
+                if (spotGuidesFilterMode === 'spot' && (isFood || sgSpotKindOf(item) !== 'sight')) return;
                 if (spotGuidesFilterMode === 'food' && !isFood) return;
                 if (spotGuidesFilterMode === 'pending' && info.isScheduled) return;
                 if (spotGuidesFilterMode === 'scheduled' && !info.isScheduled) return;
+                if ((spotGuidesFilterMode === 'dept' || spotGuidesFilterMode === 'drug') && sgSpotKindOf(item) !== spotGuidesFilterMode) return;
                 if (spotGuidesFilterMode === 'booking' && !item.hasBooking) return;
                 const key = (info.isScheduled && info.dayNum && buckets[info.dayNum]) ? info.dayNum : 'pending';
                 buckets[key].push({ item, idx, info });
@@ -14268,8 +14275,8 @@ const firebaseConfig = {
                 if (isFood && item.mealType === 'dinner') chips.push('<span class="sg-kb-chip" style="background:#fef2f2;color:#b91c1c;">晚餐</span>');
                 if (kids.length) chips.push(`<span class="sg-kb-chip"><i class="fa-solid fa-sitemap"></i> ${kids.length} 個細部</span>`);
                 if (item.hasBooking) chips.push(`<span class="sg-kb-chip" style="background:#fef3c7;color:#b45309;"><i class="fa-solid fa-ticket"></i> ${escapeHtml(item.bookingStatus || '需預約')}</span>`);
-                return `<div class="sg-kb-card ${isFood ? 'food' : ''} ${sgKbCollapsedSet().has(item.id) ? 'collapsed' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
-                    <div class="sg-kb-title"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCard('${item.id}')" title="${sgKbCollapsedSet().has(item.id) ? '展開' : '縮小'}"><i class="fa-solid fa-chevron-${sgKbCollapsedSet().has(item.id) ? 'right' : 'down'}"></i></button>${isFood ? '🍽️' : '📍'} ${escapeHtml(item.name)}</div>
+                return `<div class="sg-kb-card ${isFood ? 'food' : 'k-' + sgSpotKindOf(item)} ${sgKbCollapsedSet().has(item.id) ? 'collapsed' : ''}" draggable="true" ondragstart="sgKbDragStart(event, ${idx})" ondragend="sgKbDragEnd(event)">
+                    <div class="sg-kb-title"><button type="button" class="sg-kb-tog" onclick="sgKbToggleCard('${item.id}')" title="${sgKbCollapsedSet().has(item.id) ? '展開' : '縮小'}"><i class="fa-solid fa-chevron-${sgKbCollapsedSet().has(item.id) ? 'right' : 'down'}"></i></button>${sgSpotKindIcon(item)} ${escapeHtml(item.name)}</div>
                     ${chips.length ? `<div class="sg-kb-meta">${chips.join('')}</div>` : ''}
                     ${sgKbChildrenHtml(plan, item, idx)}
                     <div class="sg-kb-act">
@@ -17071,7 +17078,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.24.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.24.1：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -17088,7 +17095,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.24.1：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -17146,7 +17153,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.24.0：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.24.1：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -17328,7 +17335,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.24.0：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.24.1：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -17385,7 +17392,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.24.0：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.24.1：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -17588,7 +17595,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.24.1：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -17660,7 +17667,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.24.1：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -17674,7 +17681,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.24.1：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -17705,7 +17712,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.24.0：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.24.1：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -17852,7 +17859,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.24.1：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -18115,7 +18122,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        // ===== V3.24.1：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
         var SG_WALK_LEVELS = {
             low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
             mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
@@ -18246,7 +18253,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.0：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
+        // ===== V3.24.1：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
         function sgSavedDay(plan) {
             try {
                 const o = JSON.parse(localStorage.getItem('sg_last_day_v1') || 'null');
@@ -18266,7 +18273,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.0：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
+        // ===== V3.24.1：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
         function sgPlatformShortHtml(text) {
             const s = String(text || '').trim();
             if (/^https?:\/\//i.test(s)) {
@@ -18277,7 +18284,7 @@ const firebaseConfig = {
             return escapeHtml(s);
         }
 
-        // ===== V3.24.0：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
+        // ===== V3.24.1：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
         const __origOpenMtV2311 = openEditMajorTransportModal;
         openEditMajorTransportModal = function (idx) {
             const r = __origOpenMtV2311.apply(this, arguments);
@@ -18305,7 +18312,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.0：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
+        // ===== V3.24.1：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
         var sgHotelArchOpen = false;
         function sgHotelAutoLabel(plan, ht, active) {
             const tripNights = Math.max(1, ((plan.days || []).length || 2) - 1);
@@ -18439,7 +18446,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.0：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
+        // ===== V3.24.1：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
         (function () {
             if (document.getElementById('sgMobileSelStyle')) return;
             const st = document.createElement('style');
@@ -18453,7 +18460,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.0：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
+        // ===== V3.24.1：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
         function sgSpotOfEvent(plan, ev) {
             if (!plan || !ev || !ev.spotGuideId) return null;
             for (const s of (plan.spotTips || [])) {
@@ -18622,6 +18629,94 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
+        // ===== V3.24.1：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
+        var SG_KINDS = {
+            sight: { label: '景點', icon: '📍', color: '#38bdf8', fg: '#0284c7' },
+            food: { label: '餐廳', icon: '🍽️', color: '#f97316', fg: '#ea580c' },
+            dept: { label: '百貨購物', icon: '🛍️', color: '#a855f7', fg: '#7e22ce' },
+            drug: { label: '藥妝', icon: '💊', color: '#10b981', fg: '#047857' }
+        };
+        var SG_KIND_KW = {
+            drug: /藥妝|藥局|藥店|ドラッグ|松本清|マツキヨ|大國|ダイコク|唐吉訶德|ドン・キホーテ|Don Quijote|サンドラッグ|ツルハ|cosme|コスメ/i,
+            dept: /百貨|高島屋|伊勢丹|三越|大丸|松屋|西武|阪急|阪神|PARCO|パルコ|LUMINE|ルミネ|マルイ|OIOI|outlet|Outlet|アウトレット|mall|Mall|モール|旗艦店|Flagship|GINZA SIX|Ginza Six|銀座\s*SIX|UNIQLO|ユニクロ|無印|Loft|ロフト|東急ハンズ|Hands|ビックカメラ|BicCamera|Bic Camera|商場|購物中心|購物/i
+        };
+        function sgSpotKindOf(item) {
+            if (!item) return 'sight';
+            if (item.category === 'food') return 'food';
+            if (item.spotKind && SG_KINDS[item.spotKind]) return item.spotKind;
+            const s = String(item.name || '');
+            if (SG_KIND_KW.drug.test(s)) return 'drug';
+            if (SG_KIND_KW.dept.test(s)) return 'dept';
+            return 'sight';
+        }
+        function sgSpotKindIcon(item) { return SG_KINDS[sgSpotKindOf(item)].icon; }
+        function sgSetKind(kind) {
+            if (!SG_KINDS[kind]) kind = 'sight';
+            setSpotGuideCategory(kind === 'food' ? 'food' : 'spot');
+            const h = document.getElementById('sgSpotKind');
+            if (h) h.value = kind;
+            Object.keys(SG_KINDS).forEach(k => {
+                const b = document.getElementById('sgKindBtn-' + k);
+                if (!b) return;
+                const on = k === kind;
+                b.style.background = on ? '#ffffff' : 'transparent';
+                b.style.color = on ? SG_KINDS[k].fg : '#64748b';
+                b.style.boxShadow = on ? '0 1px 3px rgba(0,0,0,0.08)' : 'none';
+            });
+            if (kind === 'dept' || kind === 'drug') {
+                const t = document.getElementById('spotGuideModalTitle');
+                const isEdit = (document.getElementById('sgEditIndex')?.value || '-1') !== '-1';
+                if (t) t.innerHTML = `${SG_KINDS[kind].icon} ${isEdit ? '編輯' : '新增'}${SG_KINDS[kind].label}`;
+            }
+        }
+        const __origOpenSpotV241 = openAddSpotGuideModal;
+        openAddSpotGuideModal = function (editIdx, forceExpandBooking) {
+            const r = __origOpenSpotV241.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                const it = (editIdx !== null && editIdx !== undefined && editIdx >= 0 && plan && plan.spotTips) ? plan.spotTips[editIdx] : null;
+                sgSetKind(it ? sgSpotKindOf(it) : 'sight');
+            } catch (e) { console.warn(e); }
+            return r;
+        };
+        const __origSaveSpotV241 = handleSaveSpotGuideSubmit;
+        handleSaveSpotGuideSubmit = function (e) {
+            const kind = (document.getElementById('sgSpotKind') || {}).value || 'sight';
+            const idx = parseInt((document.getElementById('sgEditIndex') || {}).value || '-1', 10);
+            const plan = getCurrentPlan();
+            const before = plan && plan.spotTips ? plan.spotTips.length : 0;
+            const r = __origSaveSpotV241.apply(this, arguments);
+            try {
+                const list = (plan && plan.spotTips) || [];
+                const it = idx >= 0 ? list[idx] : (list.length > before ? list[list.length - 1] : null);
+                if (it) {
+                    if (it.category === 'food') delete it.spotKind; else it.spotKind = (kind === 'food' ? 'sight' : kind);
+                    saveState();
+                    renderSpotGuidesView();
+                }
+            } catch (err) { console.warn(err); }
+            return r;
+        };
+        function sgShortDur(s) {
+            s = String(s || '');
+            if (!s) return s;
+            return s.replace(/[（(]\s*直達\s*[)）]/g, '').replace(/(\d+)\s*小時\s*/g, '$1h').replace(/(\d+)\s*分(鐘)?/g, '$1m').replace(/\s+/g, ' ').trim() || s;
+        }
+        (function () {
+            if (document.getElementById('sgKindStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgKindStyle';
+            st.textContent = `
+                .sg-kb-board{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(230px,1fr)) !important;gap:10px !important;overflow:visible !important;align-items:start !important;}
+                .sg-kb-col{max-width:none !important;min-width:0 !important;}
+                .sg-kb-card.k-dept{border-left-color:${SG_KINDS.dept.color} !important;}
+                .sg-kb-card.k-drug{border-left-color:${SG_KINDS.drug.color} !important;}
+                .compact-flight-mid > span{white-space:nowrap;}
+                .compact-flight-mid > span[style*="0.65rem"]{max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+            `;
+            document.head.appendChild(st);
+        })();
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -18637,7 +18732,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.24.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.24.1：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -19172,10 +19267,11 @@ const firebaseConfig = {
             }
 
             const totalCount = list.length;
+            window.__sgDeptCount = 0; window.__sgDrugCount = 0;
             let spotCount = 0, foodCount = 0, scheduledCount = 0, bookingCount = 0, bookingPendingCount = 0, childTotal = 0;
 
             const resolvedList = list.map(item => {
-                if (item.category === 'food') foodCount++; else spotCount++;
+                if (item.category === 'food') foodCount++; else if (sgSpotKindOf(item) === 'sight') spotCount++; else if (sgSpotKindOf(item) === 'dept') window.__sgDeptCount = (window.__sgDeptCount || 0) + 1; else window.__sgDrugCount = (window.__sgDrugCount || 0) + 1;
                 childTotal += Array.isArray(item.children) ? item.children.filter(c => c && c.name).length : 0;
                 const info = resolveSpotScheduledDayInfo(plan, item);
                 if (info.isScheduled) scheduledCount++;
@@ -19204,6 +19300,8 @@ const firebaseConfig = {
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'all' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('all')">全部</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'spot' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('spot')">景點 (${spotCount})</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'food' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('food')">美食 (${foodCount})</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'dept' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('dept')">百貨購物 (${window.__sgDeptCount || 0})</button>
+                        <button type="button" class="n-btn ${spotGuidesFilterMode === 'drug' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('drug')">藥妝 (${window.__sgDrugCount || 0})</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'scheduled' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('scheduled')">已安排</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'pending' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('pending')">待安排</button>
                         <button type="button" class="n-btn ${spotGuidesFilterMode === 'booking' ? 'n-btn-primary' : ''}" style="padding: 3px 9px; font-size: 0.74rem;" onclick="setSpotGuideFilter('booking')">需預約/訂位</button>
@@ -19228,10 +19326,11 @@ const firebaseConfig = {
                 const isScheduled = info.isScheduled;
                 const isFood = (item.category === 'food');
 
-                if (spotGuidesFilterMode === 'spot' && isFood) return '';
+                if (spotGuidesFilterMode === 'spot' && (isFood || sgSpotKindOf(item) !== 'sight')) return '';
                 if (spotGuidesFilterMode === 'food' && !isFood) return '';
                 if (spotGuidesFilterMode === 'pending' && isScheduled) return '';
                 if (spotGuidesFilterMode === 'scheduled' && !isScheduled) return '';
+                if ((spotGuidesFilterMode === 'dept' || spotGuidesFilterMode === 'drug') && sgSpotKindOf(item) !== spotGuidesFilterMode) return;
                 if (spotGuidesFilterMode === 'booking' && !item.hasBooking) return '';
 
                 const isOpen = !isCompactMode || spotGuideExpanded.has(item.id);
@@ -29007,7 +29106,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.24.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.24.1：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
