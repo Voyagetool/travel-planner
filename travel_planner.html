@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.24.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.24.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -7193,7 +7193,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">活動或景點名稱 <span style="color:#ef4444;">*</span></label>
-                        <input type="text" id="eventTitleStr" class="form-input" placeholder="例如：故宮博物院 (午門進，神武門出)">
+                        <input type="text" id="eventTitleStr" class="form-input" placeholder="例如：國立故宮博物院（正館）">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -7268,7 +7268,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">注意事項 / 攻略小提示</label>
-                        <input type="text" id="eventNotesStr" class="form-input" placeholder="例如：必看珍寶館、萬春金福下午茶先在大眾點評取號">
+                        <input type="text" id="eventNotesStr" class="form-input" placeholder="例如：必看翠玉白菜、肉形石；週末人多建議開館就入場">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -8338,11 +8338,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" id="sgNameLabel">景點名稱 <span style="color:#ef4444;">*</span></label>
-                            <input type="text" id="sgNameInput" class="form-input" oninput="updateSgScheduledDayStatusUI()" placeholder="例如：故宮博物院 或 洪崖洞">
+                            <input type="text" id="sgNameInput" class="form-input" oninput="updateSgScheduledDayStatusUI()" placeholder="例如：台北 101 或 九份老街">
                         </div>
                         <div class="form-group">
                             <label class="form-label" id="sgAddressLabel">景點詳細地址 (選填，用於導航定位)</label>
-                            <input type="text" id="sgAddressInput" class="form-input" placeholder="例如：北京市東城區景山前街4號">
+                            <input type="text" id="sgAddressInput" class="form-input" placeholder="例如：台北市信義區信義路五段 7 號">
                         </div>
                     </div>
 
@@ -8403,7 +8403,7 @@
 
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label class="form-label" id="sgTipLabel">速通攻略與防雷指南 (選填)</label>
-                        <textarea id="sgTipInput" class="form-input" style="min-height: 66px; line-height: 1.5; resize: vertical;" placeholder="例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀..."></textarea>
+                        <textarea id="sgTipInput" class="form-input" style="min-height: 66px; line-height: 1.5; resize: vertical;" placeholder="例如：建議平日傍晚前往避開人潮；89 樓觀景台看夕陽接夜景…"></textarea>
                     </div>
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
@@ -13592,12 +13592,12 @@ const firebaseConfig = {
             const nameLbl = document.getElementById('sgNameLabel');
             const nameInp = document.getElementById('sgNameInput');
             if (nameLbl) nameLbl.innerHTML = isFood ? `餐廳 / 美食名稱 <span style="color:#ef4444;">*</span>` : `景點名稱 <span style="color:#ef4444;">*</span>`;
-            if (nameInp) nameInp.placeholder = isFood ? '例如：珮姐老火鍋 (洪崖洞店) 或 茶顏悅色' : '例如：故宮博物院 或 洪崖洞';
+            if (nameInp) nameInp.placeholder = isFood ? '例如：鼎泰豐 (信義店) 或 阜杭豆漿' : '例如：台北 101 或 九份老街';
 
             const addrLbl = document.getElementById('sgAddressLabel');
             const addrInp = document.getElementById('sgAddressInput');
             if (addrLbl) addrLbl.textContent = isFood ? '餐廳詳細地址 (選填，用於導航定位)' : '景點詳細地址 (選填，用於導航定位)';
-            if (addrInp) addrInp.placeholder = isFood ? '例如：渝中區解放碑較場口夜市' : '例如：北京市東城區景山前街4號';
+            if (addrInp) addrInp.placeholder = isFood ? '例如：台北市中正區忠孝東路一段 108 號 2 樓' : '例如：台北市信義區信義路五段 7 號';
 
             const tLbl = document.getElementById('sgTicketLabel');
             const tCost = document.getElementById('sgTicketCost');
@@ -13618,7 +13618,7 @@ const firebaseConfig = {
             const tipLbl = document.getElementById('sgTipLabel');
             const tipInp = document.getElementById('sgTipInput');
             if (tipLbl) tipLbl.textContent = isFood ? '必點菜色與防雷建議 (選填)' : '速通攻略與防雷指南 (選填)';
-            if (tipInp) tipInp.placeholder = isFood ? '例如：必點招牌麻辣鴛鴦鍋、現撕脆毛肚；晚間排隊人多建議提早美團線上取號...' : '例如：建議傍晚前往避開人潮；必看珍寶館與夜間燈光秀...';
+            if (tipInp) tipInp.placeholder = isFood ? '例如：必點小籠包、排骨蛋炒飯；假日排隊人多，建議提早線上抽號…' : '例如：建議平日傍晚前往避開人潮；89 樓觀景台看夕陽接夜景…';
 
             const vTitle = document.getElementById('sgVisitTitleText');
             const vDateLbl = document.getElementById('sgVisitDateLabel');
@@ -13628,7 +13628,7 @@ const firebaseConfig = {
             if (vTimeLbl) vTimeLbl.textContent = isFood ? '用餐時間（24 小時制，時與分分開設定）' : '造訪時間（24 小時制，時與分分開設定）';
 
             const schNote = document.getElementById('sgScheduleNoteInput');
-            if (schNote) schNote.placeholder = isFood ? '安排備註 (選填，例如：已訂包廂、備註靠窗位、微辣)' : '安排備註 (選填，例如：午門進神武門出、建議提早 20 分鐘安檢)';
+            if (schNote) schNote.placeholder = isFood ? '安排備註 (選填，例如：已訂 6 人桌、靠窗位、不吃辣)' : '安排備註 (選填，例如：捷運台北101/世貿站 4 號出口、建議提早 20 分鐘排隊)';
 
             const bkLbl = document.getElementById('sgBookingCheckLabel');
             const bkHint = document.getElementById('sgBookingSubHint');
@@ -13647,7 +13647,7 @@ const firebaseConfig = {
             }
             if (bkDtLbl) bkDtLbl.textContent = isFood ? '開放訂位／取號日期（點選行事曆）' : '開放／搶票日期（點選行事曆）';
             if (bkTmLbl) bkTmLbl.textContent = isFood ? '開放訂位時間（24 小時制，時與分分開設定）' : '開放時間（24 小時制，時與分分開設定）';
-            if (bkPlat) bkPlat.placeholder = isFood ? '例如：美團線上取號 / 大眾點評訂位 / 電話預約 / 現場候位' : '例如：官方網站 / 微信公眾號 / Klook';
+            if (bkPlat) bkPlat.placeholder = isFood ? '例如：inline 線上訂位 / EZTABLE / 電話預約 / 現場抽號' : '例如：官方網站 / KKday / Klook';
 
             const mealRow = document.getElementById('sgMealRow');
             if (mealRow) mealRow.style.display = isFood ? 'block' : 'none';
@@ -16943,6 +16943,7 @@ const firebaseConfig = {
                 .okr-kpi-card.kpi-merged{grid-column:1 / -1;}
                 .kpi-merged .okr-kpi-sub{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;line-height:1.5;}
                 .meal-compact-row{display:flex;justify-content:flex-end;margin-bottom:4px;}
+                @media (min-width: 701px){ .day-meals-bar.meals-compact{position:relative;padding-right:120px !important;} .day-meals-bar.meals-compact .meal-compact-row{position:absolute;right:12px;top:50%;transform:translateY(-50%);margin:0;} }
                 .meal-compact-btn{border:1px solid #d6e2ea;background:#f8fafc;border-radius:999px;padding:1px 10px;font-size:0.72rem;color:#475569;cursor:pointer;}
                 .meals-compact .meal-cost-badge,.meals-compact .day-subtotals-strip{display:none !important;}
                 .meals-compact .meal-col-item{padding-top:4px !important;padding-bottom:4px !important;}
@@ -17070,7 +17071,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.24.1：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.24.2：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -17087,7 +17088,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.24.2：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -17145,7 +17146,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.24.1：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.24.2：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -17327,7 +17328,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.24.1：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.24.2：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -17384,7 +17385,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.24.1：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.24.2：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -17587,7 +17588,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.24.2：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -17659,7 +17660,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.24.2：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -17673,7 +17674,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.24.2：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -17704,7 +17705,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.24.1：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.24.2：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -17851,7 +17852,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.24.2：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -18114,7 +18115,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        // ===== V3.24.2：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
         var SG_WALK_LEVELS = {
             low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
             mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
@@ -18245,7 +18246,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.1：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
+        // ===== V3.24.2：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
         function sgSavedDay(plan) {
             try {
                 const o = JSON.parse(localStorage.getItem('sg_last_day_v1') || 'null');
@@ -18265,7 +18266,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.1：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
+        // ===== V3.24.2：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
         function sgPlatformShortHtml(text) {
             const s = String(text || '').trim();
             if (/^https?:\/\//i.test(s)) {
@@ -18276,7 +18277,7 @@ const firebaseConfig = {
             return escapeHtml(s);
         }
 
-        // ===== V3.24.1：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
+        // ===== V3.24.2：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
         const __origOpenMtV2311 = openEditMajorTransportModal;
         openEditMajorTransportModal = function (idx) {
             const r = __origOpenMtV2311.apply(this, arguments);
@@ -18304,7 +18305,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.1：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
+        // ===== V3.24.2：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
         var sgHotelArchOpen = false;
         function sgHotelAutoLabel(plan, ht, active) {
             const tripNights = Math.max(1, ((plan.days || []).length || 2) - 1);
@@ -18438,7 +18439,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.1：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
+        // ===== V3.24.2：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
         (function () {
             if (document.getElementById('sgMobileSelStyle')) return;
             const st = document.createElement('style');
@@ -18452,7 +18453,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
+        // ===== V3.24.2：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
         function sgSpotOfEvent(plan, ev) {
             if (!plan || !ev || !ev.spotGuideId) return null;
             for (const s of (plan.spotTips || [])) {
@@ -18621,7 +18622,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.1：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
+        // ===== V3.24.2：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
         var SG_KINDS = {
             sight: { label: '景點', icon: '📍', color: '#38bdf8', fg: '#0284c7' },
             food: { label: '餐廳', icon: '🍽️', color: '#f97316', fg: '#ea580c' },
@@ -18659,6 +18660,10 @@ const firebaseConfig = {
                 const t = document.getElementById('spotGuideModalTitle');
                 const isEdit = (document.getElementById('sgEditIndex')?.value || '-1') !== '-1';
                 if (t) t.innerHTML = `${SG_KINDS[kind].icon} ${isEdit ? '編輯' : '新增'}${SG_KINDS[kind].label}`;
+                const ni = document.getElementById('sgNameInput');
+                if (ni) ni.placeholder = kind === 'dept' ? '例如：新光三越 信義新天地 或 微風南山' : '例如：康是美 或 屈臣氏（西門町店）';
+                const ti = document.getElementById('sgTipInput');
+                if (ti) ti.placeholder = kind === 'dept' ? '例如：週年慶期間滿額贈、B2 美食街；外國旅客可辦退稅…' : '例如：會員日折扣、滿額贈小樣；常備藥與面膜價格可先比價…';
             }
         }
         const __origOpenSpotV241 = openAddSpotGuideModal;
@@ -18724,7 +18729,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.24.1：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.24.2：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -19166,7 +19171,7 @@ const firebaseConfig = {
             const box = document.getElementById('sgChildrenList');
             if (!box) return;
             if (!sgChildrenDraft.length) {
-                box.innerHTML = '<div style="font-size:0.76rem; color:#94a3b8; padding:4px 2px;">尚未新增。例如主項目「鎌倉」可加入：高德院（大佛）、小町通、鶴岡八幡宮…</div>';
+                box.innerHTML = '<div style="font-size:0.76rem; color:#94a3b8; padding:4px 2px;">尚未新增。例如主項目「九份」可加入：阿妹茶樓、豎崎路、昇平戲院…</div>';
                 return;
             }
             const plan = getCurrentPlan();
@@ -29103,7 +29108,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.24.1：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.24.2：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
