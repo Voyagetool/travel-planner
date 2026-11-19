@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.23.13</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.24.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -6703,6 +6703,18 @@
                         <button type="button" class="n-btn n-btn-primary" onclick="downloadICalendarFile()" style="width: 100%; justify-content: center; padding: 12px 18px; font-size: 1rem; font-weight: 700; background: #0284c7; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
                             <i class="fa-solid fa-cloud-arrow-down" style="font-size: 1.15rem;"></i> 下載 iPhone 行事曆檔案 (.ics)
                         </button>
+                    </div>
+
+                    <!-- 出發／離開提醒（含鬧鐘） -->
+                    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+                        <div style="font-weight:800; color:#b45309; margin-bottom:4px;">🔔 出發／離開提醒（含鬧鐘）</div>
+                        <div style="font-size:0.8rem; color:#78350f; line-height:1.55; margin-bottom:8px;">包含每天從飯店出發的時間，以及開啟「離開提醒」的行程（訂位餐廳預設開啟）。時間不帶時區，手機在日本就以當地時間提醒。</div>
+                        <div id="sgLeaveExportList" style="background:#fff; border:1px solid #fde68a; border-radius:8px; padding:6px 10px; max-height:170px; overflow:auto; margin-bottom:8px;"></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" class="n-btn n-btn-primary" onclick="sgDownloadLeaveIcs('event')"><i class="fa-regular fa-bell"></i> 下載給 iPhone 行事曆（會跳通知）</button>
+                            <button type="button" class="n-btn" onclick="sgDownloadLeaveIcs('todo')"><i class="fa-regular fa-square-check"></i> 下載給 Mac 提醒事項</button>
+                        </div>
+                        <div style="font-size:0.74rem; color:#92400e; margin-top:6px; line-height:1.5;">iPhone 的「提醒事項」不能直接開 .ics 檔，建議用第一個（加入行事曆，時間到前 10 分鐘與準時各通知一次）。若要放進「提醒事項」，請在 Mac 開啟第二個檔案，會透過 iCloud 同步到 iPhone。</div>
                     </div>
 
                     <!-- iPhone 匯入 3 步驟教學卡片 -->
@@ -11737,26 +11749,18 @@ const firebaseConfig = {
                 const fGoogleChip = fTransit.googleInfo ? `<span class="tl-google-chip"><i class="fa-brands fa-google"></i> ${escapeHtml(fTransit.googleInfo)}</span>` : '';
 
                 firstTransitHtml = `
-                    <div class="timeline-transit-row" style="margin-bottom:8px; background:#f3f8fa; border:1px dashed #b9d4df; border-radius:8px; padding:6px 10px;">
-                        <div class="timeline-transit-badge custom-set" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="點擊編輯首站起程出發交通設定" style="background:#fff; cursor:pointer;">
-                            <span style="background:#3b7386; color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:3px; font-weight:700; margin-right:4px;"><i class="fa-solid fa-location-arrow"></i> 起程接駁</span>
-                            ${fTransit.title ? `<strong style="color:#0369a1; font-size:0.76rem; margin-right:4px;"><i class="fa-solid fa-diamond-turn-right" style="font-size:0.68rem;"></i> ${escapeHtml(fTransit.title)}</strong>` : ''}
-                            <i class="fa-solid ${fModeInfo.icon}"></i>
-                            <span>${fModeInfo.label}約 <strong>${formatDuration(fMinutes)}</strong></span>${sgWalkBadgeHtml(fTransit, fTransit.mode || 'car', fMinutes)}
-                            <span style="font-size:0.68rem; opacity:0.85; margin-left:2px;">${fRange}</span>
-                            ${fFromChip} ${fLeaveChip} ${fGoogleChip}
-                            ${fCostHtml}
-                            ${fTransit.notes ? `<span style="font-size:0.7rem; color:#64748b; margin-left:4px;" title="${escapeHtml(fTransit.notes)}"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(fTransit.notes.length > 18 ? fTransit.notes.slice(0, 18) + '…' : fTransit.notes)}</span>` : ''}
-                            <i class="fa-solid fa-pen-to-square" style="font-size:0.68rem; opacity:0.6; margin-left:4px;"></i>
+                    <div class="sg-ft-row">
+                        <div class="sg-ft-main" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="點擊編輯起程交通（含出門緩衝 ${Number(fTransit.bufferMin || 0)} 分鐘）">
+                            <span class="sg-ft-tag"><i class="fa-solid fa-location-arrow"></i> 出發</span>
+                            ${fTransit.startTimeStr ? `<strong class="sg-ft-leave">🔔 ${fTransit.startTimeStr} 離開</strong>` : ''}
+                            <span><strong>${escapeHtml((fTransit.fromLoc && fTransit.fromLoc !== '出發地') ? fTransit.fromLoc : (fTransit.title || '出發地'))}</strong> → 首站</span>
+                            <span><i class="fa-solid ${fModeInfo.icon}" style="color:#0284c7;"></i> ${fModeInfo.label} ${formatDuration(fMinutes)}</span>
+                            ${sgWalkBadgeHtml(fTransit, fTransit.mode || 'car', fMinutes)}
+                            ${fCost > 0 ? `<span class="sg-ft-cost">${curr.symbol}${fCost.toLocaleString()}</span>` : ''}
+                            ${fTransit.notes ? `<span title="${escapeHtml(fTransit.notes)}" style="color:#64748b;"><i class="fa-regular fa-comment-dots"></i></span>` : ''}
                         </div>
-                        <div class="timeline-transit-actions" style="margin-left:auto; display:flex; gap:6px;">
-                            <button type="button" class="n-btn transit-action-btn map-btn" onclick="openFirstTransitMapQuick(${activeDay.dayNum})" title="地圖路線規劃與交通查詢">
-                                <i class="fa-solid fa-map-location-dot"></i> 地圖路線
-                            </button>
-                            <button type="button" class="n-btn transit-action-btn" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="設定當日起程交通與花費">
-                                <i class="fa-solid fa-gear"></i> 設定
-                            </button>
-                        </div>
+                        <button type="button" class="sg-icon-btn" onclick="openFirstTransitMapQuick(${activeDay.dayNum})" title="地圖路線"><i class="fa-solid fa-map-location-dot"></i></button>
+                        <button type="button" class="sg-icon-btn" onclick="openTransitSettingsModal(${activeDay.dayNum}, 0)" title="設定起程交通"><i class="fa-solid fa-gear"></i></button>
                     </div>
                 `;
             } else if (events.length > 0) {
@@ -13891,25 +13895,23 @@ const firebaseConfig = {
             const lastTxt = endMin !== null ? `${last.title}（${p.hasEnd ? '結束' : '開始'} ${sgHhmmWrap(endMin)}）` : last.title;
             const arrive = endMin !== null ? sgHhmmWrap(endMin + minutes) : '';
             const mapQ = encodeURIComponent(hotel.addr || hotel.name);
-            return `<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span style="background:#c2410c;color:#fff;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:4px;"><i class="fa-solid fa-hotel"></i> 今晚住宿</span>
-                    <strong style="font-size:0.92rem;color:#7c2d12;">${escapeHtml(hotel.name)}</strong>
-                    ${arrive ? `<span class="tl-leave-chip" title="最後一個行程結束時間 + 交通時間"><i class="fa-regular fa-clock"></i> 預計 ${arrive} 抵達</span>` : ''}
+            return `<div class="sg-lodge">
+                <div class="sg-lodge-top">
+                    <span class="sg-lodge-tag"><i class="fa-solid fa-hotel"></i> 今晚住宿</span>
+                    <strong style="font-size:0.88rem;color:#7c2d12;">${escapeHtml(hotel.name)}</strong>
+                    ${hotel.addr ? `<a href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener" title="${escapeHtml(hotel.addr)}" style="color:#9a3412;text-decoration:none;font-size:0.8rem;">📍</a>` : ''}
+                    ${arrive ? `<span class="sg-lodge-arr" title="最後一個行程結束時間 + 交通時間">預計 ${arrive} 抵達</span>` : ''}
+                    <span style="margin-left:auto;display:flex;gap:4px;">
+                        <button type="button" class="sg-icon-btn" onclick="openLastTransitMap(${day.dayNum}, 'transit')" title="地圖路線"><i class="fa-solid fa-map-location-dot"></i></button>
+                        <button type="button" class="sg-icon-btn" onclick="openLastTransitModal(${day.dayNum})" title="設定回飯店交通"><i class="fa-solid fa-gear"></i></button>
+                    </span>
                 </div>
-                ${hotel.addr ? `<div style="margin-top:3px;font-size:0.76rem;"><a href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener" style="color:#9a3412;">📮 ${escapeHtml(hotel.addr)}</a></div>` : ''}
-                <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:0.8rem;color:#334155;">
-                    <span>最後行程：<strong>${escapeHtml(lastTxt)}</strong></span>
+                <div class="sg-lodge-sub">
+                    <span>${escapeHtml(last.title)}${endMin !== null ? ` ${sgHhmmWrap(endMin)} ${p.hasEnd ? '結束' : '開始'}` : ''}</span>
                     <span>→</span>
-                    <i class="fa-solid ${modeInfo.icon}"></i>
-                    <span>${modeInfo.label}約 <strong>${formatDuration(minutes)}</strong>${saved ? '' : ' <span style="color:#94a3b8;">（預設估算）</span>'}</span>
-                    ${Number(lt.cost) > 0 ? `<span style="color:#0f766e;font-weight:700;font-size:0.74rem;background:#ccfbf1;padding:1px 6px;border-radius:4px;"><i class="fa-solid fa-coins"></i> ${getPlanCurrency(plan).symbol}${Number(lt.cost).toLocaleString()}</span>` : ''}
-                    ${lt.googleInfo ? `<span class="tl-google-chip"><i class="fa-brands fa-google"></i> ${escapeHtml(lt.googleInfo)}</span>` : ''}
-                    ${lt.notes ? `<span style="font-size:0.74rem;color:#64748b;"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(lt.notes)}</span>` : ''}
-                </div>
-                <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" class="n-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="openLastTransitMap(${day.dayNum}, 'transit')"><i class="fa-solid fa-map-location-dot"></i> 地圖路線</button>
-                    <button type="button" class="n-btn" style="font-size:0.74rem;padding:3px 9px;" onclick="openLastTransitModal(${day.dayNum})"><i class="fa-solid fa-gear"></i> 設定</button>
+                    <span><i class="fa-solid ${modeInfo.icon}"></i> ${modeInfo.label} ${formatDuration(minutes)}${saved ? '' : '（估）'}</span>
+                    ${Number(lt.cost) > 0 ? `<span class="sg-ft-cost">${getPlanCurrency(plan).symbol}${Number(lt.cost).toLocaleString()}</span>` : ''}
+                    ${lt.notes ? `<span title="${escapeHtml(lt.notes)}"><i class="fa-regular fa-comment-dots"></i></span>` : ''}
                 </div>
             </div>`;
         }
@@ -16030,7 +16032,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.23.13：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.24.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16047,7 +16049,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.13：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.24.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -16105,7 +16107,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.23.13：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.24.0：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -16287,7 +16289,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.23.13：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.24.0：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -16344,7 +16346,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.23.13：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.24.0：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -16547,7 +16549,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.13：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.24.0：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -16619,7 +16621,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.13：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.24.0：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -16633,7 +16635,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.13：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.24.0：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -16664,7 +16666,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.23.13：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.24.0：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -16811,7 +16813,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.13：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.24.0：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -17074,7 +17076,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.23.13：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        // ===== V3.24.0：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
         var SG_WALK_LEVELS = {
             low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
             mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
@@ -17205,7 +17207,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.13：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
+        // ===== V3.24.0：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
         function sgSavedDay(plan) {
             try {
                 const o = JSON.parse(localStorage.getItem('sg_last_day_v1') || 'null');
@@ -17225,7 +17227,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.13：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
+        // ===== V3.24.0：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
         function sgPlatformShortHtml(text) {
             const s = String(text || '').trim();
             if (/^https?:\/\//i.test(s)) {
@@ -17236,7 +17238,7 @@ const firebaseConfig = {
             return escapeHtml(s);
         }
 
-        // ===== V3.23.13：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
+        // ===== V3.24.0：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
         const __origOpenMtV2311 = openEditMajorTransportModal;
         openEditMajorTransportModal = function (idx) {
             const r = __origOpenMtV2311.apply(this, arguments);
@@ -17264,7 +17266,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.13：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
+        // ===== V3.24.0：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
         var sgHotelArchOpen = false;
         function sgHotelAutoLabel(plan, ht, active) {
             const tripNights = Math.max(1, ((plan.days || []).length || 2) - 1);
@@ -17398,7 +17400,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.23.13：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
+        // ===== V3.24.0：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
         (function () {
             if (document.getElementById('sgMobileSelStyle')) return;
             const st = document.createElement('style');
@@ -17408,6 +17410,175 @@ const firebaseConfig = {
                     .cost-curr-select, .cost-mode-select, .modal-body select{height:auto !important;min-height:34px;line-height:1.35 !important;padding-top:4px !important;padding-bottom:4px !important;box-sizing:border-box;}
                     .cost-curr-select, .cost-mode-select{min-height:32px;}
                 }
+            `;
+            document.head.appendChild(st);
+        })();
+
+        // ===== V3.24.0：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
+        function sgSpotOfEvent(plan, ev) {
+            if (!plan || !ev || !ev.spotGuideId) return null;
+            for (const s of (plan.spotTips || [])) {
+                if (!s) continue;
+                if (s.id === ev.spotGuideId) return s;
+                const k = (Array.isArray(s.children) ? s.children : []).find(c => c && c.id === ev.spotGuideId);
+                if (k) return Object.assign({}, k.srcItem || {}, k, { hasBooking: (k.srcItem && k.srcItem.hasBooking) || s.hasBooking });
+            }
+            return null;
+        }
+        // 是否需要「準時離開前一站」提醒：手動開啟，或訂位制餐廳預設開啟
+        function sgLeaveAlertOn(plan, ev) {
+            if (!ev) return false;
+            if (ev.leaveAlert && ev.leaveAlert.on === false) return false;
+            if (ev.leaveAlert && ev.leaveAlert.on === true) return true;
+            if (ev.type !== 'food' && !ev.mealType) return false;
+            const s = sgSpotOfEvent(plan, ev);
+            return !!((s && s.hasBooking) || /訂位|預約|reserve/i.test(String(ev.notes || '')));
+        }
+        function sgLeaveInfo(plan, day, idx) {
+            const evs = day.events || [];
+            const ev = evs[idx], prev = evs[idx - 1];
+            if (!ev || !prev) return null;
+            const pc = parseTimeString(ev.time), pp = parseTimeString(prev.time);
+            if (pc.startMinutes >= 9999 || pp.startMinutes >= 9999) return null;
+            const prevEnd = pp.hasEnd ? pp.endMinutes : pp.startMinutes;
+            const t = ev.transit;
+            const custom = t && t.minutes !== undefined && t.minutes !== null && t.minutes !== '';
+            const travel = custom ? Number(t.minutes) : Math.max(0, pc.startMinutes - prevEnd);
+            const buffer = (ev.leaveAlert && Number(ev.leaveAlert.buffer) >= 0 && ev.leaveAlert.buffer !== '') ? Number(ev.leaveAlert.buffer) : 10;
+            const leave = pc.startMinutes - travel - buffer;
+            return { leave, leaveStr: sgHhmmWrap(leave), arriveStr: pc.startTimeStr, buffer, travel, prev, ev, late: leave < prevEnd, prevEndStr: sgHhmmWrap(prevEnd) };
+        }
+        function sgToggleLeaveAlert(dayNum, idx, ev0) {
+            if (ev0) ev0.stopPropagation();
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            const ev = day && day.events[idx];
+            if (!ev) return;
+            const on = sgLeaveAlertOn(plan, ev);
+            if (!on) { ev.leaveAlert = Object.assign({ buffer: 10 }, ev.leaveAlert || {}, { on: true }); }
+            else {
+                const cur = (ev.leaveAlert && ev.leaveAlert.buffer !== undefined) ? ev.leaveAlert.buffer : 10;
+                const ans = prompt(`「${ev.title}」${sgLeaveInfo(plan, day, idx) ? '目前建議 ' + sgLeaveInfo(plan, day, idx).leaveStr + ' 離開前一站' : ''}\n\n要提早幾分鐘離開（緩衝時間）？請輸入數字。\n輸入「關」可關閉這個提醒。`, String(cur));
+                if (ans === null) return;
+                if (/關|off|^\s*$/i.test(ans)) ev.leaveAlert = Object.assign({}, ev.leaveAlert || {}, { on: false });
+                else {
+                    const n = parseInt(ans, 10);
+                    if (isNaN(n) || n < 0) { showToast('warning', '請輸入 0 以上的數字'); return; }
+                    ev.leaveAlert = Object.assign({}, ev.leaveAlert || {}, { on: true, buffer: n });
+                }
+            }
+            saveState();
+            renderTimelineView();
+        }
+        // 時間軸：在每段移動標籤旁加上「建議幾點離開」或開啟提醒的小按鈕
+        const __origRenderTimelineViewV240 = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineViewV240.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                document.querySelectorAll('#dayCardsContainer .timeline-transit-badge[onclick^="openTransitSettingsModal("]').forEach(b => {
+                    const m = String(b.getAttribute('onclick')).match(/openTransitSettingsModal\((\d+),\s*(\d+)\)/);
+                    if (!m || Number(m[2]) === 0) return;
+                    const day = plan.days.find(d => d.dayNum === Number(m[1]));
+                    const idx = Number(m[2]);
+                    if (!day || !day.events[idx]) return;
+                    const row = b.parentElement;
+                    if (!row || row.querySelector('.sg-leave')) return;
+                    const on = sgLeaveAlertOn(plan, day.events[idx]);
+                    const li = on ? sgLeaveInfo(plan, day, idx) : null;
+                    const html = (on && li)
+                        ? `<button type="button" class="sg-leave on ${li.late ? 'late' : ''}" onclick="sgToggleLeaveAlert(${day.dayNum}, ${idx}, event)" title="${escapeHtml(`為了 ${li.arriveStr} 準時到「${day.events[idx].title}」：交通 ${li.travel} 分＋緩衝 ${li.buffer} 分。點一下可調整緩衝或關閉`)}">🔔 ${li.leaveStr} 離開${li.late ? `（早於前站結束 ${li.prevEndStr}）` : ''}</button>`
+                        : `<button type="button" class="sg-leave" onclick="sgToggleLeaveAlert(${day.dayNum}, ${idx}, event)" title="例如訂位餐廳：依抵達時間與交通時間，算出前一站幾點要離開">🔔 離開提醒</button>`;
+                    b.insertAdjacentHTML('afterend', html);
+                });
+            } catch (e) { console.warn('離開提醒顯示失敗', e); }
+            return r;
+        };
+        // ---- 匯出：所有「幾點離開」提醒 ----
+        function sgCollectLeaveAlerts(plan) {
+            const out = [];
+            (plan.days || []).forEach(d => {
+                const ymd = sgYmdFromDayNum(plan, d.dayNum);
+                if (!ymd) return;
+                const evs = d.events || [];
+                const ft = d.firstTransit;
+                if (ft && ft.startTimeStr && evs[0]) {
+                    const from = (ft.fromLoc && ft.fromLoc !== '出發地') ? ft.fromLoc : '飯店／出發地';
+                    out.push({ ymd, hhmm: ft.startTimeStr, key: `ft-${d.dayNum}`, title: `🔔 ${ft.startTimeStr} 從${from}出發`, desc: `前往「${evs[0].title}」（${parseTimeString(evs[0].time).startTimeStr} 開始）｜${getTransitModeInfo(ft.mode || 'car').label} 約 ${ft.minutes || '?'} 分` });
+                }
+                evs.forEach((ev, i) => {
+                    if (i === 0 || !sgLeaveAlertOn(plan, ev)) return;
+                    const li = sgLeaveInfo(plan, d, i);
+                    if (!li || li.leave < 0) return;
+                    out.push({ ymd, hhmm: li.leaveStr, key: `lv-${d.dayNum}-${ev._eid || i}`, title: `🔔 ${li.leaveStr} 離開「${li.prev.title}」`, desc: `前往「${ev.title}」，${li.arriveStr} 要抵達｜交通約 ${li.travel} 分＋緩衝 ${li.buffer} 分${ev.loc ? '\n地址：' + ev.loc : ''}` });
+                });
+            });
+            return out.sort((a, b) => (a.ymd + a.hhmm).localeCompare(b.ymd + b.hhmm));
+        }
+        function sgIcsDT(ymd, hhmm, addMin) {
+            const [y, mo, da] = ymd.split('-').map(Number);
+            const [h, mi] = hhmm.split(':').map(Number);
+            const dt = new Date(y, mo - 1, da, h, mi + (addMin || 0));
+            const p = n => String(n).padStart(2, '0');
+            return `${dt.getFullYear()}${p(dt.getMonth() + 1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`;
+        }
+        function sgDownloadLeaveIcs(kind) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            const list = sgCollectLeaveAlerts(plan);
+            if (!list.length) { showToast('warning', '目前沒有「幾點離開」的提醒。請先設定起程交通，或在行程移動標籤旁按「🔔 離開提醒」'); return; }
+            const esc = s => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+            const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+            // 使用「浮動時間」（不帶時區）：手機在日本就以日本時間提醒
+            const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TravelPlanner//LeaveAlerts//ZH', 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${esc((plan.title || '旅行') + ' 出發提醒')}`];
+            list.forEach(a => {
+                const uid = `${a.key}-${a.ymd}@travel-planner`;
+                if (kind === 'todo') {
+                    L.push('BEGIN:VTODO', `UID:${uid}`, `DTSTAMP:${stamp}`, `SUMMARY:${esc(a.title)}`, `DESCRIPTION:${esc(a.desc)}`, `DUE:${sgIcsDT(a.ymd, a.hhmm)}`, 'STATUS:NEEDS-ACTION',
+                        'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(a.title)}`, 'TRIGGER;RELATED=END:-PT10M', 'END:VALARM', 'END:VTODO');
+                } else {
+                    L.push('BEGIN:VEVENT', `UID:${uid}`, `DTSTAMP:${stamp}`, `DTSTART:${sgIcsDT(a.ymd, a.hhmm)}`, `DTEND:${sgIcsDT(a.ymd, a.hhmm, 10)}`, `SUMMARY:${esc(a.title)}`, `DESCRIPTION:${esc(a.desc)}`,
+                        'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(a.title)}`, 'TRIGGER:-PT10M', 'END:VALARM',
+                        'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(a.title)}`, 'TRIGGER:PT0M', 'END:VALARM', 'END:VEVENT');
+                }
+            });
+            L.push('END:VCALENDAR');
+            downloadShoppingBlob(L.join('\r\n'), kind === 'todo' ? '出發提醒_提醒事項.ics' : '出發提醒_行事曆鬧鐘.ics', 'text/calendar;charset=utf-8');
+            showToast('success', `已匯出 ${list.length} 個出發提醒`);
+        }
+        function sgRenderLeaveList() {
+            const box = document.getElementById('sgLeaveExportList');
+            const plan = getCurrentPlan();
+            if (!box || !plan) return;
+            const list = sgCollectLeaveAlerts(plan);
+            box.innerHTML = list.length ? list.map(a => `<div style="display:flex;gap:8px;font-size:0.8rem;padding:2px 0;"><span style="color:#64748b;white-space:nowrap;">${a.ymd.slice(5).replace('-', '/')}</span><strong style="white-space:nowrap;">${escapeHtml(a.hhmm)}</strong><span>${escapeHtml(a.title.replace(/^🔔 \d\d:\d\d /, ''))}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8;">目前沒有提醒。設定起程交通，或在行程移動標籤旁按「🔔 離開提醒」就會出現在這裡。</div>';
+        }
+        const __origOpenExportModalV240 = openExportModal;
+        openExportModal = function () {
+            const r = __origOpenExportModalV240.apply(this, arguments);
+            try { sgRenderLeaveList(); } catch (e) {}
+            return r;
+        };
+        (function () {
+            if (document.getElementById('sgLeaveStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgLeaveStyle';
+            st.textContent = `
+                .sg-leave{cursor:pointer;border:1px dashed #cbd5e1;background:#fff;color:#64748b;border-radius:999px;font-size:0.72rem;font-weight:700;padding:2px 9px;white-space:nowrap;}
+                .sg-leave.on{border:1px solid #fcd34d;background:#fffbeb;color:#b45309;}
+                .sg-leave.on.late{border-color:#fca5a5;background:#fef2f2;color:#b91c1c;}
+                .sg-ft-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;background:#f3f8fa;border:1px dashed #b9d4df;border-radius:10px;padding:5px 8px;}
+                .sg-ft-main{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1 1 auto;min-width:0;cursor:pointer;font-size:0.78rem;color:#334155;}
+                .sg-ft-tag{background:#3b7386;color:#fff;font-size:0.66rem;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap;}
+                .sg-ft-leave{background:#fffbeb;border:1px solid #fcd34d;color:#b45309;border-radius:999px;padding:0 8px;font-size:0.74rem;white-space:nowrap;}
+                .sg-ft-cost{color:#0f766e;font-weight:700;font-size:0.72rem;background:#ccfbf1;padding:0 6px;border-radius:4px;white-space:nowrap;}
+                .sg-icon-btn{border:1px solid #e2e8f0;background:#fff;border-radius:8px;width:28px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#475569;cursor:pointer;font-size:0.76rem;flex-shrink:0;}
+                .sg-icon-btn:hover{background:#f1f5f9;}
+                .sg-lodge{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:6px 10px;}
+                .sg-lodge-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+                .sg-lodge-tag{background:#c2410c;color:#fff;font-size:0.66rem;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap;}
+                .sg-lodge-arr{background:#fff;border:1px solid #fed7aa;color:#9a3412;border-radius:999px;font-size:0.72rem;font-weight:700;padding:0 8px;white-space:nowrap;}
+                .sg-lodge-sub{margin-top:3px;font-size:0.74rem;color:#64748b;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
             `;
             document.head.appendChild(st);
         })();
@@ -17427,7 +17598,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.23.13：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.24.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -27817,7 +27988,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.23.13：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.24.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
