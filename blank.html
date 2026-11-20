@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.25.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.25.3</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -16036,7 +16036,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.25.2：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.25.3：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16053,7 +16053,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.25.3：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -16111,7 +16111,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.25.2：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.25.3：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -16293,7 +16293,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.25.2：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.25.3：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -16350,7 +16350,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.25.2：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.25.3：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -16553,7 +16553,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.25.3：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -16625,7 +16625,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.25.3：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -16639,7 +16639,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.25.3：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -16670,7 +16670,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.25.2：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.25.3：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -16817,7 +16817,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.25.3：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -17081,7 +17081,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        // ===== V3.25.3：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
         var SG_WALK_LEVELS = {
             low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
             mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
@@ -17212,7 +17212,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.25.2：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
+        // ===== V3.25.3：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
         function sgSavedDay(plan) {
             try {
                 const o = JSON.parse(localStorage.getItem('sg_last_day_v1') || 'null');
@@ -17232,7 +17232,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.25.2：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
+        // ===== V3.25.3：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
         function sgPlatformShortHtml(text) {
             const s = String(text || '').trim();
             if (/^https?:\/\//i.test(s)) {
@@ -17243,7 +17243,7 @@ const firebaseConfig = {
             return escapeHtml(s);
         }
 
-        // ===== V3.25.2：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
+        // ===== V3.25.3：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
         const __origOpenMtV2311 = openEditMajorTransportModal;
         openEditMajorTransportModal = function (idx) {
             const r = __origOpenMtV2311.apply(this, arguments);
@@ -17271,7 +17271,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.25.2：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
+        // ===== V3.25.3：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
         var sgHotelArchOpen = false;
         function sgHotelAutoLabel(plan, ht, active) {
             const tripNights = Math.max(1, ((plan.days || []).length || 2) - 1);
@@ -17405,7 +17405,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.25.2：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
+        // ===== V3.25.3：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
         (function () {
             if (document.getElementById('sgMobileSelStyle')) return;
             const st = document.createElement('style');
@@ -17419,7 +17419,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
+        // ===== V3.25.3：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
         function sgSpotOfEvent(plan, ev) {
             if (!plan || !ev || !ev.spotGuideId) return null;
             for (const s of (plan.spotTips || [])) {
@@ -17588,7 +17588,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
+        // ===== V3.25.3：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
         var SG_KINDS = {
             sight: { label: '景點', icon: '📍', color: '#38bdf8', fg: '#0284c7' },
             food: { label: '餐廳', icon: '🍽️', color: '#f97316', fg: '#ea580c' },
@@ -17680,7 +17680,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：航空公司下拉加上搜尋（輸入「新加坡」「SQ」即可快速選取） =====
+        // ===== V3.25.3：航空公司下拉加上搜尋（輸入「新加坡」「SQ」即可快速選取） =====
         function sgAirlineSearchInit() {
             document.querySelectorAll('select[id^="fAirlineSelect_"]').forEach(sel => {
                 const seg = sel.id.replace('fAirlineSelect_', '');
@@ -17769,7 +17769,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：行程卡「⋯ 更多」選單：轉為移動改成白話名稱＋預覽確認＋可復原；已預訂接送改為精簡顯示 =====
+        // ===== V3.25.3：行程卡「⋯ 更多」選單：轉為移動改成白話名稱＋預覽確認＋可復原；已預訂接送改為精簡顯示 =====
         function sgMtOfEvent(plan, ev) {
             return (ev && ev.majorTransId) ? ((plan.majorTransports || []).find(m => m.id === ev.majorTransId) || null) : null;
         }
@@ -17906,7 +17906,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.25.2：親友代購可改名、移除代購人 =====
+        // ===== V3.25.3：親友代購可改名、移除代購人 =====
         function sgProxyRename(i) {
             const plan = getCurrentPlan();
             const old = (window.__sgProxyNames || [])[i];
@@ -17937,7 +17937,7 @@ const firebaseConfig = {
             renderShoppingList();
         }
 
-        // ===== V3.25.2：每次顯示前自動修復斷開的連結（住宿→起程交通、細部景點、預訂交通，以行程為準） =====
+        // ===== V3.25.3：每次顯示前自動修復斷開的連結（住宿→起程交通、細部景點、預訂交通，以行程為準） =====
         function sgMaintainLinks(plan) {
             if (!plan || !Array.isArray(plan.days)) return false;
             let ch = false;
@@ -18008,6 +18008,84 @@ const firebaseConfig = {
             return __origRenderTimelineViewV252.apply(this, arguments);
         };
 
+        // ===== V3.25.3：行前預訂編輯視窗依類別調整欄位與標題（新增、編輯一致） =====
+        var SG_MT_FORM = {
+            transfer: { e: '🚐', dep: '上車地點', arr: '下車地點', depPh: '例如：羽田機場 T3 入境大廳', arrPh: '例如：新宿飯店門口', time: '接送時間（24 小時制：出發／預計抵達）', prov: '車行／平台', no: '訂單編號／司機電話', fixed: false },
+            rail: { e: '🚄', dep: '出發站', arr: '抵達站', depPh: '例如：東京站', arrPh: '例如：輕井澤站', time: '發車／抵達時間（24 小時制）', prov: '訂票平台', no: '訂位代號／車次座位', fixed: false },
+            pass: { e: '🎫', dep: '起點（選填）', arr: '終點（選填）', depPh: '例如：新宿（巴士、單程票才需要）', arrPh: '例如：羽田機場', time: '使用時間（24 小時制，選填）', prov: '購買平台', no: '訂單編號', fixed: true },
+            ticket: { e: '🎟️', dep: '地點／地址', arr: null, depPh: '例如：東京迪士尼海洋', time: '入場時間（24 小時制，結束可不填）', prov: '購買平台', no: '訂單編號／票號', fixed: true },
+            tour: { e: '🧭', dep: '集合地點', arr: '解散地點（選填）', depPh: '例如：新宿站西口', arrPh: '例如：東京站', time: '集合／結束時間（24 小時制）', prov: '報名平台', no: '訂單編號／領隊電話', fixed: false },
+            sim: { e: '📶', dep: null, arr: null, time: null, date: '開始使用日期（點選行事曆）', prov: '購買平台', no: '訂單編號／啟用碼', fixed: true },
+            misc: { e: '📋', dep: '地點（選填）', arr: null, depPh: '例如：Peter Luger 銀座店', time: '時間（24 小時制，選填）', prov: '平台／店家', no: '訂單編號／訂位人', fixed: true }
+        };
+        function sgMtApplyCategoryUI() {
+            const $ = id => document.getElementById(id);
+            const sel = $('majorTransCategory');
+            if (!sel) return;
+            const cat = SG_MT_FORM[sel.value] ? sel.value : 'misc';
+            const F = SG_MT_FORM[cat];
+            const meta = MAJOR_TRANS_CATEGORIES[cat] || { label: '預訂' };
+            const grp = el => el ? el.closest('.form-group') : null;
+            const setLabel = (el, txt) => { const g = grp(el); const l = g && g.querySelector('label'); if (l && txt) { const ic = l.querySelector('i'); l.textContent = ' ' + txt; if (ic) l.prepend(ic); } };
+            const show = (el, on) => { const g = grp(el); if (g) g.style.display = on ? '' : 'none'; };
+            // 出發／抵達
+            const dep = $('majorTransDep'), arr = $('majorTransArr');
+            show(dep, !!F.dep); show(arr, !!F.arr);
+            if (F.dep) { setLabel(dep, F.dep); dep.placeholder = F.depPh || ''; }
+            if (F.arr) { setLabel(arr, F.arr); arr.placeholder = F.arrPh || ''; }
+            const row = dep && dep.closest('.form-row');
+            if (row) { row.style.display = (F.dep || F.arr) ? '' : 'none'; row.style.gridTemplateColumns = (F.dep && F.arr) ? '' : '1fr'; }
+            // 時間
+            const th = $('mtStartHour');
+            show(th, !!F.time);
+            if (F.time) setLabel(th, F.time);
+            const dateGrp = grp($('majorTransDate'));
+            if (dateGrp) { const l = dateGrp.querySelector('label'); if (l) { const ic = l.querySelector('i'); l.textContent = ' ' + (F.date || '使用日期（點選行事曆同步行程）'); if (ic) l.prepend(ic); } }
+            // 不固定時間（票券、網卡、門票才需要）
+            const nf = $('majorTransNoFixedTime');
+            const nfLab = nf && nf.closest('label');
+            if (nfLab) nfLab.style.display = F.fixed ? '' : 'none';
+            if (nf && !F.fixed && nf.checked) { nf.checked = false; try { sgMtSyncUi(); } catch (e) {} }
+            // 平台與單號
+            setLabel($('majorTransProvider'), F.prov + '（官網、Klook、KKday…）');
+            const PH = { transfer: ['例如：KKday / Klook / 車行名稱', '例如：#KK20261217 或司機電話'], rail: ['例如：JR 東日本官網 / Klook', '例如：訂位代號、5 號車 12A'], pass: ['例如：Klook / 車站售票機', '例如：#KL123456'], ticket: ['例如：官網 / Klook / KKday', '例如：票號或 QR 訂單編號'], tour: ['例如：KKday / Klook', '例如：#KK123456、領隊 LINE'], sim: ['例如：Klook / 官網 / 機場櫃檯', '例如：訂單編號或 eSIM 啟用碼'], misc: ['例如：inline / TableCheck / 保險公司', '例如：訂位人姓名、保單號碼'] }[cat];
+            if (PH) { $('majorTransProvider').placeholder = PH[0]; $('majorTransBookingNo').placeholder = PH[1]; }
+            setLabel($('majorTransBookingNo'), F.no);
+            // 標題、類別欄名稱、儲存鈕
+            const isEdit = parseInt(($('majorTransEditIndex') || {}).value, 10) >= 0;
+            const t = $('majorTransportModalTitle');
+            if (t) t.innerText = `${F.e} ${isEdit ? '編輯' : '新增'}${meta.label}`;
+            const catLab = grp(sel) && grp(sel).querySelector('label');
+            if (catLab) catLab.textContent = '預訂類別與內容';
+            const modal = $('editMajorTransportModal');
+            const btn = modal && Array.from(modal.querySelectorAll('.modal-footer button')).find(b => /儲存/.test(b.textContent));
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> 儲存';
+        }
+        const __origOnMtCatV253 = onMajorTransCategoryChange;
+        onMajorTransCategoryChange = function () {
+            const r = __origOnMtCatV253.apply(this, arguments);
+            try { sgMtApplyCategoryUI(); } catch (e) { console.warn(e); }
+            return r;
+        };
+        const __origOpenMtV253 = openEditMajorTransportModal;
+        openEditMajorTransportModal = function (idx) {
+            const r = __origOpenMtV253.apply(this, arguments);
+            try {
+                sgMtApplyCategoryUI();
+                const sel = document.getElementById('majorTransCategory');
+                const nf = document.getElementById('majorTransNoFixedTime');
+                // 新增票券、一日遊、網卡：計費預設「每人單價」
+                const md = document.getElementById('majorTransMode');
+                if (!(idx >= 0) && sel && md && ['ticket', 'tour', 'sim', 'pass'].indexOf(sel.value) >= 0 && md.querySelector('option[value="single"]')) md.value = 'single';
+                // 新增網路通訊：預設「不固定時間」並不排進時間軸
+                if (!(idx >= 0) && sel && sel.value === 'sim' && nf && !nf.checked) {
+                    nf.checked = true; try { sgMtSyncUi(); } catch (e) {}
+                    const cb = document.getElementById('majorTransSyncSchedule'); if (cb) cb.checked = false;
+                }
+            } catch (e) { console.warn(e); }
+            return r;
+        };
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -18023,7 +18101,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.25.2：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.25.3：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -28424,7 +28502,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.25.2：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.25.3：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
