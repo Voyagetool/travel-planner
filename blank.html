@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.24.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.25.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -11972,17 +11972,10 @@ const firebaseConfig = {
                             </div>
                             <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
                                 ${ev.type !== 'flight' ? `<span class="tl-drag-group"><span class="tl-drag-handle" draggable="true" data-tl-handle="1" title="按住拖曳，調整景點順序"><i class="fa-solid fa-grip-vertical"></i></span><span class="tl-move-btns"><button type="button" class="tl-move-btn" ${eIdx === 0 ? 'disabled' : ''} onclick="event.stopPropagation(); moveDayEvent(${activeDay.dayNum}, ${eIdx}, -1)" title="上移"><i class="fa-solid fa-chevron-up"></i></button><button type="button" class="tl-move-btn" ${eIdx === events.length - 1 ? 'disabled' : ''} onclick="event.stopPropagation(); moveDayEvent(${activeDay.dayNum}, ${eIdx}, 1)" title="下移"><i class="fa-solid fa-chevron-down"></i></button></span></span>` : ''}
-                                ${ev.type === 'trans' ? `
-                                    <button type="button" class="n-btn" style="padding:2px 8px; font-size:0.72rem; color:#0369a1; background:#e0f2fe; border-color:#7dd3fc; font-weight:700;" onclick="event.stopPropagation(); convertEventToTransit(${activeDay.dayNum}, ${eIdx})" title="將此交通活動轉為行程間移動接駁，時間軸更流暢乾淨">
-                                        <i class="fa-solid fa-arrows-split-up-and-left"></i> 轉為站間移動
-                                    </button>
-                                ` : ''}
                                 <button type="button" class="n-btn" style="padding: 2px 7px; font-size: 0.74rem;" onclick="event.stopPropagation(); openEditEventModal(${activeDay.dayNum}, ${eIdx})" title="編輯此行程活動">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button type="button" class="n-btn n-btn-danger" style="padding: 2px 7px; font-size: 0.74rem;" onclick="event.stopPropagation(); deleteEventItem(${activeDay.dayNum}, ${eIdx})" title="刪除此行程活動">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
+                                <button type="button" class="n-btn sg-more-btn" style="padding: 2px 8px; font-size: 0.78rem; font-weight:800;" onclick="event.stopPropagation(); sgOpenMoreMenu(event, ${activeDay.dayNum}, ${eIdx})" title="更多：轉成移動、精簡顯示、刪除">⋯</button>
                             </div>
                         </div>
                     `;
@@ -16043,7 +16036,7 @@ const firebaseConfig = {
         try { tlStatusFilter = 'all'; } catch (e) {}
 
         
-        // ===== V3.24.6：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
+        // ===== V3.25.0：手機版行程卡片內容不再被右側按鈕擠成窄欄 =====
         (function () {
             if (document.getElementById('sgMobile3Style')) return;
             const st = document.createElement('style');
@@ -16060,7 +16053,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
+        // ===== V3.25.0：航班編輯左右並排、景點精簡／詳細與購買清單改小方框、手機編輯視窗不再橫向溢出 =====
         (function () {
             if (document.getElementById('sgTileStyle')) return;
             const st = document.createElement('style');
@@ -16118,7 +16111,7 @@ const firebaseConfig = {
             if (spotGuidesViewMode === 'compact') toggleSpotGuideExpand(id);
         }
 
-        // ===== V3.24.6：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
+        // ===== V3.25.0：景點封存庫（這次確定不去的景點先封存，下次排同個地點時可還原使用） =====
         function sgArchiveList() {
             if (!Array.isArray(appState.spotLibrary)) appState.spotLibrary = [];
             return appState.spotLibrary;
@@ -16300,7 +16293,7 @@ const firebaseConfig = {
             showToast('success', `已還原 ${added} 個項目到待安排${skipped ? `，${skipped} 個因名稱重複略過` : ''}`);
         }
 
-        // ===== V3.24.6：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
+        // ===== V3.25.0：頂端分頁字放大、匯出／手冊合併、手機浮動鈕上移、購買清單方框與輸入完成、手機輸入不再自動放大 =====
         (function () {
             if (document.getElementById('sgUiPolishStyle')) return;
             const st = document.createElement('style');
@@ -16357,7 +16350,7 @@ const firebaseConfig = {
             try { shopQuickAdd({ key: 'Enter', preventDefault: function () {} }, el); } finally { window.__shopNoRefocus = false; }
         });
 
-        // ===== V3.24.6：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
+        // ===== V3.25.0：機酒與行前預訂（票券／體驗／網卡獨立統計、四顆篩選、憑證欄位） =====
         function sgMtIsService(c) { return ['sim', 'tour', 'ticket', 'misc', 'restaurant', 'insurance', 'other'].indexOf(c) >= 0; }
         var sgTicketTag = 'all';
         var SG_TICKET_TAGS = [
@@ -16560,7 +16553,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
+        // ===== V3.25.0：預訂類別精簡為七類、新增預訂集中按鈕、各類別獨立方框 =====
         var SG_MT_CANON = { charter: 'transfer', domestic_flight: 'rail', ferry: 'rail', ic: 'pass', bus: 'pass', restaurant: 'misc', insurance: 'misc', other: 'misc' };
         function sgMtMigrateCats(plan) {
             let ch = false;
@@ -16632,7 +16625,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
+        // ===== V3.25.0：機票、住宿也各自成框，與其他類別方框一起往下延伸 =====
         (function () {
             if (document.getElementById('sgSecBoxStyle')) return;
             const st = document.createElement('style');
@@ -16646,7 +16639,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
+        // ===== V3.25.0：重新整理後回到上次瀏覽的分頁（只記在這台裝置，不影響雲端與其他裝置） =====
         (function () {
             const KEY = 'sg_last_view_v1';
             const _sv = switchView;
@@ -16677,7 +16670,7 @@ const firebaseConfig = {
             });
         })();
 
-        // ===== V3.24.6：購買清單可加照片，買東西時快速對照 =====
+        // ===== V3.25.0：購買清單可加照片，買東西時快速對照 =====
         var __shopPhotosDraft = [];
         var SG_SHOP_MAX_PHOTOS = 3;
         function sgShopPhotosOf(it) { return it ? (Array.isArray(it.photos) ? it.photos.filter(Boolean) : (it.photo ? [it.photo] : [])) : []; }
@@ -16824,7 +16817,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：購買清單依「類別」呈現（八大類＋親友代購專區） =====
+        // ===== V3.25.0：購買清單依「類別」呈現（八大類＋親友代購專區） =====
         var SG_SHOP_CATS = [
             { k: 'med', icon: '💊', label: '藥品與保健食品', bg: '#fef2f2', bd: '#f3b0b0', tx: '#b91c1c', note: '留意各國藥品攜帶上限',
               kw: /藥|貼布|維他命|益生菌|保健|胃|止痛|感冒|龍角散|喉|眼藥|膏|營養/,
@@ -17087,7 +17080,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
+        // ===== V3.25.0：交通方式精簡為七種，加入步行負擔（標籤／分鐘）與當日步行加總 =====
         var SG_WALK_LEVELS = {
             low: { emoji: '🟢', text: '幾乎不用走', range: '< 5 分鐘', bg: '#ecfdf5', fg: '#047857', bd: '#a7f3d0', rep: 3 },
             mid: { emoji: '🟡', text: '適中步行', range: '5–15 分鐘', bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', rep: 10 },
@@ -17218,7 +17211,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.6：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
+        // ===== V3.25.0：天數分頁只記在這台裝置，雲端同步不再把畫面拉回舊的天數 =====
         function sgSavedDay(plan) {
             try {
                 const o = JSON.parse(localStorage.getItem('sg_last_day_v1') || 'null');
@@ -17238,7 +17231,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.6：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
+        // ===== V3.25.0：預約平台若填網址，只顯示簡短網域連結，不再整串網址撐滿卡片 =====
         function sgPlatformShortHtml(text) {
             const s = String(text || '').trim();
             if (/^https?:\/\//i.test(s)) {
@@ -17249,7 +17242,7 @@ const firebaseConfig = {
             return escapeHtml(s);
         }
 
-        // ===== V3.24.6：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
+        // ===== V3.25.0：交通／票券的「預訂平台」與「預約平台」合併為一個欄位 =====
         const __origOpenMtV2311 = openEditMajorTransportModal;
         openEditMajorTransportModal = function (idx) {
             const r = __origOpenMtV2311.apply(this, arguments);
@@ -17277,7 +17270,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.6：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
+        // ===== V3.25.0：住宿可封存／備選（保留資訊、不計入住宿與預算），標籤自動判斷也可自訂 =====
         var sgHotelArchOpen = false;
         function sgHotelAutoLabel(plan, ht, active) {
             const tripNights = Math.max(1, ((plan.days || []).length || 2) - 1);
@@ -17411,7 +17404,7 @@ const firebaseConfig = {
             return r;
         };
 
-        // ===== V3.24.6：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
+        // ===== V3.25.0：手機下拉選單文字置中不被切掉；行程與景點時間以總覽為準並自動串聯 =====
         (function () {
             if (document.getElementById('sgMobileSelStyle')) return;
             const st = document.createElement('style');
@@ -17425,7 +17418,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
+        // ===== V3.25.0：訂位餐廳「前一站幾點離開」提醒、匯出鬧鐘到 Apple 行事曆／提醒事項、起程與住宿橫幅精簡 =====
         function sgSpotOfEvent(plan, ev) {
             if (!plan || !ev || !ev.spotGuideId) return null;
             for (const s of (plan.spotTips || [])) {
@@ -17594,7 +17587,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
+        // ===== V3.25.0：景點細分類（景點／餐廳／百貨購物／藥妝）、看板不需左右捲動、航班時長改為 3h50m =====
         var SG_KINDS = {
             sight: { label: '景點', icon: '📍', color: '#38bdf8', fg: '#0284c7' },
             food: { label: '餐廳', icon: '🍽️', color: '#f97316', fg: '#ea580c' },
@@ -17686,7 +17679,7 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
-        // ===== V3.24.6：航空公司下拉加上搜尋（輸入「新加坡」「SQ」即可快速選取） =====
+        // ===== V3.25.0：航空公司下拉加上搜尋（輸入「新加坡」「SQ」即可快速選取） =====
         function sgAirlineSearchInit() {
             document.querySelectorAll('select[id^="fAirlineSelect_"]').forEach(sel => {
                 const seg = sel.id.replace('fAirlineSelect_', '');
@@ -17775,6 +17768,143 @@ const firebaseConfig = {
             document.head.appendChild(st);
         })();
 
+        // ===== V3.25.0：行程卡「⋯ 更多」選單：轉為移動改成白話名稱＋預覽確認＋可復原；已預訂接送改為精簡顯示 =====
+        function sgMtOfEvent(plan, ev) {
+            return (ev && ev.majorTransId) ? ((plan.majorTransports || []).find(m => m.id === ev.majorTransId) || null) : null;
+        }
+        function sgConvertLabel(day, idx) {
+            const evs = day.events || [];
+            if (idx === 0) return '改成出發交通（從飯店出發）';
+            if (idx === evs.length - 1) return '改成回飯店的交通';
+            return `改成「${evs[idx - 1].title}」→「${evs[idx + 1].title}」之間的移動`;
+        }
+        function sgCloseMoreMenu() { const m = document.getElementById('sgMoreMenu'); if (m) m.style.display = 'none'; }
+        function sgOpenMoreMenu(ev0, dayNum, idx) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            const ev = day && day.events[idx];
+            if (!ev) return;
+            let m = document.getElementById('sgMoreMenu');
+            if (!m) {
+                m = document.createElement('div');
+                m.id = 'sgMoreMenu';
+                document.body.appendChild(m);
+            }
+            const items = [];
+            const mt = sgMtOfEvent(plan, ev);
+            if (ev.type === 'trans') {
+                if (mt) {
+                    items.push(`<button type="button" onclick="sgToggleCompact(${dayNum}, ${idx})">${mt.compactInTimeline ? '🔼 展開顯示' : '🔽 精簡成移動條'}<small>已預訂的接送保留訂單、費用與憑證，只把顯示縮成一行</small></button>`);
+                } else {
+                    items.push(`<button type="button" onclick="sgConvertWithPreview(${dayNum}, ${idx})">↪️ ${escapeHtml(sgConvertLabel(day, idx))}<small>轉換後這筆行程會移除，6 秒內可復原</small></button>`);
+                }
+            }
+            items.push(`<button type="button" class="danger" onclick="sgCloseMoreMenu(); deleteEventItem(${dayNum}, ${idx})">🗑️ 刪除此行程</button>`);
+            m.innerHTML = items.join('');
+            m.style.display = 'block';
+            const r = ev0.currentTarget.getBoundingClientRect();
+            const w = Math.min(300, window.innerWidth - 16);
+            m.style.width = w + 'px';
+            m.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + 'px';
+            const below = r.bottom + 6;
+            m.style.top = (below + m.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - m.offsetHeight - 6) : below) + 'px';
+        }
+        document.addEventListener('click', e => { if (!(e.target.closest && (e.target.closest('#sgMoreMenu') || e.target.closest('.sg-more-btn')))) sgCloseMoreMenu(); });
+        window.addEventListener('scroll', sgCloseMoreMenu, { passive: true });
+        function sgConvertWithPreview(dayNum, idx) {
+            sgCloseMoreMenu();
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            if (!day) return;
+            day.events = sortDayEventsByTime(day.events);
+            const ev = day.events[idx];
+            if (!ev) return;
+            const p = parseTimeString(ev.time);
+            const mins = (p.hasEnd && p.durationMinutes > 0) ? p.durationMinutes : 40;
+            const evs = day.events;
+            const what = idx === 0 ? `當天的「出發交通」（從飯店前往「${evs[1] ? evs[1].title : '首站'}」）`
+                : idx === evs.length - 1 ? `「${evs[idx - 1].title}」之後「回今晚住宿」的交通`
+                : `「${evs[idx - 1].title}」→「${evs[idx + 1].title}」之間的移動`;
+            if (!confirm(`「${ev.title}」會變成${what}，約 ${formatDuration(mins)}。\n\n原本這筆行程會從時間軸移除，轉換後 6 秒內可按「復原」。\n\n確定要轉換嗎？`)) return;
+            const snap = JSON.stringify({ events: day.events, firstTransit: day.firstTransit || null, lastTransit: day.lastTransit || null });
+            const mt = sgMtOfEvent(plan, ev);
+            const mtSync = mt ? mt.syncToSchedule : undefined;
+            convertEventToTransit(dayNum, idx);
+            sgShowUndo(`已轉換「${ev.title}」`, () => {
+                const s = JSON.parse(snap);
+                day.events = s.events;
+                if (s.firstTransit) day.firstTransit = s.firstTransit; else delete day.firstTransit;
+                if (s.lastTransit) day.lastTransit = s.lastTransit; else delete day.lastTransit;
+                if (mt) mt.syncToSchedule = mtSync;
+                saveState();
+                renderAll();
+                showToast('info', '已復原');
+            });
+        }
+        function sgShowUndo(msg, fn) {
+            let b = document.getElementById('sgUndoBar');
+            if (!b) { b = document.createElement('div'); b.id = 'sgUndoBar'; document.body.appendChild(b); }
+            b.innerHTML = `<span>${escapeHtml(msg)}</span><button type="button">↩ 復原</button>`;
+            b.style.display = 'flex';
+            clearTimeout(window.__sgUndoTimer);
+            b.querySelector('button').onclick = () => { b.style.display = 'none'; clearTimeout(window.__sgUndoTimer); fn(); };
+            window.__sgUndoTimer = setTimeout(() => { b.style.display = 'none'; }, 6000);
+        }
+        function sgToggleCompact(dayNum, idx) {
+            sgCloseMoreMenu();
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === Number(dayNum));
+            const mt = day && sgMtOfEvent(plan, day.events[idx]);
+            if (!mt) return;
+            mt.compactInTimeline = !mt.compactInTimeline;
+            saveState();
+            renderTimelineView();
+        }
+        // 精簡顯示：已預訂接送在時間軸只占一行，點一下可暫時展開
+        const __origRenderTimelineViewV250 = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineViewV250.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                document.querySelectorAll('#dayCardsContainer .timeline-event-row[data-day][data-idx]').forEach(row => {
+                    const day = plan.days.find(d => d.dayNum === Number(row.dataset.day));
+                    const ev = day && day.events[Number(row.dataset.idx)];
+                    const mt = ev && sgMtOfEvent(plan, ev);
+                    if (!mt || !mt.compactInTimeline) return;
+                    row.classList.add('sg-compact');
+                    const title = row.querySelector('.timeline-event-title');
+                    if (title && !row.querySelector('.sg-compact-hint')) title.insertAdjacentHTML('afterend', `<div class="sg-compact-hint">${escapeHtml(mt.provider ? mt.provider + '・' : '')}${mt.voucherStatus ? escapeHtml(mt.voucherStatus) + '・' : ''}點一下看細節</div>`);
+                    row.addEventListener('click', e => { if (e.target.closest('button,a,.tl-status-chip')) return; row.classList.toggle('sg-compact-open'); });
+                });
+            } catch (e) { console.warn('精簡顯示失敗', e); }
+            return r;
+        };
+        (function () {
+            if (document.getElementById('sgMoreStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMoreStyle';
+            st.textContent = `
+                #sgMoreMenu{display:none;position:fixed;z-index:100001;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 12px 30px rgba(15,23,42,.22);padding:6px;}
+                #sgMoreMenu button{display:block;width:100%;text-align:left;border:none;background:transparent;padding:9px 10px;border-radius:8px;font-size:0.86rem;font-weight:700;color:#0f172a;cursor:pointer;line-height:1.4;}
+                #sgMoreMenu button small{display:block;font-weight:500;font-size:0.72rem;color:#64748b;margin-top:2px;}
+                #sgMoreMenu button:hover{background:#f1f5f9;}
+                #sgMoreMenu button.danger{color:#b91c1c;}
+                #sgMoreMenu button.danger:hover{background:#fef2f2;}
+                #sgUndoBar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:100002;background:#0f172a;color:#fff;border-radius:12px;padding:10px 14px;gap:14px;align-items:center;font-size:0.88rem;box-shadow:0 10px 26px rgba(0,0,0,.3);max-width:92vw;}
+                #sgUndoBar button{border:none;background:#fbbf24;color:#0f172a;font-weight:800;border-radius:8px;padding:4px 12px;cursor:pointer;white-space:nowrap;}
+                @media (max-width:700px){ #sgUndoBar{bottom:96px;} }
+                .timeline-event-row.sg-compact{padding-top:6px !important;padding-bottom:6px !important;background:#f0f9ff !important;border-style:dashed !important;cursor:pointer;}
+                .timeline-event-row.sg-compact .timeline-event-meta{display:none !important;}
+                .timeline-event-row.sg-compact .timeline-event-title{font-size:0.88rem !important;margin:0 !important;}
+                .timeline-event-row.sg-compact .tl-status-chip{display:none !important;}
+                .timeline-event-row.sg-compact.sg-compact-open .timeline-event-meta{display:flex !important;}
+                .sg-compact-hint{display:none;font-size:0.72rem;color:#0369a1;margin-top:2px;}
+                .timeline-event-row.sg-compact .sg-compact-hint{display:block;}
+                .timeline-event-row.sg-compact.sg-compact-open .sg-compact-hint{display:none;}
+            `;
+            document.head.appendChild(st);
+        })();
+
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
         renderSpotGuidesView = function () {
@@ -17790,7 +17920,7 @@ const firebaseConfig = {
             return __r;
         };
 
-        // ===== V3.24.6：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
+        // ===== V3.25.0：Day 選擇列固定在上方（捲動時隨時知道目前第幾天）=====
         (function () {
             if (document.getElementById('sgStickyDayStyle')) return;
             const st = document.createElement('style');
@@ -28191,7 +28321,7 @@ const firebaseConfig = {
             if (confirm('確定要刪除此行程活動嗎？')) {
                 const __delEv = day.events[eIdx];
                 day.events.splice(eIdx, 1);
-                // V3.24.6：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
+                // V3.25.0：同步取消景點頁對應項目的排程，避免被「補建事件」機制又加回行程
                 try {
                     if (__delEv) {
                         const sid = __delEv.spotGuideId || '';
