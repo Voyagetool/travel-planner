@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.26.6</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.27.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -19860,7 +19860,8 @@ const firebaseConfig = {
             sushi: { e: '🍣', t: '壽司・海鮮', kw: /壽司|寿司|すし|鮨|海鮮|鮮魚|蟹|sushi/i },
             bbq: { e: '🥩', t: '燒肉・牛排', kw: /燒肉|焼肉|燒烤|烤肉|牛排|ステーキ|steak|meat|和牛|bbq|やきとん|やきとり|串|うしごろ|ushigoro/i },
             hotpot: { e: '🍲', t: '火鍋・鍋物', kw: /火鍋|鍋|しゃぶ|涮|すき焼|壽喜燒|もつ/i },
-            teishoku: { e: '🍱', t: '定食・丼飯', kw: /定食|丼|カレー|咖哩|curry|食堂|とんかつ|豬排|牛丼|天丼|エッグ|egg|漢堡|burger|挽肉/i },
+            teishoku: { e: '🍱', t: '定食・丼飯', kw: /定食|丼|カレー|咖哩|curry|食堂|とんかつ|豬排|牛丼|天丼|挽肉/i },
+            light: { e: '🥪', t: '輕食・早午餐', kw: /三明治|サンド|sandwich|漢堡|burger|バーガー|eggslut|貝果|bagel|早午餐|brunch|吐司|toast|麵包|パン|bakery|ベーカリー|熱狗|hot ?dog/i },
             cafe: { e: '☕', t: '咖啡・甜點', kw: /cafe|café|カフェ|咖啡|coffee|甜點|スイーツ|パンケーキ|鬆餅|harbs|veloce|仙貝|下午茶|蛋糕|パフェ/i }
         };
         function sgCuisineOf(it) {
@@ -19868,7 +19869,9 @@ const firebaseConfig = {
             if (it.cuisine && SG_CUISINES[it.cuisine]) return it.cuisine;
             if (it.cuisine === 'none') return '';
             const s = String(it.name || '');
-            for (const k of Object.keys(SG_CUISINES)) if (SG_CUISINES[k].kw.test(s)) return k;
+            // 輕食優先判斷，避免「麵包」被歸到麵食
+            const order = ['light'].concat(Object.keys(SG_CUISINES).filter(k => k !== 'light'));
+            for (const k of order) if (SG_CUISINES[k] && SG_CUISINES[k].kw.test(s)) return k;
             return '';
         }
         function sgCuisineLabel(it) { const k = sgCuisineOf(it); return k ? SG_CUISINES[k].e + ' ' + SG_CUISINES[k].t : ''; }
@@ -19990,6 +19993,225 @@ const firebaseConfig = {
                     #spotGuideForm label:has(#sgChildrenLabel){flex-wrap:wrap !important;gap:6px;}
                     #spotGuideForm #sgChildrenLabel{flex:1 1 100%;}
                 }
+            `;
+            document.head.appendChild(st);
+        })();
+
+        // ===== V3.27.0：總覽行程精簡顯示＋點方框看詳細資訊；修改統一到景點納編；總覽新增行程自動建立景點納編；看板點卡片直接編輯 =====
+        function sgTlLiteOn() { try { return localStorage.getItem('tlLiteMode') !== '0'; } catch (e) { return true; } }
+        function sgTlSetLite(on) { try { localStorage.setItem('tlLiteMode', on ? '1' : '0'); } catch (e) {} renderTimelineView(); }
+        // 找出行程項目對應的景點納編主項目索引（含細部景點）
+        function sgSpotIdxOfEvent(plan, ev) {
+            if (!plan || !ev || !ev.spotGuideId) return -1;
+            return (plan.spotTips || []).findIndex(s => s && (s.id === ev.spotGuideId || (Array.isArray(s.children) && s.children.some(c => c && c.id === ev.spotGuideId))));
+        }
+        var SG_TL_SPOT_TYPES = ['spot', 'food', 'shopping'];
+        function sgDayYmd(plan, dayNum) {
+            try { const info = buildPlanDateToDayMap(plan); for (const k in info.map) if (info.map[k] === dayNum) return k; } catch (e) {}
+            return '';
+        }
+        // 由總覽的行程項目建立一筆景點納編資料並互相綁定（只處理景點／餐廳／購物）
+        function sgSpotFromEvent(plan, dayNum, ev) {
+            if (!plan || !ev || ev.spotGuideId || ev.majorTransId || !SG_TL_SPOT_TYPES.includes(ev.type) || !String(ev.title || '').trim()) return null;
+            const ymd = sgDayYmd(plan, dayNum);
+            if (!ymd) return null; // 沒有日期的計畫不建立，避免同步時被誤刪
+            if (!Array.isArray(plan.spotTips)) plan.spotTips = [];
+            const m = String(ev.time || '').match(/(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/);
+            const pad = n => String(n).padStart(2, '0');
+            const isFood = ev.type === 'food';
+            const money = isFood && ev.mealType ? Number(ev.mealCostPP) : Number(ev.cost);
+            const s = {
+                id: 'sg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                category: isFood ? 'food' : 'spot',
+                mealType: isFood ? (ev.mealType || '') : '',
+                name: String(ev.title).trim(), address: ev.loc || '',
+                openStartTime: '', openEndTime: '', openNote: '',
+                ticketCurr: 'LOCAL', ticketCost: money > 0 ? money : '', ticketNote: '', tip: '',
+                visitDate: ymd,
+                visitStartTime: m ? pad(m[1]) + ':' + m[2] : '',
+                visitEndTime: (m && m[3]) ? pad(m[3]) + ':' + m[4] : '',
+                scheduled: true, scheduledDayNum: dayNum,
+                scheduleNote: ev.notes || '',
+                hasBooking: false, bookingDate: '', bookingTime: '', bookingPlatform: '', bookingDifficulty: '一般預約', bookingStatus: '待開放',
+                children: []
+            };
+            if (ev.type === 'shopping') s.spotKind = 'dept';
+            plan.spotTips.push(s);
+            ev.spotGuideId = s.id;
+            return s;
+        }
+        function sgTlCloseInfo() { const m = document.getElementById('tlInfoModal'); if (m) m.remove(); }
+        function sgTlEditViaSpot(dayNum, idx) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === dayNum);
+            const ev = day && day.events[idx];
+            const si = sgSpotIdxOfEvent(plan, ev);
+            sgTlCloseInfo();
+            if (si >= 0) openAddSpotGuideModal(si); else openEditEventModal(dayNum, idx);
+        }
+        function sgTlMakeSpot(dayNum, idx) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === dayNum);
+            const ev = day && day.events[idx];
+            const s = sgSpotFromEvent(plan, dayNum, ev);
+            sgTlCloseInfo();
+            if (!s) { showToast('warning', '這筆行程無法建立到景點納編（需要有日期的計畫）'); return; }
+            saveState();
+            renderAll();
+            openAddSpotGuideModal(plan.spotTips.length - 1);
+        }
+        function sgTlOpenInfo(dayNum, idx) {
+            const plan = getCurrentPlan();
+            const day = plan && plan.days.find(d => d.dayNum === dayNum);
+            const ev = day && day.events[idx];
+            if (!ev) return;
+            sgTlCloseInfo();
+            const esc = escapeHtml;
+            const s = sgSpotOfEvent(plan, ev);
+            const si = sgSpotIdxOfEvent(plan, ev);
+            const curr = getPlanCurrency(plan);
+            const rows = [];
+            const add = (icon, label, html) => { if (html) rows.push(`<div class="tli-row"><div class="tli-k">${icon} ${label}</div><div class="tli-v">${html}</div></div>`); };
+            const addr = (s && s.address) || ev.loc || '';
+            add('📍', '地址', addr ? `${esc(addr)} <a class="tli-map" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((ev.title || '') + ' ' + addr)}" target="_blank" rel="noopener"><i class="fa-solid fa-map-location-dot"></i> 地圖</a>` : '');
+            let L = null; try { L = sgLockInfo(plan, ev); } catch (e) {}
+            if (L) add('🔒', L.type === 'booked' ? '預約時段' : '固定時間', esc(L.slot ? (L.slot.start + (L.slot.end ? ' – ' + L.slot.end : '')) : (ev.time || '')));
+            if (s) {
+                if (s.category === 'food') add('🍴', '料理類型', esc(sgCuisineLabel(s)));
+                let op = ''; try { op = formatSpotOpeningText(s); } catch (e) {}
+                add('🕒', '營業時間', esc(op));
+                const t = s.ticketCurr === 'FREE' ? '免費' : ((s.ticketCost !== '' && s.ticketCost !== null && s.ticketCost !== undefined) ? (s.ticketCurr === 'TWD' ? 'NT$ ' : curr.symbol + ' ') + Number(s.ticketCost).toLocaleString() : '');
+                add('🎟️', s.category === 'food' ? '人均消費' : '票價', esc([t, s.ticketNote].filter(Boolean).join('・')));
+                if (s.hasBooking) add('🎫', '預約', esc(s.bookingStatus === '已完成' ? '已預約' + (s.bookingPlatform ? '・' + s.bookingPlatform : '') : `搶票日 ${s.bookingDate || '即刻'} ${s.bookingTime || ''}`));
+                add('⭐', '必點／建議', s.tip ? esc(s.tip).replace(/\n/g, '<br>') : '');
+                add('📝', '安排備註', esc(s.scheduleNote || ''));
+                const kids = (Array.isArray(s.children) ? s.children : []).filter(c => c && c.name).map(c => esc(c.name));
+                add('🧩', '細部景點', kids.join('、'));
+            } else {
+                if (ev.mealType) add('🍴', '餐別', esc(`${sgMealLabels[ev.mealType] || ''} 人均 ${curr.symbol}${Number(ev.mealCostPP || 0).toLocaleString()}`));
+                if (Number(ev.cost) > 0) add('💰', '費用', esc(`${curr.symbol} ${Number(ev.cost).toLocaleString()}（≈ NT$ ${Math.round(Number(ev.cost) * curr.rate).toLocaleString()}）`));
+                add('📝', '備註', String(ev.notes || '').split(' ‧ ').filter(Boolean).map(esc).join('<br>'));
+            }
+            if (ev.actualCost !== undefined && ev.actualCost !== null) add('🧾', '實付', esc(`${curr.symbol} ${Number(ev.actualCost).toLocaleString()}${ev.isPaid ? '・已付款' : ''}`));
+            if (Array.isArray(ev.receipts) && ev.receipts.length) add('📎', '發票', `<a href="javascript:void(0)" onclick="sgTlCloseInfo(); openReceiptPreviewModal('event', ${dayNum}, ${idx})">查看 ${ev.receipts.length} 張</a>`);
+            const canMake = si < 0 && SG_TL_SPOT_TYPES.includes(ev.type) && !ev.majorTransId;
+            const btns = si >= 0
+                ? `<button type="button" class="n-btn" onclick="sgTlCloseInfo(); openEditEventModal(${dayNum}, ${idx})" title="記錄實付金額、發票或交通細項">🧾 記帳／細項</button><button type="button" class="n-btn n-btn-primary" onclick="sgTlEditViaSpot(${dayNum}, ${idx})"><i class="fa-solid fa-pen"></i> 到景點納編修改</button>`
+                : (canMake
+                    ? `<button type="button" class="n-btn" onclick="sgTlCloseInfo(); openEditEventModal(${dayNum}, ${idx})">編輯行程</button><button type="button" class="n-btn n-btn-primary" onclick="sgTlMakeSpot(${dayNum}, ${idx})" title="建立一筆景點納編資料，之後統一在景點納編修改">＋ 建立到景點納編</button>`
+                    : `<button type="button" class="n-btn n-btn-primary" onclick="sgTlCloseInfo(); openEditEventModal(${dayNum}, ${idx})"><i class="fa-solid fa-pen"></i> 編輯</button>`);
+            const tag = (() => { try { const r = document.querySelector(`#dayCardsContainer .timeline-event-row[data-day="${dayNum}"][data-idx="${idx}"]`); const b = r && r.querySelector('.timeline-time-tag'); return b ? b.textContent : (ev.time || ''); } catch (e) { return ev.time || ''; } })();
+            document.body.insertAdjacentHTML('beforeend', `<div id="tlInfoModal" onclick="if(event.target===this)sgTlCloseInfo()">
+                <div class="tli-box" role="dialog">
+                    <div class="tli-head"><div><span class="tli-time">${esc(tag)}</span><span class="tli-day">第 ${dayNum} 天</span></div><button type="button" class="tli-x" onclick="sgTlCloseInfo()" title="關閉">✕</button></div>
+                    <h3 class="tli-title">${esc(ev.title || '')}</h3>
+                    ${si >= 0 ? '<div class="tli-src">資料來源：景點納編（修改請到景點納編，總覽會自動同步）</div>' : ''}
+                    <div class="tli-body">${rows.join('') || '<div class="tli-empty">尚無其他資訊</div>'}</div>
+                    <div class="tli-foot">${btns}</div>
+                </div></div>`);
+        }
+        // 總覽：精簡顯示、點方框開資訊彈窗、鉛筆改到景點納編
+        const __origRenderTimelineViewV2700 = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineViewV2700.apply(this, arguments);
+            try {
+                const box = document.getElementById('dayCardsContainer');
+                if (!box) return r;
+                const lite = sgTlLiteOn();
+                box.classList.toggle('tl-lite', lite);
+                if (!box.querySelector('.tl-lite-bar') && box.querySelector('.timeline-event-row')) {
+                    box.insertAdjacentHTML('afterbegin', `<div class="tl-lite-bar"><span class="tl-lite-hint"><i class="fa-regular fa-hand-pointer"></i> 點行程方框可看詳細資訊</span><span class="tl-lite-seg"><button type="button" class="${lite ? 'on' : ''}" onclick="sgTlSetLite(true)">精簡</button><button type="button" class="${lite ? '' : 'on'}" onclick="sgTlSetLite(false)">詳細</button></span></div>`);
+                }
+                const plan = getCurrentPlan();
+                box.querySelectorAll('.timeline-event-row[data-day][data-idx]').forEach(row => {
+                    const dn = Number(row.dataset.day), idx = Number(row.dataset.idx);
+                    const day = plan.days.find(d => d.dayNum === dn);
+                    const ev = day && day.events[idx];
+                    if (!ev) return;
+                    if (!row.classList.contains('sg-compact')) row.title = '點一下查看詳細資訊';
+                    if (sgSpotIdxOfEvent(plan, ev) >= 0) {
+                        const pen = row.querySelector('button[onclick*="openEditEventModal("]');
+                        if (pen) { pen.setAttribute('onclick', `event.stopPropagation(); sgTlEditViaSpot(${dn}, ${idx})`); pen.title = '到景點納編修改（總覽會自動同步）'; }
+                    }
+                });
+            } catch (e) { console.warn('總覽精簡顯示失敗', e); }
+            return r;
+        };
+        document.addEventListener('click', function (e) {
+            const t = e.target;
+            if (!t || !t.closest) return;
+            const row = t.closest('#dayCardsContainer .timeline-event-row[data-day][data-idx]');
+            if (row) {
+                if (row.classList.contains('sg-compact')) return;
+                if (t.closest('button, a, input, select, textarea, label, .tl-drag-group, .tl-status-chip, [onclick]')) return;
+                sgTlOpenInfo(Number(row.dataset.day), Number(row.dataset.idx));
+                return;
+            }
+            // 景點納編看板：點卡片空白處直接開啟編輯，不必先展開
+            const card = t.closest('#spotGuidesContainer .sg-kb-card');
+            if (card) {
+                if (t.closest('button, a, input, select, textarea, label, .sg-kb-children, .sg-kb-act, [onclick]')) return;
+                const m = String(card.getAttribute('ondragstart') || '').match(/sgKbDragStart\(event,\s*(\d+)\)/);
+                if (m) openAddSpotGuideModal(Number(m[1]));
+            }
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sgTlCloseInfo(); });
+        // 總覽新增行程（含「＋ 插入」）時，自動在景點納編建立一筆並綁定
+        const __origSaveEventV2700 = handleSaveEventSubmit;
+        handleSaveEventSubmit = function (e) {
+            const plan = getCurrentPlan();
+            const editIdx = parseInt((document.getElementById('eventEditIndex') || {}).value || '-1', 10);
+            const before = new Set();
+            try { plan.days.forEach(d => (d.events || []).forEach(x => before.add(x))); } catch (err) {}
+            const r = __origSaveEventV2700.apply(this, arguments);
+            if (editIdx < 0) {
+                try {
+                    let made = null;
+                    plan.days.forEach(d => (d.events || []).forEach(x => { if (!made && !before.has(x)) made = sgSpotFromEvent(plan, d.dayNum, x); }));
+                    if (made) {
+                        saveState();
+                        renderAll();
+                        showToast('success', `已同步建立到景點納編「${made.name}」，之後到景點納編修改即可`);
+                    }
+                } catch (err) { console.warn('同步建立景點納編失敗', err); }
+            }
+            return r;
+        };
+        (function () {
+            if (document.getElementById('sgTlLiteStyle')) return;
+            const st = document.createElement('style');
+            st.id = 'sgTlLiteStyle';
+            st.textContent = `
+                .tl-lite-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;}
+                .tl-lite-hint{font-size:0.74rem;color:#94a3b8;}
+                .tl-lite-seg{display:inline-flex;border:1px solid #cbd5e1;border-radius:999px;overflow:hidden;background:#fff;}
+                .tl-lite-seg button{border:none;background:transparent;height:26px;padding:0 12px;font-size:0.76rem;font-weight:700;color:#475569;cursor:pointer;}
+                .tl-lite-seg button.on{background:#0f766e;color:#fff;}
+                #dayCardsContainer .timeline-event-row[data-idx]:not(.sg-compact){cursor:pointer;}
+                #dayCardsContainer.tl-lite .timeline-event-row:not(.sg-compact) .timeline-event-meta{display:none !important;}
+                #dayCardsContainer.tl-lite .timeline-event-row .timeline-event-title{margin-bottom:0 !important;}
+                #dayCardsContainer.tl-lite .sg-lk-row:not(:has(.bad)){display:none !important;}
+                #dayCardsContainer.tl-lite .sg-lk-row .sg-lk-chip:not(.bad){display:none !important;}
+                #tlInfoModal{position:fixed;inset:0;z-index:100003;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;}
+                #tlInfoModal .tli-box{background:#fff;border-radius:16px;width:min(520px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden;}
+                #tlInfoModal .tli-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0;}
+                #tlInfoModal .tli-time{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:6px;background:#e0f2fe;color:#0369a1;font-weight:800;font-size:0.8rem;}
+                #tlInfoModal .tli-day{margin-left:8px;font-size:0.76rem;color:#64748b;font-weight:700;}
+                #tlInfoModal .tli-x{border:none;background:transparent;font-size:1.05rem;color:#64748b;cursor:pointer;width:30px;height:30px;border-radius:8px;}
+                #tlInfoModal .tli-x:hover{background:#f1f5f9;}
+                #tlInfoModal .tli-title{margin:8px 16px 2px;font-size:1.08rem;font-weight:800;color:#0f172a;}
+                #tlInfoModal .tli-src{margin:0 16px;font-size:0.72rem;color:#0f766e;}
+                #tlInfoModal .tli-body{padding:10px 16px;overflow:auto;}
+                #tlInfoModal .tli-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;padding:7px 0;border-bottom:1px dashed #eef2f6;font-size:0.84rem;line-height:1.55;}
+                #tlInfoModal .tli-row:last-child{border-bottom:none;}
+                #tlInfoModal .tli-k{color:#64748b;font-weight:700;white-space:nowrap;}
+                #tlInfoModal .tli-v{color:#0f172a;overflow-wrap:anywhere;}
+                #tlInfoModal .tli-map{margin-left:6px;font-size:0.74rem;font-weight:700;color:#0284c7;white-space:nowrap;}
+                #tlInfoModal .tli-empty{color:#94a3b8;font-size:0.84rem;padding:8px 0;}
+                #tlInfoModal .tli-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #eef2f6;background:#f8fafc;flex-wrap:wrap;}
+                #tlInfoModal .tli-foot .n-btn{height:34px;padding:0 14px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+                #spotGuidesContainer .sg-kb-card{cursor:pointer;}
+                @media (max-width:640px){ #tlInfoModal .tli-row{grid-template-columns:82px minmax(0,1fr);} .tl-lite-hint{display:none;} }
             `;
             document.head.appendChild(st);
         })();
