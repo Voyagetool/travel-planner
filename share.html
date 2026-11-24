@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.27.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.28.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -19173,6 +19173,162 @@ const firebaseConfig = {
                 #tlInfoModal .tli-foot .n-btn{height:34px;padding:0 14px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
                 #spotGuidesContainer .sg-kb-card{cursor:pointer;}
                 @media (max-width:640px){ #tlInfoModal .tli-row{grid-template-columns:82px minmax(0,1fr);} .tl-lite-hint{display:none;} }
+            `;
+            document.head.appendChild(st);
+        })();
+
+        // ===== V3.28.0：景點精簡／詳細顯示料理類型；手機版景點依天數分組、不使用看板；手機總覽行程濃縮 =====
+        function sgIsMobile() { return window.innerWidth <= 700; }
+        // 依總覽行程找出景點實際排在第幾天、幾點（找不到就用景點本身的造訪日期）
+        function sgItemSchedule(plan, item) {
+            const ids = [item.id].concat((Array.isArray(item.children) ? item.children : []).filter(c => c && c.id).map(c => c.id));
+            let best = null;
+            (plan.days || []).forEach(d => (d.events || []).forEach(ev => {
+                if (!ev || !ids.includes(ev.spotGuideId)) return;
+                const p = parseTimeString(ev.time || '');
+                const st = p.startMinutes < 9999 ? p.startMinutes : 9999;
+                if (!best || d.dayNum < best.dayNum || (d.dayNum === best.dayNum && st < best.start)) best = { dayNum: d.dayNum, start: st, time: ev.time || '' };
+            }));
+            if (best) return best;
+            if (item.scheduled && item.visitDate) {
+                const d = resolvePlanDayByDate(plan, item.visitDate);
+                if (d) { const p = parseTimeString(item.visitStartTime || ''); return { dayNum: d.dayNum, start: p.startMinutes < 9999 ? p.startMinutes : 9999, time: item.visitStartTime ? item.visitStartTime + (item.visitEndTime ? ' - ' + item.visitEndTime : '') : '' }; }
+            }
+            return null;
+        }
+        const __origRenderSpotV2800 = renderSpotGuidesView;
+        renderSpotGuidesView = function () {
+            // 手機不使用看板：改以精簡模式顯示（只改本次畫面，不寫入電腦版記住的設定）
+            try { if (sgIsMobile() && spotGuidesViewMode === 'kanban') spotGuidesViewMode = 'compact'; } catch (e) {}
+            const r = __origRenderSpotV2800.apply(this, arguments);
+            try {
+                const box = document.getElementById('spotGuidesContainer');
+                const plan = getCurrentPlan();
+                if (!box || !plan) return r;
+                box.classList.toggle('sg-mobile', sgIsMobile());
+                const cards = Array.from(box.querySelectorAll(':scope > .spot-guide-card'));
+                const meta = [];
+                cards.forEach(card => {
+                    const b = card.querySelector('[onclick^="openAddSpotGuideModal("]');
+                    const m = b && String(b.getAttribute('onclick')).match(/openAddSpotGuideModal\((\d+)\)/);
+                    const it = m && plan.spotTips[Number(m[1])];
+                    if (!it) return;
+                    // 美食標籤改顯示料理類型
+                    const lab = sgCuisineLabel(it);
+                    if (lab) {
+                        const badge = Array.from(card.querySelectorAll('span')).find(x => /美食/.test(x.textContent) && x.querySelector('.fa-utensils'));
+                        if (badge && !badge.dataset.cz) { badge.dataset.cz = '1'; badge.textContent = lab; badge.title = '美食・料理類型'; }
+                    }
+                    // 百貨購物／藥妝顯示自己的分類，不再都顯示「景點」
+                    const kd = it.category !== 'food' ? sgSpotKindOf(it) : '';
+                    if (kd === 'dept' || kd === 'drug') {
+                        const badge = Array.from(card.querySelectorAll('span')).find(x => /景點/.test(x.textContent) && x.querySelector('.fa-landmark-dome'));
+                        if (badge && !badge.dataset.kd) { badge.dataset.kd = '1'; badge.textContent = SG_KINDS[kd].icon + ' ' + SG_KINDS[kd].label; badge.style.background = kd === 'dept' ? '#f3e8ff' : '#d1fae5'; badge.style.color = SG_KINDS[kd].fg; badge.style.borderColor = kd === 'dept' ? '#e9d5ff' : '#a7f3d0'; }
+                    }
+                    meta.push({ card, it, sch: sgItemSchedule(plan, it) });
+                });
+                if (!sgIsMobile() || !meta.length) return r;
+                // 手機：依天數分組排列，已安排在前、待安排在後
+                const groups = {};
+                meta.forEach(x => { const k = x.sch ? x.sch.dayNum : 0; (groups[k] = groups[k] || []).push(x); });
+                const keys = Object.keys(groups).map(Number).sort((a, b) => (a === 0) - (b === 0) || a - b);
+                const frag = document.createDocumentFragment();
+                keys.forEach(k => {
+                    const arr = groups[k].sort((a, b) => (a.sch ? a.sch.start : 9999) - (b.sch ? b.sch.start : 9999));
+                    const d = k ? plan.days.find(x => x.dayNum === k) : null;
+                    const sec = document.createElement('div');
+                    sec.className = 'sg-day-sec' + (k ? '' : ' pending');
+                    const ttl = d ? String(d.title || '').replace(/^Day\s*\d+\s*/i, '') : '';
+                    sec.innerHTML = `<div class="sg-day-head">${k ? `<span class="n">第 ${k} 天</span><span class="d">${escapeHtml(d && d.date ? d.date : '')}</span><span class="t">${escapeHtml(ttl)}</span>` : '<span class="n">待安排</span>'}<span class="c">${arr.length}</span></div><div class="sg-day-list"></div>`;
+                    const listEl = sec.querySelector('.sg-day-list');
+                    arr.forEach(x => {
+                        if (x.sch && x.sch.time) {
+                            const t = String(x.sch.time).split('-')[0].trim();
+                            const head = x.card.firstElementChild;
+                            if (head && !x.card.querySelector('.sg-m-time')) head.insertAdjacentHTML('afterbegin', `<span class="sg-m-time">${escapeHtml(t)}</span>`);
+                        }
+                        listEl.appendChild(x.card);
+                    });
+                    frag.appendChild(sec);
+                });
+                box.appendChild(frag);
+            } catch (e) { console.warn('景點手機分組失敗', e); }
+            return r;
+        };
+        // 交通券／eSIM 列加上 class，方便手機精簡成一行
+        const __origRenderTimelineViewV2800 = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineViewV2800.apply(this, arguments);
+            try {
+                const box = document.getElementById('dayCardsContainer');
+                if (!box) return r;
+                box.querySelectorAll('div[style*="grid;gap:5px;margin-bottom:10px"] > div').forEach(el => el.classList.add('sg-pass-row'));
+                box.classList.toggle('tl-mobile', sgIsMobile());
+            } catch (e) {}
+            return r;
+        };
+        let __sgMobileLast = sgIsMobile();
+        window.addEventListener('resize', () => {
+            const now = sgIsMobile();
+            if (now === __sgMobileLast) return;
+            __sgMobileLast = now;
+            try { if (appState.activeView === 'spots') renderSpotGuidesView(); else if (appState.activeView === 'timeline') renderTimelineView(); } catch (e) {}
+        });
+        (function () {
+            if (document.getElementById('sgMobile2800Style')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMobile2800Style';
+            st.textContent = `
+                .sg-day-sec{grid-column:1 / -1;margin-top:4px;}
+                .sg-day-head{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:0.82rem;border-bottom:2px solid #bfe3cc;margin-bottom:6px;position:sticky;top:0;background:#f8fafc;z-index:2;}
+                .sg-day-sec.pending .sg-day-head{border-bottom-color:#e2e8f0;}
+                .sg-day-head .n{font-weight:800;color:#15803d;white-space:nowrap;}
+                .sg-day-sec.pending .sg-day-head .n{color:#64748b;}
+                .sg-day-head .d{color:#475569;font-weight:700;white-space:nowrap;}
+                .sg-day-head .t{color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;}
+                .sg-day-head .c{margin-left:auto;background:#e2e8f0;color:#334155;border-radius:999px;padding:0 8px;font-size:0.72rem;font-weight:800;}
+                .sg-day-list{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;}
+                .sg-m-time{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:6px;background:#e0f2fe;color:#0369a1;font-weight:800;font-size:0.72rem;}
+                @media (max-width:700px){
+                    /* 手機：不顯示看板按鈕 */
+                    #spotGuidesContainer button[onclick="setSpotGuideViewMode('kanban')"]{display:none !important;}
+                    /* 手機景點卡：已分組就不重複顯示「第 N 天」，操作按鈕展開後才出現 */
+                    #spotGuidesContainer.sg-mobile .spot-guide-card{padding:8px 10px !important;border-radius:12px !important;}
+                    #spotGuidesContainer.sg-mobile .sg-day-sec:not(.pending) .spot-guide-card > div:first-child > span[style*="#dcfce7"]{display:none !important;}
+                    #spotGuidesContainer.sg-mobile .spot-guide-card:not(.open) > div:first-child > div[style*="margin-left:auto"]{display:none !important;}
+                    #spotGuidesContainer.sg-mobile .spot-guide-card > div:first-child{gap:5px !important;}
+                    #spotGuidesContainer.sg-mobile .spot-guide-card label{font-size:0.9rem !important;}
+                    #spotGuidesContainer.sg-mobile .spot-guide-card:not(.open) > div:nth-child(2)[style*="margin:7px 0 0 26px"]{display:none !important;}
+
+                    /* 手機總覽（精簡）：卡片操作鈕移到右上角、拖曳鈕收起，時間與標籤縮小 */
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-row{position:relative !important;padding:8px 10px 8px 8px !important;margin-bottom:4px !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-row > div[style*="flex-shrink:0"]{position:absolute !important;top:6px;right:6px;flex:0 0 auto !important;width:auto !important;border-top:none !important;margin:0 !important;padding:0 !important;gap:4px !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-row .tl-drag-group{display:none !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-row > div[style*="flex:1"]{padding-right:66px;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-row > div[style*="flex:1"] > div:first-child{margin-bottom:2px !important;gap:3px !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-time-tag{font-size:0.72rem !important;padding:1px 6px !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-row > div[style*="flex:1"] > div:first-child > span{font-size:0.68rem !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-event-title{font-size:0.9rem !important;line-height:1.35 !important;}
+                    /* 移動列：一行顯示，按鈕只留圖示，未啟用的離開提醒與時段區間收起 */
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-row{flex-wrap:wrap;gap:4px !important;margin:2px 0 4px !important;padding-top:0 !important;padding-bottom:0 !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-badge{font-size:0.7rem !important;padding:2px 8px !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-badge > span[style*="0.68rem"]{display:none !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .sg-leave:not(.on){display:none !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-actions{display:inline-flex !important;gap:3px !important;margin:0 !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-actions .transit-action-btn{font-size:0 !important;padding:0 !important;width:26px;height:24px;display:inline-flex !important;align-items:center;justify-content:center;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-actions .transit-action-btn i{font-size:0.76rem !important;}
+                    #view-timeline #dayCardsContainer.tl-lite .timeline-transit-actions .sg-ins-btn::before{content:'＋';font-size:0.85rem;font-weight:800;}
+                    /* 交通券／eSIM：一行顯示 */
+                    #view-timeline #dayCardsContainer.tl-lite .sg-pass-row{flex-wrap:nowrap !important;font-size:0.74rem !important;padding:3px 8px !important;min-width:0;overflow:hidden;}
+                    #view-timeline #dayCardsContainer.tl-lite div:has(> .sg-pass-row){grid-template-columns:minmax(0,1fr);min-width:0;}
+                    #view-timeline #dayCardsContainer.tl-lite .sg-pass-row strong{white-space:nowrap;}
+                    #view-timeline #dayCardsContainer.tl-lite .sg-pass-row > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 0;}
+                    /* 每日餐點（縮小時）：展開按鈕放右上角，不再獨占一行 */
+                    .day-meals-bar.meals-compact{position:relative !important;}
+                    .day-meals-bar.meals-compact .meal-compact-row{position:absolute !important;top:6px;right:8px;float:none !important;margin:0 !important;z-index:1;}
+                    .day-meals-bar.meals-compact .meals-three-cols{padding-right:74px;display:grid !important;grid-template-columns:minmax(0,1fr);gap:1px;}
+                    .day-meals-bar.meals-compact .meal-col-item{display:block !important;margin:0 !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+                }
             `;
             document.head.appendChild(st);
         })();
