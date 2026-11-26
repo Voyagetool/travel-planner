@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.29.2</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.30.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -19698,6 +19698,376 @@ const firebaseConfig = {
             } catch (err) { console.warn(err); }
             return __origSaveBaseV2910.apply(this, arguments);
         };
+
+        // ===== V3.30.0：餐廳「預計點餐」：菜色清單＋菜單照片（照片另存雲端子文件，不佔主資料容量） =====
+        var __sgMenuDraft = { items: [], photos: [], orig: [] };
+        var __sgPhotoCache = {};
+        var SG_MENU_MAX_PHOTOS = 6;
+        var SG_PH_BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+        window.__sgPhSets = window.__sgPhSets || {};
+        // 菜單照片要看得清楚字：長邊 1280px、JPEG 0.7（約 150–250KB）
+        function sgMenuCompress(file) {
+            return new Promise((resolve, reject) => {
+                const fr = new FileReader();
+                fr.onerror = () => reject(new Error('讀取失敗'));
+                fr.onload = () => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('不是有效的圖片'));
+                    img.onload = () => {
+                        const k = Math.min(1, 1280 / Math.max(img.width, img.height));
+                        const cv = document.createElement('canvas');
+                        cv.width = Math.max(1, Math.round(img.width * k));
+                        cv.height = Math.max(1, Math.round(img.height * k));
+                        const cx = cv.getContext('2d');
+                        cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+                        cx.drawImage(img, 0, 0, cv.width, cv.height);
+                        resolve(cv.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.src = fr.result;
+                };
+                fr.readAsDataURL(file);
+            });
+        }
+        function sgPhotoCol() {
+            try {
+                if (typeof firestoreDb !== 'undefined' && firestoreDb && typeof getCloudRoomId === 'function' && getCloudRoomId())
+                    return firestoreDb.collection('travel_planners').doc(getCloudRoomId()).collection('photos');
+            } catch (e) {}
+            return null;
+        }
+        // 有雲端：照片存成獨立文件，主資料只記「ph:編號」；沒有雲端（本機模式）才直接存在資料裡
+        async function sgPhotoPut(dataUrl) {
+            const col = sgPhotoCol();
+            if (col) {
+                const id = 'mp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                try {
+                    // 網路不通時 Firestore 會一直等待，8 秒沒回應就改存在主資料，避免卡住
+                    await Promise.race([col.doc(id).set({ data: dataUrl, ts: Date.now() }), new Promise((_, rej) => setTimeout(() => rej(new Error('上傳逾時')), 8000))]);
+                    __sgPhotoCache['ph:' + id] = dataUrl; return 'ph:' + id;
+                }
+                catch (e) { console.warn('照片上傳雲端失敗，改存在主資料', e); }
+            }
+            if (JSON.stringify(appState).length + dataUrl.length > 900000) throw new Error('資料量已接近上限，請先刪除一些照片');
+            return dataUrl;
+        }
+        function sgPhotoGet(ref) {
+            if (!ref) return Promise.resolve('');
+            if (String(ref).startsWith('data:')) return Promise.resolve(ref);
+            if (__sgPhotoCache[ref]) return Promise.resolve(__sgPhotoCache[ref]);
+            const col = sgPhotoCol();
+            if (!col) return Promise.resolve('');
+            const p = col.doc(String(ref).slice(3)).get().then(d => { const v = d.exists ? ((d.data() || {}).data || '') : ''; __sgPhotoCache[ref] = v; return v; }).catch(() => { delete __sgPhotoCache[ref]; return ''; });
+            __sgPhotoCache[ref] = p;
+            return p;
+        }
+        function sgPhotoDel(ref) {
+            if (!ref || !String(ref).startsWith('ph:')) return;
+            const col = sgPhotoCol();
+            if (col) col.doc(String(ref).slice(3)).delete().catch(() => {});
+            delete __sgPhotoCache[ref];
+        }
+        function sgPhImg(ref, cls, onclick) {
+            const isData = String(ref).startsWith('data:');
+            return `<img class="${cls}" src="${isData ? ref : SG_PH_BLANK}" ${isData ? '' : `data-ph="${escapeHtml(ref)}"`} alt="" ${onclick ? `onclick="${onclick}"` : ''}>`;
+        }
+        function sgHydratePhotos(root) {
+            (root || document).querySelectorAll('img[data-ph]:not([data-ok])').forEach(img => {
+                img.dataset.ok = '1';
+                img.classList.add('sg-ph-loading');
+                sgPhotoGet(img.dataset.ph).then(src => { img.classList.remove('sg-ph-loading'); if (src) img.src = src; else { img.alt = '照片載入失敗'; img.classList.add('sg-ph-fail'); } });
+            });
+        }
+        // 全螢幕看菜單照片
+        var __sgLb = { key: '', i: 0 };
+        function sgPhLbOpen(key, i, ev) {
+            if (ev) ev.stopPropagation();
+            __sgLb = { key, i: i || 0 };
+            let el = document.getElementById('sgPhLb');
+            if (!el) {
+                document.body.insertAdjacentHTML('beforeend', `<div id="sgPhLb" onclick="sgPhLbClose()"><div class="lb-top" id="sgPhLbInfo"></div><div class="lb-mid" onclick="event.stopPropagation()"><button type="button" onclick="sgPhLbNav(-1)">‹</button><img id="sgPhLbImg" alt=""><button type="button" onclick="sgPhLbNav(1)">›</button></div><div class="lb-tip">點空白處關閉</div></div>`);
+                el = document.getElementById('sgPhLb');
+            }
+            el.style.display = 'flex';
+            sgPhLbRender();
+        }
+        function sgPhLbRender() {
+            const list = window.__sgPhSets[__sgLb.key] || [];
+            if (!list.length) return sgPhLbClose();
+            __sgLb.i = (__sgLb.i + list.length) % list.length;
+            const img = document.getElementById('sgPhLbImg');
+            img.src = SG_PH_BLANK;
+            sgPhotoGet(list[__sgLb.i]).then(src => { if (src) img.src = src; });
+            document.getElementById('sgPhLbInfo').textContent = `菜單照片 ${__sgLb.i + 1} / ${list.length}`;
+            document.querySelectorAll('#sgPhLb .lb-mid button').forEach(b => { b.style.visibility = list.length > 1 ? 'visible' : 'hidden'; });
+        }
+        function sgPhLbNav(d) { __sgLb.i += d; sgPhLbRender(); }
+        function sgPhLbClose() { const el = document.getElementById('sgPhLb'); if (el) el.style.display = 'none'; }
+
+        // ---- 編輯視窗 ----
+        function sgMenuEnsureUI() {
+            if (document.getElementById('sgMenuBox')) return;
+            const tip = document.getElementById('sgTipInput');
+            const grp = tip && tip.closest('.form-group');
+            if (!grp) return;
+            grp.insertAdjacentHTML('afterend', `<div id="sgMenuBox" class="form-group sg-menu-box">
+                <label class="form-label sg-menu-head"><span><i class="fa-solid fa-clipboard-list" style="color:#ea580c;"></i> 預計點餐（選填：菜色、價格與菜單照片）</span></label>
+                <div id="sgMenuItems"></div>
+                <div class="sg-menu-foot"><span id="sgMenuSum" class="sg-menu-sum"></span></div>
+                <div class="sg-menu-actions">
+                    <button type="button" class="n-btn" onclick="sgMenuAdd()"><i class="fa-solid fa-plus"></i> 新增菜色</button>
+                    <label class="n-btn" for="sgMenuPhotoFile" id="sgMenuPhotoLabel"><i class="fa-solid fa-camera"></i> 加入菜單照片</label>
+                    <input type="file" id="sgMenuPhotoFile" accept="image/*" multiple style="display:none" onchange="sgMenuPhotoPick(this)">
+                    <span id="sgMenuUpHint" class="sg-menu-up"></span>
+                </div>
+                <div id="sgMenuPhotos" class="sg-menu-photos"></div>
+            </div>`);
+        }
+        function sgMenuSyncVis() {
+            const box = document.getElementById('sgMenuBox');
+            if (box) box.style.display = ((document.getElementById('sgCategory') || {}).value === 'food') ? '' : 'none';
+        }
+        function sgMenuRender() {
+            const box = document.getElementById('sgMenuItems');
+            if (!box) return;
+            const sym = getPlanCurrency(getCurrentPlan()).symbol;
+            box.innerHTML = __sgMenuDraft.items.map((m, i) => `<div class="sg-menu-row">
+                <input class="form-input sg-menu-name" placeholder="菜名，例如：特選和牛拼盤" value="${escapeHtml(m.name || '')}" oninput="sgMenuSet(${i}, 'name', this.value)">
+                <span class="sg-menu-grp"><span class="sg-menu-cur">${escapeHtml(sym)}</span><input class="form-input sg-menu-price" type="number" min="0" step="any" inputmode="decimal" placeholder="價格" value="${(m.price !== '' && m.price !== null && m.price !== undefined) ? m.price : ''}" oninput="sgMenuSet(${i}, 'price', this.value)">
+                <span class="sg-menu-cur">×</span><input class="form-input sg-menu-qty" type="number" min="1" inputmode="numeric" value="${m.qty || 1}" oninput="sgMenuSet(${i}, 'qty', this.value)" title="份數">
+                <button type="button" class="sg-menu-del" onclick="sgMenuDel(${i})" title="刪除這道">✕</button></span>
+            </div>`).join('') || '<div class="sg-menu-empty">還沒有菜色，可以先加菜單照片，或按「新增菜色」</div>';
+            sgMenuSum();
+            sgMenuRenderPhotos();
+        }
+        function sgMenuTotals(items) {
+            let total = 0, n = 0;
+            (items || []).forEach(m => { const p = Number(m.price); if (p > 0) { total += p * Math.max(1, parseInt(m.qty) || 1); } if (String(m.name || '').trim()) n++; });
+            const plan = getCurrentPlan();
+            const people = Math.max(1, parseInt((plan && plan.memberCount) || 1));
+            return { total, n, people, pp: Math.round(total / people) };
+        }
+        function sgMenuSum() {
+            const el = document.getElementById('sgMenuSum');
+            if (!el) return;
+            const t = sgMenuTotals(__sgMenuDraft.items);
+            const sym = getPlanCurrency(getCurrentPlan()).symbol;
+            el.innerHTML = t.total > 0 ? `合計 <b>${sym}${t.total.toLocaleString()}</b>${t.people > 1 ? `・${t.people} 人平均約 <b>${sym}${t.pp.toLocaleString()}</b>` : ''} <button type="button" class="sg-menu-apply" onclick="sgMenuApplyPP()" title="把平均金額填到上方「人均消費」">帶入人均消費</button>` : '';
+        }
+        function sgMenuApplyPP() {
+            const t = sgMenuTotals(__sgMenuDraft.items);
+            const cur = document.getElementById('sgTicketCurr'), cost = document.getElementById('sgTicketCost');
+            if (cur) cur.value = 'LOCAL';
+            if (cost) cost.value = t.pp;
+            try { onSgTicketFieldsChange(); } catch (e) {}
+            showToast('success', `已帶入人均消費 ${getPlanCurrency(getCurrentPlan()).symbol}${t.pp.toLocaleString()}`);
+        }
+        function sgMenuAdd() { __sgMenuDraft.items.push({ name: '', price: '', qty: 1 }); sgMenuRender(); const rows = document.querySelectorAll('#sgMenuItems .sg-menu-name'); if (rows.length) rows[rows.length - 1].focus(); }
+        function sgMenuDel(i) { __sgMenuDraft.items.splice(i, 1); sgMenuRender(); }
+        function sgMenuSet(i, k, v) { const m = __sgMenuDraft.items[i]; if (!m) return; m[k] = v; if (k !== 'name') sgMenuSum(); }
+        function sgMenuRenderPhotos() {
+            const w = document.getElementById('sgMenuPhotos');
+            if (!w) return;
+            window.__sgPhSets.__draft = __sgMenuDraft.photos;
+            w.innerHTML = __sgMenuDraft.photos.map((ref, i) => `<span class="sg-menu-ph">${sgPhImg(ref, 'sg-menu-thumb', `sgPhLbOpen('__draft', ${i}, event)`)}<button type="button" onclick="sgMenuPhotoDel(${i})" title="移除這張">✕</button></span>`).join('');
+            sgHydratePhotos(w);
+            const lab = document.getElementById('sgMenuPhotoLabel');
+            if (lab) lab.style.display = __sgMenuDraft.photos.length >= SG_MENU_MAX_PHOTOS ? 'none' : '';
+        }
+        function sgMenuPhotoDel(i) { __sgMenuDraft.photos.splice(i, 1); sgMenuRenderPhotos(); }
+        async function sgMenuPhotoPick(input) {
+            const files = Array.from((input && input.files) || []);
+            input.value = '';
+            const hint = document.getElementById('sgMenuUpHint');
+            for (const f of files) {
+                if (__sgMenuDraft.photos.length >= SG_MENU_MAX_PHOTOS) { showToast('warning', `每間餐廳最多 ${SG_MENU_MAX_PHOTOS} 張菜單照片`); break; }
+                try {
+                    if (hint) hint.textContent = '照片上傳中…';
+                    const data = await sgMenuCompress(f);
+                    const ref = await sgPhotoPut(data);
+                    __sgMenuDraft.photos.push(ref);
+                    sgMenuRenderPhotos();
+                } catch (e) { showToast('error', '無法加入這張照片：' + (e.message || e)); }
+            }
+            if (hint) hint.textContent = '';
+        }
+        const __origOpenSpotV3000 = openAddSpotGuideModal;
+        openAddSpotGuideModal = function (editIdx) {
+            const r = __origOpenSpotV3000.apply(this, arguments);
+            try {
+                sgMenuEnsureUI();
+                const plan = getCurrentPlan();
+                const it = (editIdx !== null && editIdx !== undefined && editIdx >= 0) ? plan.spotTips[editIdx] : null;
+                __sgMenuDraft = {
+                    items: (it && Array.isArray(it.menu)) ? JSON.parse(JSON.stringify(it.menu)) : [],
+                    photos: (it && Array.isArray(it.menuPhotos)) ? it.menuPhotos.slice() : []
+                };
+                __sgMenuDraft.orig = __sgMenuDraft.photos.slice();
+                sgMenuRender();
+                sgMenuSyncVis();
+            } catch (e) { console.warn('預計點餐載入失敗', e); }
+            return r;
+        };
+        const __origSetKindV3000 = sgSetKind;
+        sgSetKind = function () { const r = __origSetKindV3000.apply(this, arguments); try { sgMenuSyncVis(); } catch (e) {} return r; };
+        const __origSaveSpotV3000 = handleSaveSpotGuideSubmit;
+        handleSaveSpotGuideSubmit = function (e) {
+            const idx = parseInt((document.getElementById('sgEditIndex') || {}).value || '-1', 10);
+            const plan = getCurrentPlan();
+            const before = plan && plan.spotTips ? plan.spotTips.length : 0;
+            const isFood = (document.getElementById('sgCategory') || {}).value === 'food';
+            const items = (__sgMenuDraft.items || []).filter(m => String(m.name || '').trim() || Number(m.price) > 0).map(m => ({
+                name: String(m.name || '').trim(),
+                price: (m.price === '' || m.price === null || m.price === undefined || isNaN(Number(m.price))) ? '' : Number(m.price),
+                qty: Math.max(1, parseInt(m.qty) || 1)
+            }));
+            const photos = (__sgMenuDraft.photos || []).slice();
+            const orig = (__sgMenuDraft.orig || []).slice();
+            const r = __origSaveSpotV3000.apply(this, arguments);
+            try {
+                const modal = document.getElementById('editSpotGuideModal');
+                if (modal && modal.classList.contains('active')) return r; // 驗證沒過、視窗還開著就不處理
+                const list = (plan && plan.spotTips) || [];
+                const it = idx >= 0 ? list[idx] : (list.length > before ? list[list.length - 1] : null);
+                if (it) {
+                    if (isFood && items.length) it.menu = items; else delete it.menu;
+                    if (isFood && photos.length) it.menuPhotos = photos; else delete it.menuPhotos;
+                    const keep = it.menuPhotos || [];
+                    orig.filter(x => !keep.includes(x)).forEach(sgPhotoDel);
+                    saveState();
+                    renderAll();
+                }
+            } catch (err) { console.warn('預計點餐儲存失敗', err); }
+            return r;
+        };
+
+        // ---- 顯示：卡片標籤、檢視視窗、總覽資訊彈窗 ----
+        function sgMenuHas(it) { return !!(it && ((Array.isArray(it.menu) && it.menu.length) || (Array.isArray(it.menuPhotos) && it.menuPhotos.length))); }
+        function sgMenuChipHtml(it) {
+            if (!sgMenuHas(it)) return '';
+            const n = (it.menu || []).length, p = (it.menuPhotos || []).length;
+            return `<span class="sg-menu-chip" onclick="event.stopPropagation(); sgMenuView('${it.id}')" title="查看預計點餐">📋 ${n ? n + ' 道' : '菜單'}${p ? ` 📷${p}` : ''}</span>`;
+        }
+        function sgMenuViewHtml(it) {
+            if (!sgMenuHas(it)) return '';
+            const sym = getPlanCurrency(getCurrentPlan()).symbol;
+            const t = sgMenuTotals(it.menu);
+            window.__sgPhSets[it.id] = (it.menuPhotos || []).slice();
+            const rows = (it.menu || []).map(m => `<div class="sgmv-item"><span class="n">${escapeHtml(m.name || '（未命名）')}</span>${(m.qty || 1) > 1 ? `<span class="q">×${m.qty}</span>` : ''}<span class="p">${Number(m.price) > 0 ? sym + (Number(m.price) * Math.max(1, m.qty || 1)).toLocaleString() : ''}</span></div>`).join('');
+            const ph = (it.menuPhotos || []).map((ref, i) => sgPhImg(ref, 'sg-menu-thumb', `sgPhLbOpen('${it.id}', ${i}, event)`)).join('');
+            return `<div class="sgmv">${rows}${t.total > 0 ? `<div class="sgmv-total">合計 ${sym}${t.total.toLocaleString()}${t.people > 1 ? `・平均每人約 ${sym}${t.pp.toLocaleString()}` : ''}</div>` : ''}${ph ? `<div class="sg-menu-photos">${ph}</div>` : ''}</div>`;
+        }
+        function sgMenuView(id) {
+            const plan = getCurrentPlan();
+            const idx = (plan.spotTips || []).findIndex(s => s && s.id === id);
+            const it = plan.spotTips[idx];
+            if (!it) return;
+            const old = document.getElementById('sgMenuViewModal'); if (old) old.remove();
+            document.body.insertAdjacentHTML('beforeend', `<div id="sgMenuViewModal" onclick="if(event.target===this)this.remove()"><div class="sgmv-box">
+                <div class="sgmv-head"><b>📋 ${escapeHtml(it.name)}・預計點餐</b><button type="button" onclick="document.getElementById('sgMenuViewModal').remove()">✕</button></div>
+                <div class="sgmv-body">${sgMenuViewHtml(it)}</div>
+                <div class="sgmv-foot"><button type="button" class="n-btn n-btn-primary" onclick="document.getElementById('sgMenuViewModal').remove(); openAddSpotGuideModal(${idx})"><i class="fa-solid fa-pen"></i> 編輯</button></div>
+            </div></div>`);
+            sgHydratePhotos(document.getElementById('sgMenuViewModal'));
+        }
+        const __origRenderSpotV3000 = renderSpotGuidesView;
+        renderSpotGuidesView = function () {
+            const r = __origRenderSpotV3000.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                document.querySelectorAll('#spotGuidesContainer .sg-kb-card, #spotGuidesContainer .spot-guide-card').forEach(card => {
+                    if (card.querySelector('.sg-menu-chip')) return;
+                    const b = card.querySelector('[onclick^="openAddSpotGuideModal("]');
+                    const m = b && String(b.getAttribute('onclick')).match(/openAddSpotGuideModal\((\d+)\)/);
+                    const it = m && plan.spotTips[Number(m[1])];
+                    const chip = sgMenuChipHtml(it);
+                    if (!chip) return;
+                    if (card.classList.contains('sg-kb-card')) {
+                        let meta = card.querySelector('.sg-kb-meta');
+                        if (!meta) { card.querySelector('.sg-kb-title').insertAdjacentHTML('afterend', '<div class="sg-kb-meta"></div>'); meta = card.querySelector('.sg-kb-meta'); }
+                        meta.insertAdjacentHTML('beforeend', chip);
+                    } else {
+                        const lab = card.querySelector('label[for^="spotGuideCheck_"]');
+                        if (lab) lab.insertAdjacentHTML('afterend', chip);
+                        if (card.classList.contains('open')) { card.insertAdjacentHTML('beforeend', `<div class="sg-card-menu" onclick="event.stopPropagation()">${sgMenuViewHtml(it)}</div>`); sgHydratePhotos(card); }
+                    }
+                });
+            } catch (e) { console.warn('預計點餐標籤失敗', e); }
+            return r;
+        };
+        const __origTlInfoV3000 = sgTlOpenInfo;
+        sgTlOpenInfo = function (dayNum, idx) {
+            const r = __origTlInfoV3000.apply(this, arguments);
+            try {
+                const plan = getCurrentPlan();
+                const day = plan.days.find(d => d.dayNum === dayNum);
+                const ev = day && day.events[idx];
+                const si = sgSpotIdxOfEvent(plan, ev);
+                const it = si >= 0 ? plan.spotTips[si] : null;
+                const body = document.querySelector('#tlInfoModal .tli-body');
+                if (body && sgMenuHas(it)) {
+                    body.insertAdjacentHTML('beforeend', `<div class="tli-row"><div class="tli-k">📋 預計點餐</div><div class="tli-v">${sgMenuViewHtml(it)}</div></div>`);
+                    sgHydratePhotos(body);
+                }
+            } catch (e) {}
+            return r;
+        };
+        (function () {
+            if (document.getElementById('sgMenu3000Style')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMenu3000Style';
+            st.textContent = `
+                .sg-menu-box{background:#fffaf3;border:1px solid #fde8c4;border-radius:12px;padding:10px 12px;}
+                .sg-menu-head{margin-bottom:6px !important;}
+                .sg-menu-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+                .sg-menu-row .sg-menu-name{flex:1 1 auto;min-width:0;}
+                .sg-menu-grp{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;}
+                .sg-menu-cur{font-size:0.8rem;font-weight:700;color:#64748b;}
+                .sg-menu-row .sg-menu-price{width:88px !important;}
+                .sg-menu-row .sg-menu-qty{width:52px !important;text-align:center;}
+                .sg-menu-del{width:28px;height:28px;border-radius:8px;border:1px solid #fecaca;background:#fff;color:#dc2626;cursor:pointer;flex:0 0 auto;}
+                .sg-menu-empty{font-size:0.78rem;color:#94a3b8;padding:2px 0 6px;}
+                .sg-menu-foot{min-height:0;}
+                .sg-menu-sum{font-size:0.8rem;color:#9a3412;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+                .sg-menu-apply{border:1px solid #fdba74;background:#fff7ed;color:#c2410c;border-radius:999px;height:24px;padding:0 10px;font-size:0.72rem;font-weight:700;cursor:pointer;}
+                .sg-menu-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+                .sg-menu-actions .n-btn{height:30px;display:inline-flex;align-items:center;gap:5px;padding:0 12px;font-size:0.78rem;cursor:pointer;}
+                .sg-menu-up{font-size:0.74rem;color:#0369a1;}
+                .sg-menu-photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+                .sg-menu-ph{position:relative;display:inline-block;}
+                .sg-menu-ph button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:#ef4444;color:#fff;font-size:0.72rem;cursor:pointer;padding:0;line-height:22px;}
+                .sg-menu-thumb{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;background:#f1f5f9;cursor:zoom-in;display:block;}
+                .sg-ph-loading{animation:sgPhPulse 1.2s ease-in-out infinite;}
+                .sg-ph-fail{outline:1px dashed #fca5a5;}
+                @keyframes sgPhPulse{0%,100%{opacity:1}50%{opacity:.45}}
+                .sg-menu-chip{display:inline-flex;align-items:center;gap:3px;height:20px;padding:0 8px;border-radius:999px;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;font-size:0.7rem;font-weight:800;cursor:pointer;white-space:nowrap;}
+                .sg-card-menu{margin:8px 0 0 26px;}
+                .sgmv-item{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px dashed #f1f5f9;font-size:0.84rem;}
+                .sgmv-item .n{flex:1;min-width:0;color:#0f172a;font-weight:700;}
+                .sgmv-item .q{color:#64748b;font-size:0.76rem;}
+                .sgmv-item .p{color:#c2410c;font-weight:700;white-space:nowrap;}
+                .sgmv-total{text-align:right;font-size:0.8rem;color:#9a3412;font-weight:800;padding-top:5px;}
+                #sgMenuViewModal{position:fixed;inset:0;z-index:100003;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;}
+                #sgMenuViewModal .sgmv-box{background:#fff;border-radius:16px;width:min(520px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+                #sgMenuViewModal .sgmv-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eef2f6;}
+                #sgMenuViewModal .sgmv-head button{border:none;background:transparent;font-size:1.05rem;color:#64748b;cursor:pointer;width:30px;height:30px;border-radius:8px;}
+                #sgMenuViewModal .sgmv-body{padding:10px 16px;overflow:auto;}
+                #sgMenuViewModal .sgmv-foot{display:flex;justify-content:flex-end;padding:10px 16px;border-top:1px solid #eef2f6;background:#f8fafc;}
+                #sgMenuViewModal .sgmv-foot .n-btn{height:34px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;}
+                #sgPhLb{display:none;position:fixed;inset:0;z-index:100006;background:rgba(15,23,42,.94);flex-direction:column;align-items:center;justify-content:center;padding:14px;color:#fff;}
+                #sgPhLb .lb-mid{display:flex;align-items:center;gap:10px;max-width:100%;}
+                #sgPhLb .lb-mid img{max-width:84vw;max-height:78vh;border-radius:10px;background:#fff;object-fit:contain;}
+                #sgPhLb .lb-mid button{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:1.4rem;border-radius:50%;width:40px;height:40px;cursor:pointer;flex:0 0 auto;}
+                #sgPhLb .lb-top{margin-bottom:10px;font-size:0.86rem;}
+                #sgPhLb .lb-tip{margin-top:10px;font-size:0.78rem;opacity:.75;}
+                @media (max-width:640px){
+                    .sg-menu-row{flex-wrap:wrap;padding-bottom:6px;border-bottom:1px dashed #fde8c4;}
+                    .sg-menu-row .sg-menu-name{flex:1 1 100%;}
+                    .sg-menu-grp{margin-left:auto;}
+                    #sgPhLb .lb-mid img{max-width:78vw;}
+                }
+            `;
+            document.head.appendChild(st);
+        })();
 
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
