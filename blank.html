@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.29.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.29.1</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -19385,13 +19385,16 @@ const firebaseConfig = {
         }
 
         // ---- 地理編碼（OpenStreetMap Nominatim，免金鑰，結果存在本機快取） ----
-        var SG_GEO_KEY = 'sg_geo_cache_v1';
+        var SG_GEO_KEY = 'sg_geo_cache_v2';
         function sgGeoCache() { try { return JSON.parse(localStorage.getItem(SG_GEO_KEY) || '{}'); } catch (e) { return {}; } }
         function sgGeoPut(q, v) { try { const c = sgGeoCache(); c[q] = v; localStorage.setItem(SG_GEO_KEY, JSON.stringify(c)); } catch (e) {} }
         var __sgGeoQ = Promise.resolve(), __sgGeoLast = 0;
         function sgGeocode(q) {
             q = String(q || '').trim();
             if (!q) return Promise.resolve(null);
+            const cc = window.__sgGeoCC || '';
+            const qq = q;
+            q = cc + '|' + qq; // 快取依國家區分，避免同名地點定位到別的國家
             const c = sgGeoCache();
             if (Object.prototype.hasOwnProperty.call(c, q)) return Promise.resolve(c[q]);
             const job = __sgGeoQ.then(async () => {
@@ -19401,7 +19404,7 @@ const firebaseConfig = {
                 if (wait) await new Promise(r => setTimeout(r, wait));
                 __sgGeoLast = Date.now();
                 try {
-                    const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW&q=' + encodeURIComponent(q));
+                    const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW' + (cc ? '&countrycodes=' + cc : '') + '&q=' + encodeURIComponent(qq));
                     if (!res.ok) return undefined; // 服務暫時失敗（如請求太頻繁）不寫入快取，下次再試
                     const j = await res.json();
                     const v = (j && j[0]) ? { lat: Number(j[0].lat), lng: Number(j[0].lon) } : null;
@@ -19413,13 +19416,17 @@ const firebaseConfig = {
             return job;
         }
         function sgCleanAddr(a) {
-            return String(a || '').replace(/尚未填寫詳細地址/, '')
+            return String(a || '').split('➔').pop().replace(/尚未填寫詳細地址/, '')
                 .replace(/日本\s*〒?\s*\d{3}-?\d{4}\s*/g, '').replace(/〒\s*\d{3}-?\d{4}/g, '')
                 .replace(/\s*\d{3}-\d{4}\s*日本\s*$/, '').replace(/\s*日本\s*$/, '')
                 .replace(/[（(][^）)]*[）)]/g, ' ').replace(/\s+/g, ' ').trim();
         }
         // 依序嘗試：完整地址 → 名稱 → 地址去掉門牌（約略位置）
+        // 台灣出發機場直接給座標（避免「松山機場」被定位到日本松山）
+        var SG_TW_AIRPORTS = [[/松山機場|松山\s*\(TSA\)|TSA/, 25.0697, 121.5525], [/桃園(國際)?機場|TPE/, 25.0777, 121.2328], [/小港機場|高雄(國際)?機場|KHH/, 22.5771, 120.3500], [/台中(國際)?機場|臺中(國際)?機場|RMQ/, 24.2647, 120.6206]];
         async function sgGeoStop(st) {
+            const raw = String(st.addr || '') + ' ' + String(st.name || '');
+            for (const a of SG_TW_AIRPORTS) if (a[0].test(sgCleanAddr(st.addr) || st.name || '') || (!st.addr && a[0].test(raw))) return { lat: a[1], lng: a[2], approx: false };
             const addr = sgCleanAddr(st.addr);
             let err = false;
             if (addr) { const v = await sgGeocode(addr); if (v) return Object.assign({ approx: false }, v); if (v === undefined) err = true; }
@@ -19443,6 +19450,7 @@ const firebaseConfig = {
                 return;
             }
             const w = window.open('about:blank', '_blank'); // 先開視窗，避免定位後被瀏覽器擋下
+            window.__sgGeoCC = 'cn';
             showToast('info', '大陸地點：改用高德地圖規劃路線…');
             const [o, d] = await Promise.all([sgGeoStop(from), sgGeoStop(to)]);
             let url = sgAmapRouteUrl(o, d, mode, from.name, to.name);
@@ -19472,6 +19480,14 @@ const firebaseConfig = {
         };
 
         // ---- 地點地圖 ----
+        // 依計畫幣別決定定位國家（再加上台灣，方便出發機場）
+        var SG_CUR_CC = { JPY: 'jp', CNY: 'cn', KRW: 'kr', TWD: 'tw', HKD: 'hk', MOP: 'mo', THB: 'th', SGD: 'sg', VND: 'vn', MYR: 'my', PHP: 'ph', IDR: 'id' };
+        var SG_CC_CENTER = { jp: [36.2, 138.25, 5], cn: [35.0, 105.0, 4], kr: [36.5, 127.8, 6], tw: [23.7, 121.0, 7], hk: [22.32, 114.17, 10], mo: [22.19, 113.54, 12], th: [15.8, 101.0, 5], sg: [1.35, 103.82, 11], vn: [16.0, 107.8, 5], my: [4.2, 102.0, 5], ph: [12.9, 121.8, 5], id: [-2.5, 118.0, 4] };
+        function sgPlanCC(plan) {
+            const cc = SG_CUR_CC[(plan && plan.currencyCode) || ''] || '';
+            if (!cc) return '';
+            return cc === 'tw' ? 'tw' : cc + ',tw';
+        }
         var SG_DAY_COLORS = ['#2563eb', '#ea580c', '#16a34a', '#9333ea', '#db2777', '#0891b2', '#ca8a04', '#4f46e5', '#dc2626', '#0d9488'];
         function sgDayColor(n) { return n ? SG_DAY_COLORS[(n - 1) % SG_DAY_COLORS.length] : '#94a3b8'; }
         function sgLoadLeaflet() {
@@ -19492,6 +19508,10 @@ const firebaseConfig = {
                 if (!d) return stops;
                 const hotel = getDayLodging(plan, dayNum);
                 if (hotel && (hotel.addr || hotel.name)) stops.push({ hotel: true, name: hotel.name || '住宿', addr: hotel.addr || '', day: dayNum, time: '' });
+                // 當晚入住的飯店（例如第一天抵達、換飯店的日子）放在最後
+                const ymd = sgYmdFromDayNum(plan, dayNum);
+                const tonight = ymd ? ((plan.hotels || []).find(h => h && h.checkIn && h.checkOut && h.checkIn <= ymd && ymd < h.checkOut) || null) : null;
+                const endHotel = (tonight && tonight !== hotel && (tonight.addr || tonight.name)) ? { hotel: true, name: tonight.name || '住宿', addr: tonight.addr || '', day: dayNum, time: '' } : null;
                 (d.events || []).forEach(ev => {
                     if (!ev || ev.type === 'flight' || ev.majorTransId) return;
                     if (ev.type === 'trans' && !ev.loc) return;
@@ -19499,6 +19519,7 @@ const firebaseConfig = {
                     if (!st.addr && !st.name) return;
                     stops.push(Object.assign(st, { day: dayNum, time: String(ev.time || '').split('-')[0].trim(), type: ev.type }));
                 });
+                if (endHotel) stops.push(endHotel);
             } else {
                 (plan.spotTips || []).forEach(it => {
                     if (!it || !it.name) return;
@@ -19516,6 +19537,7 @@ const firebaseConfig = {
             if (!plan) return;
             sgCloseMap();
             const run = ++__sgMapRun;
+            window.__sgGeoCC = sgPlanCC(plan);
             const chips = [`<button type="button" class="${!dayNum ? 'on' : ''}" onclick="sgOpenPlaceMap(0)">全部景點</button>`]
                 .concat((plan.days || []).map(d => `<button type="button" class="${dayNum === d.dayNum ? 'on' : ''}" style="--c:${sgDayColor(d.dayNum)}" onclick="sgOpenPlaceMap(${d.dayNum})">第 ${d.dayNum} 天</button>`)).join('');
             document.body.insertAdjacentHTML('beforeend', `<div id="sgMapModal" onclick="if(event.target===this)sgCloseMap()"><div class="sgm-box">
@@ -19546,7 +19568,8 @@ const firebaseConfig = {
             }
             try { await sgLoadLeaflet(); } catch (e) { status(e.message); return; }
             if (run !== __sgMapRun || !document.getElementById('sgMapCanvas')) return;
-            __sgMap = L.map('sgMapCanvas', { zoomControl: true }).setView([35.68, 139.76], 11);
+            const __c0 = SG_CC_CENTER[(window.__sgGeoCC || '').split(',')[0]] || [35.68, 139.76, 5];
+            __sgMap = L.map('sgMapCanvas', { zoomControl: true }).setView([__c0[0], __c0[1]], __c0[2]);
             // 底圖：OpenStreetMap（免金鑰）；載入失敗時自動改用 Esri 街道圖
             let __tileErr = 0, __tileSwapped = false;
             const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(__sgMap);
@@ -19646,6 +19669,60 @@ const firebaseConfig = {
             `;
             document.head.appendChild(st);
         })();
+
+        // ---- 計畫日期與住宿自我修復：天數以每日行程為準；「全程住宿」自動跟著行程日期 ----
+        function sgHealPlanDates(plan) {
+            if (!plan || !Array.isArray(plan.days) || !plan.days.length || !plan.dateRange) return false;
+            let s = '';
+            try { s = bcalParseExistingDateRange(plan.dateRange, plan.days.length).startDate || ''; } catch (e) {}
+            if (!s) return false;
+            const len = plan.days.length;
+            const e = bcalAddDays(s, len - 1);
+            let ch = false;
+            const cnt = Number((String(plan.dateRange).match(/\((\d+)\s*天\)/) || [])[1] || 0);
+            if (cnt && cnt < len) { plan.dateRange = `${s} ~ ${e} (${len}天)`; ch = true; }
+            const hs = Array.isArray(plan.hotels) ? plan.hotels : [];
+            if (hs.length === 1) {
+                const h = hs[0];
+                if (String(h.stayLabel || '').replace(/^🏨\s*/, '').trim() === '全程住宿' && (h.checkIn !== s || h.checkOut !== e)) {
+                    h.checkIn = s; h.checkOut = e; h.nights = Math.max(1, len - 1); plan.hotel = h; ch = true;
+                }
+            }
+            return ch;
+        }
+        const __origRenderAllV2910 = renderAll;
+        renderAll = function () {
+            try { const p = getCurrentPlan(); if (sgHealPlanDates(p)) saveState(); } catch (e) { console.warn('日期自我修復略過', e); }
+            return __origRenderAllV2910.apply(this, arguments);
+        };
+        // 計畫設定：新日期比現有天數短時先確認，不再默默只改標題日期
+        const __origSaveBaseV2910 = handleSavePlanBaseSubmit;
+        handleSavePlanBaseSubmit = function (e) {
+            try {
+                const plan = getCurrentPlan();
+                const B = bcalState.base;
+                let sY = B.startDate, eY = B.endDate || B.startDate;
+                if (B.pickingEnd && B.startDate) eY = (B.hoverDate && B.hoverDate >= B.startDate) ? B.hoverDate : B.startDate;
+                const len = plan && Array.isArray(plan.days) ? plan.days.length : 0;
+                if (sY && eY && len) {
+                    const total = Math.max(1, bcalDiffDaysInclusive(sY, eY));
+                    if (total < len) {
+                        const extra = plan.days.slice(total);
+                        const nEv = extra.reduce((a, d) => a + ((d.events || []).length), 0);
+                        const ok = confirm(`新的日期只有 ${total} 天，但目前行程有 ${len} 天（第 ${total + 1}～${len} 天${nEv ? `還有 ${nEv} 個行程` : ''}）。\n\n按「確定」：縮短行程，並刪除多出的天數\n按「取消」：保留原本 ${len} 天的日期，只儲存其他設定`);
+                        if (!ok) {
+                            const info = buildPlanDateToDayMap(plan);
+                            B.startDate = info.startYmd || sY; B.endDate = info.endYmd || eY; B.pickingEnd = false;
+                            return __origSaveBaseV2910.apply(this, arguments);
+                        }
+                        const r = __origSaveBaseV2910.apply(this, arguments);
+                        try { plan.days = plan.days.slice(0, total); saveState(); renderAll(); } catch (err) {}
+                        return r;
+                    }
+                }
+            } catch (err) { console.warn(err); }
+            return __origSaveBaseV2910.apply(this, arguments);
+        };
 
         // ===== 景點頁顯示前先以總覽行程的實際時間回填，確保兩邊時間一致 =====
         const __origRenderSpotGuidesViewForSync = renderSpotGuidesView;
