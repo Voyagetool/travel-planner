@@ -6121,7 +6121,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.29.1</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.29.2</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -20571,87 +20571,62 @@ const firebaseConfig = {
         }
         var __sgMap = null, __sgMapRun = 0;
         function sgCloseMap() { const m = document.getElementById('sgMapModal'); if (m) m.remove(); if (__sgMap) { try { __sgMap.remove(); } catch (e) {} __sgMap = null; } __sgMapRun++; }
+        // 地圖改用 Google 地圖內嵌（免金鑰），位置與點進 Google 地圖看到的一致
+        function sgStopQuery(s) { return [s.name || '', sgCleanAddr(s.addr)].filter(Boolean).join(' ').trim(); }
+        function sgStopRouteQ(s) { return sgCleanAddr(s.addr) || s.name || ''; }
+        function sgEmbedPlace(s) { return `https://maps.google.com/maps?q=${encodeURIComponent(sgStopQuery(s))}&output=embed&hl=zh-TW&z=16`; }
+        function sgEmbedRoute(list) {
+            const pts = list.map(sgStopRouteQ).filter(Boolean).slice(0, 10);
+            if (pts.length < 2) return pts.length ? sgEmbedPlace(list[0]) : '';
+            return `https://maps.google.com/maps?saddr=${encodeURIComponent(pts[0])}&daddr=${pts.slice(1).map(encodeURIComponent).join('+to:')}&output=embed&hl=zh-TW`;
+        }
+        var __sgMapStops = [], __sgMapRouteUrl = '';
         async function sgOpenPlaceMap(dayNum) {
             const plan = getCurrentPlan();
             if (!plan) return;
             sgCloseMap();
-            const run = ++__sgMapRun;
-            window.__sgGeoCC = sgPlanCC(plan);
             const chips = [`<button type="button" class="${!dayNum ? 'on' : ''}" onclick="sgOpenPlaceMap(0)">全部景點</button>`]
                 .concat((plan.days || []).map(d => `<button type="button" class="${dayNum === d.dayNum ? 'on' : ''}" style="--c:${sgDayColor(d.dayNum)}" onclick="sgOpenPlaceMap(${d.dayNum})">第 ${d.dayNum} 天</button>`)).join('');
-            document.body.insertAdjacentHTML('beforeend', `<div id="sgMapModal" onclick="if(event.target===this)sgCloseMap()"><div class="sgm-box">
-                <div class="sgm-head"><b><i class="fa-solid fa-map-location-dot"></i> ${dayNum ? `第 ${dayNum} 天路線地圖` : '全部景點地圖'}</b><span class="sgm-status" id="sgMapStatus">載入地圖中…</span><button type="button" class="sgm-x" onclick="sgCloseMap()">✕</button></div>
-                <div class="sgm-chips">${chips}</div>
-                <div id="sgMapCanvas"></div>
-                <div class="sgm-foot"><div id="sgMapList"></div><div class="sgm-btns" id="sgMapBtns"></div></div>
-            </div></div>`);
-            const stops = sgMapStops(plan, dayNum);
-            const status = t => { const el = document.getElementById('sgMapStatus'); if (el && run === __sgMapRun) el.textContent = t; };
+            const stops = sgMapStops(plan, dayNum).filter(s => s.addr || s.name);
+            // 同一間飯店前後各出現一次時，路線只保留一次起點，最後回飯店另外標示
+            __sgMapStops = stops;
             const isCN = sgIsChinaPlace(plan, stops.map(s => s.addr + ' ' + s.name).join(' '));
-            const ext = s => isCN ? `https://uri.amap.com/search?keyword=${encodeURIComponent(s.name || s.addr)}&callnative=1` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((s.name || '') + ' ' + sgCleanAddr(s.addr))}`;
-            // 清單
-            let n = 0;
-            stops.forEach(s => { s.no = s.hotel ? '宿' : String(++n); });
-            const listEl = document.getElementById('sgMapList');
-            listEl.innerHTML = stops.length ? stops.map((s, i) => `<div class="sgm-row" data-i="${i}" onclick="sgMapFocus(${i})"><span class="sgm-no" style="background:${s.hotel ? '#475569' : sgDayColor(s.day)}">${s.no}</span>${s.time ? `<span class="sgm-t">${escapeHtml(s.time)}</span>` : (!dayNum && s.day ? `<span class="sgm-t">D${s.day}</span>` : '')}<span class="sgm-n">${escapeHtml(s.name || s.addr)}</span><span class="sgm-st" id="sgMapSt${i}">定位中</span><a href="${ext(s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${isCN ? '在高德地圖開啟' : '在 Google 地圖開啟'}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`).join('') : '<div class="sgm-empty">這一天還沒有可定位的地點</div>';
-            // 外部整天路線
-            const btns = document.getElementById('sgMapBtns');
-            const pts = stops.filter(s => s.addr || s.name);
-            if (dayNum && pts.length >= 2) {
-                if (!isCN) {
-                    const url = 'https://www.google.com/maps/dir/' + pts.slice(0, 10).map(s => encodeURIComponent(sgCleanAddr(s.addr) || s.name)).join('/');
-                    btns.innerHTML = `<a class="n-btn n-btn-primary" href="${url}" target="_blank" rel="noopener"><i class="fa-brands fa-google"></i> Google 地圖開啟整天路線${pts.length > 10 ? '（前 10 站）' : ''}</a>`;
-                } else {
-                    btns.innerHTML = `<span class="sgm-hint">大陸地點：點清單右側圖示用高德查看；兩站之間的路線請按時間軸上的「地圖路線」（自動改用高德）</span>`;
-                }
-            }
-            try { await sgLoadLeaflet(); } catch (e) { status(e.message); return; }
-            if (run !== __sgMapRun || !document.getElementById('sgMapCanvas')) return;
-            const __c0 = SG_CC_CENTER[(window.__sgGeoCC || '').split(',')[0]] || [35.68, 139.76, 5];
-            __sgMap = L.map('sgMapCanvas', { zoomControl: true }).setView([__c0[0], __c0[1]], __c0[2]);
-            // 底圖：OpenStreetMap（免金鑰）；載入失敗時自動改用 Esri 街道圖
-            let __tileErr = 0, __tileSwapped = false;
-            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(__sgMap);
-            osm.on('tileerror', () => {
-                if (__tileSwapped || ++__tileErr < 4) return;
-                __tileSwapped = true;
-                __sgMap.removeLayer(osm);
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' }).addTo(__sgMap);
-            });
-            const group = L.featureGroup().addTo(__sgMap);
-            const lines = {};
-            window.__sgMapMarkers = [];
-            let ok = 0, miss = 0;
-            for (let i = 0; i < stops.length; i++) {
-                if (run !== __sgMapRun) return;
-                const s = stops[i];
-                status(`定位中 ${i + 1}/${stops.length}（第一次較慢，之後會記住）`);
-                const g = await sgGeoStop(s);
-                if (run !== __sgMapRun) return;
-                const stEl = document.getElementById('sgMapSt' + i);
-                if (!g || g.err) { miss++; if (stEl) { stEl.textContent = g && g.err ? '定位服務忙碌，稍後重開再試' : '找不到位置'; stEl.className = 'sgm-st miss'; } continue; }
-                ok++;
-                if (stEl) { stEl.textContent = g.approx ? '約略位置' : ''; stEl.className = 'sgm-st' + (g.approx ? ' approx' : ''); }
-                const col = s.hotel ? '#475569' : sgDayColor(s.day);
-                const icon = L.divIcon({ className: 'sgm-pin', html: `<span style="background:${col};${g.approx ? 'opacity:.6;border-style:dashed;' : ''}">${s.no}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] });
-                const mk = L.marker([g.lat, g.lng], { icon }).addTo(group).bindPopup(`<b>${escapeHtml(s.name || '')}</b>${s.time ? `<br>🕒 ${escapeHtml(s.time)}` : ''}${s.addr ? `<br><small>${escapeHtml(sgCleanAddr(s.addr))}</small>` : ''}${g.approx ? '<br><small style="color:#b45309">約略位置（依地區定位）</small>' : ''}<br><a href="${ext(s)}" target="_blank" rel="noopener">${isCN ? '高德地圖' : 'Google 地圖'}開啟</a>`);
-                window.__sgMapMarkers[i] = mk;
-                if (dayNum || s.day) {
-                    const k = dayNum || s.day;
-                    (lines[k] = lines[k] || []).push([g.lat, g.lng]);
-                }
-                Object.keys(lines).forEach(k => {
-                    if (lines[k].length < 2) return;
-                    if (lines[k].__pl) lines[k].__pl.setLatLngs(lines[k]); else lines[k].__pl = L.polyline(lines[k], { color: sgDayColor(Number(k)), weight: 3, opacity: .7, dashArray: '6 6' }).addTo(group);
-                });
-                try { __sgMap.fitBounds(group.getBounds().pad(0.15), { maxZoom: 15 }); } catch (e) {}
-            }
-            status(`已定位 ${ok} 個${miss ? `，${miss} 個找不到（可點右側圖示用地圖搜尋）` : ''}`);
+            const ext = s => isCN ? `https://uri.amap.com/search?keyword=${encodeURIComponent(s.name || s.addr)}&callnative=1` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sgStopQuery(s))}`;
+            const letters = 'ABCDEFGHIJ';
+            const routeStops = dayNum ? stops.slice(0, 10) : [];
+            __sgMapRouteUrl = dayNum ? sgEmbedRoute(routeStops) : '';
+            const first = __sgMapRouteUrl || (stops[0] ? sgEmbedPlace(stops[0]) : '');
+            const rows = stops.map((s, i) => {
+                const tag = dayNum ? (i < 10 ? letters[i] : '·') : (s.day ? 'D' + s.day : '—');
+                return `<div class="sgm-row" data-i="${i}" onclick="sgMapFocus(${i})"><span class="sgm-no" style="background:${s.hotel ? '#475569' : sgDayColor(s.day)}">${tag}</span>${s.time ? `<span class="sgm-t">${escapeHtml(s.time)}</span>` : ''}<span class="sgm-n">${s.hotel ? '🏨 ' : ''}${escapeHtml(s.name || s.addr)}</span><a href="${ext(s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${isCN ? '在高德地圖開啟' : '在 Google 地圖開啟'}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`;
+            }).join('');
+            const gUrl = (dayNum && routeStops.length >= 2) ? 'https://www.google.com/maps/dir/' + routeStops.map(s => encodeURIComponent(sgStopRouteQ(s))).join('/') : '';
+            document.body.insertAdjacentHTML('beforeend', `<div id="sgMapModal" onclick="if(event.target===this)sgCloseMap()"><div class="sgm-box">
+                <div class="sgm-head"><b><i class="fa-solid fa-map-location-dot"></i> ${dayNum ? `第 ${dayNum} 天路線地圖` : '全部景點地圖'}</b><span class="sgm-status" id="sgMapStatus">${dayNum ? (stops.length > 10 ? `共 ${stops.length} 站，地圖顯示前 10 站（A–J）` : '字母對應地圖上的 A、B、C… 站；點清單可單獨查看該地點') : '點清單中的地點，地圖會顯示該位置'}</span><button type="button" class="sgm-x" onclick="sgCloseMap()">✕</button></div>
+                <div class="sgm-chips">${chips}</div>
+                <div id="sgMapCanvas">${first ? `<iframe id="sgMapFrame" src="${first}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>` : '<div class="sgm-empty" style="padding:30px;text-align:center;">這一天還沒有可顯示的地點</div>'}</div>
+                <div class="sgm-foot"><div id="sgMapList">${rows || '<div class="sgm-empty">這一天還沒有可顯示的地點</div>'}</div>
+                <div class="sgm-btns">${__sgMapRouteUrl ? `<button type="button" class="n-btn" onclick="sgMapShowRoute()"><i class="fa-solid fa-route"></i> 顯示整天路線</button>` : ''}${gUrl && !isCN ? `<a class="n-btn n-btn-primary" href="${gUrl}" target="_blank" rel="noopener"><i class="fa-brands fa-google"></i> Google 地圖開啟整天路線</a>` : ''}${isCN ? `<span class="sgm-hint">大陸地點可點清單右側圖示用高德查看；時間軸的「地圖路線」會自動改用高德</span>` : ''}</div></div>
+            </div></div>`);
+        }
+        function sgMapShowRoute() {
+            const f = document.getElementById('sgMapFrame');
+            if (f && __sgMapRouteUrl) f.src = __sgMapRouteUrl;
+            document.querySelectorAll('#sgMapList .sgm-row').forEach(r => r.classList.remove('on'));
         }
         function sgMapFocus(i) {
-            const mk = window.__sgMapMarkers && window.__sgMapMarkers[i];
-            if (mk && __sgMap) { __sgMap.setView(mk.getLatLng(), Math.max(__sgMap.getZoom(), 15)); mk.openPopup(); }
+            const s = __sgMapStops[i];
+            const f = document.getElementById('sgMapFrame');
+            if (!s || !f) return;
+            f.src = sgEmbedPlace(s);
+            document.querySelectorAll('#sgMapList .sgm-row').forEach(r => r.classList.toggle('on', Number(r.dataset.i) === i));
         }
+        (function () {
+            const st = document.createElement('style');
+            st.textContent = `#sgMapCanvas iframe{width:100%;height:100%;border:0;display:block;} #sgMapModal .sgm-row.on{background:#eff6ff;}`;
+            document.head.appendChild(st);
+        })();
+
         // 入口：總覽上方工具列、景點頁篩選列
         const __origRenderTimelineViewV2900 = renderTimelineView;
         renderTimelineView = function () {
