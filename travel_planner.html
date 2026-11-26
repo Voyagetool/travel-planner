@@ -6120,7 +6120,7 @@
                         </button>
                     </div>
                     <span class="plan-status-wrap"><button type="button" id="planStatusBtn" class="plan-status-btn planning" onclick="togglePlanStatusMenu(event)" title="這趟旅程是安排中還是已完成">安排中</button><div id="planStatusMenu" class="plan-status-menu"><button type="button" class="plan-status-opt" data-mode="planning" onclick="setPlanStatus('planning')"><span><i class="fa-solid fa-hourglass-half"></i> 安排中</span></button><button type="button" class="plan-status-opt" data-mode="done" onclick="setPlanStatus('done')"><span><i class="fa-solid fa-circle-check"></i> 已完成</span></button><button type="button" class="plan-status-opt" data-mode="auto" onclick="setPlanStatus('auto')"><span><i class="fa-solid fa-wand-magic-sparkles"></i> 依日期自動</span><small>結束日過後＝已完成</small></button></div></span>
-                    <span class="okr-version-tag" id="appVersionTag">V3.28.0</span>
+                    <span class="okr-version-tag" id="appVersionTag">V3.29.0</span>
                 </div>
 
                 <!-- 單行精緻副標題與核心屬性列 (點擊即可編輯) -->
@@ -20360,6 +20360,320 @@ const firebaseConfig = {
                     .day-meals-bar.meals-compact .meals-three-cols{padding-right:74px;display:grid !important;grid-template-columns:minmax(0,1fr);gap:1px;}
                     .day-meals-bar.meals-compact .meal-col-item{display:block !important;margin:0 !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
                 }
+            `;
+            document.head.appendChild(st);
+        })();
+
+        // ===== V3.29.0：住宿「全程住宿」自動帶入行程日期、自訂標籤外部同步；地點地圖；大陸地點路線改用高德 =====
+        // ---- 住宿：全程住宿 ----
+        function sgTripRangeYmd(plan) {
+            const info = buildPlanDateToDayMap(plan);
+            return { start: info.startYmd || '', end: info.endYmd || '' };
+        }
+        function sgHotelFillFullStay(silent) {
+            const plan = getCurrentPlan();
+            const r = sgTripRangeYmd(plan);
+            if (!r.start || !r.end) { if (!silent) showToast('warning', '計畫還沒設定出發／回程日期，請先到計畫設定填寫'); return false; }
+            const ci = document.getElementById('hCheckIn'), co = document.getElementById('hCheckOut');
+            if (ci) ci.value = r.start;
+            if (co) co.value = r.end;
+            try { calcHotelModalCost(); } catch (e) {}
+            if (!silent) showToast('info', `已帶入行程日期：${r.start} 入住 ➔ ${r.end} 退房`);
+            return true;
+        }
+        const __origSgHotelSetLabelV2900 = sgHotelSetLabel;
+        sgHotelSetLabel = function (txt) {
+            __origSgHotelSetLabelV2900.apply(this, arguments);
+            if (txt === '全程住宿') sgHotelFillFullStay(false);
+        };
+        // 有填標籤就照填的顯示；留空才自動判斷
+        sgHotelBadge = function (plan, ht, idx, hotels) {
+            const s = String(ht.stayLabel || '').trim();
+            const isDefault = !s || /^(🏨\s*)?(入住飯店|住宿\s*\d+)$/.test(s);
+            return isDefault ? '🏨 ' + sgHotelAutoLabel(plan, ht, hotels) : (/^🏨/.test(s) ? s : '🏨 ' + s);
+        };
+        const __origSaveHotelV2900 = handleSaveHotelSubmit;
+        handleSaveHotelSubmit = function (e) {
+            try {
+                const lab = (document.getElementById('hStayLabel') || {}).value || '';
+                const ci = (document.getElementById('hCheckIn') || {}).value || '';
+                const co = (document.getElementById('hCheckOut') || {}).value || '';
+                if (lab.trim() === '全程住宿' && (!ci || !co)) sgHotelFillFullStay(true);
+            } catch (err) {}
+            const r = __origSaveHotelV2900.apply(this, arguments);
+            try { renderAll(); } catch (err) {}
+            return r;
+        };
+
+        // ---- 大陸地點判斷 ----
+        var SG_CN_RE = /中国|中國|中华人民共和国|China|北京|上海|重庆|重慶|南京|广州|廣州|深圳|成都|杭州|西安|天津|武汉|武漢|苏州|蘇州|厦门|廈門|长沙|長沙|昆明|青岛|青島|哈尔滨|哈爾濱|大连|大連|桂林|丽江|麗江|张家界|張家界|渝中|解放碑/;
+        var SG_NOT_CN_RE = /日本|Japan|Tokyo|東京|大阪|京都|Korea|韓國|首爾|台灣|臺灣|Taiwan|台北|臺北|香港|Hong Kong|澳門|Macau/i;
+        function sgIsChinaPlace(plan, text) {
+            const t = String(text || '');
+            if (SG_NOT_CN_RE.test(t)) return false;
+            if (SG_CN_RE.test(t)) return true;
+            return !!(plan && plan.currencyCode === 'CNY');
+        }
+
+        // ---- 地理編碼（OpenStreetMap Nominatim，免金鑰，結果存在本機快取） ----
+        var SG_GEO_KEY = 'sg_geo_cache_v1';
+        function sgGeoCache() { try { return JSON.parse(localStorage.getItem(SG_GEO_KEY) || '{}'); } catch (e) { return {}; } }
+        function sgGeoPut(q, v) { try { const c = sgGeoCache(); c[q] = v; localStorage.setItem(SG_GEO_KEY, JSON.stringify(c)); } catch (e) {} }
+        var __sgGeoQ = Promise.resolve(), __sgGeoLast = 0;
+        function sgGeocode(q) {
+            q = String(q || '').trim();
+            if (!q) return Promise.resolve(null);
+            const c = sgGeoCache();
+            if (Object.prototype.hasOwnProperty.call(c, q)) return Promise.resolve(c[q]);
+            const job = __sgGeoQ.then(async () => {
+                const c2 = sgGeoCache();
+                if (Object.prototype.hasOwnProperty.call(c2, q)) return c2[q];
+                const wait = Math.max(0, 1100 - (Date.now() - __sgGeoLast));
+                if (wait) await new Promise(r => setTimeout(r, wait));
+                __sgGeoLast = Date.now();
+                try {
+                    const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW&q=' + encodeURIComponent(q));
+                    if (!res.ok) return undefined; // 服務暫時失敗（如請求太頻繁）不寫入快取，下次再試
+                    const j = await res.json();
+                    const v = (j && j[0]) ? { lat: Number(j[0].lat), lng: Number(j[0].lon) } : null;
+                    sgGeoPut(q, v);
+                    return v;
+                } catch (e) { return undefined; }
+            });
+            __sgGeoQ = job.catch(() => null);
+            return job;
+        }
+        function sgCleanAddr(a) {
+            return String(a || '').replace(/尚未填寫詳細地址/, '')
+                .replace(/日本\s*〒?\s*\d{3}-?\d{4}\s*/g, '').replace(/〒\s*\d{3}-?\d{4}/g, '')
+                .replace(/\s*\d{3}-\d{4}\s*日本\s*$/, '').replace(/\s*日本\s*$/, '')
+                .replace(/[（(][^）)]*[）)]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+        // 依序嘗試：完整地址 → 名稱 → 地址去掉門牌（約略位置）
+        async function sgGeoStop(st) {
+            const addr = sgCleanAddr(st.addr);
+            let err = false;
+            if (addr) { const v = await sgGeocode(addr); if (v) return Object.assign({ approx: false }, v); if (v === undefined) err = true; }
+            if (st.name) { const v = await sgGeocode(String(st.name).replace(/[（(][^）)]*[）)]/g, ' ').trim()); if (v) return Object.assign({ approx: false }, v); if (v === undefined) err = true; }
+            if (addr && addr.indexOf(',') > 0) { const v = await sgGeocode(addr.slice(addr.indexOf(',') + 1).trim()); if (v) return Object.assign({ approx: true }, v); if (v === undefined) err = true; }
+            return err ? { err: true } : null;
+        }
+
+        // ---- 大陸地點：時間軸「地圖路線」改開高德 ----
+        function sgAmapRouteUrl(o, d, mode, oName, dName) {
+            const m = mode === 'walk' ? 'walk' : (mode === 'car' || mode === 'taxi' || mode === 'other' ? 'car' : 'bus');
+            if (o && d) return `https://uri.amap.com/navigation?from=${o.lng},${o.lat},${encodeURIComponent(oName || '起點')}&to=${d.lng},${d.lat},${encodeURIComponent(dName || '終點')}&mode=${m}&coordinate=wgs84&callnative=1`;
+            return '';
+        }
+        async function sgOpenRoute(plan, from, to, mode) {
+            const txt = [from.addr, from.name, to.addr, to.name].join(' ');
+            if (!sgIsChinaPlace(plan, txt)) {
+                const gm = mode === 'walk' ? 'walking' : (mode === 'transit' || mode === 'bus' || mode === 'mixed' ? 'transit' : 'driving');
+                const url = getMapRouteUrl(sgCleanAddr(from.addr) || from.name, sgCleanAddr(to.addr) || to.name, gm, 'google');
+                if (url) window.open(url, '_blank'); else showToast('warning', '未能取得地點資訊，請先在行程中填寫地點！');
+                return;
+            }
+            const w = window.open('about:blank', '_blank'); // 先開視窗，避免定位後被瀏覽器擋下
+            showToast('info', '大陸地點：改用高德地圖規劃路線…');
+            const [o, d] = await Promise.all([sgGeoStop(from), sgGeoStop(to)]);
+            let url = sgAmapRouteUrl(o, d, mode, from.name, to.name);
+            if (!url) url = getMapRouteUrl(from.name || from.addr, to.name || to.addr, 'driving', 'amap');
+            if (w) w.location.href = url; else window.open(url, '_blank');
+        }
+        function sgStopOfEvent(plan, ev) {
+            const s = sgSpotOfEvent(plan, ev);
+            return { name: String(ev.title || '').replace(/➔/g, ' ').trim(), addr: (s && s.address) || ev.loc || '' };
+        }
+        openTransitExternalMapQuick = function (dayNum, eventIdx) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day || !day.events || !day.events[eventIdx] || eventIdx <= 0) return;
+            const curr = day.events[eventIdx];
+            sgOpenRoute(plan, sgStopOfEvent(plan, day.events[eventIdx - 1]), sgStopOfEvent(plan, curr), (curr.transit && curr.transit.mode) || 'transit');
+        };
+        openFirstTransitMapQuick = function (dayNum) {
+            const plan = getCurrentPlan();
+            const day = plan && (plan.days || []).find(d => d.dayNum === Number(dayNum));
+            if (!day || !day.events || !day.events.length) return;
+            const ft = day.firstTransit || {};
+            const hotel = getDayLodging(plan, Number(dayNum));
+            const from = hotel ? { name: hotel.name, addr: hotel.addr } : { name: ft.fromLoc || '', addr: '' };
+            const first = (typeof sgFirstEventOfDay === 'function' ? sgFirstEventOfDay(day) : null) || day.events[0];
+            sgOpenRoute(plan, from, sgStopOfEvent(plan, first), ft.mode || 'transit');
+        };
+
+        // ---- 地點地圖 ----
+        var SG_DAY_COLORS = ['#2563eb', '#ea580c', '#16a34a', '#9333ea', '#db2777', '#0891b2', '#ca8a04', '#4f46e5', '#dc2626', '#0d9488'];
+        function sgDayColor(n) { return n ? SG_DAY_COLORS[(n - 1) % SG_DAY_COLORS.length] : '#94a3b8'; }
+        function sgLoadLeaflet() {
+            if (window.L && window.L.map) return Promise.resolve();
+            if (window.__sgLeafletP) return window.__sgLeafletP;
+            window.__sgLeafletP = new Promise((res, rej) => {
+                const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(l);
+                const s = document.createElement('script'); s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                s.onload = () => res(); s.onerror = () => { window.__sgLeafletP = null; rej(new Error('地圖元件載入失敗，請確認網路')); };
+                document.head.appendChild(s);
+            });
+            return window.__sgLeafletP;
+        }
+        function sgMapStops(plan, dayNum) {
+            const stops = [];
+            if (dayNum) {
+                const d = plan.days.find(x => x.dayNum === dayNum);
+                if (!d) return stops;
+                const hotel = getDayLodging(plan, dayNum);
+                if (hotel && (hotel.addr || hotel.name)) stops.push({ hotel: true, name: hotel.name || '住宿', addr: hotel.addr || '', day: dayNum, time: '' });
+                (d.events || []).forEach(ev => {
+                    if (!ev || ev.type === 'flight' || ev.majorTransId) return;
+                    if (ev.type === 'trans' && !ev.loc) return;
+                    const st = sgStopOfEvent(plan, ev);
+                    if (!st.addr && !st.name) return;
+                    stops.push(Object.assign(st, { day: dayNum, time: String(ev.time || '').split('-')[0].trim(), type: ev.type }));
+                });
+            } else {
+                (plan.spotTips || []).forEach(it => {
+                    if (!it || !it.name) return;
+                    const sch = (typeof sgItemSchedule === 'function') ? sgItemSchedule(plan, it) : null;
+                    stops.push({ name: it.name, addr: it.address || '', day: sch ? sch.dayNum : 0, time: sch && sch.time ? String(sch.time).split('-')[0].trim() : '', type: it.category === 'food' ? 'food' : 'spot', start: sch ? sch.start : 9999 });
+                });
+                stops.sort((a, b) => ((a.day || 99) - (b.day || 99)) || ((a.start || 9999) - (b.start || 9999)));
+            }
+            return stops;
+        }
+        var __sgMap = null, __sgMapRun = 0;
+        function sgCloseMap() { const m = document.getElementById('sgMapModal'); if (m) m.remove(); if (__sgMap) { try { __sgMap.remove(); } catch (e) {} __sgMap = null; } __sgMapRun++; }
+        async function sgOpenPlaceMap(dayNum) {
+            const plan = getCurrentPlan();
+            if (!plan) return;
+            sgCloseMap();
+            const run = ++__sgMapRun;
+            const chips = [`<button type="button" class="${!dayNum ? 'on' : ''}" onclick="sgOpenPlaceMap(0)">全部景點</button>`]
+                .concat((plan.days || []).map(d => `<button type="button" class="${dayNum === d.dayNum ? 'on' : ''}" style="--c:${sgDayColor(d.dayNum)}" onclick="sgOpenPlaceMap(${d.dayNum})">第 ${d.dayNum} 天</button>`)).join('');
+            document.body.insertAdjacentHTML('beforeend', `<div id="sgMapModal" onclick="if(event.target===this)sgCloseMap()"><div class="sgm-box">
+                <div class="sgm-head"><b><i class="fa-solid fa-map-location-dot"></i> ${dayNum ? `第 ${dayNum} 天路線地圖` : '全部景點地圖'}</b><span class="sgm-status" id="sgMapStatus">載入地圖中…</span><button type="button" class="sgm-x" onclick="sgCloseMap()">✕</button></div>
+                <div class="sgm-chips">${chips}</div>
+                <div id="sgMapCanvas"></div>
+                <div class="sgm-foot"><div id="sgMapList"></div><div class="sgm-btns" id="sgMapBtns"></div></div>
+            </div></div>`);
+            const stops = sgMapStops(plan, dayNum);
+            const status = t => { const el = document.getElementById('sgMapStatus'); if (el && run === __sgMapRun) el.textContent = t; };
+            const isCN = sgIsChinaPlace(plan, stops.map(s => s.addr + ' ' + s.name).join(' '));
+            const ext = s => isCN ? `https://uri.amap.com/search?keyword=${encodeURIComponent(s.name || s.addr)}&callnative=1` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((s.name || '') + ' ' + sgCleanAddr(s.addr))}`;
+            // 清單
+            let n = 0;
+            stops.forEach(s => { s.no = s.hotel ? '宿' : String(++n); });
+            const listEl = document.getElementById('sgMapList');
+            listEl.innerHTML = stops.length ? stops.map((s, i) => `<div class="sgm-row" data-i="${i}" onclick="sgMapFocus(${i})"><span class="sgm-no" style="background:${s.hotel ? '#475569' : sgDayColor(s.day)}">${s.no}</span>${s.time ? `<span class="sgm-t">${escapeHtml(s.time)}</span>` : (!dayNum && s.day ? `<span class="sgm-t">D${s.day}</span>` : '')}<span class="sgm-n">${escapeHtml(s.name || s.addr)}</span><span class="sgm-st" id="sgMapSt${i}">定位中</span><a href="${ext(s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${isCN ? '在高德地圖開啟' : '在 Google 地圖開啟'}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`).join('') : '<div class="sgm-empty">這一天還沒有可定位的地點</div>';
+            // 外部整天路線
+            const btns = document.getElementById('sgMapBtns');
+            const pts = stops.filter(s => s.addr || s.name);
+            if (dayNum && pts.length >= 2) {
+                if (!isCN) {
+                    const url = 'https://www.google.com/maps/dir/' + pts.slice(0, 10).map(s => encodeURIComponent(sgCleanAddr(s.addr) || s.name)).join('/');
+                    btns.innerHTML = `<a class="n-btn n-btn-primary" href="${url}" target="_blank" rel="noopener"><i class="fa-brands fa-google"></i> Google 地圖開啟整天路線${pts.length > 10 ? '（前 10 站）' : ''}</a>`;
+                } else {
+                    btns.innerHTML = `<span class="sgm-hint">大陸地點：點清單右側圖示用高德查看；兩站之間的路線請按時間軸上的「地圖路線」（自動改用高德）</span>`;
+                }
+            }
+            try { await sgLoadLeaflet(); } catch (e) { status(e.message); return; }
+            if (run !== __sgMapRun || !document.getElementById('sgMapCanvas')) return;
+            __sgMap = L.map('sgMapCanvas', { zoomControl: true }).setView([35.68, 139.76], 11);
+            // 底圖：OpenStreetMap（免金鑰）；載入失敗時自動改用 Esri 街道圖
+            let __tileErr = 0, __tileSwapped = false;
+            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(__sgMap);
+            osm.on('tileerror', () => {
+                if (__tileSwapped || ++__tileErr < 4) return;
+                __tileSwapped = true;
+                __sgMap.removeLayer(osm);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' }).addTo(__sgMap);
+            });
+            const group = L.featureGroup().addTo(__sgMap);
+            const lines = {};
+            window.__sgMapMarkers = [];
+            let ok = 0, miss = 0;
+            for (let i = 0; i < stops.length; i++) {
+                if (run !== __sgMapRun) return;
+                const s = stops[i];
+                status(`定位中 ${i + 1}/${stops.length}（第一次較慢，之後會記住）`);
+                const g = await sgGeoStop(s);
+                if (run !== __sgMapRun) return;
+                const stEl = document.getElementById('sgMapSt' + i);
+                if (!g || g.err) { miss++; if (stEl) { stEl.textContent = g && g.err ? '定位服務忙碌，稍後重開再試' : '找不到位置'; stEl.className = 'sgm-st miss'; } continue; }
+                ok++;
+                if (stEl) { stEl.textContent = g.approx ? '約略位置' : ''; stEl.className = 'sgm-st' + (g.approx ? ' approx' : ''); }
+                const col = s.hotel ? '#475569' : sgDayColor(s.day);
+                const icon = L.divIcon({ className: 'sgm-pin', html: `<span style="background:${col};${g.approx ? 'opacity:.6;border-style:dashed;' : ''}">${s.no}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] });
+                const mk = L.marker([g.lat, g.lng], { icon }).addTo(group).bindPopup(`<b>${escapeHtml(s.name || '')}</b>${s.time ? `<br>🕒 ${escapeHtml(s.time)}` : ''}${s.addr ? `<br><small>${escapeHtml(sgCleanAddr(s.addr))}</small>` : ''}${g.approx ? '<br><small style="color:#b45309">約略位置（依地區定位）</small>' : ''}<br><a href="${ext(s)}" target="_blank" rel="noopener">${isCN ? '高德地圖' : 'Google 地圖'}開啟</a>`);
+                window.__sgMapMarkers[i] = mk;
+                if (dayNum || s.day) {
+                    const k = dayNum || s.day;
+                    (lines[k] = lines[k] || []).push([g.lat, g.lng]);
+                }
+                Object.keys(lines).forEach(k => {
+                    if (lines[k].length < 2) return;
+                    if (lines[k].__pl) lines[k].__pl.setLatLngs(lines[k]); else lines[k].__pl = L.polyline(lines[k], { color: sgDayColor(Number(k)), weight: 3, opacity: .7, dashArray: '6 6' }).addTo(group);
+                });
+                try { __sgMap.fitBounds(group.getBounds().pad(0.15), { maxZoom: 15 }); } catch (e) {}
+            }
+            status(`已定位 ${ok} 個${miss ? `，${miss} 個找不到（可點右側圖示用地圖搜尋）` : ''}`);
+        }
+        function sgMapFocus(i) {
+            const mk = window.__sgMapMarkers && window.__sgMapMarkers[i];
+            if (mk && __sgMap) { __sgMap.setView(mk.getLatLng(), Math.max(__sgMap.getZoom(), 15)); mk.openPopup(); }
+        }
+        // 入口：總覽上方工具列、景點頁篩選列
+        const __origRenderTimelineViewV2900 = renderTimelineView;
+        renderTimelineView = function () {
+            const r = __origRenderTimelineViewV2900.apply(this, arguments);
+            try {
+                const bar = document.querySelector('#dayCardsContainer .tl-lite-bar');
+                const row = document.querySelector('#dayCardsContainer .timeline-event-row[data-day]');
+                if (bar && row && !bar.querySelector('.sgm-open')) bar.insertAdjacentHTML('afterbegin', `<button type="button" class="sgm-open" onclick="sgOpenPlaceMap(${Number(row.dataset.day)})"><i class="fa-solid fa-map-location-dot"></i> 當日地圖</button>`);
+            } catch (e) {}
+            return r;
+        };
+        const __origRenderSpotV2900 = renderSpotGuidesView;
+        renderSpotGuidesView = function () {
+            const r = __origRenderSpotV2900.apply(this, arguments);
+            try {
+                const arch = document.querySelector('#spotGuidesContainer button[onclick="sgOpenArchive()"]');
+                if (arch && !arch.parentElement.querySelector('.sgm-open-spot')) arch.insertAdjacentHTML('beforebegin', `<button type="button" class="n-btn sgm-open-spot" style="padding:3px 9px;font-size:0.74rem;color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff;" onclick="sgOpenPlaceMap(0)"><i class="fa-solid fa-map-location-dot"></i> 地圖</button>`);
+            } catch (e) {}
+            return r;
+        };
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('sgMapModal')) sgCloseMap(); });
+        (function () {
+            if (document.getElementById('sgMap2900Style')) return;
+            const st = document.createElement('style');
+            st.id = 'sgMap2900Style';
+            st.textContent = `
+                .sgm-open{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;height:26px;padding:0 10px;border-radius:999px;font-size:0.76rem;font-weight:700;cursor:pointer;margin-right:auto;}
+                #sgMapModal{position:fixed;inset:0;z-index:100004;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:12px;}
+                #sgMapModal .sgm-box{background:#fff;border-radius:16px;width:min(960px,100%);height:min(92vh,860px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+                #sgMapModal .sgm-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #eef2f6;}
+                #sgMapModal .sgm-head b{font-size:0.98rem;color:#0f172a;white-space:nowrap;}
+                #sgMapModal .sgm-status{font-size:0.74rem;color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+                #sgMapModal .sgm-x{border:none;background:transparent;font-size:1.05rem;color:#64748b;cursor:pointer;width:30px;height:30px;border-radius:8px;}
+                #sgMapModal .sgm-chips{display:flex;gap:5px;padding:8px 14px;overflow-x:auto;flex-shrink:0;}
+                #sgMapModal .sgm-chips button{flex:0 0 auto;height:26px;padding:0 11px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;font-size:0.76rem;font-weight:700;color:#475569;cursor:pointer;}
+                #sgMapModal .sgm-chips button.on{background:var(--c,#0f766e);border-color:var(--c,#0f766e);color:#fff;}
+                #sgMapCanvas{flex:1 1 auto;min-height:260px;background:#e2e8f0;}
+                #sgMapModal .sgm-foot{flex:0 0 auto;max-height:34%;overflow:auto;border-top:1px solid #eef2f6;padding:6px 14px 10px;}
+                #sgMapModal .sgm-row{display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:1px dashed #eef2f6;font-size:0.82rem;cursor:pointer;}
+                #sgMapModal .sgm-row:hover{background:#f8fafc;}
+                #sgMapModal .sgm-no{flex:0 0 22px;height:22px;border-radius:50%;color:#fff;font-weight:800;font-size:0.72rem;display:inline-flex;align-items:center;justify-content:center;}
+                #sgMapModal .sgm-t{flex:0 0 auto;font-size:0.72rem;font-weight:800;color:#0369a1;background:#e0f2fe;border-radius:5px;padding:0 6px;}
+                #sgMapModal .sgm-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:#0f172a;}
+                #sgMapModal .sgm-st{font-size:0.7rem;color:#94a3b8;white-space:nowrap;}
+                #sgMapModal .sgm-st.miss{color:#b91c1c;font-weight:700;}
+                #sgMapModal .sgm-st.approx{color:#b45309;font-weight:700;}
+                #sgMapModal .sgm-row a{color:#0284c7;font-size:0.78rem;padding:0 4px;}
+                #sgMapModal .sgm-empty{color:#94a3b8;font-size:0.84rem;padding:8px 0;}
+                #sgMapModal .sgm-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;flex-wrap:wrap;}
+                #sgMapModal .sgm-btns .n-btn{height:34px;padding:0 14px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+                #sgMapModal .sgm-hint{font-size:0.74rem;color:#64748b;}
+                .sgm-pin span{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:0.74rem;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);box-sizing:border-box;}
+                @media (max-width:700px){ #sgMapModal{padding:0;} #sgMapModal .sgm-box{border-radius:0;height:100%;} #sgMapModal .sgm-foot{max-height:38%;} }
             `;
             document.head.appendChild(st);
         })();
